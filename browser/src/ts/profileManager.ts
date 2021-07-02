@@ -1,9 +1,10 @@
 import { Mudslinger } from "./client";
 import { EventHook } from "./event";
 import { UserConfig } from "./userConfig";
-import { messagebox } from "./messagebox";
+import { Messagebox, messagebox } from "./messagebox";
 import { AppInfo } from "./appInfo";
 import { WindowData } from "./windowManager";
+import { LayoutDefinition } from "./layoutManager";
 
 export class Profile {
     public name:string;
@@ -13,6 +14,7 @@ export class Profile {
     public char:string;
     public pass:string;
     public windows:WindowData[];
+    public layout?:LayoutDefinition;
 }
 
 export class ProfileManager {
@@ -22,9 +24,14 @@ export class ProfileManager {
     private _activeConfig:UserConfig = new UserConfig();
     private profiles:Map<string,Profile> = new Map<string,Profile>();
     private configs:Map<string,UserConfig> = new Map<string,UserConfig>();
+    public lastProfile: string;
 
     public constructor(private baseConfig:UserConfig) {
         this.load();
+    }
+
+    public getBaseConfig():UserConfig {
+        return this.baseConfig;
     }
 
     private activeChanged = (v:string):string => {
@@ -55,14 +62,15 @@ export class ProfileManager {
                     this.configs.set(iterator[0], this.createConfig(localStorage.getItem("config_" + iterator[0]), iterator[0]));
                 }
             } catch (err) {
-                messagebox("Errore", "Non riesco a leggere i profili", null, "Ok", "", null, null);
+                Messagebox.Show("Errore", "Non riesco a leggere i profili");
             }
         }
         if (last && !this.profiles.has(last)) {
             last = "";
-            messagebox("Errore", "Non riesco a trovare il profilo usato precedentemente. Uso il base.", null, "Ok", "", null, null);
+            Messagebox.Show("Errore", "Non riesco a trovare il profilo usato precedentemente. Uso il base.");
         }
-        this.setCurrent(last ?? "");
+        this.setCurrent("");
+        this.lastProfile = last || "";
     }
 
     private saveConfigToStorage(key:string): (val: string) => string {
@@ -88,10 +96,10 @@ export class ProfileManager {
     public setCurrent(name:string) {
         if (this._current != name) {
             this._current = name;
-            // todo raise events
-            this.evtProfileChanged.fire({current: name});
+            this.lastProfile = name;
             this.saveProfiles();
             this.activeConfig.init(this.getCurrentConfig().saveConfig(), this.activeChanged);
+            this.evtProfileChanged.fire({current: name});
             this.setTitle();
         }
     }

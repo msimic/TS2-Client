@@ -1,7 +1,7 @@
 import * as Util from "./util";
 import { JsScript, Variable } from "./jsScript";
 import { Class, ClassManager } from "./classManager";
-import { messagebox } from "./messagebox";
+import { Messagebox } from "./messagebox";
 declare let CodeMirror: any;
 
 export class ClassEditor {
@@ -110,7 +110,7 @@ export class ClassEditor {
         this.$cancelButton = $(myDiv.getElementsByClassName("winClass-btnCancel")[0]);
         this.$filter = $(myDiv.getElementsByClassName("winClass-filter")[0]);
         this.$filter.keyup((e)=> {
-            this.Filter($(e.target).val());
+            this.ApplyFilter();
         });
 
         const win_w = $(window).innerWidth()-20;
@@ -131,6 +131,10 @@ export class ClassEditor {
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
 
+    }
+
+    private ApplyFilter() {
+        this.Filter(this.$filter.val());
     }
 
     private itemClick(e:MouseEvent) {
@@ -172,6 +176,7 @@ export class ClassEditor {
             html += "<li>" + Util.rawToHtml(this.list[i]) + "</option>";
         }
         this.$listBox.html(html);
+        this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
@@ -179,7 +184,7 @@ export class ClassEditor {
         let v:Class;
 
         if (!this.$name.val()) {
-            messagebox("Errore", "La classe deve avere un nome!", () =>{}, "OK", "", 200, null);
+            Messagebox.Show("Errore", "La classe deve avere un nome!");
             return;
         }
 

@@ -12,14 +12,19 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
+import { isTrue } from "./util";
+import { LayoutManager } from "./layoutManager";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
     public EvtChangeDefaultBgColor = new EventHook<[string, string]>();
     public EvtContactClicked = new EventHook<void>();
     public EvtConnectClicked = new EventHook<void>();
+    public EvtProfileClicked = new EventHook<void>();
     public EvtDisconnectClicked = new EventHook<void>();
     private clickFuncs: {[k: string]: (value:any) => void} = {};
+    private windowManager:WindowManager;
+    private layout:LayoutManager;
     private optionMappingToStorage = new Map([
         ["connect", ""],
         ["use-profile", ""],
@@ -54,6 +59,8 @@ export class MenuBar {
         ["reset-settings", ""],
         ["import-settings", ""],
         ["export-settings", ""],
+        ["import-layout", ""],
+        ["export-layout", ""],
         ["log-time", "logTime"],
         ["debug-scripts", "debugScripts"],
         ["about", ""],
@@ -135,7 +142,6 @@ export class MenuBar {
         private aboutWin: AboutWin,
         private profileWin: ProfilesWindow,
         private config: UserConfig,
-        private windowManager:WindowManager,
         private variableEditor:VariablesEditor,
         private classEditor: ClassEditor,
         private eventEditor: EventsEditor
@@ -147,8 +153,14 @@ export class MenuBar {
         this.attachMenu();
         this.handleNewConfig();
         }, 0);
-        windowManager.EvtEmitWindowsChanged.handle((v) => this.windowsChanged(v));
     }
+
+    public setWIndowManager(windowM:WindowManager) {
+        this.windowManager = windowM;
+        this.windowManager.EvtEmitWindowsChanged.handle((v) => this.windowsChanged(v));
+        this.layout = this.windowManager.getLayoutManager();
+    }
+
     windowsChanged(windows: string[]) {
         $("#windowList").empty();
         if (windows.length == 0) {
@@ -184,15 +196,9 @@ export class MenuBar {
         this.config.evtConfigImport.handle(this.onImport);
     }
 
-    private isTrue(v:any):boolean {
-        if (typeof v == "boolean") return v;
-        if (typeof v == "string") return v == "true";
-        return false;
-    }
-
     private makeClickFuncs() {
         this.clickFuncs["connect"] = (val) => {
-            if (this.isTrue(val)) {
+            if (isTrue(val)) {
                 this.EvtDisconnectClicked.fire();
             }
             else {
@@ -213,8 +219,16 @@ export class MenuBar {
             this.config.importFromFile();
         };
 
+        this.clickFuncs["export-layout"] = () => {
+            this.layout.exportToFile();
+        };
+
+        this.clickFuncs["import-layout"] = () => {
+            this.layout.importFromFile();
+        };
+
         this.clickFuncs["wrap-lines"] = (val) => {
-            if (!this.isTrue(val)) {
+            if (!isTrue(val)) {
                 $(".outputText").addClass("output-prewrap");
             } else {
                 $(".outputText").removeClass("output-prewrap");
@@ -239,14 +253,14 @@ export class MenuBar {
         };
 
         this.clickFuncs["enable-color"] = (val) => {
-            if (this.isTrue(val)) {
+            if (isTrue(val)) {
                 this.EvtChangeDefaultColor.fire(["white", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
             }
         }
 
         this.clickFuncs["use-profile"] = (val) => {
-            this.profileWin.show();
+            this.EvtProfileClicked.fire();
         }
 
         this.clickFuncs["courier"] = (val) => {
@@ -335,7 +349,7 @@ export class MenuBar {
         };
 
         this.clickFuncs["colorsEnabled"] = (val) => {
-            if (this.isTrue(val)) {
+            if (isTrue(val)) {
                 this.config.set("text-color", undefined);
             }
         };

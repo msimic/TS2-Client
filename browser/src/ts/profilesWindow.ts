@@ -1,20 +1,28 @@
 import { Profile, ProfileManager } from "./profileManager";
-import { messagebox } from "./messagebox";
+import { ButtonOK, Messagebox, messagebox } from "./messagebox";
 import { ProfileWindow } from "./profileWindow";
 import { Client } from "./client";
 import { Acknowledge } from "./util";
 import { Mudslinger } from "./client";
+import { EventHook } from "./event";
+import { LayoutManager } from "./layoutManager";
+
+const connectText = "Connessione";
 
 export class ProfilesWindow {
     private $win: JQuery;
-
+    public EvtClosedClicked = new EventHook<boolean>();
+    private autologinTime:number = -1;
     private profileList: JQuery;
     private createButton: HTMLButtonElement;
     private editButton: HTMLButtonElement;
     private deleteButton: HTMLButtonElement;
     private connectButton: HTMLButtonElement;
+    offlineButton: HTMLButtonElement;
+    autologinInterval: number;
+    manualClose: boolean = true;
 
-    constructor(private manager:ProfileManager, private profileWin:ProfileWindow, private client:Client) {
+    constructor(private manager:ProfileManager, private layoutManager:LayoutManager, private profileWin:ProfileWindow, private client:Client) {
         let win = document.createElement("div");
         win.style.display = "none";
         win.className = "winProfiles";
@@ -26,6 +34,9 @@ export class ProfilesWindow {
         <!--content-->
         <div>
             <div style="display:flex;flex-direction:column;height:100%">
+                <div>
+                    <span style="display:inline-block;margin:5px;">Seleziona il profilo:</span>
+                </div>
                 <div>
                     <div class="select-box">
                         <div class="inner-box">       
@@ -39,7 +50,8 @@ export class ProfilesWindow {
                     <button title="Crea profilo" class="winProfiles-crea greenbutton">+</button>
                     <button title="Cancella selezionato" class="winProfiles-elimina redbutton">X</button>
                     <button title="Modifica selezionato" class="winProfiles-modifica yellowbutton">...</button>
-                    <button class="winProfiles-connect bluebutton">Connettiti</button>
+                    <button class="winProfiles-connect bluebutton">Connessione</button>
+                    <button title="Carica il profilo senza connettersi (per modificare importazion/trigger)" class="winProfiles-offline button" style="margin:10px !important;float:right;">Offline</button>
                 </div>
             </div>
         </div>
@@ -85,16 +97,25 @@ export class ProfilesWindow {
         this.profileList = $(win.getElementsByClassName("winProfiles-profiles")[0] as HTMLSelectElement);
         this.createButton = win.getElementsByClassName("winProfiles-crea")[0] as HTMLButtonElement;
         this.editButton = win.getElementsByClassName("winProfiles-modifica")[0] as HTMLButtonElement;
+        this.offlineButton = win.getElementsByClassName("winProfiles-offline")[0] as HTMLButtonElement;
         this.deleteButton = win.getElementsByClassName("winProfiles-elimina")[0] as HTMLButtonElement;
         this.connectButton = win.getElementsByClassName("winProfiles-connect")[0] as HTMLButtonElement;
         this.profileList.width("100%");
         this.load();
         
-        (<any>this.$win).jqxWindow({width: 270, height: 120, showCollapseButton: true});
+        $(this.connectButton).text(connectText);
+
+        (<any>this.$win).jqxWindow({width: 370, height: 150, showCollapseButton: true});
         $(this.createButton).click(this.handleNew.bind(this));
-        $(this.connectButton).click(this.handleConnectButtonClick.bind(this));
+        $(this.offlineButton).click(this.handleOfflineButtonClick.bind(this));
+        $(this.connectButton).click(() => setTimeout(()=>this.handleConnectButtonClick(),1));
         $(this.editButton).click(this.handleEditButtonClick.bind(this));
         $(this.deleteButton).click(this.handleDeleteButtonClick.bind(this));
+
+        (<any>this.$win).on("close", () => {
+            this.EvtClosedClicked.fire(this.manualClose);
+            if (this.autologinInterval) clearInterval(this.autologinInterval);
+        });
     }
 
     private load() {
@@ -110,7 +131,7 @@ export class ProfilesWindow {
         let nuovo = $(`<option value="-1">&lt;... Crea nuovo ...&gt;</option>`);
         this.profileList.append(nuovo);
 
-        this.profileList.val(this.manager.getCurrent()).change();
+        this.profileList.val(this.manager.lastProfile).change();
         this.profileList.change(() => { 
             var val = this.profileList.val();
             this.handleSelectClick(val);
@@ -126,13 +147,14 @@ export class ProfilesWindow {
     basilari usabili da tutti gli altri profili. Premi il bottone per modificare il profilo
     base per ulteriori informazioni.`;
 
-    private handleNew() {
+    private async handleNew() {
         const prof = new Profile();
         this.load();
         this.profileWin.show(prof, (p) => {
             prof.pass = Mudslinger.encrypt(prof.pass);
             this.manager.create(prof);
             this.load();
+            this.checkBaseProfile(prof).then(async v => await this.checkProfileLayout(prof));
         });
     }
 
@@ -142,39 +164,62 @@ export class ProfilesWindow {
         }
     }
 
-    private handleConnectButtonClick() {
+    private async handleOfflineButtonClick() {
+        if (this.autologinInterval) {
+            clearInterval(this.autologinInterval);
+        }
+        if (this.profileList.val() != "-1") {
+            this.manager.setCurrent(this.profileList.val());
+        } else {
+            this.manager.setCurrent("");
+        }
+        this.hide(true);
+    }
+
+    private async handleConnectButtonClick() {
         if (this.profileList.val() != "-1") this.manager.setCurrent(this.profileList.val());
+        if (this.autologinInterval) {
+            clearInterval(this.autologinInterval);
+        }
         let connectProfile = () => {
             if (!this.manager.getCurrent()) {
-                this.client.connect({host: "mud.temporasanguinis.it", port: 4000});
-                this.hide();
+                this.client.connect({host: null, port: null});
+                this.hide(false);
             } else {
                 const cp = this.manager.getProfile(this.manager.getCurrent());
                 this.client.connect({host: cp.host, port: Number(cp.port)});
-                this.hide();
+                this.hide(false);
             }
         };
 
-        if (this.client.connected) messagebox("Avvertenza", `Sei gia' connesso.
+        if (this.client.connected) {
+            let ret = await Messagebox.Question(`Sei gia' connesso.
 
             Se preferisci disconnetterti in modo normale dal gioco premi No.
             Se invece vuoi forzare la disconessione premi Si.
 
             <b>Vuoi forzare la disconessione?</b>
-            `, (v) => {
-                if (v == "Si") {
-                    this.client.disconnect();
-                    connectProfile();
-                }
-            }, "No", "Si", 480, null);
+            `);
+
+            if (ret.button == ButtonOK) {
+                await this.client.disconnect();
+                connectProfile();
+            }
+        }
         else {
             connectProfile();
         }
     }
 
-    private handleEditButtonClick() {
+    private async ImportBaseTriggers() {
+        await $.ajax("./baseUserConfig.json").done((code:any) => {
+            this.manager.getBaseConfig().ImportText(code);
+            Messagebox.Show("Configurazione aggiornata", "I trigger e alias sono stati importati.");
+        });
+    }
+    private async handleEditButtonClick() {
         if (!this.profileList.val()) {
-            messagebox("Avvertenza", `Il profilo base non puo' essere modificato.
+            let ret = await Messagebox.Question(`Il profilo base non puo' essere modificato.
             Esso connette al server principale senza nessun autologin.
             Quello che puo' essere fatto e' importare i trigger e alias raccomandati.
 
@@ -183,7 +228,11 @@ export class ProfilesWindow {
                   creati nel profilo privato del personaggio.
 
             <b>Vuoi importare i trigger e alias raccomandati nel profilo base?</b>
-            `, () => {}, "Si", "No", 480, null);
+            `).then(v => {
+                if (v.button == ButtonOK) {
+                    this.ImportBaseTriggers();
+                }
+            });
         } else {
             const prof = this.manager.getProfile(this.profileList.val());
             const oldName = this.profileList.val();
@@ -198,45 +247,135 @@ export class ProfilesWindow {
                     this.manager.saveProfiles();
                 }
                 this.load();
+                this.checkBaseProfile(p).then(async v => await this.checkProfileLayout(p));
             });
         }
     }
 
-    private handleDeleteButtonClick() {
+    public async checkBaseProfile(p: Profile) {
+        let resolve:Function = null;
+        const ret = new Promise((res,rj)=>{
+            resolve = res;
+        });
+
+        const trgs = this.manager.getBaseConfig().get("triggers");
+        if (!trgs || !trgs.length || trgs.length < 17) {
+            Messagebox.Question(`Sembra che non hai i trigger base caricati.
+Vuoi caricarli nel profilo base?`).then(async v => {
+                if (v.button == 1) {
+                    await this.ImportBaseTriggers();
+                }
+                resolve();
+            })
+        } else {
+            resolve();
+        }
+
+        return ret;
+    }
+
+    public async checkProfileLayout(p: Profile) {
+        let resolve:Function = null;
+        const ret = new Promise((res,rj)=>{
+            resolve = res;
+        });
+
+        if (!p.layout || !p.layout.items || !p.layout.items.length) {
+            const trgs = this.manager.getBaseConfig().get("triggers");
+            if (trgs && trgs.length && trgs.length > 17) {
+                Messagebox.Question(`Sembra che hai i trigger base caricati.
+Ma sei senza layout...
+
+Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
+                    if (v.button == 1) {
+                        await this.layoutManager.loadBaseLayout(p);
+                        if (p.layout) {
+                            this.layoutManager.loadLayout(p.layout);
+                        } else {
+                            this.layoutManager.unload();
+                        }
+                    } else {
+                        this.layoutManager.createLayout(p);
+                        if (p.layout) {
+                            this.layoutManager.loadLayout(p.layout);
+                        } else {
+                            this.layoutManager.unload();
+                        }
+                    }
+                    resolve();
+                })
+            } else {
+                resolve();
+            }
+        } else {
+            resolve();
+        }
+        
+        return ret;
+    }
+
+    private async handleDeleteButtonClick() {
         if (this.profileList.val()=="-1") { return;}
         if (!this.profileList.val()) {
-            messagebox("Avvertenza",
+            Messagebox.Show("Avvertenza",
             `Il profilo base non puo' essere cancellato.
             Se volevi cancellare un'altro profilo, prima selezionalo.
-            `, () => {}, "Ok", "", 280, 140);
+            `);
         } else {
-            messagebox("Domanda",
-            `<b>Sei sicuro di voler cancellare
+            let ret = await Messagebox.Question(`<b>Sei sicuro di voler cancellare
             il profilo <u>${this.profileList.val()}</u></b>?
 
             N.B: un profilo cancellato cancella anche i trigger e gli alias in esso.
                  Non c'e' modo di recuperarlo una volta cancellato.
-            `, (v) => {
-                if (v == "Si") {
-                    this.manager.delete(this.manager.getProfile(this.profileList.val()));
-                    this.load();
-                }
-            }, "Si", "No", 380, null);
+            `);
+            if (ret.button == ButtonOK) {
+                this.manager.delete(this.manager.getProfile(this.profileList.val()));
+                this.load();
+            }
         }
     }
 
-    public show() {
+    
+    public show(autologin?:boolean) {
+        this.manualClose = true;
         this.load();
         Acknowledge("profileCreateChar", this.profileCreateChar);
+        $(this.connectButton).text(connectText);
+        if (autologin) {
+            this.startAutoreconnect();
+        } else {
+            if (this.autologinInterval) {
+                clearInterval(this.autologinInterval);
+            }
+        }
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow('bringToFront');
+        setTimeout(() => $(this.connectButton).focus(), 500);
+    }
+
+    private startAutoreconnect() {
+        this.autologinTime = 80;
+        if (this.autologinInterval) {
+            clearInterval(this.autologinInterval);
+        }
+        this.autologinInterval = setInterval(() => {
+            this.autologinTime--;
+            $(this.connectButton).text(connectText + " (" + this.autologinTime + ")");
+            if (this.autologinTime == 0 && this.client.socketConnected && !this.client.connected) {
+                this.handleConnectButtonClick();
+                if (this.autologinInterval) clearInterval(this.autologinInterval);
+            } else if (this.autologinTime == 0) {
+                this.startAutoreconnect();
+            }
+        }, 1000);
     }
 
     public destroy() {
         (<any>this.$win).jqxWindow("destroy");
     }
 
-    private hide() {
+    private hide(manual:boolean) {
+        this.manualClose = manual;
         (<any>this.$win).jqxWindow("close");
     }
 }

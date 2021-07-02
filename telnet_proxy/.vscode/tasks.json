@@ -8,6 +8,14 @@
             "promptOnClose": false,
             "isBackground": false,
             "problemMatcher": ["$tsc"]
+        },
+        {
+            "type": "npm",
+            "label": "webpack proxy",
+            "script": "webpack",
+            "promptOnClose": false,
+            "isBackground": false,
+            "problemMatcher": ["$tsc"]
         }
     ]
 }

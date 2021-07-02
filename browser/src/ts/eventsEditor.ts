@@ -1,6 +1,6 @@
 import * as Util from "./util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "./jsScript";
-import { messagebox } from "./messagebox";
+import { Messagebox } from "./messagebox";
 declare let CodeMirror: any;
 
 export class EventsEditor {
@@ -18,13 +18,13 @@ export class EventsEditor {
     protected $mainSplit: JQuery;
     protected $saveButton: JQuery;
     protected $cancelButton: JQuery;
-    $filter: JQuery;
-    list: string[];
-    values:ScriptEvent[];
-    prev: ScriptEvent;
-    codeMirror: any;
-    $codeMirrorWrapper: JQuery;
-    $dummy: JQuery;
+    protected $filter: JQuery;
+    protected list: string[];
+    protected values:ScriptEvent[];
+    protected prev: ScriptEvent;
+    protected codeMirror: any;
+    protected $codeMirrorWrapper: JQuery;
+    protected $dummy: JQuery;
 
     /* these need to be overridden */
     protected getList(): Array<string> {
@@ -42,10 +42,12 @@ export class EventsEditor {
         }
         this.script.addEvent(ev);
         this.script.save();
+        this.prev = ev;
     }
     protected deleteItem(ev: ScriptEvent): void {
         this.script.delEvent(ev);
         this.script.save();
+        this.prev = null;
     }
 
     protected Filter(str:string) {
@@ -174,7 +176,7 @@ export class EventsEditor {
         this.$cancelButton = $(myDiv.getElementsByClassName("winEvents-btnCancel")[0]);
         this.$filter = $(myDiv.getElementsByClassName("winEvents-filter")[0]);
         this.$filter.keyup((e)=> {
-            this.Filter($(e.target).val());
+            this.ApplyFilter();
         });
 
         const win_w = $(window).innerWidth()-20;
@@ -212,6 +214,10 @@ export class EventsEditor {
         this.load(null);
         this.setEditorDisabled(true);
 
+    }
+
+    private ApplyFilter() {
+        this.Filter(this.$filter.val());
     }
 
     private load(val:string) {
@@ -269,6 +275,7 @@ export class EventsEditor {
     }
 
     private clearEditor(): void {
+        this.prev = null;
         this.$type.val("");
         this.load("");
         this.$value.val("");
@@ -289,6 +296,7 @@ export class EventsEditor {
             html += "<li>" + Util.rawToHtml(this.list[i]) + "</option>";
         }
         this.$listBox.html(html);
+        this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
@@ -296,13 +304,13 @@ export class EventsEditor {
         let v:ScriptEvent;
 
         if (!this.$type.val()) {
-            messagebox("Errore", "Devi selezionare il tipo evento!", () =>{}, "OK", "", 200, null);
+            Messagebox.Show("Errore", "Devi selezionare il tipo evento!");
             return;
         }
 
         this.$value.val(this.codeMirror.getValue());
         if (!this.$value.val()) {
-            messagebox("Errore", "Devi dare la script per l'evento!", () =>{}, "OK", "", 200, null);
+            Messagebox.Show("Errore", "Devi dare la script per l'evento!");
             return;
         }
 

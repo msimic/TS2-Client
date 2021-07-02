@@ -17,6 +17,13 @@ export let EvtScriptEmitToggleClass = new EventHook<{owner:string, id:string, st
 
 export let EvtScriptEvent = new EventHook<{event:ScripEventTypes, condition:string, value:any}>();
 
+declare global {
+    interface Window {
+        repeats: any;
+        timeouts: any;
+    }
+}
+
 export interface PropertyChanged {
     obj: any;
     propName: any;
@@ -50,9 +57,9 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
                     var oldValue = self._oldValues[propName];
 
                     if (propValue != oldValue) {
-                        self._oldValues[propName] = propValue;
 
                         onWatch({ obj: self, propName: propName, oldValue: oldValue, newValue: propValue });
+                        self._oldValues[propName] = propValue;
 
                     }
 
@@ -62,105 +69,40 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
     }
 }
 
-function makeScript(owner:string, text: string, argsSig: string,
-    classManager: ClassManager,
-    aliasManager: AliasManager,
-    triggerManager: TriggerManager,
-    outputManager: OutputManager) {
+export function colorize(sText: string, sColor:string, sBackground:string, bold:boolean, underline:boolean, blink:boolean) {
+    if (typeof bold == "string") bold=(bold=="true");
+    if (typeof underline == "string") underline=(underline=="true");
+    if (typeof blink == "string") blink=(blink=="true");
 
-    let _scriptFunc_: any;
-    let own = owner;
-
-    /* Scripting API section */
-    const color = function(sText: string, sColor:string, sBackground:string, bold:boolean, underline:boolean, blink:boolean) {
-        let classes = "";
-        if (blink) {
-            classes += "blink ";
-        }
-        if (underline) {
-            classes += "underline "
-        }
-        let styles = "display: inline-block;";
-        if (sColor) {
-            styles += "color:" + sColor + ";"
-        }
-        if (sBackground) {
-            styles += "background-color:" + sBackground + ";"
-        }
-        /*if (underline) {
-            styles += "border-bottom-style:solid;border-bottom-width:1px;border-bottom-color:" + (sColor || "white") + ";";
-        }*/
-        let content = (bold ? "<b>" : "") + sText + (bold ? "</b>" : "");
-        let span = `<span class="${classes}" style="${styles}">${content}</span>`;
-        return span;
-    };
-    const sub = function(sWhat: string, sWith:string) {
-        if (triggerManager) triggerManager.subBuffer(sWhat, sWith);
-    };
-    const gag = function() {
-        if (triggerManager) triggerManager.gag();
-    };
-    const cap = function(window:string) {
-        if (triggerManager) {
-            outputManager.sendToWindow(window, triggerManager.line, triggerManager.buffer);
-        }
-    };
-    const send = function(cmd: string) {
-        EvtScriptEmitCmd.fire({owner: own, message: cmd.toString()});
-    };
-    const print = function(message: string, window?:string) {
-        EvtScriptEmitPrint.fire({owner: own, message: message.toString(), window: window});
-    };
-    const cls = function(window?:string) {
-        EvtScriptEmitCls.fire({owner: own, window: window});
-    };
-    const toggleTrigger = function(id:string, state: boolean) {
-        EvtScriptEmitToggleTrigger.fire({owner: own, id: id, state: state});
-    };
-    const toggleAlias = function(id:string, state: boolean) {
-        EvtScriptEmitToggleAlias.fire({owner: own, id: id, state: state});
-    };
-    const toggleClass = function(id:string, state: boolean) {
-        EvtScriptEmitToggleClass.fire({owner: own, id: id, state: state});
-    };
-
-    const classEnabled = function(id:string):boolean {
-        if (classManager) return classManager.isEnabled(id);
-        return true;
-    };
-
-    const triggerEnabled = function(id:string):boolean {
-        if (triggerManager) return triggerManager.isEnabled(id);
-        return true;
-    };
-
-    const aliasEnabled = function(id:string):boolean {
-        if (aliasManager) return aliasManager.isEnabled(id);
-        return true;
-    };
-
-    const getTrigger = function(id:string):TrigAlItem {
-        if (triggerManager) return triggerManager.getById(id);
-        return null;
-    };
-
-    const getAlias = function(id:string):TrigAlItem {
-        if (aliasManager) return aliasManager.getById(id);
-        return null;
-    };
-
-    /* end Scripting API section */
-
-    try {
-        eval("_scriptFunc_ = function(" + argsSig + ") {\"use strict\";\n" + text + "\n}");
+    let classes = "";
+    if (blink) {
+        classes += "blink ";
     }
-    catch (err) {
-        EvtScriptEmitEvalError.fire(err);
-        return null;
+    if (underline) {
+        classes += "underline "
     }
-
-    return _scriptFunc_.bind(this);;
-}
+    let styles = "display: inline-block;";
+    if (sColor) {
+        styles += "color:" + sColor + ";"
+    }
+    if (sBackground) {
+        styles += "background-color:" + sBackground + ";"
+    }
+    if (bold) {
+        styles += "font-weight:bold;"
+    }
+    /*if (underline) {
+        styles += "border-bottom-style:solid;border-bottom-width:1px;border-bottom-color:" + (sColor || "white") + ";";
+    }*/
+    let content = sText;
+    let span = "";
+    if (sText) {
+        span = `<span class="${classes}" style="${styles}">${content}</span>`;
+    } else {
+        span = `<span class="${classes}" style="${styles}">${content}`;
+    }
+    return span;
+};
 
 export interface Variable {
     Name: string;
@@ -218,10 +160,16 @@ export class JsScript {
     private variables: Map<string, Variable>;
     private eventList: ScriptEvent[] = [];
     private events: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
+    private baseVariables: Map<string, Variable>;
+    private baseEventList: ScriptEvent[] = [];
+    private baseEvents: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
+
     private self = this;
-    constructor(private config: ConfigIf) {
+    constructor(private config: ConfigIf,private baseConfig: ConfigIf) {
+        this.loadBase();
         this.load();
         config.evtConfigImport.handle(() => {
+            this.loadBase();
             this.load();
         }, this);
         this.scriptThis.startWatch((e)=>{
@@ -242,7 +190,7 @@ export class JsScript {
     }
 
     checkEventCondition(ev:ScriptEvent, condition:string):boolean {
-        return ev.condition == condition;
+        return ev.condition == condition || (ev.type == ScripEventTypes[ScripEventTypes.VariableChanged] && ev.condition.split(",").indexOf(condition)!=-1);
     }
 
     triggerEvent(ev:ScriptEvent, param:any) {
@@ -253,12 +201,21 @@ export class JsScript {
     }
 
     onEvent(type:string, condition:string, param:any) {
-        if (!this.events.has(type)) return;
-
-        const evts = this.events.get(type);
-        for (const ev of evts) {
-            if (ev.enabled && this.checkEventCondition(ev, condition) && (!ev.class || this.classManager.isEnabled(ev.class))) {
-                this.triggerEvent(ev, param);
+        if (this.config.getDef("triggersEnabled", true) !== true) return;
+        if (this.events.has(type)) {
+            const evts = this.events.get(type);
+            for (const ev of evts) {
+                if (ev.enabled && this.checkEventCondition(ev, condition) && (!ev.class || this.classManager.isEnabled(ev.class))) {
+                    this.triggerEvent(ev, param);
+                }
+            }
+        }
+        if (this.baseEvents.has(type)) {
+            const evts = this.baseEvents.get(type);
+            for (const ev of evts) {
+                if (ev.enabled && this.checkEventCondition(ev, condition) && (!ev.class || this.classManager.isEnabled(ev.class))) {
+                    this.triggerEvent(ev, param);
+                }
             }
         }
     }
@@ -272,6 +229,11 @@ export class JsScript {
     clearEvents() {
         this.eventList = [];
         this.events.clear();
+    }
+
+    clearBaseEvents() {
+        this.baseEventList = [];
+        this.baseEvents.clear();
     }
 
     getEvents(Class?:string):ScriptEvent[] {
@@ -299,18 +261,20 @@ export class JsScript {
         if (ind != -1) {
             this.eventList.splice(ind, 1);
         }
-        if (this.events.has(ev.type)) {
-            ind = this.events.get(ev.type).indexOf(ev);
+        for (const kvp of this.events) {
+            ind = kvp[1].indexOf(ev);
             if (ind != -1) {
-                this.events.get(ev.type).splice(ind, 1);
+                kvp[1].splice(ind, 1);
             }
         }
+        
         if (this.eventList.length == 0) {
             this.events.clear();
         }
     }
 
     getVariables(Class?:string):Variable[] {
+        this.save();
         return [...this.variables.values()].filter(v => v.Class == Class || !Class);
     }
 
@@ -334,12 +298,28 @@ export class JsScript {
         }
     }
 
+    loadBase() {
+        this.clearBaseEvents();
+        let sc = this.baseConfig.getDef("script_events", []);
+        this.baseEvents = new Map<string, ScriptEvent[]>(sc);
+        for (const ev of this.baseEvents) {
+            if (ev[1]) this.baseEventList = this.baseEventList.concat(ev[1]);
+        }
+        this.baseVariables = new Map<string, Variable>(this.config.getDef("variables", []));
+        for (const v of this.baseVariables) {
+            if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
+        }
+    }
+
     load() {
         this.clearEvents();
         let sc = this.config.getDef("script_events", []);
         this.events = new Map<string, ScriptEvent[]>(sc);
         for (const ev of this.events) {
-            if (ev[1]) this.eventList.concat(ev[1]);
+            if (ev[1]) this.eventList = this.eventList.concat(ev[1]);
+        }
+        if (this.variables) for (const v of this.variables) {
+            delete this.scriptThis[v[0]];
         }
         this.variables = new Map<string, Variable>(this.config.getDef("variables", []));
         for (const v of this.variables) {
@@ -348,10 +328,14 @@ export class JsScript {
     }
 
     save() {
+        /*if (this.events.size == 0) {
+            console.log("Eventi cancellati? Errore. Non salvo.");
+            return;
+        }*/
         for (const key in this.scriptThis) {
             if (Object.prototype.hasOwnProperty.call(this.scriptThis, key)) {
                 const element = this.scriptThis[key];
-                if (typeof element != "function" && key != "oldValues" && key[0]!='_') {
+                if (typeof element != "function" && key != "_oldValues") {
                     let variable = this.variables.get(key) || { Name: key, Class: "", Value: null };
                     variable.Value = element;
                     variable.Name = variable.Name || key;
@@ -360,7 +344,7 @@ export class JsScript {
             }
         }
         for (const k of this.variables.keys()) {
-            if (this.variables.get(k).Value == undefined || k == "oldValues" || k[0]=='_') {
+            if (this.variables.get(k).Value == undefined || k == "_oldValues") {
                 this.variables.delete(k);
             }
         }
@@ -372,15 +356,12 @@ export class JsScript {
 
     public makeScript(owner:string, text: string, argsSig: string): any {
         try {
-        let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager);
-        if (!scr) { return null; }
-        return (...args: any[]) => {
-            try {
-                scr(...args);
-            } catch (err) {
-                EvtScriptEmitError.fire({owner:owner, err: err});
-            }
-        };
+            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager);
+            if (!scr) { return null; }
+            return (...args: any[]) => {
+                    let ret = scr(...args);
+                    return ret;
+            };
         } catch (err2) {
             EvtScriptEmitEvalError.fire(err2);
         }
@@ -401,4 +382,141 @@ export class JsScript {
     public setOutputManager(manager:OutputManager) {
         this.outputManager = manager;
     }
+}
+function makeScript(owner:string, text: string, argsSig: string,
+    classManager: ClassManager,
+    aliasManager: AliasManager,
+    triggerManager: TriggerManager,
+    outputManager: OutputManager) {
+
+    let _scriptFunc_: any;
+    let own = owner;
+
+    /* Scripting API section */
+    const color = colorize;
+    const sub = function(sWhat: string, sWith:string) {
+        if (triggerManager) triggerManager.subBuffer(sWhat, sWith);
+    };
+    const delay = function(id: string, time:number, func:Function) {
+        if (!window.timeouts) {
+            window.timeouts = {};
+        }
+        if (!id) {
+            throw "Devi specificare l'ID del delay";
+        }
+        if (!func) {
+            throw "Devi provvedere la funzione da eseguire dopo il delay";
+        }
+        if (window.timeouts[id]) {
+            clearTimeout(window.timeouts[id]);
+            delete window.timeouts[id];
+        }
+        window.timeouts[id] = setTimeout(() => {
+            func();
+            delete window.timeouts[id];
+        }, time);
+    };
+    const repeat = function(id: string, time:number, func:Function) {
+        if (!window.repeats) {
+            window.repeats = {};
+        }
+        if (!id) {
+            throw "Devi specificare l'ID del repeat";
+        }
+        if (window.repeats[id]) {
+            clearTimeout(window.repeats[id]);
+            delete window.repeats[id];
+        }
+        if (func) {
+            window.repeats[id] = setInterval(() => {
+                func();
+                delete window.repeats[id];
+            }, time);
+        }
+    };
+    const gag = function() {
+        if (triggerManager) triggerManager.gag();
+    };
+    const cap = function(window:string) {
+        if (outputManager) {
+            outputManager.sendToWindow(window, triggerManager.line, triggerManager.buffer);
+        }
+    };
+    const deleteWindow = function(window:string) {
+        if (outputManager) {
+            outputManager.getWindowManager().destroyWindow(window,true);
+        }
+    };
+    const createWindow = function(window:string, data:any) {
+        if (outputManager) {
+            outputManager.getWindowManager().createWindow(window,data);
+        }
+    };
+    const send = function(cmd: string) {
+        EvtScriptEmitCmd.fire({owner: own, message: cmd.toString()});
+    };
+    const print = function(message: string, window?:string) {
+        EvtScriptEmitPrint.fire({owner: own, message: message.toString(), window: window});
+    };
+    const cls = function(window?:string) {
+        EvtScriptEmitCls.fire({owner: own, window: window});
+    };
+    const toggleTrigger = function(id:string, state: boolean) {
+        EvtScriptEmitToggleTrigger.fire({owner: own, id: id, state: state});
+    };
+    const toggleAlias = function(id:string, state: boolean) {
+        EvtScriptEmitToggleAlias.fire({owner: own, id: id, state: state});
+    };
+    const toggleClass = function(id:string, state: boolean) {
+        EvtScriptEmitToggleClass.fire({owner: own, id: id, state: state});
+    };
+
+    const classEnabled = function(id:string):boolean {
+        if (classManager) return classManager.isEnabled(id);
+        return true;
+    };
+
+    const triggerEnabled = function(id:string):boolean {
+        if (triggerManager) return triggerManager.isEnabled(id);
+        return true;
+    };
+
+    const aliasEnabled = function(id:string):boolean {
+        if (aliasManager) return aliasManager.isEnabled(id);
+        return true;
+    };
+
+    const getTrigger = function(id:string):TrigAlItem {
+        if (triggerManager) return triggerManager.getById(id);
+        return null;
+    };
+
+    const getAlias = function(id:string):TrigAlItem {
+        if (aliasManager) return aliasManager.getById(id);
+        return null;
+    };
+
+    /* end Scripting API section */
+    const _errEmit = EvtScriptEmitError;
+    try {
+
+        let code = `
+                (async () => {
+                    try {
+                        ${text}
+                    } catch (err) {
+                        _errEmit.fire({owner:owner, err: err});
+                    }
+                })()
+        `;
+        const scrTxt = "_scriptFunc_ = function(" + argsSig + ") {\n" + code + "\n}";
+        eval(scrTxt);
+    }
+    catch (err) {
+        EvtScriptEmitEvalError.fire(err);
+        return null;
+    }
+
+    const ret = _scriptFunc_.bind(this);
+    return ret;
 }

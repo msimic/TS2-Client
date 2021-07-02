@@ -10,6 +10,11 @@ export interface ConfigIf {
     evtConfigImport: EventHook<{[k: string]: any}>;
 }
 
+interface RegexMatchCapability {
+    regex:string;
+    enabled:boolean;
+}
+
 export interface ScriptIf {
     makeScript(owner:string, text: string, argsSig: string): any;
 }
@@ -85,7 +90,7 @@ export class AliasManager {
             }
         }
     }
-
+    
     private loadAliases() {
         this.aliases = this.config.get("aliases") || [];
         this.mergeAliases();
@@ -97,7 +102,7 @@ export class AliasManager {
     public checkAlias(cmd: string): boolean | string {
         if (this.config.getDef("aliasesEnabled", true) !== true) return null;
 
-        if (cmd.match(/\.[neswud0-9]+$/i)) {
+        if (cmd && cmd[0] == "." && cmd.match(/\.[neswud0-9]+$/i)) {
             return this.createPath(cmd);
         }
 
@@ -145,8 +150,8 @@ export class AliasManager {
             }
         }
         return null;
-    }
-    
+    }   
+
     createPath(cmd: string): string {
         if (cmd[0]!=".") return '';
 

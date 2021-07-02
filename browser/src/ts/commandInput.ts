@@ -1,9 +1,12 @@
 import { EventHook } from "./event";
 
 import {AliasManager} from "./aliasManager";
+import { UserConfig } from "./userConfig";
+import { isTrue } from "./util";
 
 export class CommandInput {
-    public EvtEmitCmd = new EventHook<string>();
+    public EvtEmitScroll = new EventHook<boolean>();
+    public EvtEmitCmd = new EventHook<{command:string,fromScript:boolean}>();
     public EvtEmitAliasCmds = new EventHook<{orig: string, commands: string[]}>();
 
     private cmd_history: string[] = [];
@@ -13,11 +16,34 @@ export class CommandInput {
     private $cmdInput: JQuery;
 
     private chkCmdStack: HTMLInputElement;
+    private chkCmdAliases: JQuery;
+    private chkCmdTriggers: JQuery;
 
-    constructor(private aliasManager: AliasManager) {
+    constructor(private aliasManager: AliasManager, private config:UserConfig) {
         this.$cmdInput = $("#cmdInput");
 
         this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
+        this.chkCmdAliases = $("#chkCmdAliases");
+        this.chkCmdTriggers = $("#chkCmdTriggers");
+
+        this.chkCmdAliases.prop('checked', isTrue(this.config.getDef("aliasesEnabled",true)));
+        this.chkCmdTriggers.prop('checked', isTrue(this.config.getDef("triggersEnabled",true)));
+
+        this.config.onSet("triggersEnabled", (v)=>{
+            this.chkCmdTriggers.prop('checked', isTrue(v))
+        });
+
+        this.config.onSet("aliasesEnabled", (v)=>{
+            this.chkCmdAliases.prop('checked', isTrue(v))
+        });
+
+        this.chkCmdAliases.on('change', () => {
+            this.config.set("aliasesEnabled", this.chkCmdAliases.is(":checked"));
+        })
+
+        this.chkCmdTriggers.on('change', () => {
+            this.config.set("triggersEnabled", this.chkCmdTriggers.is(":checked"));
+        })
 
         this.$cmdInput.keydown((event: KeyboardEvent) => { return this.keydown(event); });
         this.$cmdInput.bind("input propertychange", () => { return this.inputChange(); });
@@ -33,7 +59,7 @@ export class CommandInput {
         this.$cmdInput.focus();
     }
 
-    public execCommand(cmd: string) {
+    public execCommand(cmd: string, fromScript:boolean) {
         let cmds = [ cmd ];
         let ocmds = [ cmd ];  // originals to fetch the info who triggered the input for aliases
         if (this.chkCmdStack.checked) {
@@ -42,7 +68,7 @@ export class CommandInput {
         }
         for (let i = 0; i < cmds.length; i++) {
             if (cmds[i] && cmds[i].charAt(0) == '~') {
-                this.EvtEmitCmd.fire(cmds[i].slice(1));
+                this.EvtEmitCmd.fire({command:cmds[i].slice(1),fromScript:fromScript});
                 continue;
             }
             let result = this.aliasManager.checkAlias(cmds[i]);
@@ -54,14 +80,15 @@ export class CommandInput {
                 }
                 this.EvtEmitAliasCmds.fire({orig: ocmds[i], commands: cmds});
             } else if (!result) {
-                this.EvtEmitCmd.fire(cmds[i]);
+                this.EvtEmitCmd.fire({command:cmds[i],fromScript:fromScript});
             }
         }
     }
 
     private sendCmd(): void {
         let cmd: string = this.$cmdInput.val();
-        this.execCommand(cmd);
+        this.execCommand(cmd, false);
+        this.EvtEmitScroll.fire(true);
 
         this.$cmdInput.select();
 

@@ -3,6 +3,7 @@ import { TriggerManager } from "./triggerManager";
 import * as Util from "./util";
 
 export class OutputWin extends OutWinBase {
+    private outer:JQuery;
     clearWindow(owner: string) {
         this.cls();
         if (!this.debugScripts) this.append(
@@ -13,7 +14,8 @@ export class OutputWin extends OutWinBase {
     }
     constructor(config: ConfigIf, private triggerManager:TriggerManager) {
         super($("#winOutput"), config);
-
+        this.outer = $("#winOutput").parent();
+        this.postInit();
         $(document).ready(() => {
             window.onerror = this.handleWindowError.bind(this);
         });
@@ -23,22 +25,26 @@ export class OutputWin extends OutWinBase {
         });
     }
 
+    protected getOuterElement():JQuery {
+        return this.outer;
+    }
+
     handleScriptPrint(owner:string, data: string) {
         this.append(
             "<span style=\"color:orange\">" /*+ owner + ": "*/
-            + Util.rawToHtml(data)
+            + Util.raw(data)
             + "<br>"
             + "</span>", true);
-        this.scrollBottom(true);
+        this.scrollBottom(false);
     }
 
-    handleSendCommand(cmd: string) {
+    handleSendCommand(cmd: string, fromScript:boolean) {
         this.append(
             "<span style=\"color:yellow\">"
             + Util.rawToHtml(cmd)
             + "<br>"
             + "</span>", true);
-        this.scrollBottom(true);
+        this.scrollBottom(!fromScript);
     }
 
     handleScriptSendCommand(owner:string, cmd: string) {
@@ -48,7 +54,7 @@ export class OutputWin extends OutWinBase {
             + Util.rawToHtml(cmd)*/
             + "]<br>"
             + "</span>", true);
-        this.scrollBottom(true);
+        this.scrollBottom(false);
     }
 
     handleTriggerSendCommands(orig:string, cmds:string[]) {
@@ -83,7 +89,7 @@ export class OutputWin extends OutWinBase {
         }
         */
         this.append(html, true);
-        this.scrollBottom(true);
+        this.scrollBottom(false);
     }
 
     private connIntervalId: number = null;
@@ -96,8 +102,8 @@ export class OutputWin extends OutWinBase {
 
         let elem = document.createElement("span");
         if (host && port) {
-            elem.innerHTML = "<br/><span style='color:cyan'>"
-                + "[[Connesione telnet a " + host + ":" + port.toString()
+            elem.innerHTML = "<br/><span style='color:cyan'><br/>"
+                + "[[Connessione telnet a " + host + ":" + port.toString()
                 + "<span class='conn-dots'></span>"
                 + "]]<br>";
         }
@@ -110,7 +116,7 @@ export class OutputWin extends OutWinBase {
 
         let dots = elem.getElementsByClassName('conn-dots')[0] as HTMLSpanElement;
 
-        this.connIntervalId = setInterval(() => dots.textContent += '.', 1000);
+        this.connIntervalId = <number><any>setInterval(() => dots.textContent += '.', 1000);
 
         this.append(elem, true);
         this.scrollBottom(true);
@@ -122,7 +128,7 @@ export class OutputWin extends OutWinBase {
             this.connIntervalId = null;
         }
         this.append(
-            "<br/><span style=\"color:cyan\">"
+            "<span style=\"color:cyan\"><br/>"
             + "[[Telnet connesso]]"
             + "<br>"
             + "</span>", true);
@@ -135,7 +141,7 @@ export class OutputWin extends OutWinBase {
             this.connIntervalId = null;
         }
         this.append(
-            "<br/><span style=\"color:cyan\">"
+            "<span style=\"color:cyan\"><br/>"
             + "[[Telnet disconnesso]]"
             + "<br>"
         + "</span>", true);
@@ -144,7 +150,7 @@ export class OutputWin extends OutWinBase {
 
     handleWsConnect() {
         this.append(
-            "<br/><span style=\"color:cyan\">"
+            "<span style=\"color:cyan\"><br/>"
             + "[[Websocket connesso]]"
             + "<br>"
             + "</span>", true);
@@ -157,7 +163,7 @@ export class OutputWin extends OutWinBase {
             this.connIntervalId = null;
         }
         this.append(
-            "<br/><span style=\"color:cyan\">"
+            "<span style=\"color:cyan\"><br/>"
             + "[[Websocket disconnesso]]"
             + "<br>"
             + "</span>", true);
@@ -166,7 +172,7 @@ export class OutputWin extends OutWinBase {
 
     handleTelnetError(data: string) {
         this.append(
-            "<br/><span style=\"color:red\">"
+            "<span style=\"color:red\"><br/>"
             + "[[Telnet errore:" + "<br>"
             + data + "<br>"
             + "]]"
@@ -177,7 +183,7 @@ export class OutputWin extends OutWinBase {
 
     handleWsError() {
         this.append(
-            "<br/><span style=\"color:red\">"
+            "<span style=\"color:red\"><br/>"
             + "[[Websocket errore]]"
             + "<br>"
             + "</span>", true);
@@ -186,7 +192,7 @@ export class OutputWin extends OutWinBase {
 
     private handleWindowError(message: any, source: any, lineno: any, colno: any, error: any) {
         this.append(
-            "<br/><span style=\"color:red\">"
+            "<span style=\"color:red\"><br/>"
             + "[[Web Client Errore:<br>"
             + message + "<br>"
             + source + "<br>"
@@ -204,7 +210,7 @@ export class OutputWin extends OutWinBase {
         let stack = Util.rawToHtml(err.stack);
 
         this.append(
-            "<br/><span style=\"color:red\">"
+            "<span style=\"color:red\"><br/>"
             + "[[Errore compilazione script:<br>"
             + err.toString() + "<br>"
             + "<br>"
@@ -219,7 +225,7 @@ export class OutputWin extends OutWinBase {
     handleScriptError(data:{owner:string, err:any}) {
 
         this.append(
-            "<br/><span style=\"color:red\">"
+            "<span style=\"color:red\"><br/>"
             + "[[Errore Script (" + data.owner + "):<br>"
             + data.err.toString() + "<br>"
             /*+ "<br>"

@@ -1,6 +1,8 @@
 import * as Util from "./util";
 import { JsScript, Variable } from "./jsScript";
-import { messagebox } from "./messagebox";
+import { Messagebox, messagebox } from "./messagebox";
+import { isTrue } from "./util";
+import { isNumeric } from "jquery";
 declare let CodeMirror: any;
 
 export class VariablesEditor {
@@ -110,7 +112,7 @@ export class VariablesEditor {
         this.$cancelButton = $(myDiv.getElementsByClassName("winVar-btnCancel")[0]);
         this.$filter = $(myDiv.getElementsByClassName("winVar-filter")[0]);
         this.$filter.keyup((e)=> {
-            this.Filter($(e.target).val());
+            this.ApplyFilter();
         });
 
         const win_w = $(window).innerWidth()-20;
@@ -131,6 +133,10 @@ export class VariablesEditor {
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
 
+    }
+
+    private ApplyFilter() {
+        this.Filter(this.$filter.val());
     }
 
     private itemClick(e:MouseEvent) {
@@ -174,6 +180,7 @@ export class VariablesEditor {
             html += "<li>" + Util.rawToHtml(this.list[i]) + "</option>";
         }
         this.$listBox.html(html);
+        this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
@@ -181,7 +188,7 @@ export class VariablesEditor {
         let v:Variable;
 
         if (!this.$name.val()) {
-            messagebox("Errore", "La variabile deve avere un nome!", () =>{}, "OK", "", 200, null);
+            Messagebox.Show("Errore", "La variabile deve avere un nome!");
             return;
         }
 
@@ -192,7 +199,7 @@ export class VariablesEditor {
         }
 
         v.Name = this.$name.val();
-        v.Value = this.$value.val();
+        v.Value = (this.$value.val() == "true" || this.$value.val() == "false") ? isTrue(this.$value.val()) : (isNumeric(this.$value.val()) ? Number(this.$value.val()) : this.$value.val());
         v.Class = this.$className.val();
         this.saveItem(v);
 

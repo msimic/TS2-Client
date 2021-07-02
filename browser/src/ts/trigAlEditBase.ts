@@ -1,3 +1,4 @@
+import { Messagebox } from "./messagebox";
 import * as Util from "./util";
 
 declare let CodeMirror: any;
@@ -144,13 +145,28 @@ export abstract class TrigAlEditBase {
         this.$scriptArea = $(myDiv.getElementsByClassName("winEdit-scriptArea")[0]);
         this.$filter = $(myDiv.getElementsByClassName("winEdit-filter")[0]);
         this.$filter.keyup((e)=> {
-            this.Filter($(e.target).val());
+            this.ApplyFilter();
         });
 
         const win_w = $(window).innerWidth()-20;
         const win_h = $(window).innerHeight()-20;
 
         (<any>this.$win).jqxWindow({width: Math.min(600, win_w), height: Math.min(400, win_h), showCollapseButton: true});
+
+        this.$win.on('close', (event) => {
+            if (this.isDirty()) {
+                Messagebox.ShowWithButtons("Salvataggio", `Sono stati rilevati cambiamenti.
+Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
+                if (mr.button == 1) {
+                        this.handleSaveButtonClick();
+                } else {
+                        this.handleCancelButtonClick();
+                        this.hide();
+                }
+                });
+                this.show(true);
+            }
+        });
 
         (<any>this.$mainSplit).jqxSplitter({
             width: "100%",
@@ -181,6 +197,36 @@ export abstract class TrigAlEditBase {
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
         this.$scriptCheckbox.change(this.handleScriptCheckboxChange.bind(this));
 
+    }
+
+    protected isDirty():boolean {
+        let ind = this.$listBox.data("selectedIndex");
+        let item = this.getItem(ind);
+
+        if (!item && !this.$cancelButton.prop("disabled")) {
+            return true;
+        }
+
+        if (!item) return false;
+
+        let modified:boolean = false;
+        modified = modified || (this.$pattern.val() != item.pattern);
+        modified = modified || (this.$id.val() != item.id);
+        modified = modified || (this.$className.val() != item.class);
+        if (this.$scriptCheckbox.prop("checked")) {
+            modified = modified || (this.codeMirror.getValue() != item.value);
+        } else {
+            modified = modified || (this.$textArea.val() != item.value);
+        }
+        modified = modified || (this.$isPromptCheckbox.prop("checked") != item.is_prompt)
+        modified = modified || (this.$enabledCheckbox.prop("checked") != item.enabled);
+        modified = modified || (this.$regexCheckbox.prop("checked") != item.regex);
+        modified = modified || (this.$scriptCheckbox.prop("checked") != item.is_script);
+        return modified;
+    }
+
+    private ApplyFilter() {
+        this.Filter(this.$filter.val());
     }
 
     private itemClick(e:MouseEvent) {
@@ -236,6 +282,7 @@ export abstract class TrigAlEditBase {
             html += "<li>" + Util.rawToHtml(lst[i]) + "</option>";
         }
         this.$listBox.html(html);
+        this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
@@ -341,10 +388,16 @@ export abstract class TrigAlEditBase {
         }
     }
 
-    public show() {
-        this.clearEditor();
-        this.setEditorDisabled(true);
-        this.updateListBox();
+    public hide(noload:boolean=false) {
+        (<any>this.$win).jqxWindow("close");
+    }
+
+    public show(noload:boolean=false) {
+        if (!noload) {
+            this.clearEditor();
+            this.setEditorDisabled(true);
+            this.updateListBox();
+        }
 
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");

@@ -57,11 +57,16 @@ export class TriggerManager {
             }    
             return;
         }
+        t.enabled = val;
     }
 
     public getById(id:string):TrigAlItem {
         for (let index = 0; index < this.triggers.length; index++) {
             const element = this.triggers[index];
+            if (element.id == id) return element;
+        }
+        for (let index = 0; index < this.allTriggers.length; index++) {
+            const element = this.allTriggers[index];
             if (element.id == id) return element;
         }
         return null;
@@ -72,10 +77,10 @@ export class TriggerManager {
         return t && t.enabled;
     }
 
-    public contains(pattern:string, maxIndex:number) {
+    public contains(pattern:string, maxIndex:number, tclass:string, tid:string) {
         for (let index = 0; index < Math.min(maxIndex, this.allTriggers.length); index++) {
             const element = this.allTriggers[index];
-            if (element.pattern == pattern) return true;
+            if (element.pattern == pattern && element.class == tclass && element.id == tid) return true;
         }
         return false;
     }
@@ -86,7 +91,7 @@ export class TriggerManager {
         this.allTriggers = triggers;
         for (let index = 0; index < this.allTriggers.length; index++) {
             const element = this.allTriggers[index];
-            if (element && index>0 && this.contains(element.pattern, index)) {
+            if (element && index>0 && this.contains(element.pattern, index, element.class, element.id)) {
                 this.allTriggers.splice(index, 1);
                 index--;
                 continue;
@@ -124,7 +129,7 @@ export class TriggerManager {
                 this.passSent = true;
                 setTimeout(()=>{ this.passSent = false;}, 1000);
                 const pass = Mudslinger.decrypt(prof.pass);
-                this.EvtEmitTriggerCmds.fire({orig: 'autologin', cmds: [pass, 'i', 'i', 'i']});
+                this.EvtEmitTriggerCmds.fire({orig: 'autologin', cmds: [pass, 'i', 'i']});
             }
         }
     }
@@ -132,6 +137,9 @@ export class TriggerManager {
     public runTrigger(trig:TrigAlItem, line:string) {
         let fired:boolean = false;
         if (trig.regex) {
+            if (line.endsWith("\n") && trig.pattern.endsWith("$")) {
+                line = line.substr(0, line.length-1);
+            }
             let match = line.match(trig.pattern);
             if (!match) {
                 return;

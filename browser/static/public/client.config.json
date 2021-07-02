@@ -1,0 +1,5 @@
+{
+	"apiBaseUrl": null,
+	"socket_io_host": "https://mud.temporasanguinis.it:4040",
+	"socket_io_port": 4040
+}

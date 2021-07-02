@@ -3,7 +3,7 @@ import { EventHook } from "./event";
 
 export class UserConfig {
     private cfgVals: {[k: string]: any};
-    private setHandlers: {[k: string]: EventHook<any>} = {};
+    private setHandlers: {[k: string]: EventHook<any>[]} = {};
     public evtConfigImport = new EventHook<{[k: string]: any}>();
 
     private saveFunc: (v: string) => string;
@@ -44,17 +44,19 @@ export class UserConfig {
         for (const key in this.setHandlers) {
             if (Object.prototype.hasOwnProperty.call(this.setHandlers, key)) {
                 const element = this.setHandlers[key];
-                this.setHandlers[key].fire(this.get(key));
+                this.setHandlers[key].map(v => {v.fire(this.get(key))});
             }
         }
     }
 
     public onSet(key: string, cb: (val: any) => void) {
         if (key in this.setHandlers === false) {
-            this.setHandlers[key] = new EventHook<any>();
+            this.setHandlers[key] = [];
         }
+        const hook = new EventHook<any>();
+        this.setHandlers[key].push(hook);
         if (cb) {
-            this.setHandlers[key].handle(cb);
+            hook.handle(cb);
         } else {
             delete this.setHandlers[key];
         }
@@ -69,12 +71,20 @@ export class UserConfig {
         return this.cfgVals[key];
     }
 
+    private firing:boolean;
     public set(key: string, val: any) {
+        if (this.firing) {
+            console.log("Setting while firing");
+        }
         const prev = this.cfgVals[key];
         this.cfgVals[key] = val;
         this.saveConfig();
         if (prev != val && key in this.setHandlers) {
-            this.setHandlers[key].fire(val);
+            this.firing = true;
+            this.setHandlers[key].map(v => {
+                v.fire(val)
+            });
+            this.firing = false;
         }
     }
 
@@ -98,15 +108,18 @@ export class UserConfig {
     }
 
     public exportToFile() {
-        let data = "data:text/json;charset=utf-8," + JSON.stringify(this.cfgVals, null, 2);
-        let uri = encodeURI(data);
+        let json = JSON.stringify(this.cfgVals, null, 2);
+        let blob = new Blob([json], {type: "octet/stream"});
+        let url = window.URL.createObjectURL(blob);
+
         let link = document.createElement("a");
-        link.setAttribute("href", uri);
+        link.setAttribute("href", url);
         link.setAttribute("download", "userConfig.json");
         link.style.visibility = "hidden";
 
         document.body.appendChild(link);
         link.click();
+        window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
     }
 
@@ -124,9 +137,7 @@ export class UserConfig {
             let reader = new FileReader();
             reader.onload = (e1: any) => {
                 let text = e1.target.result;
-                let vals = JSON.parse(text);
-                this.cfgVals = vals;
-                this.evtConfigImport.fire(vals);
+                this.ImportText(text);
                 // saveConfig();
             };
             reader.readAsText(file);
@@ -136,5 +147,11 @@ export class UserConfig {
         document.body.appendChild(inp);
         inp.click();
         document.body.removeChild(inp);
+    }
+
+    public ImportText(text: any) {
+        let vals = typeof text == "string" ? JSON.parse(text) : text;
+        this.cfgVals = vals;
+        this.evtConfigImport.fire(vals);
     }
 }

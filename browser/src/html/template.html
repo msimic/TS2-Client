@@ -87,8 +87,10 @@
           <li data-option-name="debug-scripts"><label><input type="checkbox">ScriptInfo</label></li>
           <li type="separator"></li>
           <li data-option-name="reset-settings">Ripristina</li>
-          <li data-option-name="import-settings">Importa</li>
-          <li data-option-name="export-settings">Esporta</li>
+          <li data-option-name="import-settings">Importa Configurazione</li>
+          <li data-option-name="export-settings">Esporta Configurazione</li>
+          <li data-option-name="import-layout">Importa Layout</li>
+          <li data-option-name="export-layout">Esporta Layout</li>
         </ul>
       </li>
       <li>Scripting
@@ -117,13 +119,53 @@
       <li data-require-api="true" data-option-name="profiles"><a href="/user/profiles">Profiles</a></li>
     </ul>
   </div>
-  <div id="mainWin">
-    <pre id="winOutput" aria-live="assertive" aria-relevant="additions" class="outputText"></pre>
-    <div id="cmdCont">
-      <textarea autofocus rows="1" id="cmdInput" aria-live="off" autocapitalize="off"></textarea>
-      <div class="chkCmdInputCmdStackCont">
-        <input id="chkCmdStack" type="checkbox" checked>
-        <label for="chkCmdStack" class="toolTipText" aria-live="assertive" title="Command stacking">Comandi Multipli</label>
+  <div id="mainWin" style="color:white;">
+    <div id="content-wrapper">
+      <div id="column-left">
+        <div id="column-left-top">
+        </div>
+        <div id="column-left-bottom">
+        </div>
+      </div>
+      <div id="column-center">
+          <div id="row-top">
+            <div id="row-top-left">
+            </div>
+            <div id="row-top-right">
+            </div>
+          </div>
+          <div id="row-center">
+              <pre id="winOutput" aria-live="assertive" aria-relevant="additions" class="outputText"></pre>
+          </div>
+          <div id="row-bottom">
+            <div id="row-bottom-left">
+            </div>
+            <div id="row-bottom-right">
+            </div>
+          </div>
+          <div id="row-input">
+            <div id="cmdCont">
+              <textarea autofocus rows="1" id="cmdInput" aria-live="off" autocapitalize="off"></textarea>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">
+                <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="assertive" title="Abilita o disabilita Triggers"></label>
+              </div>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdAliases" type="checkbox" checked title="Aliases">
+                <label for="chkCmdAliases" class="checker checkerAliases" aria-live="assertive" title="Abilita o disabilita Alias"></label>
+              </div>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdStack" type="checkbox" checked>
+                <label for="chkCmdStack" class="checker checkerStack" aria-live="assertive" title="Comandi multipli con ;"></label>
+              </div>
+            </div> 
+          </div>
+      </div>
+      <div id="column-right">
+        <div id="column-right-top">
+        </div>
+        <div id="column-right-bottom">
+        </div>
       </div>
     </div>
   </div>

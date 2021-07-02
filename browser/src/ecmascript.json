@@ -298,6 +298,14 @@
     "!type": "fn(command: string)",
     "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati."
   },
+  "delay": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' dopo 'milliseconds' secondi.\nI'ID e' necessario e se esiste gia' un delay con quell'ID esso verra sovrascritto e anullato."
+  },
+  "repeat": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' ogni 'milliseconds' secondi e ripete per sempre.\nI'ID e' necessario e se esiste gia' un repeat con quell'ID esso verra sovrascritto e anullato.\nSe function non viene dato, un repeat esistente verra anullato."
+  },
   "toggleTrigger": {
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita un trigger (id e l'id del trigger e state e' il nuovo stato)."

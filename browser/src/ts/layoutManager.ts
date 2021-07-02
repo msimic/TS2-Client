@@ -1,0 +1,1502 @@
+import { isNumeric, type } from "jquery";
+import { CommandInput } from "./commandInput";
+import { CustomWin } from "./customWindow";
+import { EventHook } from "./event";
+import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "./jsScript";
+import { Messagebox, messagebox } from "./messagebox";
+import { Profile, ProfileManager } from "./profileManager";
+import { isTrue, rawToHtml } from "./util";
+
+export enum PanelPosition {
+    Floating = 0,
+    PaneTopLeft = 1,
+    PaneTopRight = 2,
+    PaneRightTop = 3,
+    PaneRightBottom = 4,
+    PaneBottomLeft = 5,
+    PaneBottomRight = 6,
+    PaneLeftTop = 7,
+    PaneLeftBottom = 8
+}
+
+export interface LayoutDefinition {
+    panes: DockPane[];
+    items: Control[];
+}
+
+export interface DockPane {
+    id:string;
+    position: PanelPosition;
+    w?:number;
+    h?:number;
+    background?:string;
+    width?:string;
+}
+
+export enum ControlType {
+    Button,
+    Panel,
+    Window
+}
+
+export enum Position {
+    Relative,
+    Absolute
+}
+
+export enum Direction {
+    None,
+    Left,
+    Right,
+    Top,
+    Down,
+    Fill
+}
+
+export interface Control {
+    type:ControlType;
+    position?:Position;
+    id?:string;
+    parent?:string;
+    visible?:string;
+    blink?:string;
+    x?:number;
+    y?:number;
+    w?:number;
+    h?:number;
+    style?:string;
+    css?:string;
+    color?: string;
+    background?:string;
+    paneId:string;
+    stack?:Direction;
+    content:string;
+    commands?:string;
+    checkbox?:string;
+    gauge?:string,
+    is_script?:boolean;
+    tooltip?:string;
+}
+
+export class LayoutManager {
+
+    public EvtEmitLayoutChanged = new EventHook<LayoutDefinition>();
+    public layout:LayoutDefinition;
+    public scripts = new Map<number, Function>();
+    public controls = new Map<number, JQuery>();
+    public parents = new Map<string, JQuery>();
+    public variableChangedMap = new Map<string, Control[]>();
+    public variableStyleChangedMap = new Map<string, Control[]>();
+
+    private defaultPanes = [
+        {position: PanelPosition.PaneTopLeft, id: "row-top-left"},
+        {position: PanelPosition.PaneTopRight, id: "row-top-right"},
+        {position: PanelPosition.PaneRightTop, id: "column-right-top"},
+        {position: PanelPosition.PaneRightBottom, id: "column-right-bottom"},
+        {position: PanelPosition.PaneBottomLeft, id: "row-bottom-left"},
+        {position: PanelPosition.PaneBottomRight, id: "row-bottom-right"},
+        {position: PanelPosition.PaneLeftTop, id: "column-left-top"},
+        {position: PanelPosition.PaneLeftBottom, id: "column-left-bottom"},
+    ];
+
+    constructor(private profileManager:ProfileManager, private scripting:JsScript, private cmdInput:CommandInput) {
+        profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
+            this.load();
+        });
+        this.deleteLayout();
+        this.load();
+        EvtScriptEvent.handle((e) => this.handleEvent(e));
+    }
+
+    handleEvent(e:{event:ScripEventTypes, condition:string, value:any}) {
+        if (e.event != ScripEventTypes.VariableChanged) return;
+        this.onVariableChanged(e.condition);
+    }
+
+    public onVariableChanged(variableName:string) {
+        let ctrls;
+        if (ctrls=this.variableChangedMap.get(variableName)) {
+            for (const c of ctrls) {
+                let index = this.layout.items.indexOf(c);
+                let cont = this.createContent(c, false);
+                let ui = this.controls.get(index);
+                $(".ui-control-content", ui).html(cont);
+            }
+        }
+        if (ctrls=this.variableStyleChangedMap.get(variableName)) {
+            for (const c of ctrls) {
+                if (c.checkbox) this.checkCheckbox(c);
+                if (c.gauge) this.checkGauge(c);
+                if (c.visible) this.checkVisible(c);
+                if (c.blink) this.checkBlink(c);
+            }
+        }
+    }
+    public getCurrent():LayoutDefinition {
+        let cp:string;
+        if (!(cp = this.profileManager.getCurrent())) {
+            return null;
+        }
+        let prof = this.profileManager.getProfile(cp).layout;
+        return prof;
+    }
+
+    public profileConnected() {
+        this.unload();
+        this.load();
+    }
+
+    public profileDisconnected() {
+        this.unload();
+    }
+
+    public load() {
+        let cp:string;
+        cp = this.profileManager.getCurrent();
+
+        this.unload();
+        
+        if (!cp) return;
+
+        this.deleteLayout();
+        let prof = this.profileManager.getProfile(cp);
+        if (prof && prof.layout) this.loadLayout(prof.layout);
+        this.triggerChanged();
+    }
+
+    public unload() {
+        this.deleteLayout();
+        this.layout = null;
+        this.scripts.clear();
+        this.parents.clear();
+        this.variableChangedMap.clear();
+        this.variableStyleChangedMap.clear();
+        this.controls.clear();
+    }
+
+    public exportToFile() {
+        let json = JSON.stringify(this.layout, null, 2);
+        let blob = new Blob([json], {type: "octet/stream"});
+        let url = window.URL.createObjectURL(blob);
+
+        let link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "layout.json");
+        link.style.visibility = "hidden";
+
+        document.body.appendChild(link);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+    }
+
+    public ImportText(text: any) {
+        if (!this.profileManager.getCurrent()) {
+            Messagebox.Show("Errore", "Impossibile caricare layout nel profilo base.");
+            return;
+        }
+        let vals = typeof text == "string" ? JSON.parse(text) : text;
+        this.layout = vals;
+        this.profileManager.evtProfileChanged.fire({current:this.profileManager.getCurrent()});
+    }
+
+    public importFromFile() {
+        let inp: HTMLInputElement = document.createElement("input");
+        inp.type = "file";
+        inp.style.visibility = "hidden";
+
+        inp.addEventListener("change", (e: any) => {
+            let file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = (e1: any) => {
+                let text = e1.target.result;
+                this.ImportText(text);
+                // saveConfig();
+            };
+            reader.readAsText(file);
+
+        });
+
+        document.body.appendChild(inp);
+        inp.click();
+        document.body.removeChild(inp);
+    }
+
+    loadLayout(layout: LayoutDefinition) {
+        if (!layout) return;
+
+        this.layout = layout;
+
+        for (const p of layout.panes) {
+            $("#"+p.id).css({
+                background: (p.background || "transparent"),
+                width: (p.width || "auto")
+            });
+        }
+
+        let index = 0;
+        for (const c of this.layout.items) {
+            let control:JQuery;
+            if (c.type == ControlType.Button) {
+                control = this.createButton(c);
+                if (c.id)
+                    this.parents.set(c.id, control);                
+            }
+            else if (c.type == ControlType.Panel) {
+                control = this.createPanel(c);
+                if (c.id)
+                    this.parents.set(c.id, control);                
+            }
+            else if (c.type == ControlType.Window) {
+                control = this.createWindow(c);
+                if (c.id)
+                    this.parents.set(c.id, control);                
+            }
+
+            if (c.tooltip) {
+                control.attr("title", c.tooltip);
+            }
+            this.controls.set(index, control);
+            if (c.parent && this.parents.has(c.parent)) {
+                $($(".ui-control-content",this.parents.get(c.parent))[0]).append(control);
+            } else { $("#"+c.paneId).append(control); }
+
+            if (c.checkbox) {
+                for (const v of c.checkbox.split(",")) {
+                    let variables = this.parseVariables(v);
+                    for (const variable of variables) {
+                        if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                        this.variableStyleChangedMap.get(variable).push(c);                                                    
+                    }                      
+                }
+                this.checkCheckbox(c);
+            }
+
+            if (c.gauge) {
+                for (const v of c.gauge.split(",")) {
+                    if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
+                    this.variableStyleChangedMap.get(v).push(c);                        
+                }
+                this.checkGauge(c);
+            }
+
+            if (c.visible) {
+                for (const v of c.visible.split(",")) {
+                    let variables = this.parseVariables(v);
+                    for (const variable of variables) {
+                        if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                        this.variableStyleChangedMap.get(variable).push(c);                                                    
+                    }                      
+                }
+                this.checkVisible(c);
+            }
+
+            if (c.blink) {
+                for (const v of c.blink.split(",")) {
+                    let variables = this.parseVariables(v);
+                    for (const variable of variables) {
+                        if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                        this.variableStyleChangedMap.get(variable).push(c);                                                    
+                    }
+                }
+                this.checkBlink(c);
+            }
+
+            index++;
+        }
+    }
+
+    isAlphaNumeric(str:string) {
+        var code, i, len;
+      
+        for (i = 0, len = str.length; i < len; i++) {
+          code = str.charCodeAt(i);
+          if (!(code > 47 && code < 58) && // numeric (0-9)
+              !(code > 64 && code < 91) && // upper alpha (A-Z)
+              !(code > 96 && code < 123)) { // lower alpha (a-z)
+            return false;
+          }
+        }
+        return true;
+      };
+
+    parseVariables(v: string):string[] {
+        let ret = v.split(/==|!=|<=|>=|<|>|\/|\*|\+|-/);
+        ret = ret.filter(v => v.length && !isNumeric(v) && this.isAlphaNumeric(v));
+        return ret;
+    }
+
+    checkGauge(c: Control) {
+        let index = this.layout.items.indexOf(c);
+        let ui = this.controls.get(index);
+        let color = c.color || "red";
+        let sthis = this.scripting.getScriptThis();
+        const vars = c.gauge.split(",");
+        const max = Number(sthis[vars[1]]);
+        const val = Number(sthis[vars[0]]);
+        const percent = Math.ceil((val/max)*100);
+        ui.css({
+            "background-image": `linear-gradient(90deg, ${color} 0 ${percent}%, transparent ${percent}% 100%)`
+        });
+    }
+
+    checkVisible(c: Control) {
+        this.checkExpression(c, c.visible, (ui, passed) => {
+            if (passed) {
+                ui.css({
+                    "display": "block"
+                });
+            } else {
+                ui.css({
+                    "display": "none"
+                });
+            }
+        });
+        return;
+        if (!c.visible) return;
+        let index = this.layout.items.indexOf(c);
+        let ui = this.controls.get(index);
+        let sthis = this.scripting.getScriptThis();
+        const vars = c.visible.split(",");
+        let allTrue = true;
+        for (const v of vars) {
+            let compareOP = (v1:any,v2:any)=>v1==v2;
+            let compare = null;
+            let variable = v;
+            if (variable.indexOf("==")!=-1) {
+                compare = variable.split("==")[1];
+                variable = variable.split("==")[0];
+            }
+            if (variable.indexOf("!=")!=-1) {
+                compare = variable.split("!=")[1];
+                variable = variable.split("!=")[0];
+                compareOP = (v1:any,v2:any)=>v1!=v2;
+            }
+            if (variable.indexOf(">=")!=-1) {
+                compare = variable.split(">=")[1];
+                variable = variable.split(">=")[0];
+                compareOP = (v1:any,v2:any)=>v1>=v2;
+            }
+            if (variable.indexOf("<=")!=-1) {
+                compare = variable.split("<=")[1];
+                variable = variable.split("<=")[0];
+                compareOP = (v1:any,v2:any)=>v1<=v2;
+            }
+            if (variable.indexOf("<")!=-1) {
+                compare = variable.split("<")[1];
+                variable = variable.split("<")[0];
+                compareOP = (v1:any,v2:any)=>v1<v2;
+            }
+            if (variable.indexOf(">")!=-1) {
+                compare = variable.split(">")[1];
+                variable = variable.split(">")[0];
+                compareOP = (v1:any,v2:any)=>v1>v2;
+            }
+            if (!compare) {
+                allTrue = allTrue && isTrue(sthis[variable]);
+            } else if (compare) {
+                allTrue = allTrue && compareOP(sthis[variable], compare);
+            }
+        }
+        ui.css({
+            "display": (allTrue ? "block" : "none")
+        });
+    }
+
+    checkExpression(c:Control, expression:string, func:(ui:JQuery, result:boolean)=>void) {
+        if (!c || !expression) return;
+        let index = this.layout.items.indexOf(c);
+        let ui = this.controls.get(index);
+        let sthis = this.scripting.getScriptThis();
+        const vars = expression.split(",");
+        let allTrue = true;
+        for (const v of vars) {
+            let vr = this.parseVariables(v);
+            let expr = v;
+            vr.forEach(vrb => {
+                let value = sthis[vrb];
+                if (typeof value == "string") {
+                    value = "\""+value+"\"";
+                }
+                expr = expr.replace(vrb, value)
+            });
+            allTrue = allTrue && eval(expr);
+            if (!allTrue) break;
+        }
+        func(ui, allTrue);
+    }
+
+    checkBlink(c: Control) {
+        this.checkExpression(c, c.blink, (ui, passed) => {
+            if (passed) {
+                ui.addClass("blink");
+            } else {
+                ui.removeClass("blink");
+            }
+        });
+    }
+
+    checkCheckbox(c: Control) {
+        this.checkExpression(c, c.checkbox, (ui, passed) => {
+            if (passed) {
+                ui.addClass("toggled");
+            } else {
+                ui.removeClass("toggled");
+            }
+        });
+        return;
+        let index = this.layout.items.indexOf(c);
+        let ui = this.controls.get(index);
+        ui.removeClass("toggled");
+        if (!c.checkbox) return;
+        let sthis = this.scripting.getScriptThis();
+        if (isTrue(sthis[c.checkbox]))
+            ui.addClass("toggled");
+    }
+
+    deleteLayout() {
+        for (const p of this.defaultPanes) {
+            $("#"+p.id).empty();
+            $("#"+p.id).attr("style","");
+            $("#"+p.id).attr("class","");
+        }
+    }
+
+    public createWindow(ctrl:Control):JQuery {
+        return $(`<div id="window-dock-${ctrl.content.replace(" ","-")}" style="display:none;"></div>`)
+    }
+
+    public createButton(ctrl:Control):JQuery {
+        let style = "";
+        let cls = "";
+        if (ctrl.style) {
+            switch (ctrl.style) {
+                case "blue":
+                    cls += "bluebutton ";                    
+                    break;
+                case "red":
+                    cls += "redbutton ";
+                    break;
+                case "green":
+                    cls += "greenbutton ";
+                    break;
+                case "yellow":
+                    cls += "yellowbutton ";
+                    break;
+                case "":
+                    break;
+                default:
+                    EvtScriptEmitPrint.fire({owner:"Layout", message: "Bottone con stile invalido: " + ctrl.content})
+                    break;
+            }
+        }
+        if (ctrl.stack) {
+            if (ctrl.stack == Direction.Fill) {
+                style+= "flex: 1;";
+            }
+        }
+        if (ctrl.color) {
+            style+= "color:"+ctrl.color+";";
+        }
+        if (ctrl.background) {
+            style+= "background-color:"+ctrl.background+";";
+        }
+        if (ctrl.x) {
+            style+= "left:"+ctrl.x+"px !important;";
+        }
+        if (ctrl.y) {
+            style+= "top:"+ctrl.y+"px !important;";
+        }
+        if (ctrl.w) {
+            style+= "width:"+ctrl.w+"px !important;";
+        }
+        if (ctrl.h) {
+            style+= "height:"+ctrl.h+"px !important;";
+        }
+        if (ctrl.position) {
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+        }
+
+        if ((ctrl.stack == Direction.None) || !ctrl.stack) {
+            style+= "clear:both !important;";
+        }/* else {
+            style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
+        }*/
+
+        if (ctrl.css) {
+            style+= ctrl.css + ";";
+        }
+
+        const btn = `<button style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
+        const b = $(btn);
+        if (ctrl.commands) {
+            const index = this.layout.items.indexOf(ctrl);
+            if (ctrl.is_script) {
+                let scr = this.scripting.makeScript("button "+index, ctrl.commands, "");
+                this.scripts.set(index, scr);
+                b.click(()=>{
+                    this.scripts.get(index)();
+                });
+            } else {
+                b.click(()=>{
+                    this.cmdInput.execCommand(ctrl.commands, false);
+                });
+            }
+        }
+        return b;
+    }
+
+    public createPanel(ctrl:Control):JQuery {
+        let containerStyle = "";
+        let style = "";
+        let cls = "";
+        if (ctrl.style) {
+            switch (ctrl.style) {
+                case "blue":
+                    cls += "bluepanel ";                    
+                    break;
+                case "red":
+                    cls += "redpanel ";
+                    break;
+                case "green":
+                    cls += "greenpanel ";
+                    break;
+                case "yellow":
+                    cls += "yellowpanel ";
+                    break;
+                case "":
+                    break;
+                default:
+                    EvtScriptEmitPrint.fire({owner:"Layout", message: "Pannello con stile invalido: " + ctrl.content})
+                    break;
+            }
+        }
+        if (ctrl.color) {
+            style+= "color:"+ctrl.color+" !important;";
+        }
+        if (ctrl.background) {
+            style+= "background-color:"+ctrl.background+" !important;";
+        }
+        if (ctrl.x) {
+            style+= "left:"+ctrl.x+"px !important;";
+        }
+        if (ctrl.y) {
+            style+= "top:"+ctrl.y+"px !important;";
+        }
+        if (ctrl.w) {
+            style+= "width:"+ctrl.w+"px !important;";
+        }
+        if (ctrl.h) {
+            style+= "height:"+ctrl.h+"px !important;";
+        }
+        if (ctrl.position) {
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+        }
+        if (ctrl.stack != Direction.None && ctrl.stack) {
+
+            containerStyle+= "display:flex !important;";
+            if (ctrl.stack == Direction.Left) {
+                containerStyle+= "flex-direction: row;";
+            }
+            else if (ctrl.stack == Direction.Right) {
+                containerStyle+= "flex-direction: row-reverse;";
+            }
+            else if (ctrl.stack == Direction.Top) {
+                containerStyle+= "flex-direction: column;";
+            }
+            else if (ctrl.stack == Direction.Down) {
+                containerStyle+= "flex-direction: column-reverse;";
+            }
+
+            if (ctrl.stack == Direction.Fill) {
+                style+= "flex: 1;";
+                containerStyle+= "width: 100%;height: 100%;";
+            }
+        }
+
+        if (ctrl.stack == Direction.None) {
+            style+= "clear:both !important;";
+        } else {
+            style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
+        }
+
+        if (ctrl.css) {
+            style+= ctrl.css +";";
+        }
+
+        const btn = `<div style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;${containerStyle}">${this.createContent(ctrl,true)}</div></div>`;
+        const b = $(btn);
+        if (ctrl.commands) {
+            const index = this.layout.items.indexOf(ctrl);
+            if (ctrl.is_script) {
+                let scr = this.scripting.makeScript("panel "+index, ctrl.commands, "");
+                this.scripts.set(index, scr);
+                b.click(()=>{
+                    this.scripts.get(index)();
+                });
+            } else {
+                b.click(()=>{
+                    this.cmdInput.execCommand(ctrl.commands, false);
+                });
+            }
+        }
+        return b;
+    }
+
+    createContent(ctrl: Control, parseVariable:boolean) {
+        let index = this.layout.items.indexOf(ctrl);
+        let content = ctrl.content;
+        content=rawToHtml(content);
+        let sthis = this.scripting.getScriptThis()
+        if (content.indexOf("%color(")!=-1) {
+            content = content.replace(/\%color\([^\)]+?\)/gi,(s,a)=>{
+                let colorStr = s.substr(7, s.length-8);
+                let params = colorStr.split(",");
+                return colorize.apply(this, ["", ...params]);
+            });
+        }
+        if (content.indexOf("%closecolor")!=-1) {
+            content = content.replace(/\%closecolor/gi,(s,a)=>{
+                return "</span>";
+            });
+        }
+        let varPos = -1;
+        while ((varPos = content.indexOf("%var("))!=-1) {
+            varPos+= 4;
+            let openBracket = 0;
+            let endPos = -1;
+            for (let index = varPos; index < content.length; index++) {
+                if (content[index]=="(") openBracket++;
+                if (content[index]==")") openBracket--;
+                if (openBracket == 0) {
+                    endPos = index;
+                    break;
+                }
+            }
+            let replaceWith = (s:string)=>{
+                //s = s.substr(5, s.length-6);
+                let params = s.split(",");
+                let variable=params[0];
+                let compare = null;
+                let compareOP = (v1:any,v2:any)=>v1==v2;
+                if (variable.indexOf("==")!=-1) {
+                    compare = variable.split("==")[1];
+                    variable = variable.split("==")[0];
+                }
+                if (variable.indexOf("!=")!=-1) {
+                    compare = variable.split("!=")[1];
+                    variable = variable.split("!=")[0];
+                    compareOP = (v1:any,v2:any)=>v1!=v2;
+                }
+                if (variable.indexOf("&lt;=")!=-1) {
+                    compare = variable.split("&lt;=")[1];
+                    variable = variable.split("&lt;=")[0];
+                    compareOP = (v1:any,v2:any)=>v1<=v2;
+                }
+                if (variable.indexOf("&gt;=")!=-1) {
+                    compare = variable.split("&gt;=")[1];
+                    variable = variable.split("&gt;=")[0];
+                    compareOP = (v1:any,v2:any)=>v1>=v2;
+                }
+                if (variable.indexOf("&lt;")!=-1) {
+                    compare = variable.split("&lt;")[1];
+                    variable = variable.split("&lt;")[0];
+                    compareOP = (v1:any,v2:any)=>v1<v2;
+                }
+                if (variable.indexOf("&gt;")!=-1) {
+                    compare = variable.split("&gt;")[1];
+                    variable = variable.split("&gt;")[0];
+                    compareOP = (v1:any,v2:any)=>v1>v2;
+                }
+                if (isNumeric(compare)) {
+                    compare = Number(compare);
+                }
+                let val = sthis[variable];
+                if (parseVariable) {
+                    if (!this.variableChangedMap.has(variable)) this.variableChangedMap.set(variable, []);
+                    this.variableChangedMap.get(variable).push(ctrl);
+                }
+                if (params.length>2) {
+                    if (compare) {
+                        return ((compareOP(val,compare)) ? params[1] : params[2]);
+                    } else {
+                        return isTrue(val) ? params[1] : params[2];
+                    }
+                } else if (params.length==2) {
+                    return (val||"-").toString().substr(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
+                } else {
+                    return (compare ? (compareOP(val,compare)) : val);
+                }
+            };
+            let replacement = content.substr(varPos+1, endPos-varPos-1);
+            if (endPos>-1 && endPos!=varPos) {
+                replacement = replaceWith(content.substr(varPos+1, endPos-varPos-1))
+            } else {
+                EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid variable in template of Control: " + ctrl.content})
+                break;
+            }
+            content = content.substr(0,varPos-4) + replacement + content.substr(endPos+1);
+        }
+        return content;
+    }
+
+    public async loadBaseLayout(prof:Profile) {
+        var ly = await $.ajax("./baseLayout.json");
+        if (ly) {
+            prof.layout = ly;
+            return;
+        }
+        this.createLayout(prof);
+        for (const p of prof.layout.panes) {
+            p.background = "rgb(21 106 167 / 77%);";
+        }
+        prof.layout.items.push({
+            paneId: "column-right-top",
+            type: ControlType.Window,
+            position: Position.Relative,
+            content: "Social",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-right-bottom",
+            type: ControlType.Window,
+            position: Position.Relative,
+            content: "Mapper",
+            is_script: true
+        });
+        prof.layout.items.push({
+            id: "btnrow1",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "btnrow2",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "btnrow3",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "btnrow4",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "btnrow5",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "btnrow6",
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            css: "margin:0;display:flex;flex-direction:column;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow6",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoKill%color(black)%var(autokill,%color(white) ON,%color(black) OFF)`,
+            commands: "autokill",
+            checkbox: "autokill",
+            tooltip: "Uccidi a vista",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow6",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `SelfSanc%color(black)%var(selfsanc,%color(white) ON,%color(black) OFF)`,
+            commands: "selfsanc",
+            checkbox: "selfsanc",
+            tooltip: "Tieni sancato se stesso",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow6",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `SelfShield%color(black)%var(selfshield,%color(white) ON,%color(black) OFF)`,
+            commands: "selfshield",
+            checkbox: "selfshield",
+            tooltip: "Tieniti scudato",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow4",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoGroup%color(black)%var(autogroup,%color(white) ON,%color(black) OFF)`,
+            commands: "autogroup",
+            checkbox: "autogroup",
+            tooltip: "Nel momento quando qualcuno inizia a seguirti lo grupperai automaticamente",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow4",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoOrder%color(black)%var(autoorder,%color(white) ON,%color(black) OFF)`,
+            commands: "autoorder",
+            checkbox: "autoorder",
+            tooltip: "Appena entri in gruppo il client ascoltera' gli ordini del capogruppo",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow4",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoFollow%color(black)%var(autofollow,%color(white) ON,%color(black) OFF)`,
+            commands: "autofollow",
+            checkbox: "autofollow",
+            tooltip: "Segue in stagni e portali automaticamente",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow5",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoLoot%color(black)%var(autoloot,%color(white) ON,%color(black) OFF)`,
+            commands: "autoloot",
+            checkbox: "autoloot",
+            tooltip: "Raccoglie soldi e altro automaticamente dai corpi morti",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow5",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `Antispalm%color(black)%var(antispalm,%color(white) ON,%color(black) OFF)`,
+            commands: "antispalm",
+            checkbox: "antispalm",
+            tooltip: "Cambia scudi automaticamente se vede che si sta spalmando su uno scudo elementale (o ci sono draghi vicino)",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow5",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoArmi%color(black)%var(autoarmi,%color(white) ON,%color(black) OFF)`,
+            commands: "autoarmi",
+            checkbox: "autoarmi",
+            tooltip: "Cambia le armi automaticamente se vede che non colpiscono",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow1",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `Autoassist%color(black)%var(autoassist,%color(white) ON,%color(black) OFF)`,
+            commands: "autoassist",
+            checkbox: "autoassist",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow1",
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            type: ControlType.Button,
+            content: `AutoStop%color(black)%var(autostop,%color(white) ON,%color(black) OFF)`,
+            commands: "autostop",
+            checkbox: "autostop",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow2",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoBash%color(black)%var(autobash,%color(white) ON,%color(black) OFF)`,
+            commands: "autobash",
+            checkbox: "autobash",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow2",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoStab%color(black)%var(autostab,%color(white) ON,%color(black) OFF)`,
+            commands: "autostab",
+            checkbox: "autostab",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow2",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoFury%color(black)%var(autofury,%color(white) ON,%color(black) OFF)`,
+            commands: "autofury",
+            checkbox: "autofury",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow1",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoRescue%color(black)%var(autorescue,%color(white) ON,%color(black) OFF)`,
+            commands: "autorescue",
+            checkbox: "autorescue",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow3",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoCast%color(black)%var(autocast,%color(white) ON,%color(black) OFF)`,
+            commands: "autocast",
+            checkbox: "autocast",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow3",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoCleric%color(black)%var(autocleric,%color(white) %var(aclMinimum)%,%color(black) OFF)`,
+            commands: "autocleric",
+            checkbox: "autocleric",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            parent: "btnrow3",
+            type: ControlType.Button,
+            style:"",
+            css:"flex:1;white-space:pre;margin:2px;",
+            content: `AutoSanc%color(black)%var(autosanc,%color(white) ON,%color(black) OFF)`,
+            commands: "autosanc",
+            checkbox: "autosanc",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-top",
+            type: ControlType.Panel,
+            style:"",
+            content: `%color(lightgray) Divini:%closecolor %color(yellow)%var(TSSigDivini,5)%closecolor  PQ/h:  %color(white) %var(_stat_pqh,4)%closecolor   MXP/h:%color(white)  %var(_stat_xph,6)%closecolor
+%color(lightgray) Aria:  %closecolor %color(white)%var(TSSigAria,5)%closecolor  5 min: %color(yellow) %var(_stat_pq5m,4)%closecolor   5 min:%color(green)  %var(_stat_xp5m,6)%closecolor
+%color(lightgray) Acqua: %closecolor %color(lightblue)%var(TSSigAcqua,5)%closecolor  15 min:%color(yellow) %var(_stat_pq15m,4)%closecolor   15 min:%color(green) %var(_stat_xp15m,6)%closecolor
+%color(lightgray) Terra: %closecolor %color(brown)%var(TSSigTerra,5)%closecolor  1 ora: %color(yellow) %var(_stat_pq1h,4)%closecolor   1 ora:%color(green)  %var(_stat_xp1h,6)%closecolor
+%color(lightgray) Fuoco: %closecolor %color(red)%var(TSSigFuoco,5)%closecolor  Sess.: %color(yellow) %var(_stat_pqsess,4)%closecolor   Sess.:%color(green)  %var(_stat_xpsess,6)%closecolor
+%color(yellow) Gold:%closecolor %color(yellow)%var(TSGoldK,7)%closecolor  %color(orange)Bank:%closecolor%color(orange)%var(TSBankK,7)%closecolor`,
+            css: "background-color:rgba(0,0,0,0.3);box-shadow: 0px 0px 1px 1px rgba(0,0,255,0.3);color:lightgray;",
+            stack: Direction.None
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(255, 255, 255)",
+            type: ControlType.Panel,
+            content: `%var(TSPersonaggio) %color(white)%var(TSHp)/%var(TSMaxHp)%closecolor %var(afk,%color(black)[AFK],)`,
+            css:"margin:1px;margin-left:4px;padding:1px;font-size:12px;color:lightgray !important;",
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(255, 255, 255)",
+            background: "rgba(0,0,0,0.5)",
+            type: ControlType.Panel,
+            content: `%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NON SANCATO!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)`,
+            css:"margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;",
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(255, 255, 255)",
+            background: "rgba(0,0,0,0.5)",
+            type: ControlType.Panel,
+            content: `%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NON Scudato!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)`,
+            css:"margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;",
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(35, 200, 35)",
+            background: "red",
+            type: ControlType.Button,
+            content: `%color(white,transparent,true)%var(tankKey): %var(tankPercent<50,%color(yellow,transparent,true,false,true)%var(TSTankCond),%color(white,transparent,true)%var(TSTankCond))`,
+            css:"text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:12px;min-width:170px;",
+            gauge:"tankPercent,tankMax",
+            commands: "if (this.TSTank!=this.TSPersonaggio) send('assist ' + this.tankKey)",
+            visible: "TSTank!='*'",
+            is_script:true
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(35, 200, 35)",
+            background: "black",
+            type: ControlType.Button,
+            content: `%color(white,transparent,true)%var(mobKey): %var(TSMobCond)`,
+            css:"text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:12px;min-width:170px;",
+            gauge:"mobPercent,mobMax",
+            commands: "send('attack ' + this.mobKey)",
+            visible: "TSMob!='*'",
+            is_script:true
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-left",
+            color: "rgb(185, 185, 185)",
+            background: "rgba(0,0,0,0.5)",
+            type: ControlType.Button,
+            content: `Spell:(%var(spells))`,
+            css:"text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
+            commands: "attr",
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-right",
+            color: "rgb(255, 255, 255, 0.3)",
+            type: ControlType.Button,
+            content: `%var(TSSettore==Chiuso,%color(white)Al CHIUSO,%color(black,yellowgreen)All'APERTO)`,
+            css:"margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+            commands: `if (this.healtype=="C") { if (this.TSSettore!="Chiuso") { send("cast 'control w' worse") } } else if (this.healtype=="D") { if (this.TSSettore!="Chiuso") { send("cast 'control w' worse") } else { send("bloom") } }`,
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-right",
+            background: "blue",
+            type: ControlType.Button,
+            content: `%var(TSPosizione!=In piedi,%color(white)Seduto,%color(yellowgreen)In piedi)`,
+            css:"margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+            commands: `if (this.TSPosizione!='In piedi') { send('stand') } else { send('sit') }`,
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "row-bottom-right",
+            background: "blue",
+            type: ControlType.Panel,
+            content: `%var(TSLag==+,%color(white)Laggato,%color(yellowgreen)Reattivo)`,
+            css:"margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:3px !important;font-size:12px;",
+        });
+        prof.layout.items.push({
+            id: "tick_and_btn",
+            paneId: "column-left-bottom",
+            type: ControlType.Panel,
+            css: "margin:0;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "mv_and_btn",
+            paneId: "column-left-bottom",
+            type: ControlType.Panel,
+            css: "margin:0;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "mn_and_btn",
+            paneId: "column-left-bottom",
+            type: ControlType.Panel,
+            css: "margin:0;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            id: "hp_and_btn",
+            paneId: "column-left-bottom",
+            type: ControlType.Panel,
+            css: "margin:0;",
+            stack: Direction.Left,
+            content: "",
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "yellow",
+            parent: "hp_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "BLUNT",
+            commands: "send('blunt')",
+            checkbox: "usiBlunt",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "blue",
+            parent: "tick_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "EXTRA",
+            commands: "send('extra')",
+            checkbox: "usiExtra",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "red",
+            parent: "mn_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            position: Position.Relative,
+            stack: Direction.Left,
+            css:"margin:1px;padding:1px;",
+            content: "SLASH",
+            commands: "send('slash')",
+            checkbox: "usiSlash",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "white",
+            parent: "mv_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "PIERCE",
+            commands: "send('pierce')",
+            checkbox: "usiPierce",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "white",
+            background: "#AAAAFF",
+            parent: "mv_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "ImmuCOLD",
+            commands: "send('immucold')",
+            checkbox: "usiImmuCold",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "white",
+            background: "#FF9999",
+            parent: "tick_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "ImmuFIRE",
+            commands: "send('immufire')",
+            checkbox: "usiImmuFire",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            parent: "tick_and_btn",
+            color: "rgb(221 221 221)",
+            css:"margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+            w: 180,
+            h:20,
+            type: ControlType.Button,
+            stack: Direction.Fill,
+            content: `Tick: %var(TickRemaining) sec.`,
+            commands: "tick",
+            gauge: "TickRemaining,currentTickLenght",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            parent: "mv_and_btn",
+            color: "rgb(210 151 90)",
+            css:"margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+            w: 180,
+            h:20,
+            type: ControlType.Button,
+            stack: Direction.Fill,
+            content: `Move: %var(TSMov)/%var(TSMaxMov)`,
+            commands: "feast",
+            gauge: "TSMov,TSMaxMov",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "white",
+            background: "#33AA33",
+            parent: "hp_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "ImmuACID",
+            commands: "send('immuacid')",
+            checkbox: "usiImmuAcid",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            parent: "hp_and_btn",
+            color: "#33AA33",
+            css:"margin:1px;padding:1px;font-size:11px;background-color:rgba(255,0,0,0.5) !important; color:white !important;",
+            w: 180,
+            h:20,
+            type: ControlType.Button,
+            stack: Direction.Fill,
+            content: `HP: %var(TSHp)/%var(TSMaxHp)`,
+            commands: "heal",
+            gauge: "TSHp,TSMaxHp",
+            blink: "TSHp<TSMaxHp/4",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            color: "white",
+            background: "#4444FF",
+            parent: "mn_and_btn",
+            h:20,
+            w:70,
+            type: ControlType.Button,
+            stack: Direction.Left,
+            position: Position.Relative,
+            css:"margin:1px;padding:1px;",
+            content: "ImmuELE",
+            commands: "send('immuele')",
+            checkbox: "usiImmuEle",
+            is_script: true
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            parent: "mn_and_btn",
+            color: "rgb(129 129 210)",
+            css:"margin:1px;padding:1px;font-size:11px;background-color:rgba(0,0,255,0.5) !important; color:white !important;",
+            w: 180,
+            h:20,
+            type: ControlType.Button,
+            stack: Direction.Fill,
+            content: `Mana: %var(TSMana)/%var(TSMaxMana)`,
+            commands: "cani",
+            gauge: "TSMana,TSMaxMana",
+            is_script: false
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            type: ControlType.Window,
+            position: Position.Relative,
+            content: "Gruppo",
+        });
+        prof.layout.items.push({
+            paneId: "column-left-bottom",
+            type: ControlType.Window,
+            position: Position.Relative,
+            content: "Group Tell",
+        });
+        prof.layout.items.push({
+            id: "tap_ui",
+            w:150,
+            h:150,
+            paneId: "row-bottom-right",
+            type: ControlType.Panel,
+            css: "margin:0;border:0;padding:0;position:absolute;top:-150px;right:0;background-image:url(css/images/clickUI-small.png) !important;opacity:0.7;",
+            stack: Direction.None,
+            content: "",
+            visible: "ClickControls"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:5,
+            y:5,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "attack",
+            tooltip: "Assisti gruppo o attacca il primo mob"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:55,
+            y:5,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "nord"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:105,
+            y:5,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "up"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:5,
+            y:55,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "west"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:55,
+            y:55,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "stoporfleeorlook",
+            tooltip: "Stoppa o flea, o se fuori combat guarda"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:105,
+            y:55,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "est"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:5,
+            y:105,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "casta",
+            tooltip: "Cura o casta"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:55,
+            y:105,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "sud"
+        });
+        prof.layout.items.push({
+            parent: "tap_ui",
+            background: "transparent",
+            w:40,
+            h:40,
+            x:105,
+            y:105,
+            paneId: "row-bottom-right",
+            type: ControlType.Button,
+            css: "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+            stack: Direction.None,
+            content: "",
+            commands: "down"
+        });
+    }
+
+    public createLayout(prof:Profile) {
+        prof.layout = {
+            panes: [...this.defaultPanes],
+            items: []
+        }
+    }
+
+    public triggerChanged() {
+        this.EvtEmitLayoutChanged.fire(this.layout);
+    }
+
+    public save() {
+        this.profileManager.saveProfiles();
+    }
+
+}

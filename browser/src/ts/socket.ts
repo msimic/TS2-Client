@@ -25,6 +25,12 @@ export class Socket {
     private ioEvt: IoEvent;
     private telnetClient: TelnetClient;
     private clientIp: string;
+    socketConnected: boolean;
+
+    public isTelnetConnected() {
+        return this.telnetClient != null;
+    }
+
     public mxpActive(): boolean {
         return this.telnetClient && this.telnetClient.mxp;
     }
@@ -72,18 +78,22 @@ export class Socket {
 
         this.ioConn.on("connect", () => {
             this.EvtWsConnect.fire({sid: this.ioConn.id});
+            this.socketConnected = true;
         });
 
         this.ioConn.on("disconnect", (rsn:any) => {
             this.EvtWsDisconnect.fire(null);
+            this.socketConnected = false;
         });
 
         this.ioConn.on("error", (msg: any) => {
             this.EvtWsError.fire(msg);
+            this.socketConnected = false;
         });
 
         this.ioConn.on("connect_error", (msg: any) => {
             this.EvtWsError.fire(msg);
+            this.socketConnected = false;
         });
 
         this.ioEvt = new IoEvent(this.ioConn);
@@ -143,8 +153,19 @@ export class Socket {
         this.ioEvt.clReqTelnetOpen.fire([host, port]);
     }
 
-    public closeTelnet() {
+    public async closeTelnet() {
+        let resolve:Function = null;
+        const p = new Promise(r => {
+            resolve = r;
+        });
+
         this.ioEvt.clReqTelnetClose.fire(null);
+        let interval = setInterval(() => {
+            if (this.telnetClient) return;
+            clearInterval(interval);
+            resolve();
+        }, 100);
+        return p;
     }
 
     sendCmd(cmd: string) {

@@ -26,11 +26,13 @@ import * as apiUtil from "./apiUtil";
 import { ProfilesWindow } from "./profilesWindow";
 import { ProfileManager } from "./profileManager";
 import { ProfileWindow } from "./profileWindow";
-import { Acknowledge } from "./util";
+import { Acknowledge, linesToArray, raw, rawToHtml } from "./util";
 import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
+import { Messagebox } from "./messagebox";
+import { LayoutManager } from "./layoutManager";
 
 
 interface ConnectionTarget {
@@ -64,6 +66,8 @@ export class Client {
     variableEditor: VariablesEditor;
     classEditor: ClassEditor;
     eventsEditor: EventsEditor;
+    socketConnected: boolean;
+    layoutManager: LayoutManager;
     public get connected():boolean {
         return this._connected;
     }
@@ -71,8 +75,13 @@ export class Client {
         this._connected = v;
     }
 
-    public disconnect() {
-        this.socket.closeTelnet();
+    public async disconnect() {
+        try {
+            this.manualDisconnect = true;
+            await this.socket.closeTelnet();
+        } finally {
+            this.manualDisconnect = false;
+        }
     }
 
     public connect(ct?:ConnectionTarget) {
@@ -89,13 +98,15 @@ export class Client {
         }
     }
 
+    private manualDisconnect:boolean = false;
+
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
+        (<any>window)["Messagebox"] = Messagebox;
         this.aboutWin = new AboutWin();
-        this.jsScript = new JsScript(this.profileManager.activeConfig);
+        this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig);
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
         this.variableEditor = new VariablesEditor(this.jsScript);
-        this.profilesWin = new ProfilesWindow(this.profileManager, this.profileWin, this);
         this.classManager = new ClassManager(this.profileManager.activeConfig);
         this.jsScriptWin = new JsScriptWin(this.jsScript);
         this.triggerManager = new TriggerManager(
@@ -106,7 +117,7 @@ export class Client {
         this.jsScript.setTriggerManager(this.triggerManager);
         this.jsScript.setAliasManager(this.aliasManager);
 
-        this.commandInput = new CommandInput(this.aliasManager);
+        this.commandInput = new CommandInput(this.aliasManager, this.profileManager.activeConfig);
 
         this.outputWin = new OutputWin(this.profileManager.activeConfig, this.triggerManager);
 
@@ -114,16 +125,22 @@ export class Client {
         this.aliasEditor = new AliasEditor(this.aliasManager);
         this.eventsEditor = new EventsEditor(this.jsScript);
         this.triggerEditor = new TriggerEditor(this.triggerManager);
+
+        
         this.windowManager = new WindowManager(this.profileManager);
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
-        this.jsScript.setOutputManager(this.outputManager);
-
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript);
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
-        this.connectWin = new ConnectWin(this.socket);
-
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.windowManager, this.variableEditor, this.classEditor, this.eventsEditor);
+        this.jsScript.setOutputManager(this.outputManager);
+        this.layoutManager = new LayoutManager(this.profileManager, this.jsScript, this.commandInput);
+        this.profilesWin = new ProfilesWindow(this.profileManager,this.layoutManager, this.profileWin, this);
+        this.windowManager.setLayoutManager(this.layoutManager);
         this.windowManager.triggerChanged();
+
+        this.connectWin = new ConnectWin(this.socket);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor);
+        this.menuBar.setWIndowManager(this.windowManager);
+        this.profileWin.setWindowManager(this.windowManager);
 
         // MenuBar events
         this.menuBar.EvtChangeDefaultColor.handle((data: [string, string]) => {
@@ -138,12 +155,23 @@ export class Client {
             this.contactWin.show();
         });
 
+        this.menuBar.EvtProfileClicked.handle(()=>{
+            this.manualDisconnect = false;
+            this.profilesWin.show();
+        })
+
         this.menuBar.EvtConnectClicked.handle(() => {
+            this.manualDisconnect = false;
             this.connect();
         });
 
         this.menuBar.EvtDisconnectClicked.handle(() => {
+            this.manualDisconnect = true;
             this.disconnect();
+        });
+
+        this.profilesWin.EvtClosedClicked.handle(v => {
+            this.manualDisconnect = v;
         });
 
         // Socket events
@@ -157,7 +185,7 @@ export class Client {
         });
 
         var preventNavigate = (e:any) => {
-            this.jsScript.save();
+            this.save();
             e.preventDefault();
             e.returnValue = "";
             return "";
@@ -166,6 +194,7 @@ export class Client {
         this.socket.EvtTelnetConnect.handle((val: [string, number]) => {
             this.jsScript.load();
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
+            this.layoutManager.profileConnected();
             this.windowManager.profileConnected();
             // Prevent navigating away accidentally
             this.connected = true;
@@ -181,9 +210,10 @@ export class Client {
 
         this.socket.EvtTelnetDisconnect.handle(() => {
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: false});
-            this.windowManager.save();
+            this.save();
             this.windowManager.profileDisconnected();
-            this.jsScript.save();
+            this.layoutManager.profileDisconnected();
+            if (!this.manualDisconnect) this.profilesWin.show(true);
             // allow navigating away
             this.connected = false;
             window.removeEventListener("beforeunload", preventNavigate);
@@ -198,10 +228,13 @@ export class Client {
         });
 
         this.socket.EvtWsError.handle((data) => {
+            this.socketConnected = false;
+            this.connected = false;
             this.outputWin.handleWsError();
         });
 
         this.socket.EvtWsConnect.handle((val: {sid: string}) => {
+            this.socketConnected = true;
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: true});
             apiUtil.clientInfo.sid = val.sid;
             this.outputWin.handleWsConnect();
@@ -210,6 +243,9 @@ export class Client {
         this.socket.EvtWsDisconnect.handle(() => {
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: false});
             apiUtil.clientInfo.sid = null;
+            this.socketConnected = false;
+            this.connected = false;
+            if (!this.manualDisconnect) this.profilesWin.show(true);
             this.menuBar.handleTelnetDisconnect();
             this.outputWin.handleWsDisconnect();
         });
@@ -219,24 +255,33 @@ export class Client {
         });
 
         // CommandInput events
-        this.commandInput.EvtEmitCmd.handle((data: string) => {
+        this.commandInput.EvtEmitCmd.handle((data: {command:string, fromScript:boolean}) => {
             if (true !== this.serverEcho) {
-                this.outputWin.handleSendCommand(data);
+                let cmd = "<span style=\"color:yellow\">"
+                + rawToHtml(data.command)
+                + "<br>"
+                + "</span>"
+                this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
+                this.outputWin.scrollBottom(!data.fromScript);
             }
-            this.socket.sendCmd(data);
+            this.socket.sendCmd(data.command);
+        });
+
+        this.commandInput.EvtEmitScroll.handle((force:boolean) => {
+            this.outputWin.scrollBottom(force);
         });
 
         this.commandInput.EvtEmitAliasCmds.handle((data) => {
             this.outputWin.handleAliasSendCommands(data.orig, data.commands)
             for (let cmd of data.commands) {
-                this.commandInput.execCommand(cmd);
+                this.commandInput.execCommand(cmd, true);
             }
         });
 
         // Mxp events
         this.mxp.EvtEmitCmd.handle((data) => {
             if (data.noPrint !== true) {
-                this.outputWin.handleSendCommand(data.value);
+                this.outputWin.handleSendCommand(data.value, true);
             }
             this.socket.sendCmd(data.value);
 
@@ -249,7 +294,11 @@ export class Client {
         // JsScript events
         EvtScriptEmitCmd.handle((data:{owner:string, message:string}) => {
             this.outputWin.handleScriptSendCommand(data.owner, data.message);
-            this.commandInput.execCommand(data.message);
+            const lines = linesToArray(data.message)
+            //console.log(lines)
+            for (const line of lines) {
+                this.commandInput.execCommand(line.trim(), true);    
+            }
             //this.socket.sendCmd(data);
         });
 
@@ -257,7 +306,13 @@ export class Client {
             if (data.window) {
                 this.outputManager.sendToWindow(data.window, data.message, data.message, true);
             } else {
-                this.outputWin.handleScriptPrint(data.owner, data.message);
+                const msg = "<span style=\"color:orange\">" /*+ owner + ": "*/
+                + raw(data.message)
+                + "<br>"
+                + "</span>"
+                //this.outputWin.handleScriptPrint(data.owner, data.message);
+                this.outputManager.handlePreformatted(msg);
+                this.outputWin.scrollBottom(false);
             }
         });
 
@@ -281,7 +336,7 @@ export class Client {
         this.triggerManager.EvtEmitTriggerCmds.handle((data: {orig:string, cmds:string[]}) => {
             this.outputWin.handleTriggerSendCommands(data.orig, data.cmds);
             for (let cmd of data.cmds) {
-                this.commandInput.execCommand(cmd);
+                this.commandInput.execCommand(cmd, true);
             }
             /*for (let cmd of data) {
                 this.socket.sendCmd(cmd);
@@ -327,7 +382,12 @@ export class Client {
             }
         });
     }
-
+    public save():void {
+        this.jsScript.save();
+        this.profileManager.saveProfiles();
+        this.windowManager.save();
+        this.layoutManager.save();
+    }
     public readonly UserConfig = UserConfig;
     public readonly AppInfo = AppInfo;
 }

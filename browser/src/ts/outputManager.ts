@@ -23,6 +23,8 @@ export class OutputManager {
 
     private target: OutWinBase;
     private targetWindows: Array<OutWinBase>;
+    private vt100line:number = 0;
+    private vt100column:number = 0;
 
     private ansiReverse = false;
     private ansiBold = false;
@@ -89,8 +91,13 @@ export class OutputManager {
         this.target = this.targetWindows[this.targetWindows.length - 1];
     }
 
+    public getWindowManager():WindowManager {
+        return this.windowManager;
+    }
+    
     public sendToWindow(window:string, text:string, buffer:string, newLine?:boolean) {
         let wd = this.windowManager.createWindow(window);
+        if (!wd || !wd.output) return;
         if (newLine) {
             wd.output.writeLine(text, buffer);
         } else {
@@ -100,6 +107,7 @@ export class OutputManager {
 
     public clearWindow(window:string) {
         let wd = this.windowManager.createWindow(window);
+        if (!wd || !wd.output) return;
         wd.output.cls();
     }
 
@@ -112,8 +120,22 @@ export class OutputManager {
         return this.target.popElem();
     }
 
+    private preformattedQueue:string[] = [];
+    public handlePreformatted(data: string) {
+        if (this.partialSeq) {
+            this.preformattedQueue.push(data);
+        } else {
+            this.target.append(data, true);
+        }
+    }
+
+    private dataQueue:string[] = [];
     public handleText(data: string) {
-        this.target.addText(data);
+        if (this.partialSeq) {
+            this.dataQueue.push(data);
+        } else {
+            this.target.addText(data);
+        }
     }
 
     private setFgColorId(colorId: string) {
@@ -318,6 +340,11 @@ export class OutputManager {
         this.defaultAnsiBg = [colorName, level];
         this.defaultBgId = colorName + "-" + level;
         $(".outputText").css("background-color", colorIdToHtml[this.defaultBgId]);
+        $(".outputText").each((i,e)=>{
+            if (e.parentElement.id == "row-center") {
+                $(e.parentElement).css("background-color", colorIdToHtml[this.defaultBgId]);
+            }
+        });
     }
 
     handleChangeDefaultColor(name: string, level: string) {
@@ -383,6 +410,19 @@ export class OutputManager {
                 output = "";
 
                 this.EvtNewLine.fire();
+                if (this.dataQueue.length) {
+                    for (const data of this.dataQueue) {
+                        this.handleText(data);
+                    }
+                    this.dataQueue = [];
+                }
+
+                if (this.preformattedQueue.length) {
+                    for (const data of this.preformattedQueue) {
+                        this.handlePreformatted(data);
+                    }
+                    this.preformattedQueue = [];
+                }
 
                 continue;
             }
@@ -492,8 +532,34 @@ export class OutputManager {
                 continue;
             }
 
+            /* VT100 line and column - transformed to linebreaks from current not fixed screen positions*/
+            re = /^\x1b\[([0-9]*)\;([0-9]*)H/;
+            match = re.exec(substr);
+            if (match) {
+                console.log("VT100:", match[0]);
+                const vtline = Number(match[1]);
+                const vtcol = Number(match[2]);
+                i += match[0].length;
+                if (vtline != this.vt100line) {
+                    output += "\n";
+                    this.vt100line = vtline;
+                    this.vt100column = 0;
+                    this.handleText(output);
+                    output = "";
+                }
+                if (vtcol > this.vt100column) {
+                    let pad = vtcol-(output.length);
+                    pad = pad < 0 ? 0 : pad;
+                    output += " ".repeat(pad);
+                    this.vt100column = vtcol;
+                    /*this.handleText(output);
+                    output = "";*/
+                }
+                continue;
+            }
+
             /* other CSI sequences recognized but not supported */
-            re = /^\x1b\[[0-9]*[ABCDEFGHJKSTfn]/;
+            re = /^\x1b\[[0-9]*\;?[0-9]*?[ABCDEFGHJKSTfn]/;
             match = re.exec(substr);
             if (match) {
                 console.log("Unsupported CSI sequence:", match[0]);
@@ -539,12 +605,12 @@ export class OutputManager {
                 Send away everything up to the sequence start and assume it will get completed next time
                 we receive data...
              */
-            if (i !== 0) {
+            /*if (i !== 0) {
                 this.handleText(output);
-            }
-            this.partialSeq = rx.slice(i);
-            console.log("Got partial:");
-            console.log(this.partialSeq);
+            }*/
+            this.partialSeq = (i !== 0 ? output : "") + rx.slice(i);
+            //console.log("Got partial:");
+            //console.log(this.partialSeq);
             break;
         }
         if (!this.partialSeq) {

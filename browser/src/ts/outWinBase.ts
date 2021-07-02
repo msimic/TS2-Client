@@ -14,16 +14,20 @@ export class OutWinBase {
 
     protected debugScripts = false;
 
-    private colorsEnabled: boolean;
+    protected colorsEnabled: boolean;
     private copyOnMouseUp: boolean;
     private logTime: boolean;
 
     private lineCount: number = 0;
     private maxLines: number = 500;
+    private mouseWasDown = false;
 
     private onMouseUp = () => {
-        document.execCommand('copy');
-        $("#cmdInput").focus();
+        if (this.mouseWasDown) {
+            this.mouseWasDown = false;
+            document.execCommand('copy');
+            $("#cmdInput").focus();
+        }
     }
 
     constructor(rootElem: JQuery, private config: ConfigIf) {
@@ -39,8 +43,6 @@ export class OutWinBase {
         // direct children of the root will be line containers, let"s push the first one.
         this.pushElem($("<span>").appendTo(rootElem));
 
-        this.$rootElem.bind("scroll", (e: any) => { this.handleScroll(e); });
-
         this.colorsEnabled = this.config.getDef("colorsEnabled", true);
         this.copyOnMouseUp = this.config.getDef("copyOnMouseUp", true);
         this.logTime = this.config.getDef("logTime", false);
@@ -49,6 +51,7 @@ export class OutWinBase {
         });
         
         if (this.copyOnMouseUp) {
+            this.$rootElem.mousedown(this.onMouseDown);
             this.$rootElem.mouseup(this.onMouseUp);
         }
 
@@ -57,16 +60,29 @@ export class OutWinBase {
         this.config.onSet("colorsEnabled", (val: any) => { this.setColorsEnabled(val); });
         this.config.onSet("copyOnMouseUp", (val: any) => { 
             this.copyOnMouseUp = val;
+            this.$rootElem[0].removeEventListener("mousedown", this.onMouseDown);
             this.$rootElem[0].removeEventListener("mouseup", this.onMouseUp);
             if (this.copyOnMouseUp) {
+                this.$rootElem[0].addEventListener("mousedown", this.onMouseDown);
                 this.$rootElem[0].addEventListener("mouseup", this.onMouseUp);
             }
         });
     }
 
+    protected postInit() {
+        this.getOuterElement().bind("scroll", (e: any) => { this.handleScroll(e); });
+        this.cls();
+    }
+
+    onMouseDown = (onMouseDown: any) => {
+        this.mouseWasDown = true;
+    }
+
     public cls() {
-        this.lineCount == 0;
+        this.lineCount = 0;
         this.$rootElem.empty();
+        this.$targetElems = [this.$rootElem];
+        this.$target = this.$rootElem;
     }
     
     public setMaxLines(count: number) {
@@ -116,12 +132,16 @@ export class OutWinBase {
     protected $target: JQuery;
     private $rootElem: JQuery;
 
+    protected getOuterElement():JQuery {
+        return this.$rootElem;
+    }
+
     private scrollLock = false; // true when we should not scroll to bottom
     private handleScroll(e: any) {
-        let scrollHeight = this.$rootElem.prop("scrollHeight");
-        let scrollTop = this.$rootElem.scrollTop();
-        let outerHeight = this.$rootElem.outerHeight();
-        let is_at_bottom = outerHeight + scrollTop + 8 >= scrollHeight;
+        let scrollHeight = this.getOuterElement().prop("scrollHeight");
+        let scrollTop = this.getOuterElement().scrollTop();
+        let outerHeight = this.getOuterElement().outerHeight();
+        let is_at_bottom = outerHeight + scrollTop + 35 >= scrollHeight;
 
         this.scrollLock = !is_at_bottom;
     }
@@ -219,7 +239,7 @@ export class OutWinBase {
             let data:[string,string] = [this.lineText, this.appendBuffer];
             this.EvtLine.fire(data);
             if (data[1] != this.appendBuffer) {
-                this.outputChanged(data);
+                //this.outputChanged(data);
             }
             this.appendBuffer = "";
             this.newLine();
@@ -227,7 +247,7 @@ export class OutWinBase {
             let data:[string,string] = [this.lineText, this.appendBuffer];
             this.EvtBuffer.fire(data);
             if (data[1] != this.appendBuffer) {
-                this.outputChanged(data);
+                //this.outputChanged(data);
             }
         }
     };
@@ -236,6 +256,9 @@ export class OutWinBase {
         this.lineText = data[0];
         this.appendBuffer = data[1];
         this.$target.html(this.appendBuffer);
+        if (this.appendBuffer == "") {
+            this.popElem().remove();
+        }
     }
 
     private padStart(str:string, targetLength:number, padString:string) {
@@ -253,6 +276,9 @@ export class OutWinBase {
     };
 
     protected appendToCurrentTarget(o:any) {
+        if (this.$target == this.$rootElem) {
+            this.lineCount++;
+        }
         this.$target.append(o);
     }
 
@@ -260,7 +286,7 @@ export class OutWinBase {
         return this.$targetElems[1];
     }
 
-    protected append(o: any, toRoot:boolean) {
+    public append(o: any, toRoot:boolean) {
         if (o == "<span></span>" || o == '') {
             return;
         }
@@ -273,6 +299,10 @@ export class OutWinBase {
             this.$target.append(o); //$(o).insertBefore(this.$target);
             if (this.$target == this.$rootElem) {
                 this.lineCount += 1;
+                /*const childCnt = this.$rootElem.children().length;
+                if (childCnt != this.lineCount) {
+                    console.log("Lines out of sync! " + childCnt + ":" + this.lineCount);
+                }*/
             }
             this.newLine();
         }
@@ -298,15 +328,25 @@ export class OutWinBase {
         this.pushElem($("<span>"));
         this.scrollBottom();
 
+        /*const childCnt = this.$rootElem.children().length;
+        if (childCnt != this.lineCount) {
+            console.log("Lines out of sync! " + childCnt + ":" + this.lineCount);
+        }*/
+
         this.lineText = "";
 
-        this.lineCount += 1;
+        //this.lineCount += 1;
+        
         if (this.lineCount > this.maxLines) {
-            this.$rootElem.children(":lt(" +
-                (this.maxLines / 2) +
-                ")"
-            ).remove();
-            this.lineCount = (this.maxLines / 2);
+            if (this.$rootElem.children().length>this.maxLines) {
+                this.$rootElem.children(":lt(" +
+                    (this.maxLines / 2) +
+                    ")"
+                ).remove();
+                this.lineCount = this.$rootElem.children().length;
+            } else {
+                this.lineCount = this.$rootElem.children().length;
+            }
         }
     }
 
@@ -330,14 +370,15 @@ export class OutWinBase {
     private scrollRequested = false;
     private privScrolBottom() {
         // console.time("_scroll_bottom");
-        let elem = this.$rootElem;
-        elem.scrollTop(elem.prop("scrollHeight"));
+        let elem = this.getOuterElement();
+        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 150);
+        //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = false;
         this.scrollRequested = false;
         // console.timeEnd("_scroll_bottom");
     };
 
-    protected scrollBottom(force: boolean = false) {
+    public scrollBottom(force: boolean = false) {
         if (this.scrollLock && force !== true) {
             return;
         }

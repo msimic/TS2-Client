@@ -14,15 +14,34 @@ export function replaceLf(text: string): string {
     return text.replace(/\n/g, "<br>");
 }
 
-export function rawToHtml(text: string): string {
+export function raw(text: string): string {
     if (typeof text != "string") {
         text = JSON.stringify(text);
         text = text.slice(1, text.length-1);
     }
     return text;
+}
+
+export function isTrue(v:any):boolean {
+    if (typeof v == "boolean") return v;
+    if (typeof v == "string") return v == "true";
+    return false;
+}
+
+export function rawToHtml(text: string): string {
+    if (typeof text != "string") {
+        text = JSON.stringify(text);
+        text = text.slice(1, text.length-1);
+    }
     return replaceLf(
             replaceLtGt(
             replaceAmp(text)));
+}
+
+export function linesToArray(str:string):string[] {
+    let ret:string[] = [];
+    ret = str.replace('\r', '').split('\n');
+    return ret;
 }
 
 export function stripHtml(sText:string):string {
@@ -43,7 +62,7 @@ export function Acknowledge(ack:string, str:string) {
     if (val == 'true') return;
     messagebox("Informazione", str, () => {
         localStorage.setItem('ack_'+ack, "true");
-    }, "OK", "", 500, null);
+    }, "OK", "", false, "", 500, null);
 }
 
 // https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
@@ -171,6 +190,8 @@ export function addIntellisense(editor:any) {
             "45": "insert",
             "46": "delete",
             "50": "quote",
+            "66": "{",
+            "67": "}",
             "91": "left window key",
             "92": "right window key",
             "93": "select",
@@ -208,7 +229,7 @@ export function addIntellisense(editor:any) {
             var __Cursor = editor.getDoc().getCursor();
             var __Token = editor.getTokenAt(__Cursor);
 
-            let prevent = ['[',']','-','+','=','>','<','!','(',')','{','}'];
+            let prevent = ['[',']','-','+','=','>','<','!','(',')','{','}','`'];
 
             if (!editor.state.completionActive && !(event.ctrlKey||event.altKey||event.shiftKey) &&
                 !ExcludedIntelliSenseTriggerKeys[<string>(event.keyCode || event.which).toString()] && !(prevent.indexOf(__Token.string)!=-1)
