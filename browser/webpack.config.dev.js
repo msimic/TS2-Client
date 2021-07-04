@@ -1,4 +1,5 @@
 var path = require('path');
+var fs = require('fs');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -41,10 +42,10 @@ module.exports = {
     writeToDisk: true,
     watchContentBase: true,
     host: 'localhost',
-    https: true,
+    /*https: true,
     host: 'mars.local',
     key: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.key"),
-    cert: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.crt"),
+    cert: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.crt"),*/
     port: 8080,
     watchOptions: {
       poll: 500

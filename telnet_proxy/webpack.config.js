@@ -22,9 +22,6 @@ module.exports = {
     minimize: true,
     minimizer: [
       new TerserPlugin({
-        cache: true,
-        parallel: true,
-        sourceMap: false, // Must be set to true if using source-maps in production
         terserOptions: {
           // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
           ecma: undefined,
@@ -47,7 +44,7 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        enforce: 'pre', 
+        /*enforce: 'pre',*/ 
       },
     ],
   },
