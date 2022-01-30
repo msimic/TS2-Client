@@ -1,7 +1,7 @@
 import {OutputWin} from "./outputWin";
 import {OutWinBase} from "./outWinBase";
 import {EventHook} from "./event";
-import { utf8decode } from "./util";
+import { ConfigIf, utf8decode } from "./util";
 
 import { ansiColorTuple, copyAnsiColorTuple, colorIdToHtml,
          ansiFgLookup, ansiBgLookup, ansiName, ansiLevel } from "./color";
@@ -9,13 +9,13 @@ import { UserConfig } from "./userConfig";
 import { Socket } from "./socket";
 import { WindowManager } from "./windowManager";
 
-
+/*
 export interface ConfigIf {
     set(key: "defaultAnsiFg" | "defaultAnsiBg", val: ansiColorTuple): void;
     get(key: "defaultAnsiFg" | "defaultAnsiBg"): ansiColorTuple;
     get(key: "utf8Enabled"): boolean;
     evtConfigImport: EventHook<{[k: string]: any}>;
-}
+}*/
 
 export class OutputManager {
     public EvtMxpTag = new EventHook<string>();

@@ -2,8 +2,11 @@ import { AliasManager } from "./aliasManager";
 import { TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
 
 export class AliasEditor extends TrigAlEditBase {
-    constructor(private aliasManager: AliasManager) {
-        super("Alias");
+    constructor(private aliasManager: AliasManager, title?:string) {
+        super(title || "Alias");
+        aliasManager.changed.handle(()=>{
+            super.refresh()
+        })
         this.$isPromptCheckbox.parent().hide();
     }
 

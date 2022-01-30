@@ -14,8 +14,9 @@
             "ScriptHost"
         ],
         "types": [
-            "jquery"
-        ]
+            "jquery", "resize-observer-browser"
+        ],
+        "typeRoots": ["node_modules/@types"],
     },
     "exclude": [
         "node_modules"

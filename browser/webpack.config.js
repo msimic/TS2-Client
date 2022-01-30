@@ -1,6 +1,7 @@
 var path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 module.exports = {
   entry: './build/browser/src/ts/client.js',
   output: {
@@ -13,6 +14,10 @@ module.exports = {
       verbose: true,
       cleanOnceBeforeBuildPatterns: ['*.hot-update.json', '*.js', '!jquery*'],
     }),
+    new 
+    CopyPlugin([
+      "src/cacheServiceWorker.js"
+      ]),
     new HtmlWebpackPlugin({
       template: "./src/html/template.html",
       filename: path.resolve(__dirname, "static/public", "index.html")

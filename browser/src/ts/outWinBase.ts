@@ -1,11 +1,12 @@
 import * as Util from "./util";
 import { colorIdToHtml } from "./color";
 import { EventHook } from "./event";
+import { ConfigIf } from "./util";
 
-export interface ConfigIf {
+/*export interface ConfigIf {
     onSet(key: string, cb: (val: any) => void): void;
     getDef(key: string, def: any): any;
-}
+}*/
 
 
 export class OutWinBase {
@@ -70,7 +71,10 @@ export class OutWinBase {
     }
 
     protected postInit() {
-        this.getOuterElement().bind("scroll", (e: any) => { this.handleScroll(e); });
+        //this.getOuterElement().bind("scroll", (e: any) => { this.handleScroll(e); });
+        this.getOuterElement().on('wheel', (e: any) => {
+            this.handleScroll()
+        })
         this.cls();
     }
 
@@ -137,7 +141,7 @@ export class OutWinBase {
     }
 
     private scrollLock = false; // true when we should not scroll to bottom
-    private handleScroll(e: any) {
+    private handleScroll() {
         let scrollHeight = this.getOuterElement().prop("scrollHeight");
         let scrollTop = this.getOuterElement().scrollTop();
         let outerHeight = this.getOuterElement().outerHeight();
@@ -150,7 +154,7 @@ export class OutWinBase {
     public pushElem(elem: JQuery) {
         //this.writeBuffer();
 
-        this.appendToCurrentTarget(elem);
+        this.appendToCurrentTarget(elem[0]);
         this.$targetElems.push(elem);
         this.$target = elem;
 
@@ -231,7 +235,7 @@ export class OutWinBase {
 
         this.lineText += txt;
         this.appendBuffer += spanText;
-        this.appendToCurrentTarget(spanText);
+        this.appendToCurrentTarget($(spanText)[0]);
         
         if (txt.endsWith("\n")) {
             // firo i trigger qua prima che venga a schermo
@@ -279,7 +283,11 @@ export class OutWinBase {
         if (this.$target == this.$rootElem) {
             this.lineCount++;
         }
-        this.$target.append(o);
+        try {
+        (this.$target)[0].appendChild((o instanceof jQuery) ? (<any>o)[0] : (o instanceof Node) ? o : $("<span>"+o+"</span>")[0]);
+        } catch (err) {
+            (this.$target)[0].appendChild($("<span>"+err.toString()+"</span>")[0])
+        }
     }
 
     protected line() {
@@ -371,12 +379,37 @@ export class OutWinBase {
     private privScrolBottom() {
         // console.time("_scroll_bottom");
         let elem = this.getOuterElement();
-        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 150);
+        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 50);
         //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = false;
         this.scrollRequested = false;
         // console.timeEnd("_scroll_bottom");
     };
+
+    public ScrollPageUp() {
+        let elem = this.getOuterElement();
+        const scrollH = parseInt(elem.prop('scrollTop'))-elem.height()
+        elem.stop().animate({scrollTop:scrollH}, 50);
+        //elem.scrollTop(elem.prop("scrollHeight"));
+        this.scrollLock = true;
+        this.scrollRequested = false;
+    }
+    public ScrollPageDown() {
+        let elem = this.getOuterElement();
+        const scrollH = parseInt(elem.prop('scrollTop'))+elem.height()
+        elem.stop().animate({scrollTop:scrollH}, 50);
+        //elem.scrollTop(elem.prop("scrollHeight"));
+        this.scrollLock = true;
+        this.scrollRequested = false;
+        this.handleScroll()
+    }
+    public ScrollTop() {
+        let elem = this.getOuterElement();
+        elem.stop().animate({scrollTop:0}, 250);
+        //elem.scrollTop(elem.prop("scrollHeight"));
+        this.scrollLock = true;
+        this.scrollRequested = false;
+    }
 
     public scrollBottom(force: boolean = false) {
         if (this.scrollLock && force !== true) {

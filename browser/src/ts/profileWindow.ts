@@ -14,6 +14,8 @@ export class ProfileWindow {
     private $pass: JQuery;
     private $serverList: JQuery;
     private $autoLogin: JQuery;
+    private $baseScripting: JQuery;
+    private $baseLayout: JQuery;
     private okButton: HTMLButtonElement;
     private cancelButton: HTMLButtonElement;
     private profile:Profile;
@@ -31,9 +33,9 @@ export class ProfileWindow {
         <!--header-->
         <div>Profilo</div>
         <!--content-->
-        <div>
+        <div id="profile-window">
             <div style="display:table;width:100%;height:100%;padding:10px;box-sizing: border-box">
-                <div style="display:table-row;">
+                <div style="display:table-row;height:29px;">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
                         <label style="margin-right:10px;">Nome profilo</label>
                     </div>
@@ -41,7 +43,7 @@ export class ProfileWindow {
                         <input id="nomeprofilo" tabindex="1" style="margin-top:5px;width:100%;" title="Il nome del profilo" placeholder="&lt;Il nome del profilo&gt;"type="text"/>
                     </div>
                 </div>
-                <div style="display:table-row;">
+                <div style="display:table-row;height:29px;">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
                         <label style="margin-right:10px;">Server</label>
                     </div>
@@ -55,7 +57,7 @@ export class ProfileWindow {
                         </div>
                     </div>
                 </div>
-                <div style="display:table-row;" id="server_row">
+                <div style="display:table-row;height:29px;" id="server_row">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
                         <label style="margin-right:10px;">Server e porta</label>
                     </div>
@@ -63,7 +65,15 @@ export class ProfileWindow {
                         <input tabindex="3" id="nomeserver" style="margin-top:5px;width:100%;" title="Server URL" placeholder="&lt;Url server (server:port)&gt;" type="text"/>
                     </div>
                 </div>
-                <div style="display:table-row;">
+                <div style="display:table-row;height:29px;">
+                    <div style="display:table-cell;text-align:right;vertical-align: middle;">
+                        <label style="margin-right:10px;">Autenticazione</label>
+                    </div>
+                    <div style="display:table-cell;vertical-align: middle;">
+                    <label style="margin-right:10px;"><input type="checkbox" tabindex="3" class="winProfile-autologin" /></label>
+                    </div>
+                </div>
+                <div style="display:table-row;height:29px;">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
                         <label style="margin-right:10px;">Personaggio</label>
                     </div>
@@ -71,7 +81,7 @@ export class ProfileWindow {
                         <input tabindex="4" id="nomepg" style="margin-top:5px;width:100%;" title="Il nome del personaggio" placeholder="&lt;Il nome del personaggio&gt;" type="text"/>
                     </div>
                 </div>
-                <div style="display:table-row;">
+                <div style="display:table-row;height:29px;">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
                         <label style="margin-right:10px;">Password</label>
                     </div>
@@ -79,13 +89,30 @@ export class ProfileWindow {
                         <input tabindex="5" id="password" style="margin-top:5px;width:100%;" title="La password del personaggio" placeholder="&lt;Password: opzionale&gt;" type="password"/>
                     </div>
                 </div>
-                <div style="display:table-row;">
+                <div style="display:table-row;height:29px;">
                     <div style="display:table-cell;text-align:right;vertical-align: middle;">
-                        <label style="margin-right:10px;">Autologin<input type="checkbox" tabindex="3" class="winProfile-autologin" /></label>
+                        <label style="margin-right:10px;">Trigger preimpostati</label>
+                    </div>
+                    <div style="display:table-cell;vertical-align: middle;">
+                    <label title="Se abilitato il profilo avra' accesso a una base di trigger e alias gia' creati.\nSe vuoi usare i trigger preimpostati devi importare i trigger nel profilo base, premendo il pulsante giallo su di esso." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-scriptingbase" /></label>
+                    </div>
+                </div>
+                <div style="display:table-row;height:29px;">
+                    <div style="display:table-cell;text-align:right;vertical-align: middle;">
+                        <label style="margin-right:10px;">Disposizione schermo</label>
+                    </div>
+                    <div style="display:table-cell;vertical-align: middle;">
+                    <label title="Se abilitato questo profilo avra' una predisposizione schermo per approdare le finestre e vario altro contenuto. Richiede Trigger preimpostati." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-uselayout" /></label>
+                    <button tabindex="1000" id="reloadLayout" title="Ricarica disposizione schermo" class="">Ricarica predefinito</button>
+                    <button tabindex="1001" id="editLayout" title="Modifica disposizione schermo" class="">Modifica</button>
+                    </div>
+                </div>
+                <div style="display:table-row;">
+                    <div style="display:table-cell;text-align:left;vertical-align: middle;">
+                        <span style="display:inline-block;width:160px;color: blue;font-size:9px">N.B. quando cambia la configurazione del sistema, per ragioni di sicurezza, le password vengono invalidate e serve rimetterle manualmente  .</span>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
                         <div class="messageboxbuttons" style="margin-top: 10px;display: inline-block;float:right;">
-                            <button tabindex="1000" id="reloadLayout" title="Ricarica layour base" class="">Layout</button>
                             <button tabindex="6" title="Applica" class="acceptbutton greenbutton">Accetta</button>
                             <button tabindex="7" title="Annulla" class="cancelbutton redbutton">Annulla</button>
                         </div>
@@ -102,16 +129,40 @@ export class ProfileWindow {
         this.$serverRow = $("#server_row", this.$win);
 
         this.$autoLogin = $(".winProfile-autologin", this.$win);
+        this.$baseLayout = $(".winProfile-uselayout", this.$win);
+        this.$baseScripting = $(".winProfile-scriptingbase", this.$win);
+
+        $("#editLayout", this.$win).on("click", () => {
+            let lstr = JSON.stringify(this.profile.layout?this.profile.layout:{},null,2)
+            Messagebox.ShowInput("Edit layout", "Definizione layout (attento)", lstr, true).then(v => {
+                if (v.button == 1) {
+                    this.profile.layout = JSON.parse(v.result)
+                }
+            })
+        });
+
+        this.$baseScripting.change(() => {
+            if (this.$baseScripting.is(":checked")) {
+                this.$baseLayout.removeAttr("disabled");
+            } else {
+                this.$baseLayout.prop('checked', false).trigger("change");
+                this.$baseLayout.attr("disabled", "disabled");
+            }
+        });
+        this.$baseScripting.prop('checked', false).trigger("change");
+
         this.$autoLogin.change(() => {
             if (this.$autoLogin.is(":checked")) {
                 this.$char.removeAttr("disabled");
                 this.$pass.removeAttr("disabled");
+                $(this.reloadLayoutButton).removeAttr("disabled");
             } else {
                 this.$char.attr("disabled", "disabled");
                 this.$pass.attr("disabled", "disabled");
+                $(this.reloadLayoutButton).attr("disabled", "disabled");
             }
         });
-        this.$autoLogin.prop('checked', false).trigger("change");
+        this.$autoLogin.prop('checked', true).trigger("change");
 
         $("select", this.$win).on("click" , function() {
   
@@ -157,7 +208,7 @@ export class ProfileWindow {
             }, 300);
         });
 
-        (<any>this.$win).jqxWindow({width: 450, height: 290, showCollapseButton: true, isModal: true});
+        (<any>this.$win).jqxWindow({width: 450, height: 340, showCollapseButton: true, isModal: true});
         $(this.okButton).click(this.handleOk.bind(this));
         $(this.cancelButton).click(this.handleCancelClick.bind(this));
         (<any>this.$win).jqxWindow("close");
@@ -225,12 +276,14 @@ export class ProfileWindow {
             this.profile.port = (<string>this.$serverName.val()).split(":")[1];
         }
         this.profile.autologin = this.$autoLogin.prop('checked');
+        this.profile.useLayout = this.$baseLayout.prop('checked');
+        this.profile.baseTriggers = this.$baseScripting.prop('checked');
         this.profile.name = this.$name.val();
         this.profile.char = this.$char.val();
         this.profile.pass = this.$pass.val();
     }
 
-    private load() {
+    public load() {
         let serverName = this.profile.port == "6000" ? "Tester" : "Live";
         let custom = false;
         this.$serverName.val((this.profile.host ?? "")+":"+(this.profile.port??"0"));
@@ -257,6 +310,17 @@ export class ProfileWindow {
         this.$name.val(this.profile.name ?? "");
         this.$char.val(this.profile.char ?? "");
         this.$pass.val(this.profile.pass ?? "");
+        this.$baseScripting.prop('checked', this.profile.baseTriggers).trigger("change");
+        this.$baseLayout.prop('checked', this.profile.useLayout).trigger("change");
+        this.$baseScripting.removeAttr("disabled")
+        this.$baseLayout.removeAttr("disabled")
+        const trgs = this.manager.getBaseConfig().get("triggers");
+        if (!trgs || !trgs.length || trgs.length < 17) {
+            this.$baseScripting.prop('checked', false).trigger("change");
+            this.$baseLayout.prop('checked', false).trigger("change");
+            this.$baseScripting.attr("disabled", "disabled").trigger("change");
+            $(this.reloadLayoutButton).attr("disabled", "disabled").trigger("change");
+        }
     }
 
     public show(profile:Profile, callback:(profile:Profile) => void) {

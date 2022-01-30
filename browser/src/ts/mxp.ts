@@ -258,6 +258,8 @@ export class Mxp {
                     let elem = $(html_tag);
                     const tagCommand = stripAnsi(tag_m[2] ? tag_m[2] : tag_m[4]);
                     elem[0].setAttribute("title", tagCommand);
+                    elem[0].setAttribute("aria-label", tagCommand);
+                    // elem[0].setAttribute("aria-live", "off");
                     elem.addClass("underline");
                     elem.addClass("clickable");
                     if (tag_m[3] && tag_m[3].match(/prompt/i)) {

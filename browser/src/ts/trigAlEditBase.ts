@@ -394,12 +394,16 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     public show(noload:boolean=false) {
         if (!noload) {
-            this.clearEditor();
-            this.setEditorDisabled(true);
-            this.updateListBox();
+            this.refresh();
         }
 
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    public refresh() {
+        this.clearEditor();
+        this.setEditorDisabled(true);
+        this.updateListBox();
     }
 }

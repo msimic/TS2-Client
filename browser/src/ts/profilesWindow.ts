@@ -150,12 +150,21 @@ export class ProfilesWindow {
     private async handleNew() {
         const prof = new Profile();
         this.load();
-        this.profileWin.show(prof, (p) => {
+        this.profileWin.show(prof, async (p) => {
             prof.pass = Mudslinger.encrypt(prof.pass);
-            this.manager.create(prof);
+            this.manager.create(p);
+            if (p.useLayout)
+                await this.setProfileLayout(p.useLayout, p);
+            else if (p.layout && p.layout.items && p.layout.items.length) {
+                await this.setProfileLayout(false, p);
+            }
+            this.manager.setCurrent(p.name, true)
             this.load();
-            this.checkBaseProfile(prof).then(async v => await this.checkProfileLayout(prof));
+            //this.checkBaseProfile(prof).then(async v => await this.checkProfileLayout(prof));
         });
+        if (this.manager.getProfiles().length < 1) {
+            this.checkBaseProfile(prof)
+        }
     }
 
     private handleSelectClick(val:string) {
@@ -177,7 +186,6 @@ export class ProfilesWindow {
     }
 
     private async handleConnectButtonClick() {
-        if (this.profileList.val() != "-1") this.manager.setCurrent(this.profileList.val());
         if (this.autologinInterval) {
             clearInterval(this.autologinInterval);
         }
@@ -203,18 +211,35 @@ export class ProfilesWindow {
 
             if (ret.button == ButtonOK) {
                 await this.client.disconnect();
+                if (this.profileList.val() != "-1") this.manager.setCurrent(this.profileList.val());
                 connectProfile();
             }
         }
         else {
+            if (this.profileList.val() != "-1") this.manager.setCurrent(this.profileList.val());
             connectProfile();
         }
     }
 
     private async ImportBaseTriggers() {
-        await $.ajax("./baseUserConfig.json").done((code:any) => {
-            this.manager.getBaseConfig().ImportText(code);
-            Messagebox.Show("Configurazione aggiornata", "I trigger e alias sono stati importati.");
+        await $.ajax("./baseUserConfig.json?rnd="+Math.random()).done((code:any) => {
+            let baseConfig = this.manager.getBaseConfig()
+            let config = baseConfig;
+            if (!this.manager.getCurrent()) {
+                config = this.manager.activeConfig
+            }
+            config.ImportText(code);
+            baseConfig.evtConfigImport.fire({
+                owner: baseConfig,
+                data: baseConfig.cfgVals
+            })
+            Messagebox.ShowWithButtons("Configurazione aggiornata",
+             "I trigger e alias sono stati importati.\nDovresti ora riavviare il client, vuoi farlo?",
+             "Si", "No").then(v => {
+                if (v.button == 1) {
+                    window.location.reload()
+                }
+            });
         });
     }
     private async handleEditButtonClick() {
@@ -225,9 +250,10 @@ export class ProfilesWindow {
 
             N.b.: Gli alias e trigger del profilo base sono acessibili in tutti i profili/personaggi.
                   Si puo' sopprimere i trigger e alias di base con alias e trigger di pattern identico
-                  creati nel profilo privato del personaggio.
+                  creati nel profilo privato del personaggio. Oppure scegliendo di non usarli alla
+                  creazione di un profilo.
 
-            <b>Vuoi importare i trigger e alias raccomandati nel profilo base?</b>
+            <b>Vuoi includere/aggiornare i trigger e alias preimpostati nel profilo base?</b>
             `).then(v => {
                 if (v.button == ButtonOK) {
                     this.ImportBaseTriggers();
@@ -237,7 +263,16 @@ export class ProfilesWindow {
             const prof = this.manager.getProfile(this.profileList.val());
             const oldName = this.profileList.val();
             const oldPass = prof.pass;
-            this.profileWin.show(prof, (p) => {
+            this.profileWin.show(prof, async (p) => {
+                if (!p.layout) {
+                    p.layout = null;
+                    p.windows = [];
+                }
+                if (p.useLayout)
+                    await this.setProfileLayout(p.useLayout, p);
+                else if (p.layout && p.layout.items && p.layout.items.length) {
+                    await this.setProfileLayout(false, p);
+                }
                 if (oldPass != p.pass) {
                     p.pass = Mudslinger.encrypt(p.pass);
                 }
@@ -246,8 +281,9 @@ export class ProfilesWindow {
                 } else {
                     this.manager.saveProfiles();
                 }
+                this.manager.setCurrent(p.name, true)
                 this.load();
-                this.checkBaseProfile(p).then(async v => await this.checkProfileLayout(p));
+                //this.checkBaseProfile(p).then(async v => await this.checkProfileLayout(p));
             });
         }
     }
@@ -260,10 +296,16 @@ export class ProfilesWindow {
 
         const trgs = this.manager.getBaseConfig().get("triggers");
         if (!trgs || !trgs.length || trgs.length < 17) {
-            Messagebox.Question(`Sembra che non hai i trigger base caricati.
-Vuoi caricarli nel profilo base?`).then(async v => {
+            Messagebox.Question(`Sembra che non hai caricati i trigger preimpostati.
+Ti serviranno se vuoi usare la disposizione schermo e il mapper e le funzionalita' automatiche.
+Senza di essi avrai un client puro ma potrai comunque fare dei tuoi trigger e alias.
+Potrai ad ogni modo farlo in futuro premendo il bottone giallo sul profilo base.
+
+Vuoi caricare i trigger e alias preimpostati nel profilo base?`).then(async v => {
                 if (v.button == 1) {
-                    await this.ImportBaseTriggers();
+                    await this.ImportBaseTriggers().then(v => {
+                        this.profileWin.load()
+                    });
                 }
                 resolve();
             })
@@ -287,21 +329,8 @@ Vuoi caricarli nel profilo base?`).then(async v => {
 Ma sei senza layout...
 
 Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
-                    if (v.button == 1) {
-                        await this.layoutManager.loadBaseLayout(p);
-                        if (p.layout) {
-                            this.layoutManager.loadLayout(p.layout);
-                        } else {
-                            this.layoutManager.unload();
-                        }
-                    } else {
-                        this.layoutManager.createLayout(p);
-                        if (p.layout) {
-                            this.layoutManager.loadLayout(p.layout);
-                        } else {
-                            this.layoutManager.unload();
-                        }
-                    }
+                    let loadBase = v.button == 1;
+                    await this.setProfileLayout(loadBase, p);
                     resolve();
                 })
             } else {
@@ -312,6 +341,25 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
         }
         
         return ret;
+    }
+
+    private async setProfileLayout(loadBase: boolean, p: Profile) {
+        if (loadBase) {
+            await this.layoutManager.loadBaseLayout(p);
+            if (p.layout) {
+                this.layoutManager.loadLayout(p.layout);
+            } else {
+                this.layoutManager.unload();
+            }
+        } else {
+            if (!p.layout || !p.layout.items || !p.layout.items.length)
+                this.layoutManager.createLayout(p);
+            if (p.layout) {
+                this.layoutManager.loadLayout(p.layout);
+            } else {
+                this.layoutManager.unload();
+            }
+        }
     }
 
     private async handleDeleteButtonClick() {

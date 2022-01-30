@@ -148,6 +148,12 @@ function copyToPublic() {
     fs.copyFileSync('static/public/index.html', 'dist/public/index.html');
     console.log(`copying file index.html`);
 
+    fs.copyFileSync('src/cacheServiceWorker.js', 'dist/public/cacheServiceWorker.js');
+    console.log(`copying file cacheServiceWorker.js`);
+
+    fs.copyFileSync('src/cacheServiceWorker.js', 'static/public/cacheServiceWorker.js');
+    console.log(`copying file cacheServiceWorker.js`);
+
     const folders = [
         {
         path: './static/public/css',

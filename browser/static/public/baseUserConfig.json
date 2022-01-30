@@ -237,7 +237,7 @@
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
       "id": "lootGold",
-      "value": "toggleClass(\"autoloot\",false);\n\nif (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n\tsend(\"get all.monete corpo\");\n\tsend(\"get all.monete ossa\");\n}\nif (this.onetimeLook) {\n  send(\"look\")\n}\nthis.onetimeLook = false;\n  \nsetTimeout(()=> {\n    toggleClass(\"autoloot\",this.autoloot);\n},500);\n",
+      "value": "toggleClass(\"autoloot\",false);\n\n/*if (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n\tsend(\"get all.monete corpo\");\n\tsend(\"get all.monete ossa\");\n}*/\nif (this.onetimeLook) {\n  send(\"look\")\n}\nthis.onetimeLook = false;\n  \nsetTimeout(()=> {\n    toggleClass(\"autoloot\",this.autoloot);\n},500);\n",
       "regex": true,
       "is_script": true,
       "class": "autoloot",
@@ -527,7 +527,7 @@
     {
       "pattern": "^(.+) ti colpisce con la sua palla di fuoco! - OUCH",
       "id": "",
-      "value": "if (this.TSSpells.toLowerCase().indexOf(\"f\")==-1) {\n  if (!this.isTank() && !this.preventAntispalm) {\n    if (this.inCombat()) {\n      send(\"stand;~stop\");\n    }\n    send(\"fs forced\");\n    this.preventAntispalm = true;\n  }\n}",
+      "value": "if (!this.preventAntispalm) {\n  send(\"if\");\n}",
       "regex": true,
       "is_script": true,
       "class": "antispalm",
@@ -773,13 +773,23 @@
       "class": "",
       "enabled": true,
       "is_prompt": false
+    },
+    {
+      "pattern": "^Ahi ahi, non puoi andare da quella parte...",
+      "id": "",
+      "value": "mapper.failWalk(\"Percorso fallito. Direzione sbagliata.\")",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
     }
   ],
   "aliases": [
     {
       "pattern": "initialize",
       "id": "",
-      "value": "this.scriptVersion = 2\ntoggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\ntoggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\ntoggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\ntoggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\ntoggleClass(\"sorcerer\", !!this.mustMemorize);\ntoggleClass(\"fight\", true);\ntoggleClass(\"autocleric\", this.autocleric>0);\ntoggleClass(\"autoassist\", this.autoassist);\ntoggleClass(\"autobash\", this.autobash);\ntoggleClass(\"autorescue\", this.autorescue);\ntoggleClass(\"autoarmi\", this.autoarmi);\ntoggleClass(\"antispalm\", this.antispalm);\ntoggleClass(\"debug\", false);\ntoggleClass(\"autogroup\", this.autogroup);\ntoggleClass(\"autoloot\", this.autoloot);\ntoggleClass(\"memorize\", false);\ntoggleClass(\"automemorize\", this.automemo);\ntoggleClass(\"selfsanc\", !!this.healtype);\ntoggleClass(\"selfshield\", this.selfshield);\ntoggleClass(\"gtalign\", false);\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nif (this.Immortal) {\n  send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\")\n} else {\n  send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\")\n}\nif (this.setupdone!=this.scriptVersion) {\n  setTimeout(()=>{\n  \tprint(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n  }, 2000);\n}\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = this.ultimoScudo;\nlet ultimaArma = this.ultimaArma;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}",
+      "value": "this.scriptVersion = 2\n\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nif (this.Immortal) {\n  send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\")\n} else {\n  send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\")\n}\nif (this.setupdone!=this.scriptVersion) {\n  setTimeout(()=>{\n  \tprint(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n  }, 2000);\n}\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null; //this.ultimoScudo;\nlet ultimaArma = null; //this.ultimaArma;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nthis.TSRoom = null",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -905,7 +915,7 @@
     {
       "pattern": "preinit",
       "id": "",
-      "value": "function is_touch_device4() {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n}\nthis.Immortal = false;\nthis.roundtime = 4000;\nif (is_touch_device4()) {\n  this.ClickControls=true;\n}\ntoggleClass(\"fixxa\", false);",
+      "value": "function is_touch_device4() {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n}\nthis.Immortal = false;\nthis.roundtime = 4000;\nif (is_touch_device4()) {\n  /*this.ClickControls=true;*/\n}\ntoggleClass(\"fixxa\", false);\ntoggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\ntoggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\ntoggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\ntoggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\ntoggleClass(\"sorcerer\", !!this.mustMemorize);\ntoggleClass(\"fight\", true);\ntoggleClass(\"autocleric\", this.autocleric>0);\ntoggleClass(\"autoassist\", this.autoassist);\ntoggleClass(\"autobash\", this.autobash);\ntoggleClass(\"autorescue\", this.autorescue);\ntoggleClass(\"autoarmi\", this.autoarmi);\ntoggleClass(\"antispalm\", this.antispalm);\ntoggleClass(\"debug\", false);\ntoggleClass(\"autogroup\", this.autogroup);\ntoggleClass(\"autoloot\", this.autoloot);\ntoggleClass(\"memorize\", false);\ntoggleClass(\"automemorize\", this.automemo);\ntoggleClass(\"selfsanc\", !!this.healtype);\ntoggleClass(\"selfshield\", this.selfshield);\ntoggleClass(\"gtalign\", false);\nvar room = this.TSRoom\nthis.TSRoom = null;\nsetTimeout(()=>this.TSRoom=room, 100)\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -975,7 +985,7 @@
     {
       "pattern": "setup",
       "id": "",
-      "value": "this.canBash = (await Messagebox.Question(\"Puoi Bashare?\")).button == 1;\nthis.canStab = (await Messagebox.Question(\"Puoi Stabbare?\")).button == 1;\nthis.mustMemorize = false;\nthis.casttype = (await Messagebox.ShowInput(\"Tipo cast\", \"[C]hierico, [D]ruido, [M]ago, [P]sionico, combinazione o vuoto:\", this.casttype ? this.casttype : \"C\")).result.toUpperCase();\nthis.spellOffensivo = null;\ntoggleClass(\"mage\",false)\ntoggleClass(\"cleric\",false)\ntoggleClass(\"druid\",false)\ntoggleClass(\"psionic\",false)\nthis.mustMind = false;\nif (this.casttype.indexOf(\"C\")!=-1) {\n   toggleClass(\"cleric\",true)\n  this.healtype=\"C\"\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"harm\")).result;\n}\nif (this.casttype.indexOf(\"D\")!=-1) {\n   toggleClass(\"druid\",true)\n  this.healtype=\"D\"\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"meteor s\")).result;\n}\nif (this.casttype.indexOf(\"M\")!=-1) {\n   toggleClass(\"mage\",true)\n  this.mustMemorize = (await Messagebox.Question(\"Puoi castare SENZA memmare?\")).button == 0;\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"disint\")).result;\n}\nif (this.casttype.indexOf(\"P\")!=-1) {\n   toggleClass(\"psionic\",true)\n  this.mustMind = true;\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"cryo\")).result;\n}\ntoggleClass(\"sorcerer\",this.mustMemorize)\nthis.borsa = (await Messagebox.ShowInput(\"Borsa\", \"Inserisci keyword della borsa:\", this.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio)).result;\nthis.armaBlunt = (await Messagebox.ShowInput(\"Arma Blunt\", \"Inserisci keyword dell'arma blunt:\", this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio)).result;\nthis.armaSlash = (await Messagebox.ShowInput(\"Arma Slash\", \"Inserisci keyword dell'arma slash:\", this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio)).result;\nthis.armaPierce = (await Messagebox.ShowInput(\"Arma Pierce\", \"Inserisci keyword dell'arma pierce (o vuoto):\", this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio)).result;\nthis.numeroAttacchi = (await Messagebox.ShowInput(\"Numero attacchi\", \"Quanti attacchi fai (senza dual wield):\", this.numeroAttacchi ? this.numeroAttacchi : \"4\")).result;\nthis.ordineArmi = (await Messagebox.ShowInput(\"Ordine cambio armi\", \"1=blunt,pierce,slash 2:blunt,slash,pierce\", this.ordineArmi ? this.ordineArmi : \"2\")).result;\nthis.armaPrimaria = (await Messagebox.ShowInput(\"Arma Primaria\", \"'blunt', 'slash' o 'pierce' (o vuoto):\", this.armaPrimaria ? this.armaPrimaria : \"blunt\")).result;\nthis.zoneDaNonRimettereArma = (await Messagebox.ShowInput(\"Dove non rimetti arma primaria\", \"Vnum separati da virgola\", this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\")).result;\nthis.armaExtra = (await Messagebox.ShowInput(\"Arma Extra\", \"Inserisci keyword dell'arma extra (o vuoto):\", this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio)).result;\nthis.scudoCold = (await Messagebox.ShowInput(\"Scudo immu cold\", \"Inserisci keyword dello scudo cold (o vuoto):\", this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio)).result;\nthis.scudoAcid = (await Messagebox.ShowInput(\"Scudo immu acid\", \"Inserisci keyword dello scudo acid (o vuoto):\", this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio)).result;\nthis.scudoEle = (await Messagebox.ShowInput(\"Scudo immu elettrico\", \"Inserisci keyword dello scudo elettrico (o vuoto):\", this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio)).result;\nthis.throwObject = (await Messagebox.ShowInput(\"Shuriken\", \"Inserisci keyword dell'oggetto che usi per tirare:\", this.throwObject ? this.throwObject : \"shuriken\")).result;\nthis.holdItem = (await Messagebox.ShowInput(\"Hold\", \"Inserisci keyword dell'oggetto che tieni in mano:\", this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio)).result;\nthis.oggettoTrueSight = (await Messagebox.ShowInput(\"True sight\", \"Inserisci keyword dell'oggetto ti da' True Sight:\", this.oggettoTrueSight ? this.oggettoTrueSight : \"visiera-ed\"+this.TSPersonaggio)).result;\nthis.pgTitle = (await Messagebox.ShowInput(\"Title\", \"Il tuo title:\", this.pgTitle ? this.pgTitle : \".\")).result;\nlet colori = this.colori ? this.colori.join(\",\") : \"$c0009\";\ncolori = (await Messagebox.ShowInput(\"Colori\", \"I colori con i quali parli separati da virgola (ultimo = resto frase):\", colori ? colori : \"$c0009\")).result;\nthis.colori = colori.split(\",\")\nif ((await Messagebox.Question(\"Vuoi giocare in modalita' compatta?\")).button == 1) {\n  toggleTrigger(\"gagprompt\",true);\n  send(\"compact enable\")\n} else {\n  toggleTrigger(\"gagprompt\",false);\n  send(\"compact disable\")\n}\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}",
+      "value": "this.canBash = (await Messagebox.Question(\"Puoi Bashare?\")).button == 1;\nthis.canStab = (await Messagebox.Question(\"Puoi Stabbare?\")).button == 1;\nthis.mustMemorize = false;\nthis.casttype = (await Messagebox.ShowInput(\"Tipo cast\", \"[C]hierico, [D]ruido, [M]ago, [P]sionico, combinazione o vuoto:\", this.casttype ? this.casttype : \"C\")).result.toUpperCase();\nthis.spellOffensivo = null;\ntoggleClass(\"mage\",false)\ntoggleClass(\"cleric\",false)\ntoggleClass(\"druid\",false)\ntoggleClass(\"psionic\",false)\nthis.mustMind = false;\nif (this.casttype.indexOf(\"C\")!=-1) {\n   toggleClass(\"cleric\",true)\n  this.healtype=\"C\"\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"harm\")).result;\n}\nif (this.casttype.indexOf(\"D\")!=-1) {\n   toggleClass(\"druid\",true)\n  this.healtype=\"D\"\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"meteor s\")).result;\n}\nif (this.casttype.indexOf(\"M\")!=-1) {\n   toggleClass(\"mage\",true)\n  this.mustMemorize = (await Messagebox.Question(\"Puoi castare SENZA memmare?\")).button == 0;\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"disint\")).result;\n}\nif (this.casttype.indexOf(\"P\")!=-1) {\n   toggleClass(\"psionic\",true)\n  this.mustMind = true;\n  this.spellOffensivo = (await Messagebox.ShowInput(\"Spell offensivo\", \"Dammi lo spell offensivo preferito (o vuoto):\", this.spellOffensivo ? this.spellOffensivo : \"cryo\")).result;\n}\ntoggleClass(\"sorcerer\",this.mustMemorize)\nthis.borsa = (await Messagebox.ShowInput(\"Borsa\", \"Inserisci keyword della borsa:\", this.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio)).result;\nthis.armaBlunt = (await Messagebox.ShowInput(\"Arma Blunt\", \"Inserisci keyword dell'arma blunt:\", this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio)).result;\nthis.armaSlash = (await Messagebox.ShowInput(\"Arma Slash\", \"Inserisci keyword dell'arma slash:\", this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio)).result;\nthis.armaPierce = (await Messagebox.ShowInput(\"Arma Pierce\", \"Inserisci keyword dell'arma pierce (o vuoto):\", this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio)).result;\nthis.numeroAttacchi = (await Messagebox.ShowInput(\"Numero attacchi\", \"Quanti attacchi fai (senza dual wield):\", this.numeroAttacchi ? this.numeroAttacchi : \"4\")).result;\nthis.ordineArmi = (await Messagebox.ShowInput(\"Ordine cambio armi\", \"1=blunt,pierce,slash 2:blunt,slash,pierce\", this.ordineArmi ? this.ordineArmi : \"2\")).result;\nthis.armaPrimaria = (await Messagebox.ShowInput(\"Arma Primaria\", \"'blunt', 'slash' o 'pierce' (o vuoto):\", this.armaPrimaria ? this.armaPrimaria : \"blunt\")).result;\nthis.zoneDaNonRimettereArma = (await Messagebox.ShowInput(\"Dove non rimetti arma primaria\", \"Vnum separati da virgola\", this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\")).result;\nthis.armaExtra = (await Messagebox.ShowInput(\"Arma Extra\", \"Inserisci keyword dell'arma extra (o vuoto):\", this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio)).result;\nthis.scudoCold = (await Messagebox.ShowInput(\"Scudo immu cold\", \"Inserisci keyword dello scudo cold (o vuoto):\", this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio)).result;\nthis.scudoAcid = (await Messagebox.ShowInput(\"Scudo immu acid\", \"Inserisci keyword dello scudo acid (o vuoto):\", this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio)).result;\nthis.scudoEle = (await Messagebox.ShowInput(\"Scudo immu elettrico\", \"Inserisci keyword dello scudo elettrico (o vuoto):\", this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio)).result;\nthis.scudoFire = (await Messagebox.ShowInput(\"Scudo immu fire\", \"Inserisci keyword dello scudo fire (o vuoto):\", this.scudoFire ? this.scudoFire : \"scudo-ele-ed\"+this.TSPersonaggio)).result;\nthis.throwObject = (await Messagebox.ShowInput(\"Shuriken\", \"Inserisci keyword dell'oggetto che usi per tirare:\", this.throwObject ? this.throwObject : \"shuriken\")).result;\nthis.holdItem = (await Messagebox.ShowInput(\"Hold\", \"Inserisci keyword dell'oggetto che tieni in mano:\", this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio)).result;\nthis.oggettoTrueSight = (await Messagebox.ShowInput(\"True sight\", \"Inserisci keyword dell'oggetto ti da' True Sight:\", this.oggettoTrueSight ? this.oggettoTrueSight : \"visiera-ed\"+this.TSPersonaggio)).result;\nthis.pgTitle = (await Messagebox.ShowInput(\"Title\", \"Il tuo title:\", this.pgTitle ? this.pgTitle : \".\")).result;\nlet colori = this.colori ? this.colori.join(\",\") : \"$c0009\";\ncolori = (await Messagebox.ShowInput(\"Colori\", \"I colori con i quali parli separati da virgola (ultimo = resto frase):\", colori ? colori : \"$c0009\")).result;\nthis.colori = colori.split(\",\")\nif ((await Messagebox.Question(\"Vuoi giocare in modalita' compatta?\")).button == 1) {\n  toggleTrigger(\"gagprompt\",true);\n  send(\"compact enable\")\n} else {\n  toggleTrigger(\"gagprompt\",false);\n  send(\"compact disable\")\n}\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1055,7 +1065,7 @@
     {
       "pattern": "ia",
       "id": "",
-      "value": "if (!this.scudoAcid || this.ultimoScudo==this.scudoAcid) return;\nsend(`rem ${this.borsa}`);\nif (this.scudoAcid) send(`get ${this.scudoAcid} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoAcid}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = true;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ACID\";\nthis.ultimoScudo = this.scudoAcid;",
+      "value": "if (!this.scudoAcid || this.ultimoScudo==this.scudoAcid) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoAcid) send(`get ${this.scudoAcid} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoAcid}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = true;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ACID\";\nthis.ultimoScudo = this.scudoAcid;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1065,7 +1075,7 @@
     {
       "pattern": "ic",
       "id": "",
-      "value": "if (!this.scudoCold || this.ultimoScudo==this.scudoCold) return;\nsend(`rem ${this.borsa}`);\nif (this.scudoCold) send(`get ${this.scudoCold} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoCold}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = true;\nthis.usiImmuFire = false;\nthis.Immu = \"COLD\";\nthis.ultimoScudo = this.scudoCold;",
+      "value": "if (!this.scudoCold || this.ultimoScudo==this.scudoCold) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoCold) send(`get ${this.scudoCold} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  send(`rem 11`)\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoCold}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = true;\nthis.usiImmuFire = false;\nthis.Immu = \"COLD\";\nthis.ultimoScudo = this.scudoCold;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1075,7 +1085,7 @@
     {
       "pattern": "ie",
       "id": "",
-      "value": "if (!this.scudoEle || this.ultimoScudo==this.scudoEle) return;\nsend(`rem ${this.borsa}`);\nif (this.scudoEle) send(`get ${this.scudoEle} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoEle}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiImmuEle = true;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ELE\";\nthis.ultimoScudo = this.scudoEle;",
+      "value": "if (!this.scudoEle || this.ultimoScudo==this.scudoEle) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoEle) send(`get ${this.scudoEle} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n    send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoEle}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = true;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ELE\";\nthis.ultimoScudo = this.scudoEle;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1225,7 +1235,7 @@
     {
       "pattern": "blunt",
       "id": "",
-      "value": "if (!this.armaBlunt || this.ultimaArma == this.armaBlunt) return;\nsend(`rem ${this.borsa}`);\nsend(`get ${this.armaBlunt} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n}\nsend(`~wield ${this.armaBlunt}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = true;\nthis.usiPierce = false;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaBlunt;",
+      "value": "if (!this.armaBlunt || this.ultimaArma == this.armaBlunt) return;\n//send(`rem ${this.borsa}`);\nsend(`get ${this.armaBlunt} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n}\nsend(`~wield ${this.armaBlunt}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n}\n//send(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = true;\nthis.usiPierce = false;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaBlunt;",
       "regex": false,
       "is_script": true,
       "class": "armi",
@@ -1235,7 +1245,7 @@
     {
       "pattern": "pierce",
       "id": "",
-      "value": "if (!this.armaPierce || this.ultimaArma == this.armaPierce) return;\nsend(`rem ${this.borsa}`);\nsend(`get ${this.armaPierce} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaPierce}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = false;\nthis.usiPierce = true;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaPierce;",
+      "value": "if (!this.armaPierce || this.ultimaArma == this.armaPierce) return;\n//send(`rem ${this.borsa}`);\nsend(`get ${this.armaPierce} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaPierce}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n}\n//send(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = false;\nthis.usiPierce = true;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaPierce;",
       "regex": false,
       "is_script": true,
       "class": "armi",
@@ -1245,7 +1255,7 @@
     {
       "pattern": "slash",
       "id": "",
-      "value": "if (!this.armaSlash || this.ultimaArma == this.armaSlash) return;\nsend(`rem ${this.borsa}`);\nsend(`get ${this.armaSlash} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaSlash}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiSlash = true;\nthis.usiBlunt = false;\nthis.usiPierce = false;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaSlash;",
+      "value": "if (!this.armaSlash || this.ultimaArma == this.armaSlash) return;\n//send(`rem ${this.borsa}`);\nsend(`get ${this.armaSlash} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n  if (this.armaExtra) send(`rem ${this.armaExtra}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaSlash}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaExtra) send(`put ${this.armaExtra} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n}\n//send(`wear ${this.borsa}`);\nthis.usiSlash = true;\nthis.usiBlunt = false;\nthis.usiPierce = false;\nthis.usiExtra = false;\nthis.ultimaArma = this.armaSlash;",
       "regex": false,
       "is_script": true,
       "class": "armi",
@@ -1635,7 +1645,7 @@
     {
       "pattern": "extra",
       "id": "",
-      "value": "if (!this.armaExtra || this.ultimaArma == this.armaExtra) return;\nsend(`rem ${this.borsa}`);\nsend(`get ${this.armaExtra} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaExtra}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = false;\nthis.usiPierce = false;\nthis.usiExtra = true;\nthis.ultimaArma = this.armaExtra;",
+      "value": "if (!this.armaExtra || this.ultimaArma == this.armaExtra) return;\n//send(`rem ${this.borsa}`);\nsend(`get ${this.armaExtra} ${this.borsa}`);\nif (this.ultimaArma) {\n  send(`rem ${this.ultimaArma}`);\n} else {\n  if (this.armaPierce) send(`rem ${this.armaPierce}`);\n  if (this.armaSlash) send(`rem ${this.armaSlash}`);\n  if (this.armaBlunt) send(`rem ${this.armaBlunt}`);\n}\nsend(`~wield ${this.armaExtra}`);\nif (this.ultimaArma) {\n  send(`put ${this.ultimaArma} ${this.borsa}`);\n} else {\n  if (this.armaSlash) send(`put ${this.armaSlash} ${this.borsa}`);\n  if (this.armaBlunt) send(`put ${this.armaBlunt} ${this.borsa}`);\n  if (this.armaPierce) send(`put ${this.armaPierce} ${this.borsa}`);\n}\n//send(`wear ${this.borsa}`);\nthis.usiSlash = false;\nthis.usiBlunt = false;\nthis.usiPierce = false;\nthis.usiExtra = true;\nthis.ultimaArma = this.armaExtra;",
       "regex": false,
       "is_script": true,
       "class": "armi",
@@ -1765,7 +1775,7 @@
     {
       "pattern": "if",
       "id": "",
-      "value": "if (!this.scudoFire || this.ultimoScudo==this.scudoFire) return;\nsend(`rem ${this.borsa}`);\nif (this.scudoFire) send(`get ${this.scudoFire} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n}\nsend(`wear ${this.scudoFire}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n}\nsend(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = true;\nthis.Immu = \"FIRE\";\nthis.ultimoScudo = this.scudoFire;",
+      "value": "if (!this.scudoFire || this.ultimoScudo==this.scudoFire) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoFire) send(`get ${this.scudoFire} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n    send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n}\nsend(`wear ${this.scudoFire}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = true;\nthis.Immu = \"FIRE\";\nthis.ultimoScudo = this.scudoFire;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -2099,6 +2109,76 @@
       "regex": false,
       "is_script": true,
       "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "vai",
+      "id": "",
+      "value": "if (!isNaN($1))\n  mapper.walkToVnum($1);\nelse\n  mapper.walkToRoomShortName($1);",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "teleport",
+      "id": "",
+      "value": "print(\"Aspetto teleport: \"+$1)",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "dig",
+      "id": "",
+      "value": "rem @ultimaArma\ngb @armaDigCut\n~wield @armaDigCut\n~dig $1\nrem @armaDigCut\n~wield @ultimaArma\npb @armaDigCut",
+      "regex": false,
+      "is_script": false,
+      "class": "util",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "cut",
+      "id": "",
+      "value": "rem @ultimaArma\ngb @armaDigCut\n~wield @armaDigCut\n~cut $1\nrem @armaDigCut\n~wield @ultimaArma\npb @armaDigCut",
+      "regex": false,
+      "is_script": false,
+      "class": "util",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "room",
+      "id": "",
+      "value": "var room = null;\nif ($1) {\nroom = mapper.getRoomById($1)  \n} else\nroom = mapper.getSelected()\n\nif (room) {\n  if (this.debug) {\n  \tprint(JSON.stringify(room, null, 2))\n  } else {\n  \tprint(\"Ti trovi in #\" + room.id + \": \" + room.name)\n  }\n} else {\nprint(\"Nessuna room selezionata sul mapper.\")\n}",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "cerca",
+      "id": "",
+      "value": "mapper.search($1)",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "roomedit",
+      "id": "",
+      "value": "var room = null;\nif ($1) {\nroom = mapper.getRoomById($1)  \n} else\nroom = mapper.getSelected()\n\nif (room) {\n  Messagebox.ShowInput(\"Edit Room\",\n                   \"Modifica la room\",\n                   JSON.stringify(room, null, 2), true).then(r=>{\n  \tif (r.button == 1 && r.result) {\n      const newRoom = JSON.parse(r.result)\n      mapper.setRoomData(room.id, newRoom)\n    }\n  })\n}",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
       "enabled": true,
       "is_prompt": false
     }

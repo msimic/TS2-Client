@@ -1,6 +1,7 @@
-import { OutWinBase, ConfigIf } from "./outWinBase";
+import { OutWinBase } from "./outWinBase";
 import { TriggerManager } from "./triggerManager";
 import * as Util from "./util";
+import { ConfigIf } from "./util";
 
 export class OutputWin extends OutWinBase {
     private outer:JQuery;
@@ -198,6 +199,7 @@ export class OutputWin extends OutWinBase {
             + source + "<br>"
             + lineno + "<br>"
             + colno + "<br>"
+            + error && error.stack ? error.stack : ""
             + "]]"
             + "<br>"
             + "</span>", true
@@ -228,8 +230,8 @@ export class OutputWin extends OutWinBase {
             "<span style=\"color:red\"><br/>"
             + "[[Errore Script (" + data.owner + "):<br>"
             + data.err.toString() + "<br>"
-            /*+ "<br>"
-            + stack + "<br>"*/
+            + "<br>"
+            + data.err.stack + "<br>"
             + "]]"
             + "<br>"
             + "</span>", true

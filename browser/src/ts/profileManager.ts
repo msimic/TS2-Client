@@ -13,6 +13,8 @@ export class Profile {
     public autologin: boolean;
     public char:string;
     public pass:string;
+    public baseTriggers: boolean;
+    public useLayout: boolean;
     public windows:WindowData[];
     public layout?:LayoutDefinition;
 }
@@ -93,12 +95,12 @@ export class ProfileManager {
         return profiles;
     }
 
-    public setCurrent(name:string) {
-        if (this._current != name) {
+    public setCurrent(name:string, force?:boolean) {
+        if (this._current != name || force) {
             this._current = name;
             this.lastProfile = name;
             this.saveProfiles();
-            this.activeConfig.init(this.getCurrentConfig().saveConfig(), this.activeChanged);
+            this.activeConfig.init(name, this.getCurrentConfig().saveConfig(), this.activeChanged);
             this.evtProfileChanged.fire({current: name});
             this.setTitle();
         }
@@ -118,7 +120,7 @@ export class ProfileManager {
     
     private createConfig(str:string, val:string):UserConfig {
         const cfg = new UserConfig();
-        cfg.init(str,this.saveConfigToStorage(val));
+        cfg.init(val, str,this.saveConfigToStorage(val));
         Mudslinger.setDefaults(cfg);
         return cfg;
     }
@@ -135,7 +137,7 @@ export class ProfileManager {
         var cfg = this.getConfigFor(oldname);
         if (cfg) {
             const cfgValues = cfg.saveConfig();
-            cfg.init(cfgValues,this.saveConfigToStorage(profile.name));
+            cfg.init(profile.name, cfgValues,this.saveConfigToStorage(profile.name));
         } else  {
             cfg = this.createConfig(null, profile.name);
         }
@@ -168,7 +170,7 @@ export class ProfileManager {
     }
 
     public getConfigFor(name:string):UserConfig {
-        if (!name) return this.baseConfig;
+        if (!name||name.length==0) return this.baseConfig;
         return this.configs.get(name);
     }
 

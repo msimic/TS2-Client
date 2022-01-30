@@ -1,11 +1,12 @@
 import * as aliasManager from "../src/ts/aliasManager";
 import { TrigAlItem } from "../src/ts/trigAlEditBase";
+import { ConfigIf } from "../src/ts/util";
 
 export function test() {
 
 QUnit.module("aliasManager");
 
-let testConfig = (aliases: TrigAlItem[]): aliasManager.ConfigIf => {
+let testConfig = (aliases: TrigAlItem[]): ConfigIf => {
     
     let aliases_ = aliases;
     let enabled_: boolean;

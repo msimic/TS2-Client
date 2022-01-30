@@ -6,7 +6,7 @@ import {Md5} from 'ts-md5/dist/md5';
 import * as aesjs from "aes-js";
 import { AliasEditor } from "./aliasEditor";
 import { AliasManager } from "./aliasManager";
-import { CommandInput } from "./commandInput";
+import { CommandInput, ScrollType } from "./commandInput";
 import { JsScript, EvtScriptEmitCmd, EvtScriptEmitPrint, EvtScriptEmitEvalError, EvtScriptEmitError, EvtScriptEmitCls, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { JsScriptWin } from "./jsScriptWin";
 import { MenuBar } from "./menuBar";
@@ -33,7 +33,9 @@ import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
 import { Messagebox } from "./messagebox";
 import { LayoutManager } from "./layoutManager";
-
+import { MapperWindow } from "./mapperWindow";
+import { Mapper } from "./mapper";
+import {  } from './cacheServiceWorker'
 
 interface ConnectionTarget {
     host: string,
@@ -42,11 +44,13 @@ interface ConnectionTarget {
 
 export class Client {
     private aliasEditor: AliasEditor;
+    private baseAliasEditor: AliasEditor;
     private aliasManager: AliasManager;
     private commandInput: CommandInput;
     private jsScript: JsScript;
     private jsScriptWin: JsScriptWin;
     private profilesWin: ProfilesWindow;
+    private mapperWin: MapperWindow;
     private profileWin:ProfileWindow;
     private menuBar: MenuBar;
     private mxp: Mxp;
@@ -54,11 +58,13 @@ export class Client {
     private outputWin: OutputWin;
     private socket: Socket;
     private triggerEditor: TriggerEditor;
+    private baseTriggerEditor: TriggerEditor;
     private triggerManager: TriggerManager;
     private aboutWin: AboutWin;
     private connectWin: ConnectWin;
     private contactWin: ContactWin;
     private classManager: ClassManager;
+    private mapper: Mapper;
     private serverEcho = false;
 
     private _connected = false;
@@ -94,7 +100,9 @@ export class Client {
                 this.connectionTarget.port
             );
         } else {
-            this.connectWin.show();
+            const cp = this.profileManager.getProfile(this.profileManager.getCurrent());
+            if (cp) this.connect({host: cp.host, port: Number(cp.port)});
+            else  this.connect({host: null, port: null});
         }
     }
 
@@ -103,7 +111,17 @@ export class Client {
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
         (<any>window)["Messagebox"] = Messagebox;
         this.aboutWin = new AboutWin();
-        this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig);
+        this.mapper = new Mapper();
+        setTimeout(()=>this.mapper.loadVersion().then(v => {
+            const version = v;
+            let vn = Math.random()
+            if (v.version != 0) {
+                vn = v.version
+            }
+            return this.mapper.load('mapperData.json?v='+vn)
+        }), 2000);
+        this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
+        this.mapper.setScript(this.jsScript)
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
         this.variableEditor = new VariablesEditor(this.jsScript);
@@ -112,12 +130,18 @@ export class Client {
         this.triggerManager = new TriggerManager(
             this.jsScript, this.profileManager.activeConfig, baseConfig, this.classManager, profileManager);
         this.aliasManager = new AliasManager(
-            this.jsScript, this.profileManager.activeConfig, baseConfig, this.classManager);
+            this.jsScript, this.profileManager.activeConfig, baseConfig, this.classManager, profileManager);
         this.jsScript.setClassManager(this.classManager);
         this.jsScript.setTriggerManager(this.triggerManager);
         this.jsScript.setAliasManager(this.aliasManager);
 
         this.commandInput = new CommandInput(this.aliasManager, this.profileManager.activeConfig);
+        this.commandInput.EvtEmitCommandsAboutToArrive.handle(v=>{
+            this.mapper.clearManualSteps()
+        })
+        this.commandInput.EvtEmitPreparseCommands.handle((d)=>{
+            d.callback(this.mapper.parseCommandsForDirection(d.commands))
+        })
 
         this.outputWin = new OutputWin(this.profileManager.activeConfig, this.triggerManager);
 
@@ -126,6 +150,12 @@ export class Client {
         this.eventsEditor = new EventsEditor(this.jsScript);
         this.triggerEditor = new TriggerEditor(this.triggerManager);
 
+        const baseAliasManager = new AliasManager(
+            null, baseConfig, null, this.classManager, profileManager);
+        this.baseAliasEditor = new AliasEditor(baseAliasManager, "Alias preimpostati (abbi cautela)");
+        const baseTriggerManager = new TriggerManager(
+            null, baseConfig, null, this.classManager, profileManager);
+        this.baseTriggerEditor = new TriggerEditor(baseTriggerManager, "Trigger preimpostati (abbi cautela)");
         
         this.windowManager = new WindowManager(this.profileManager);
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
@@ -134,11 +164,13 @@ export class Client {
         this.jsScript.setOutputManager(this.outputManager);
         this.layoutManager = new LayoutManager(this.profileManager, this.jsScript, this.commandInput);
         this.profilesWin = new ProfilesWindow(this.profileManager,this.layoutManager, this.profileWin, this);
+
         this.windowManager.setLayoutManager(this.layoutManager);
+        this.windowManager.setMapper(this.mapper);
         this.windowManager.triggerChanged();
 
         this.connectWin = new ConnectWin(this.socket);
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.jsScript);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
@@ -267,14 +299,28 @@ export class Client {
             this.socket.sendCmd(data.command);
         });
 
-        this.commandInput.EvtEmitScroll.handle((force:boolean) => {
-            this.outputWin.scrollBottom(force);
+        this.commandInput.EvtEmitScroll.handle((type:ScrollType) => {
+            switch (type) {
+                case ScrollType.Bottom:
+                this.outputWin.scrollBottom(true);
+                break;
+                case ScrollType.PageUp:
+                this.outputWin.ScrollPageUp();
+                break;
+                case ScrollType.PageDown:
+                this.outputWin.ScrollPageDown();
+                break;
+                case ScrollType.Top:
+                this.outputWin.ScrollTop();
+                break;
+            }
+            
         });
 
         this.commandInput.EvtEmitAliasCmds.handle((data) => {
             this.outputWin.handleAliasSendCommands(data.orig, data.commands)
             for (let cmd of data.commands) {
-                this.commandInput.execCommand(cmd, true);
+                this.commandInput.execCommand(cmd, cmd, true);
             }
         });
 
@@ -297,22 +343,26 @@ export class Client {
             const lines = linesToArray(data.message)
             //console.log(lines)
             for (const line of lines) {
-                this.commandInput.execCommand(line.trim(), true);    
+                this.commandInput.execCommand(line.trim(), line.trim(), true);    
             }
             //this.socket.sendCmd(data);
         });
 
-        EvtScriptEmitPrint.handle((data:{owner:string, message:string, window?:string}) => {
+        EvtScriptEmitPrint.handle((data:{owner:string, message:string, window?:string, raw?:any}) => {
             if (data.window) {
                 this.outputManager.sendToWindow(data.window, data.message, data.message, true);
             } else {
-                const msg = "<span style=\"color:orange\">" /*+ owner + ": "*/
-                + raw(data.message)
-                + "<br>"
-                + "</span>"
-                //this.outputWin.handleScriptPrint(data.owner, data.message);
-                this.outputManager.handlePreformatted(msg);
-                this.outputWin.scrollBottom(false);
+                if (!data.raw) {
+                    const msg = "<span style=\"color:orange\">"
+                    + raw(data.message)
+                    + "<br>"
+                    + "</span>"
+                    //this.outputWin.handleScriptPrint(data.owner, data.message);
+                    this.outputManager.handlePreformatted(msg);
+                    this.outputWin.scrollBottom(false);
+                } else {
+                    this.outputWin.append(data.raw, true)
+                }
             }
         });
 
@@ -336,7 +386,7 @@ export class Client {
         this.triggerManager.EvtEmitTriggerCmds.handle((data: {orig:string, cmds:string[]}) => {
             this.outputWin.handleTriggerSendCommands(data.orig, data.cmds);
             for (let cmd of data.cmds) {
-                this.commandInput.execCommand(cmd, true);
+                this.commandInput.execCommand(cmd, cmd, true);
             }
             /*for (let cmd of data) {
                 this.socket.sendCmd(cmd);
@@ -424,6 +474,28 @@ function makeCbLocalConfigSave(): (val: string) => string {
     };
 }
 
+export async function setupWorkers() {
+
+    if ('serviceWorker' in navigator) {
+        return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
+          // Registration was successful. Now, check to see whether the service worker is controlling the page.
+          if (navigator.serviceWorker.controller) {
+            // If .controller is set, then this page is being actively controlled by the service worker.
+            console.log('Cache service worker installed.');
+          } else {
+            // If .controller isn't set, then prompt the user to reload the page so that the service worker can take
+            // control. Until that happens, the service worker's fetch handler won't be used.
+            console.log('Cache service worker installed: Please reload this page to allow the service worker to handle network operations.');
+          }
+        }).catch(function(error) {
+          console.log("Error installing cache service worker.")
+        });
+      } else {
+        console.log("No support for cache service worker.")
+      }
+      return Promise.resolve(null);
+}
+
 export namespace Mudslinger {
     export let client: Client;
     export let baseConfig = new UserConfig();
@@ -474,7 +546,7 @@ export namespace Mudslinger {
         let connectionTarget: ConnectionTarget;
         let params = new URLSearchParams(location.search);
 
-        baseConfig.init(localStorage.getItem("userConfig"), makeCbLocalConfigSave());
+        baseConfig.init("", localStorage.getItem("userConfig"), makeCbLocalConfigSave());
         setDefaults(baseConfig);
         profileManager = new ProfileManager(baseConfig);
         
@@ -581,6 +653,7 @@ export namespace Mudslinger {
     }
 
     export async function init() {
+        
         let componentsFetched = async (components:component[]) => {
             let hashStr = "";
             for (const iterator of components) {

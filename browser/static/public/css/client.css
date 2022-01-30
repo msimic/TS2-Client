@@ -120,7 +120,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     background-color: rgb(21 106 167 / 77%);
   }
   #column-right-bottom {
-    /*flex:1; */
+    flex:1;
     display: flex;   
     position: relative;
     border: 0 !important;
@@ -342,7 +342,24 @@ body {
     padding-bottom: 3px;
     padding-top: 5px;
     position: relative;
+    font-family: monospace;
+    line-height: normal;
 }
+
+#profile-window input {
+    vertical-align: middle;
+}
+#profile-window label {
+    vertical-align: middle;
+    margin: 2px;
+}
+#content-wrapper .jqx-window-header {
+    padding: 2px !important;
+}
+#content-wrapper .jqx-widget-content {
+    font-size: 10px !important;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 #row-center::-webkit-scrollbar {
   display: none;
@@ -443,6 +460,7 @@ body {
     margin-right: 3px;
 	display: block;
 	min-height: 20px;
+    max-height: 200px;
     flex: auto;
     margin-top: 3px;
     margin-bottom: 3px;
@@ -469,7 +487,7 @@ body {
 }
 
 .messageboxbuttons {
-    margin-top: 5px;
+    padding-top: 5px;
     text-align: center;
 }
 
@@ -609,6 +627,10 @@ body {
     white-space: nowrap;
 }
 
+select[invalid] {
+    color: gray; 
+}
+
 #menuBar {
 	max-width: calc(100% - 150px) !important;
 }
@@ -627,6 +649,8 @@ body {
 }
 .ui-control-content {
     white-space: nowrap;
+    font-size: 11px;
+    overflow: hidden;
 }
 input,textarea,button {
     outline:none;
@@ -867,13 +891,18 @@ input:focus,textarea:focus,button:focus {
     background-image: linear-gradient(#dad7d7 0%, #cec7c7 100%) !important;
     color: #eae7e7;
 }
-
+#currentTime {
+    padding: 2px;
+    position: absolute;
+    right: 2px;
+    top: 2px;
+}
 #content-wrapper button {
     position: static;
 	font-family: Consolas, monospace;
     -webkit-transition: color 300ms ease, background-color 300ms ease, opacity 300ms ease;
-    color: #1d1d1d;
-    background-color: #b7b7b7;
+    color: #959595;
+    background-color: rgb(97,97,117);
     display: inline-block;
     z-index: 100;
     text-decoration: none;
@@ -889,8 +918,8 @@ input:focus,textarea:focus,button:focus {
     /*transition: color 300ms ease, background-color 300ms ease, opacity 300ms ease;*/
 }
 #content-wrapper button:hover {
-  background-image: linear-gradient(#b7b7b7 0%, #999999 100%) !important;
-  /*color: black;*/
+  background-image: linear-gradient(#a4b6e7 0%, #999999 100%) !important;
+  color: black !important;
   /*font-weight: bolder;*/
   /*transform: scale(1.05);*/
     box-shadow: -5px -5px 5px 2px rgba(255, 255, 255, 0.2) inset, 
@@ -1117,4 +1146,195 @@ ul.select {
 
 #content-wrapper .jqx-window-dock-button-background {
     display: block;
+}
+
+.expand {
+    flex-direction: column;
+    display: flex !important;
+    position: relative !important;
+    width: auto !important;
+    height: 100%;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.toprow {
+    display: flex;
+    position: relative;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-direction: column;
+}
+
+.bottomrow {
+    display: flex;
+    position: relative;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-direction: column;
+    min-height: 20px;
+}
+
+.midrow {
+    flex: 1 1 auto;
+    display: flex;
+    position: relative;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.win-Mapper .jqx-menu-item-top {
+    padding: 2px 4px !important;
+    font-size: 10px !important;
+}
+
+.win-Mapper .bottomrow {
+    border: 1px solid transparent;
+    box-shadow: 0px 0px 1px 0px rgb(21 106 167 / 77%), -1px -1px 1px 0px rgb(21 106 167 / 77%) inset;
+    border-radius: 2px;
+}
+.win-Mapper .menuBar {
+    min-height: 20px;
+    position: relative;
+}
+
+.win-Mapper .jqx-menu ul {
+    height: 20px !important;
+    padding: 0 !important;
+}
+
+.jqx-menu-item {
+    padding: 2px 4px 2px 4px !important;
+    margin: 1px !important;
+    font-size: 11px !important;
+}
+
+#content-wrapper #win-Mapper {
+    min-width: 350px !important;
+    min-height: 450px !important;
+}
+#content-wrapper #win-Mapper .menuBar li {
+    color: gray !important;
+}
+
+#content-wrapper #win-Mapper .menuBar li:hover {
+    color: black !important;
+}
+
+#mapmessage {
+    padding: 2px;
+    font-size: 10px;
+    color: black;
+}
+#mapcanvas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  image-rendering: crisp-edges;
+}
+
+#content-wrapper #mapmessage {
+    color: yellow !important;
+}
+
+#zonelist {
+    width: 100%;
+    height: 24px;
+    display: inline-block;
+    background-color: transparent;
+    color: black;
+    margin: 0;
+    padding: 0;
+    font-size: 10px;
+    outline: 0 !important;
+    box-sizing: border-box;
+}
+
+#content-wrapper #zonelist {
+    border: 0px solid transparent !important;
+    border-right: 5px solid transparent !important;
+    background-color: transparent;
+    color: lightgray;
+}
+
+#content-wrapper option {
+    background: rgb(202, 202, 202);
+    color: black;
+}
+
+#zonemessage {
+    padding: 0;
+    margin: 0;
+    font-size: 10px;
+    color: black;
+}
+
+#mappertoolbar {
+    position: absolute;
+    width: auto;
+    right: 0;
+    background-color: transparent;
+    top: 0;
+    bottom: 0;
+    padding-right: 5px;
+    margin-right: 2px;
+}
+
+.maptoolbarbutton {
+    width: 18px;
+    height: 18px;
+    padding: 2px !important;
+    margin: 0 !important;
+    margin-right: 2px !important;
+    margin-left: 2px !important;
+    font: 8pt sans-serif;
+    color: black !important;
+    vertical-align: middle;
+    background-color:  rgb(186 186 194) !important;
+}
+
+#content-wrapper .maptoolbarbutton {
+    background-color: transparent !important;
+    color: lightgray !important;
+    border: none !important;
+}
+
+.win-Mapper #zoom {
+    font: 8pt sans-serif;
+    color: black;
+    margin: 2px;
+    vertical-align: middle;
+}
+
+.win-Mapper #level {
+    font: 8pt sans-serif;
+    color: black;
+    margin: 2px;
+    vertical-align: middle;
+}
+
+#content-wrapper .win-Mapper #zoom {
+    color: lightgray;
+}
+
+#content-wrapper .win-Mapper #level {
+    color: lightgray;
+}
+
+#menuWrappermapperContextMenu {
+    z-index: 5000 !important;
+    font: 10pt sans-serif;
+    color: black;
+}
+
+#mapperContextMenu {
+    z-index: 5000 !important;
+    font: 10pt sans-serif;
+    color: black;
 }

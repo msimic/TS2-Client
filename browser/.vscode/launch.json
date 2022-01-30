@@ -10,7 +10,7 @@
             "runtimeArgs": [/*"--incognito"*/],
             "webRoot": "${workspaceFolder}",
             "sourceMaps": true,
-            "trace": "verbose",
+            "trace": true,
             "skipFiles": [  
                 "${workspaceRoot}/node_modules/**/*.js",
             ]

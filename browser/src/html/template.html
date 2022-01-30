@@ -101,6 +101,12 @@
           <li data-option-name="classes">Classi</li>
           <li data-option-name="events">Eventi</li>
           <li data-option-name="script">Script</li>
+          <li>Avanzate
+            <ul>
+              <li data-option-name="base_aliases">Alias preimpostati</li>
+              <li data-option-name="base_triggers">Triggers preimpostati</li>
+            </ul>
+          </li>
         </ul>
       </li>
       <li>Altro
@@ -110,7 +116,8 @@
               <li>&lt;nessuna&gt;</li>
             </ul>
           </li>
-          <li data-option-name="about">Info</li>
+          <li data-option-name="mapper">Mapper</li>
+          <li data-option-name="about">Versione</li>
           <li data-option-name="help"><a href="./help.html" target="_blank">Help</a></li>
         </ul>
       </li>
@@ -135,7 +142,7 @@
             </div>
           </div>
           <div id="row-center">
-              <pre id="winOutput" aria-live="assertive" aria-relevant="additions" class="outputText"></pre>
+              <pre id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
           </div>
           <div id="row-bottom">
             <div id="row-bottom-left">
@@ -145,10 +152,10 @@
           </div>
           <div id="row-input">
             <div id="cmdCont">
-              <textarea autofocus rows="1" id="cmdInput" aria-live="off" autocapitalize="off"></textarea>
+              <textarea autofocus rows="1" id="cmdInput" aria-label="Barra comandi" autocapitalize="off"></textarea>
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">
-                <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="assertive" title="Abilita o disabilita Triggers"></label>
+                <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="polite" title="Abilita o disabilita Triggers"></label>
               </div>
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdAliases" type="checkbox" checked title="Aliases">

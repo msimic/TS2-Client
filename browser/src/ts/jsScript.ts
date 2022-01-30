@@ -2,12 +2,15 @@ import { isNumeric } from "jquery";
 import { AliasManager } from "./aliasManager";
 import { ClassManager } from "./classManager";
 import { EventHook } from "./event";
+import { Mapper } from "./mapper";
 import { OutputManager } from "./outputManager";
+import { ProfileManager } from "./profileManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
+import { ConfigIf } from "./util";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string}>();
-export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string}>();
+export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
 export let EvtScriptEmitError = new EventHook<{owner:string, err:any}>();
 export let EvtScriptEmitCls = new EventHook<{owner:string, window?:string}>();
 export let EvtScriptEmitEvalError = new EventHook<any>();
@@ -109,14 +112,14 @@ export interface Variable {
     Class: string;
     Value: any;
 }
-
+/*
 export interface ConfigIf {
     set(key: string, val: [string, Variable][]): void;
     set(key: string, val: [string, ScriptEvent[]][]): void;
     getDef(key: string, def: any): any;
     get(key: string): Map<string, Variable>;
     evtConfigImport: EventHook<{[k: string]: any}>;
-}
+}*/
 
 export enum ScripEventTypes {
     VariableChanged,
@@ -165,10 +168,10 @@ export class JsScript {
     private baseEvents: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
 
     private self = this;
-    constructor(private config: ConfigIf,private baseConfig: ConfigIf) {
+    constructor(private config: ConfigIf,private baseConfig: ConfigIf, private profileManager: ProfileManager, private mapper:Mapper) {
         this.loadBase();
         this.load();
-        config.evtConfigImport.handle(() => {
+        config.evtConfigImport.handle((d) => {
             this.loadBase();
             this.load();
         }, this);
@@ -273,6 +276,11 @@ export class JsScript {
         }
     }
 
+    getVariableValue(name:string):any {
+        const vari = this.variables.get(name)
+        return vari ? vari.Value : null;
+    }
+
     getVariables(Class?:string):Variable[] {
         this.save();
         return [...this.variables.values()].filter(v => v.Class == Class || !Class);
@@ -300,6 +308,11 @@ export class JsScript {
 
     loadBase() {
         this.clearBaseEvents();
+        const prof = this.profileManager.getProfile(this.profileManager.getCurrent());
+        if (prof && !prof.baseTriggers) {
+            return;
+        }
+
         let sc = this.baseConfig.getDef("script_events", []);
         this.baseEvents = new Map<string, ScriptEvent[]>(sc);
         for (const ev of this.baseEvents) {
@@ -356,7 +369,7 @@ export class JsScript {
 
     public makeScript(owner:string, text: string, argsSig: string): any {
         try {
-            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager);
+            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper);
             if (!scr) { return null; }
             return (...args: any[]) => {
                     let ret = scr(...args);
@@ -387,12 +400,14 @@ function makeScript(owner:string, text: string, argsSig: string,
     classManager: ClassManager,
     aliasManager: AliasManager,
     triggerManager: TriggerManager,
-    outputManager: OutputManager) {
+    outputManager: OutputManager,
+    map:Mapper) {
 
     let _scriptFunc_: any;
     let own = owner;
 
     /* Scripting API section */
+    const mapper = map;
     const color = colorize;
     const sub = function(sWhat: string, sWith:string) {
         if (triggerManager) triggerManager.subBuffer(sWhat, sWith);

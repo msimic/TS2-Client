@@ -1,6 +1,8 @@
 import { CustomWin } from "./customWindow";
 import { EventHook } from "./event";
 import { ControlType, LayoutManager } from "./layoutManager";
+import { Mapper } from "./mapper";
+import { MapperWindow } from "./mapperWindow";
 import { Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 
@@ -17,6 +19,7 @@ export interface WindowData {
 
 export interface WindowDefinition {
     window: JQuery;
+    custom:boolean;
     output: CustomWin;
     data: WindowData;
     created:boolean;
@@ -28,12 +31,17 @@ export class WindowManager {
     public windows: Map<string, WindowDefinition> = new Map<string, WindowDefinition>();
     public EvtEmitWindowsChanged = new EventHook<string[]>();
     private layoutManager:LayoutManager
-
+    private mapper:Mapper
+    
     constructor(private profileManager:ProfileManager) {
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.load();
         });
         this.load();
+    }
+
+    public setMapper(mapper: Mapper) {
+        this.mapper= mapper;
     }
 
     public setLayoutManager(lay:LayoutManager) {
@@ -56,22 +64,24 @@ export class WindowManager {
                 await this.deleteWindows();
                 return;
             }
-            console.log("LOAD profile " + cp)
-            let wnds = [...this.profileManager.getProfile(cp).windows];
-            console.log("LOAD")
-            console.log(wnds)
+            //console.log("LOAD profile " + cp)
+            let wnds = [...this.profileManager.getProfile(cp).windows||[]];
+            //console.log("LOAD")
+            //console.log(wnds)
             await this.deleteWindows();
-            console.log("LOAD Deleted")
-            console.log(wnds)
+            //console.log("LOAD Deleted")
+            console.log("LOAD " + cp + ": " + wnds.map(v => v.name).join(","))
             if (wnds) for (const iterator of wnds) {
                 this.windows.set(iterator.name, {
                     window: null,
                     output: null,
+                    custom: null,
                     data: iterator,
                     created:false,
                     initialized: false
                 });
             }
+            (this.windows as any).loadedFrom = cp;
 
             await this.showWindows();
             this.triggerChanged();
@@ -84,18 +94,22 @@ export class WindowManager {
         this.EvtEmitWindowsChanged.fire([...this.windows.keys()]);
     }
 
-    profileDisconnected() {
-        console.log("profileDisconnected")
+    async profileDisconnected() {
+        console.log("profileDisconnected: " + this.profileManager.getCurrent())
         for (const w of this.windows) {
             if (w[1].window) {
-                w[1].window.hide();
+                const wasVisible = w[1].data.visible;
+                this.hide(w[1].data.name);
+                (<any>w[1].window).jqxWindow("close");
+                w[1].data.visible = wasVisible;
             }
         }
+        //this.save()
     }
 
     async profileConnected() {
-        console.log("profileConnected")
-        await this.deleteWindows();
+        console.log("profileConnected: " + this.profileManager.getCurrent())
+        //await this.deleteWindows();
         this.load();
     }
 
@@ -136,13 +150,17 @@ export class WindowManager {
             console.log("DEL " + v.data.name)
             if (v.window) {
                 toDestroy.push(k);
+                const wasVisible = v.data.visible;
+                (<any>v.window).jqxWindow("close");
                 (<any>v.window).jqxWindow("destroy");
                 (<any>v.window).remove();
                 v.window = null;
+                v.data.visible = wasVisible;
             }
             if (v.output)
                 delete v.output;
         });
+        //this.save()
 
         let int:number = null;
         int = setInterval(()=>{
@@ -187,6 +205,7 @@ export class WindowManager {
             "top":"unset"
         });
         (<any>$(w)).jqxWindow({ draggable: false });
+
         w.css({
             "width": "unset",
             "height": "unset",
@@ -208,6 +227,9 @@ export class WindowManager {
         w.show();
         w.data("docked", true);
         this.windows.get(window).data.docked = true;
+        if ((<any>$(w))[0].sizeChanged) {
+            setTimeout(() => (<any>$(w))[0].sizeChanged(), 10);
+        }
         this.save();
     }
 
@@ -218,9 +240,10 @@ export class WindowManager {
         (<any>$(w)).jqxWindow({ draggable: true }); 
         const wnd = this.windows.get(window);
         wnd.data.docked = false;
-        if (wnd.output) {
+        if (wnd.output || wnd.custom) {
             delete wnd.output
             wnd.output = null;
+            wnd.custom = null;
         }
         //await this.destroyWindow(window,false);
         //this.createWindow(window);
@@ -242,6 +265,7 @@ export class WindowManager {
     }
 
     public async destroyWindow(name:string, permanent:boolean) {
+
         let resolve:Function = null;
         var p = new Promise((rs,rj) => {
             resolve = rs;
@@ -254,6 +278,7 @@ export class WindowManager {
             wdef.created = false;
             if (wdef.output) delete wdef.output;
             if (wdef.window) {
+                (<any>wdef.window).jqxWindow("close");
                 (<any>wdef.window).jqxWindow("destroy");
                 (<any>wdef.window).remove();
                 delete wdef.window;
@@ -282,35 +307,45 @@ export class WindowManager {
         return p;
     }
     public createWindow(name:string,createData?:any):WindowDefinition {
-        console.log("createWindow " + name);
+
+        //console.log("createWindow " + name);
         if (createData) {
-            console.log(createData);
+            //console.log(createData);
         }
         if (this.windows.has(name)) {
             const def = this.windows.get(name);
-            console.log("OLD " + name);
-            console.log(def);
+            //console.log("OLD " + name);
+            //console.log(def);
             return def;
         }
-        console.log("NEW " + name);
+        //console.log("NEW window" + name);
 
-        let win  = document.createElement("div");
-        win.style.display = "none";
-        win.className = "win-"+name.replace(" ","-") + " customWindow";
-        document.body.appendChild(win);
+        let win = null;
+        let customOutput = null;
+        if (name != "Mapper") {
 
-        win.innerHTML = `
-        <!--header-->
-        <div>${name}</div>
-        <!--content-->
-        <div>
-            <div class="${$("#winOutput")[0].classList} full scrollable" id="win-${name.replace(" ","-")}"></div>
-        </div>
-        `;
+            win = document.createElement("div");
+            win.style.display = "none";
+            win.className = "win-"+name.replace(" ","-") + " customWindow";
+            document.body.appendChild(win);
 
-        const $win = $(win);
+            win.innerHTML = `
+            <!--header-->
+            <div>${name}</div>
+            <!--content-->
+            <div>
+                <div class="${$("#winOutput")[0].classList} full scrollable" id="win-${name.replace(" ","-")}"></div>
+            </div>
+            `;
 
-        let defaults = this.windows.get(name) || createData;
+        } else {
+            customOutput = new MapperWindow(this.mapper)
+            win = customOutput.Instance();
+        }
+
+        const hasLayout = this.profileManager.getCurrent()?this.profileManager.getProfile(this.profileManager.getCurrent()).useLayout:false;
+        let defaults = (this.windows.get(name) || createData);
+
         if (createData) {
             defaults = {
                 window: null,
@@ -325,12 +360,33 @@ export class WindowManager {
                     y: createData.y || 100,
                     visible: createData.visible || true,
                     collapsed: createData.collapsed || false,
-                    docked:createData.docked || false
+                    docked:createData.docked==undefined?(hasLayout?true:false):createData.docked
                 }
             }
         }
 
+        let collapse = false, dock = false;
+        if (defaults && defaults.data) {
+            collapse = defaults.data.collapsed
+            dock = defaults.data.docked
+        } else {
+            dock = (hasLayout?true:false)
+        }
+
+        const $win = $(win);
         const w = (<any>$win).jqxWindow({width: (defaults&&defaults.data?defaults.data.w:450), height: (defaults&&defaults.data?defaults.data.h:250), showCollapseButton: true, autoOpen: false});
+        let inresize=false;
+        new ResizeObserver(()=>{
+            if (inresize) return;
+            inresize = true;
+            window.requestAnimationFrame(() => {
+                const size = $(".jqx-window-content",w).height();
+                if (size) $(".outputText",w).css({
+                    "maxHeight": size + "px"
+                });
+                inresize = false;
+            });
+        }).observe(w[0]);
 
         if (defaults && defaults.data) {
             (<any>$win).jqxWindow('move', defaults.data.x, defaults.data.y);
@@ -365,10 +421,8 @@ export class WindowManager {
                 wd.initialized = true;
                 setTimeout(() => {
                     self.addDockButton($(".win-"+name.replace(" ","-")),name);
-                    if (defaults && defaults.data) {
-                        if (defaults.data.collapsed) (<any>w).jqxWindow('collapse'); 
-                        if (defaults.data.docked) self.dock(name,$(".jqx-window-header", $win));
-                    }
+                    if (collapse) (<any>w).jqxWindow('collapse'); 
+                    if (dock) self.dock(name,$(".jqx-window-header", $win));
                     $("#cmdInput").focus();
                 }, 500);
             }
@@ -386,23 +440,28 @@ export class WindowManager {
 
         w.on('collapse', function (event:any) {
             if (!self.windows || !self.windows.get) return;
-            let data = self.windows.get(name).data;
-            data.collapsed = true;
+            let data = self.windows.get(name);
+            data.data.collapsed = true;
+            if (data.window) {
+                $(".expand", data.window).css("height","unset")
+            }
             self.save();
         });
 
         w.on('expand', function (event:any) {
             if (!self.windows || !self.windows.get) return;
-            let data = self.windows.get(name).data;
-            data.collapsed = false;
+            let data = self.windows.get(name);
+            data.data.collapsed = false;
+            /**if (data.window) {
+                $(".expand", data.window).css("height","100%")
+            }*/
             self.save();
         });
 
-        const winOutput = new CustomWin("win-"+name.replace(" ","-"), this.profileManager.activeConfig)
-
         const def: WindowDefinition = {
             window: w,
-            output: winOutput,
+            custom: customOutput ? true : false,
+            output: customOutput ? null : new CustomWin("win-"+name.replace(" ","-"), this.profileManager.activeConfig),
             created: true,
             initialized: false,
             data: {
@@ -413,7 +472,7 @@ export class WindowManager {
                 y: 100,
                 visible: true,
                 collapsed: false,
-                docked:false
+                docked: createData?createData.docked:(hasLayout?true:false)
             }
         }
         this.windows.set(name, def);
@@ -443,16 +502,24 @@ export class WindowManager {
     }
 
     public save() {
-        console.log("Save windows " + this.profileManager.getCurrent())
-        var wnds = [...this.windows.values()].map(v => v.data);
-        console.log(wnds)
+         var wnds = [...this.windows.values()].map(v => v.data);
+         const usr = this.profileManager.getCurrent()
+         let loadedFrom = (this.windows as any).loadedFrom
+        if (loadedFrom === undefined) {
+            (this.windows as any).loadedFrom = usr
+            loadedFrom = usr;
+        }
+         console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
+        if (loadedFrom != usr) {
+            return;
+        }
         this.profileManager.saveWindows(wnds);
     }
 
     public async show(window:string) {
         var w = this.windows.get(window);
-        console.log("SHOW " + w.data.name)
-        if (!w.output) {
+        //console.log("SHOW " + w.data.name)
+        if (!w.output && !w.custom) {
             const data = w.data;
             await this.destroyWindow(window, true);
             w = this.createWindow(window, data);
@@ -463,6 +530,9 @@ export class WindowManager {
 
     private hide(window:string) {
         var w = this.windows.get(window);
+        const oldVis = w.data.visible;
         (<any>w.window).jqxWindow("close");
+        w.data.visible = oldVis;
+        this.save();
     }
 }

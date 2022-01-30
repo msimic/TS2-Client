@@ -14,13 +14,15 @@
 			"position": 3,
 			"id": "column-right-top",
 			"background": "rgb(21 106 167 / 77%);",
-			"width": "700px"
+			"width": "350px",
+			"autoexpand": true
 		},
 		{
 			"position": 4,
 			"id": "column-right-bottom",
 			"background": "rgb(21 106 167 / 77%);",
-			"width": "700px"
+			"width": "350px",
+			"autoexpand": true
 		},
 		{
 			"position": 5,
@@ -36,13 +38,15 @@
 			"position": 7,
 			"id": "column-left-top",
 			"background": "rgb(21 106 167 / 77%);",
-			"width": "340px"
+			"width": "326px",
+			"autoexpand": true
 		},
 		{
 			"position": 8,
 			"id": "column-left-bottom",
 			"background": "rgb(21 106 167 / 77%);",
-			"width": "340px"
+			"width": "326px",
+			"autoexpand": true
 		}
 	],
 	"items": [
@@ -352,7 +356,7 @@
 			"background": "red",
 			"type": 0,
 			"content": "%color(white,transparent,true)%var(tankKey): %var(tankPercent<50,%color(yellow,transparent,true,false,true)%var(TSTankCond),%color(white,transparent,true)%var(TSTankCond))",
-			"css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:12px;min-width:170px;",
+			"css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
 			"gauge": "tankPercent,tankMax",
 			"commands": "if (this.TSTank!=this.TSPersonaggio) send('assist ' + this.tankKey)",
 			"visible": "TSTank!='*'",
@@ -364,7 +368,7 @@
 			"background": "black",
 			"type": 0,
 			"content": "%color(white,transparent,true)%var(mobKey): %var(TSMobCond)",
-			"css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:12px;min-width:170px;",
+			"css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
 			"gauge": "mobPercent,mobMax",
 			"commands": "send('attack ' + this.mobKey)",
 			"visible": "TSMob!='*'",
@@ -438,7 +442,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "yellow",
+			"color": "#AAAAAA",
 			"parent": "hp_and_btn",
 			"h": 20,
 			"w": 70,
@@ -453,7 +457,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "blue",
+			"color": "#AAAAAA",
 			"parent": "tick_and_btn",
 			"h": 20,
 			"w": 70,
@@ -468,7 +472,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "red",
+			"color": "#AAAAAA",
 			"parent": "mn_and_btn",
 			"h": 20,
 			"w": 70,
@@ -483,7 +487,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "white",
+			"color": "#AAAAAA",
 			"parent": "mv_and_btn",
 			"h": 20,
 			"w": 70,
@@ -498,8 +502,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "white",
-			"background": "#AAAAFF",
+			"color": "#AAAAFF",
 			"parent": "mv_and_btn",
 			"h": 20,
 			"w": 70,
@@ -507,15 +510,14 @@
 			"stack": 1,
 			"position": 0,
 			"css": "margin:1px;padding:1px;",
-			"content": "ImmuCOLD",
+			"content": "ResCOLD",
 			"commands": "send('immucold')",
 			"checkbox": "usiImmuCold",
 			"is_script": true
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "white",
-			"background": "#FF9999",
+			"color": "#FF3333",
 			"parent": "tick_and_btn",
 			"h": 20,
 			"w": 70,
@@ -523,7 +525,7 @@
 			"stack": 1,
 			"position": 0,
 			"css": "margin:1px;padding:1px;",
-			"content": "ImmuFIRE",
+			"content": "ResFIRE",
 			"commands": "send('immufire')",
 			"checkbox": "usiImmuFire",
 			"is_script": true
@@ -533,7 +535,7 @@
 			"parent": "tick_and_btn",
 			"color": "rgb(221 221 221)",
 			"css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-			"w": 180,
+			"w": 160,
 			"h": 20,
 			"type": 0,
 			"stack": 5,
@@ -547,7 +549,7 @@
 			"parent": "mv_and_btn",
 			"color": "rgb(210 151 90)",
 			"css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-			"w": 180,
+			"w": 160,
 			"h": 20,
 			"type": 0,
 			"stack": 5,
@@ -558,8 +560,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "white",
-			"background": "#33AA33",
+			"color": "#33FF33",
 			"parent": "hp_and_btn",
 			"h": 20,
 			"w": 70,
@@ -567,7 +568,7 @@
 			"stack": 1,
 			"position": 0,
 			"css": "margin:1px;padding:1px;",
-			"content": "ImmuACID",
+			"content": "ResACID",
 			"commands": "send('immuacid')",
 			"checkbox": "usiImmuAcid",
 			"is_script": true
@@ -577,7 +578,7 @@
 			"parent": "hp_and_btn",
 			"color": "#33AA33",
 			"css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,0,0,0.5) !important; color:white !important;",
-			"w": 180,
+			"w": 160,
 			"h": 20,
 			"type": 0,
 			"stack": 5,
@@ -589,8 +590,7 @@
 		},
 		{
 			"paneId": "column-left-bottom",
-			"color": "white",
-			"background": "#4444FF",
+			"color": "#2222FF",
 			"parent": "mn_and_btn",
 			"h": 20,
 			"w": 70,
@@ -598,7 +598,7 @@
 			"stack": 1,
 			"position": 0,
 			"css": "margin:1px;padding:1px;",
-			"content": "ImmuELE",
+			"content": "ResELE",
 			"commands": "send('immuele')",
 			"checkbox": "usiImmuEle",
 			"is_script": true
@@ -608,7 +608,7 @@
 			"parent": "mn_and_btn",
 			"color": "rgb(129 129 210)",
 			"css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(0,0,255,0.5) !important; color:white !important;",
-			"w": 180,
+			"w": 160,
 			"h": 20,
 			"type": 0,
 			"stack": 5,

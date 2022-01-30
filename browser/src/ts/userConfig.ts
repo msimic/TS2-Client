@@ -2,13 +2,15 @@ import { EventHook } from "./event";
 
 
 export class UserConfig {
-    private cfgVals: {[k: string]: any};
+    name:string;
+    cfgVals: {[k: string]: any};
     private setHandlers: {[k: string]: EventHook<any>[]} = {};
-    public evtConfigImport = new EventHook<{[k: string]: any}>();
+    public evtConfigImport = new EventHook<{data: {[k: string]: any}, owner: any}>();
 
     private saveFunc: (v: string) => string;
 
-    public init(userConfigStr: string, saveFunc_: (v: string) => string) {
+    public init(name:string, userConfigStr: string, saveFunc_: (v: string) => string) {
+        this.name = name;
         this.saveFunc = saveFunc_;
 
         if (userConfigStr) {
@@ -17,7 +19,7 @@ export class UserConfig {
             this.cfgVals = {};
         }
 
-        this.evtConfigImport.fire({});
+        this.evtConfigImport.fire({ data: this.cfgVals, owner: this });
     }
 
     public copy(userConfigStr: string) {
@@ -25,7 +27,7 @@ export class UserConfig {
         for (const key in cfgVals) {
             if (Object.prototype.hasOwnProperty.call(cfgVals, key)) {
                 const element = cfgVals[key];
-                this.set(key, element);
+                this.set(key, element, true);
             }
         }
         this.saveConfig();
@@ -72,13 +74,13 @@ export class UserConfig {
     }
 
     private firing:boolean;
-    public set(key: string, val: any) {
+    public set(key: string, val: any, nosave:boolean=false) {
         if (this.firing) {
             console.log("Setting while firing");
         }
         const prev = this.cfgVals[key];
         this.cfgVals[key] = val;
-        this.saveConfig();
+        if (!nosave) this.saveConfig();
         if (prev != val && key in this.setHandlers) {
             this.firing = true;
             this.setHandlers[key].map(v => {
@@ -152,6 +154,7 @@ export class UserConfig {
     public ImportText(text: any) {
         let vals = typeof text == "string" ? JSON.parse(text) : text;
         this.cfgVals = vals;
-        this.evtConfigImport.fire(vals);
+        this.saveConfig()
+        this.evtConfigImport.fire({data: vals, owner: this});
     }
 }

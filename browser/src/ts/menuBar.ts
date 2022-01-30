@@ -6,7 +6,7 @@ import { AliasEditor } from "./aliasEditor";
 import { TriggerEditor } from "./triggerEditor";
 import { JsScriptWin } from "./jsScriptWin";
 import { AboutWin } from "./aboutWin";
-import { Mudslinger } from "./client";
+import { Mudslinger, setupWorkers } from "./client";
 import { ProfilesWindow } from "./profilesWindow";
 import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
@@ -14,6 +14,7 @@ import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
 import { isTrue } from "./util";
 import { LayoutManager } from "./layoutManager";
+import { JsScript } from "./jsScript";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -31,6 +32,7 @@ export class MenuBar {
         ["aliases", ""],
         ["variables", ""],
         ["triggers", ""],
+        ["base_triggers", ""],
         ["classes", ""],
         ["script", ""],
         ["config", ""],
@@ -138,21 +140,49 @@ export class MenuBar {
     constructor(
         private aliasEditor: AliasEditor,
         private triggerEditor: TriggerEditor,
+        private baseTriggerEditor: TriggerEditor,
+        private baseAliasEditor: AliasEditor,
         private jsScriptWin: JsScriptWin,
         private aboutWin: AboutWin,
         private profileWin: ProfilesWindow,
         private config: UserConfig,
         private variableEditor:VariablesEditor,
         private classEditor: ClassEditor,
-        private eventEditor: EventsEditor
+        private eventEditor: EventsEditor,
+        private jsScript: JsScript
         ) 
     {
         <JQuery>((<any>$("#menuBar")).jqxMenu());
+
+        var userAgent = navigator.userAgent.toLowerCase();
+
+        if (userAgent.indexOf(' electron/') > -1) {
+            $("#menuBar").append("<span id='electronMenu'>+</span>");
+        }
+
+        $("#menuBar").append("<span id='currentTime'></span>");
+        var currentTimeSpan = $("#currentTime");
+
+        if (userAgent.indexOf(' electron/') > -1) {
+            $("#menuBar").append("<span id='electronClose'>X</span>");
+        }
+
+        (<any>Date.prototype).timeNow = function () {
+            return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+        }
+
+        currentTimeSpan.text((<any>new Date()).timeNow())
+        setInterval(()=>{
+            currentTimeSpan.text((<any>new Date()).timeNow())
+        }, 30000);
+
         this.makeClickFuncs();
         setTimeout(() => {
         this.attachMenu();
         this.handleNewConfig();
         }, 0);
+
+        setupWorkers();
     }
 
     public setWIndowManager(windowM:WindowManager) {
@@ -225,6 +255,13 @@ export class MenuBar {
 
         this.clickFuncs["import-layout"] = () => {
             this.layout.importFromFile();
+        };
+
+        this.clickFuncs["mapper"] = () => {
+            //let script = this.jsScript.makeScript("Mapper", "createWindow('Mapper')", "");
+            //if (script) { script(); };
+            this.windowManager.createWindow("Mapper");
+            this.windowManager.show("Mapper");
         };
 
         this.clickFuncs["wrap-lines"] = (val) => {
@@ -344,8 +381,16 @@ export class MenuBar {
             this.aliasEditor.show();
         };
 
+        this.clickFuncs["base_aliases"] = (val) => {
+            this.baseAliasEditor.show();
+        };
+
         this.clickFuncs["triggers"] = (val) => {
             this.triggerEditor.show();
+        };
+
+        this.clickFuncs["base_triggers"] = (val) => {
+            this.baseTriggerEditor.show();
         };
 
         this.clickFuncs["colorsEnabled"] = (val) => {

@@ -4,14 +4,14 @@ import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { ProfileManager } from "./profileManager";
 import { Mudslinger } from "./client";
-import { stripHtml } from "./util";
+import { ConfigIf, stripHtml } from "./util";
 
-export interface ConfigIf {
+/*export interface ConfigIf {
     set(key: string, val: TrigAlItem[]): void;
     getDef(key: string, def: boolean): boolean;
     get(key:string): TrigAlItem[];
     evtConfigImport: EventHook<{[k: string]: any}>;
-}
+}*/
 
 export interface ScriptIf {
     makeScript(owner:string, text: string, argsSig: string): any;
@@ -20,21 +20,35 @@ export interface ScriptIf {
 export class TriggerManager {
     public EvtEmitTriggerCmds = new EventHook<{orig: string, cmds: string[]}>();
     public EvtEmitTriggerOutputChanged = new EventHook<{line: string, buffer: string}>();
-
+    private triggerLog = new Array<{key:string, time:number}>();
     public triggers: Array<TrigAlItem> = null;
     public allTriggers: Array<TrigAlItem> = null;
+    public changed = new EventHook()
 
     constructor(private jsScript: ScriptIf, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
         /* backward compatibility */
         let savedTriggers = localStorage.getItem("triggers");
-        if (savedTriggers) {
+        if (savedTriggers && baseConfig) {
             this.config.set("triggers", JSON.parse(savedTriggers));
             localStorage.removeItem("triggers");
         }
 
-        this.loadTriggers();
-        config.evtConfigImport.handle(() => {
-            this.loadTriggers();
+        this.loadTriggers(config);
+        config.evtConfigImport.handle((d) => {
+            if (d.owner.name != config.name) return;
+            if (!baseConfig) {
+                config.set("triggers", d.data["triggers"])
+            }
+            this.loadTriggers(config);
+            this.saveTriggers();
+        }, this);
+        if (baseConfig) baseConfig.evtConfigImport.handle((d) => {
+            if (d.owner.name != baseConfig.name) return;
+            baseConfig.set("triggers", d.data["triggers"])
+            if (config.name == baseConfig.name) {
+                config.cfgVals = baseConfig.cfgVals
+            }
+            this.loadTriggers(config.name==baseConfig.name ? baseConfig : config);
             this.saveTriggers();
         }, this);
         EvtScriptEmitToggleTrigger.handle(this.onToggle, this);
@@ -86,6 +100,12 @@ export class TriggerManager {
     }
 
     public mergeTriggers() {
+        const prof = this.profileManager.getProfile(this.profileManager.getCurrent());
+        if ((prof && !prof.baseTriggers) || !this.baseConfig) {
+            this.allTriggers = $.merge([], this.config.get("triggers") || []);
+            return;
+        }
+
         var triggers = $.merge([], this.config.get("triggers") || []);
         triggers = $.merge(triggers, this.baseConfig.get("triggers") || []);
         this.allTriggers = triggers;
@@ -99,13 +119,27 @@ export class TriggerManager {
         }
     }
 
+    private saving = false;
     public saveTriggers() {
-        this.config.set("triggers", this.triggers);
-        this.mergeTriggers();
+        if (this.saving) return;
+        try {
+            this.config.set("triggers", this.triggers);
+            this.mergeTriggers();
+            if (!this.baseConfig) {
+                this.saving = true;
+                this.config.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
+            } else if (this.baseConfig && this.baseConfig.name == this.config.name) {
+                this.saving = true;
+                this.baseConfig.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
+            }
+            this.changed.fire(null)
+        } finally {
+            this.saving = false;
+        }
     }
 
-    private loadTriggers() {
-        this.triggers = this.config.get("triggers") || [];
+    private loadTriggers(config:ConfigIf) {
+        this.triggers = config.get("triggers") || [];
         this.mergeTriggers();
     }
 
@@ -138,20 +172,30 @@ export class TriggerManager {
         let fired:boolean = false;
         if (trig.regex) {
             if (line.endsWith("\n") && trig.pattern.endsWith("$")) {
-                line = line.substr(0, line.length-1);
+                line = line.substring(0, line.length-1);
             }
             let match = line.match(trig.pattern);
             if (!match) {
                 return;
             }
+            if (this.checkLoop(trig.pattern)) {
+                EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito tra i trigger: " +trig.pattern})
+                return;
+            }
+            this.logScriptTrigger(trig.pattern);
 
             if (trig.is_script) {
-                if (!trig.script) trig.script = this.jsScript.makeScript(trig.id || trig.pattern, trig.value, "match, line");
+                let value = trig.value;
+                value = value.replace(/\$(\d+)/g, function(m, d) {
+                    return match[parseInt(d)] || "";
+                });
+
+                if (!trig.script) trig.script = this.jsScript.makeScript(trig.id || trig.pattern, value, "match, line");
                 if (trig.script) {
                     trig.script(match, line); 
                     fired = true;
                 } else {
-                    throw `Trigger '${trig.pattern}' is script but the script cannot be initialized`;
+                    throw `Trigger '${trig.pattern}' e' una script malformata`;
                 }
             } else {
                 let value = trig.value;
@@ -165,14 +209,25 @@ export class TriggerManager {
                 fired = true;
             }
         } else {
-            if (line.includes(trig.pattern)) {
+            let pattern = trig.pattern;
+            pattern = pattern.replace(/\$(\d+)/g, function(m, d) {
+                return "(.+)";
+            });
+            let match = line.match(pattern);
+            if (match) {
+                if (this.checkLoop(pattern)) {
+                    EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito tra i trigger: " +pattern})
+                    return;
+                }
+                this.logScriptTrigger(pattern);
+
                 if (trig.is_script) {
                     if (!trig.script) trig.script = this.jsScript.makeScript(trig.id || trig.pattern, trig.value, "line");
                     if (trig.script) {
                         trig.script(line); 
                         fired = true;
                     } else {
-                        throw `Trigger '${trig.pattern}' is script but the script cannot be initialized`;
+                        throw `Trigger '${trig.pattern}' e' una script malformata`;
                     }
                 } else {
                     let cmds = trig.value.replace("\r", "").split("\n");
@@ -185,6 +240,32 @@ export class TriggerManager {
             EvtScriptEvent.fire({event: ScripEventTypes.TriggerFired, condition: trig.id || trig.pattern, value: line});
         }
     }
+
+    checkLoop(source: string):boolean {
+        let cnt = 0;
+        for (const k of this.triggerLog) {
+            const alL = k.time
+            const now = new Date();
+            const diff = Math.abs(now.getTime() -  alL);
+            if (diff < 10000 && k.key == source) {
+                cnt++;
+            }   
+        }
+        return false;// cnt >= 10;
+    }
+    logScriptTrigger(alias:string) {
+        let index = 0;
+        for (const k of [...this.triggerLog]) {
+            const alL = k.time
+            const now = new Date();
+            const diff = Math.abs(now.getTime() -  alL);
+            if (diff > 20000) {
+                this.triggerLog.splice(index, 1);
+            }   
+        }
+        this.triggerLog.push({key: alias, time: new Date().getTime()})
+    }
+
 
     public buffer:string;
     public line:string;

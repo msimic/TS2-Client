@@ -1,13 +1,7 @@
 import { EventHook } from "./event";
 import { TrigAlItem } from "./trigAlEditBase";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleClass, EvtScriptEvent, ScripEventTypes } from "./jsScript";
-
-export interface ConfigIf {
-    set(key: string, val: Map<string, Class>): void;
-    getDef(key: string, def: boolean): boolean;
-    get(key: string): Map<string, Class>;
-    evtConfigImport: EventHook<{[k: string]: any}>;
-}
+import { ConfigIf } from "./util";
 
 export interface Class{
     name: string;

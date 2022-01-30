@@ -1,9 +1,10 @@
-import { ConfigIf, OutWinBase } from "./outWinBase";
-import { stripHtml } from "./util";
+import { OutWinBase } from "./outWinBase";
+import { ConfigIf, stripHtml } from "./util";
 
 export class CustomWin extends OutWinBase {
     constructor(elementName:string, config: ConfigIf) {
-        super($("#"+elementName), config);
+        const parent = $("#"+elementName);
+        super(parent, config);
     }
 
     public write(text:string, buffer:string) {

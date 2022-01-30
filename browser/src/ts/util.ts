@@ -1,4 +1,6 @@
+import { EventHook } from "./event";
 import { messagebox } from "./messagebox";
+import { TrigAlItem } from "./trigAlEditBase";
 
 export function replaceLtGt(text: string): string {
     return text.replace(/</g, "&lt;")
@@ -20,6 +22,37 @@ export function raw(text: string): string {
         text = text.slice(1, text.length-1);
     }
     return text;
+}
+
+export interface ConfigIf {
+    name:string;
+    cfgVals: {[k: string]: any};
+    set(key: string, val: any): void;
+    get(key:string): any;
+    onSet(key: string, cb: (val: any) => void): void;
+    getDef(key: string, def: any): any;
+    evtConfigImport: EventHook<{data: {[k: string]: any}, owner: any}>;
+}
+
+export function createPath(cmd: string): string {
+    if (cmd[0]!=".") return '';
+
+    let number:string = '';
+    let ret = [];
+
+    for (let i = 1; i < cmd.length; i++) {
+        const c = cmd[i];
+        if (c >= '0' && c <= '9') {
+            number += c;
+        } else {
+            for (let n = 0; n < (number ? parseInt(number) : 1); n++) {
+                ret.push(c);
+            }
+            number = '';
+        }
+    }
+
+    return ret.join("\n");
 }
 
 export function isTrue(v:any):boolean {
@@ -62,7 +95,49 @@ export function Acknowledge(ack:string, str:string) {
     if (val == 'true') return;
     messagebox("Informazione", str, () => {
         localStorage.setItem('ack_'+ack, "true");
-    }, "OK", "", false, "", 500, null);
+    }, "OK", "", false, [""], 500, null, false);
+}
+
+export function downloadJsonToFile(json:any, filename:string) {
+    let jsonstr = JSON.stringify(json, null, 2);
+    let blob = new Blob([jsonstr], {type: "octet/stream"});
+    let url = window.URL.createObjectURL(blob);
+
+    let link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+}
+
+export function importFromFile(callback:(data:string)=>void) {
+    if (!callback) return;
+    let inp: HTMLInputElement = document.createElement("input");
+    inp.type = "file";
+    inp.style.visibility = "hidden";
+
+    inp.addEventListener("change", (e: any) => {
+        let file = e.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        let reader = new FileReader();
+        reader.onload = (e1: any) => {
+            let text = e1.target.result;
+            callback(text)
+        };
+        reader.readAsText(file);
+
+    });
+
+    document.body.appendChild(inp);
+    inp.click();
+    document.body.removeChild(inp);
 }
 
 // https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array

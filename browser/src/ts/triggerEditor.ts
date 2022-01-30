@@ -2,8 +2,11 @@ import { TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
 
 export class TriggerEditor extends TrigAlEditBase {
-    constructor(private triggerManager: TriggerManager) {
-        super("Triggers");
+    constructor(private triggerManager: TriggerManager, title?:string) {
+        super(title || "Triggers");
+        triggerManager.changed.handle(()=>{
+            super.refresh()
+        })
     }
 
     protected defaultValue: string =

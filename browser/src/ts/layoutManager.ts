@@ -31,6 +31,7 @@ export interface DockPane {
     h?:number;
     background?:string;
     width?:string;
+    autoexpand?:boolean;
 }
 
 export enum ControlType {
@@ -196,8 +197,12 @@ export class LayoutManager {
             return;
         }
         let vals = typeof text == "string" ? JSON.parse(text) : text;
-        this.layout = vals;
+        this.profileManager.getProfile(this.profileManager.getCurrent()).layout = vals;
         this.profileManager.evtProfileChanged.fire({current:this.profileManager.getCurrent()});
+        this.unload();
+        this.layout = vals;
+        this.loadLayout(this.layout);
+        this.triggerChanged();
     }
 
     public importFromFile() {
@@ -215,7 +220,6 @@ export class LayoutManager {
             reader.onload = (e1: any) => {
                 let text = e1.target.result;
                 this.ImportText(text);
-                // saveConfig();
             };
             reader.readAsText(file);
 
@@ -232,10 +236,15 @@ export class LayoutManager {
         this.layout = layout;
 
         for (const p of layout.panes) {
-            $("#"+p.id).css({
-                background: (p.background || "transparent"),
-                width: (p.width || "auto")
-            });
+            let cssObj:any = {
+                background: (p.background || "transparent")
+            };
+            if (p.autoexpand && p.width) {
+                cssObj.maxWidth = (p.width)
+            } else {
+                cssObj.width = (p.width || "auto")
+            }
+            $("#"+p.id).css(cssObj);
         }
 
         let index = 0;
@@ -543,7 +552,7 @@ export class LayoutManager {
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.execCommand(ctrl.commands, false);
+                    this.cmdInput.execCommand(ctrl.commands,ctrl.commands, false);
                 });
             }
         }
@@ -640,7 +649,7 @@ export class LayoutManager {
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.execCommand(ctrl.commands, false);
+                    this.cmdInput.execCommand(ctrl.commands,ctrl.commands, false);
                 });
             }
         }
@@ -715,7 +724,7 @@ export class LayoutManager {
                 if (isNumeric(compare)) {
                     compare = Number(compare);
                 }
-                let val = sthis[variable];
+                let val = sthis[variable]||'('+variable+')';
                 if (parseVariable) {
                     if (!this.variableChangedMap.has(variable)) this.variableChangedMap.set(variable, []);
                     this.variableChangedMap.get(variable).push(ctrl);
@@ -745,7 +754,7 @@ export class LayoutManager {
     }
 
     public async loadBaseLayout(prof:Profile) {
-        var ly = await $.ajax("./baseLayout.json");
+        var ly = await $.ajax("./baseLayout.json?rnd="+Math.random());
         if (ly) {
             prof.layout = ly;
             return;
