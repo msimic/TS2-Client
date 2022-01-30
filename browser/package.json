@@ -1,6 +1,6 @@
 {
   "name": "mudslinger-browser",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/msimic/mudslinger"
@@ -10,7 +10,7 @@
   "scripts": {
     "postinstall": "node tools/postinstall.js",
     "compile": "tsc -p tsconfig.json",
-    "build": "node tools/genAppInfo.js \"git rev-parse HEAD\" && tsc --sourceMap false -p tsconfig.json && webpack && node tools/build.js",
+    "build": "node tools/genAppInfo.js \"git rev-parse HEAD\" && node tools/generateHtmlHashes.js && tsc --sourceMap false -p tsconfig.json && webpack && node tools/build.js",
     "build-dev": "node tools/genAppInfo.js \"git rev-parse HEAD\" && tsc -p tsconfig.json && webpack --mode=development --config webpack.config.dev.js",
     "start": "tsc -p tsconfig.json && webpack-dev-server --config ./webpack.config.dev.js --inline --hot",
     "build-test": "tsc -p tsconfig.test.json && webpack --config webpack.config.test.js",

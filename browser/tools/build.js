@@ -161,6 +161,16 @@ function copyToPublic() {
         outputFolder: './dist/public/css'
         },
         {
+            path: './static/public/images',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/images'
+        },
+        {
+            path: './static/public/images/roomtype',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/images/roomtype'
+        },
+        {
         path: './static/public',
         regex: /^mudslinger.*\.js$/i,
         outputFolder: './dist/public'

@@ -8,40 +8,15 @@
   <title>TS Web Client</title>
 
   <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="jqwidgets/styles/jqx.base.css">
-  <link rel="stylesheet" href="css/client.css">
+  <link rel="stylesheet" href="modules/modules.min.css?hash=${hash}">
+  <link rel="stylesheet" href="css/client.css?hash=${hash}">
 
-  <script src="corejs.min.js"></script>
-
-  <script src="jquery.min.js"></script>
-  <script src="jqwidgets/jqxcore.js"></script>
-  <script src="jqwidgets/jqxmenu.js"></script>
-  <script src="jqwidgets/jqxwindow.js"></script>
-  <script src="jqwidgets/jqxsplitter.js"></script>
+  <script src="modules/corejs.min.js?hash=${hash}"></script>
+  <script src="modules/jquery.min.js?hash=${hash}"></script>
+  <script src="modules/jqwidgets_module.min.js?hash=${hash}"></script>
+  <script src="modules/codemirror_module.min.js?hash=${hash}"></script>
+  <script src="modules/tern_module.min.js?hash=${hash}"></script>
   
-  <link rel="stylesheet" href="codemirror/lib/codemirror.css">
-  <link rel="stylesheet" href="codemirror/theme/neat.css">
-  <link rel="stylesheet" href="codemirror/addon/hint/show-hint.css">
-  <link rel="stylesheet" href="codemirror/addon/dialog/dialog.css">
-  <link rel="stylesheet" href="codemirror/addon/tern/tern.css">
-  <script src="codemirror/lib/codemirror.js"></script>
-  <script src="codemirror/addon/display/autorefresh.js"></script>
-  <script src="codemirror/mode/javascript/javascript.js"></script>
-  <script src="codemirror/addon/hint/show-hint.js"></script>
-  <script src="codemirror/addon/hint/javascript-hint.js"></script>
-
-  <script src="codemirror/addon/dialog/dialog.js"></script>
-  <script src="codemirror/addon/tern/tern.js"></script>
-  <script src="https://unpkg.com/acorn/dist/acorn.js"></script>
-  <script src="https://unpkg.com/acorn-loose/dist/acorn-loose.js"></script>
-  <script src="https://unpkg.com/acorn-walk/dist/walk.js"></script>
-  <script src="https://unpkg.com/tern/lib/signal.js"></script>
-  <script src="https://unpkg.com/tern/lib/tern.js"></script>
-  <script src="https://unpkg.com/tern/lib/def.js"></script>
-  <script src="https://unpkg.com/tern/lib/comment.js"></script>
-  <script src="https://unpkg.com/tern/lib/infer.js"></script>
-  <script src="https://unpkg.com/tern/plugin/doc_comment.js"></script>
-
   <script>
 
     // set caching to max one month, this prevents browsers from indefinitely caching mudslinger even if the server code has been updated
@@ -112,15 +87,26 @@
           <li data-option-name="debug-scripts"><label><input type="checkbox">ScriptInfo</label></li>
           <li type="separator"></li>
           <li data-option-name="reset-settings">Ripristina</li>
-          <li data-option-name="import-settings">Importa</li>
-          <li data-option-name="export-settings">Esporta</li>
+          <li data-option-name="import-settings">Importa Configurazione</li>
+          <li data-option-name="export-settings">Esporta Configurazione</li>
+          <li data-option-name="import-layout">Importa Layout</li>
+          <li data-option-name="export-layout">Esporta Layout</li>
         </ul>
       </li>
       <li>Scripting
         <ul>
           <li data-option-name="aliases">Aliases</li>
           <li data-option-name="triggers">Triggers</li>
+          <li data-option-name="variables">Variabili</li>
+          <li data-option-name="classes">Classi</li>
+          <li data-option-name="events">Eventi</li>
           <li data-option-name="script">Script</li>
+          <li>Avanzate
+            <ul>
+              <li data-option-name="base_aliases">Alias preimpostati</li>
+              <li data-option-name="base_triggers">Triggers preimpostati</li>
+            </ul>
+          </li>
         </ul>
       </li>
       <li>Altro
@@ -130,7 +116,8 @@
               <li>&lt;nessuna&gt;</li>
             </ul>
           </li>
-          <li data-option-name="about">Info</li>
+          <li data-option-name="mapper">Mapper</li>
+          <li data-option-name="about">Versione</li>
           <li data-option-name="help"><a href="./help.html" target="_blank">Help</a></li>
         </ul>
       </li>
@@ -139,13 +126,53 @@
       <li data-require-api="true" data-option-name="profiles"><a href="/user/profiles">Profiles</a></li>
     </ul>
   </div>
-  <div id="mainWin">
-    <pre id="winOutput" role="alert" aria-live="assertive" aria-relevant="additions" class="outputText"></pre>
-    <div id="cmdCont">
-      <textarea autofocus rows="1" id="cmdInput" aria-live="off" autocapitalize="off"></textarea>
-      <div class="chkCmdInputCmdStackCont">
-        <input id="chkCmdStack" type="checkbox" checked>
-        <label for="chkCmdStack" class="toolTipText" aria-live="assertive" title="Command stacking">Comandi Multipli</label>
+  <div id="mainWin" style="color:white;">
+    <div id="content-wrapper">
+      <div id="column-left">
+        <div id="column-left-top">
+        </div>
+        <div id="column-left-bottom">
+        </div>
+      </div>
+      <div id="column-center">
+          <div id="row-top">
+            <div id="row-top-left">
+            </div>
+            <div id="row-top-right">
+            </div>
+          </div>
+          <div id="row-center">
+              <pre id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
+          </div>
+          <div id="row-bottom">
+            <div id="row-bottom-left">
+            </div>
+            <div id="row-bottom-right">
+            </div>
+          </div>
+          <div id="row-input">
+            <div id="cmdCont">
+              <textarea autofocus rows="1" id="cmdInput" aria-label="Barra comandi" autocapitalize="off"></textarea>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">
+                <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="polite" title="Abilita o disabilita Triggers"></label>
+              </div>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdAliases" type="checkbox" checked title="Aliases">
+                <label for="chkCmdAliases" class="checker checkerAliases" aria-live="assertive" title="Abilita o disabilita Alias"></label>
+              </div>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdStack" type="checkbox" checked>
+                <label for="chkCmdStack" class="checker checkerStack" aria-live="assertive" title="Comandi multipli con ;"></label>
+              </div>
+            </div> 
+          </div>
+      </div>
+      <div id="column-right">
+        <div id="column-right-top">
+        </div>
+        <div id="column-right-bottom">
+        </div>
       </div>
     </div>
   </div>
