@@ -26,5 +26,34 @@ Linguaggi usati: Typescript, HTML5, CSS
 
 Il proxy fatto in Node.js tramite Socket.IO crea le connessioni telnet e trasferisce i dati telnet al browser ed e' hostato sul sito del gioco.
 
+# Build
+* git clone https://github.com/msimic/TS2-Client.git
+
+# Prerequisiti per build del proxy: Git, Node.js / NPM
+* In cartella telnet_proxy
+* > npm install
+* > npm run build
+* configurare i config per l'esecuzione in locale
+* > npm run build && npm run start
+
+# Prerequisiti per build del client: Git, Node.js / NPM, Docker
+* In cartella browser
+* > npm install
+* > npm run build
+* > npm run electronWindows
+* > docker pull electronuserland/builder
+* > npm run electronLinux
+
+# Esecuzione
+* Aprire in VSCode i progetti telnet_proxy e browser
+* configurare i config
+* CTRL+SHIFT+B e runnare il build
+* F5 per runnare con debugging 
+
+# Contributi
+
+Accettiamo contributi, anche di devs di altri mud se volete far girare il client per il vostro mud.
+Aiuti sono graditi in coding e desing grafico.
+
 # Licenza
 [MIT](LICENSE.md)
