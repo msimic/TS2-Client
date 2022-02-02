@@ -8,13 +8,16 @@ Linguaggi usati: Typescript, HTML5, CSS
 
 Il proxy Node.js Socket.IO create le connessioni telnet e trasferisce i dati telnet al browser.
 
-Versione live su: [http://temporasanguinis.it/#play](Tempora Sanguinis)
+Versione live su: [http://temporasanguinis.it/play](Tempora Sanguinis)
 
 # Funzionalita' #
 * Colori ANSI
 * 256 colori
+* Mapper
 * UTF-8
-* MXP support (``<image>``, ``<send>``, ``<a>``, ``<i>``, ``<b>``, ``<u>``, ``<color>``, e ``<s>``)
+* Disposizione schermo (layout)
+* Finestre (scriptabili via trigger)
+* Supporto MXP (``<image>``, ``<send>``, ``<a>``, ``<i>``, ``<b>``, ``<u>``, ``<color>``, e ``<s>``)
 * Triggers (semplici and regex)
 * Aliases (semplici and regex)
 * Variabili
