@@ -2,8 +2,13 @@
 export const ButtonOK = 1;
 export const ButtonCancel = 0;
 
+export enum Button {
+    Ok = ButtonOK,
+    Cancel = ButtonCancel
+}
+
 export interface MessageboxResult {
-    button:number;
+    button:Button;
     result: string;
     results: string[];
 }

@@ -102,7 +102,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Disposizione schermo</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                    <label title="Se abilitato questo profilo avra' una predisposizione schermo per approdare le finestre e vario altro contenuto. Richiede Trigger preimpostati." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-uselayout" /></label>
+                    <label title="Se abilitato questo profilo avra' una predisposizione schermo per ancorare le finestre e vario altro contenuto. Richiede Trigger preimpostati." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-uselayout" /></label>
                     <button tabindex="1000" id="reloadLayout" title="Ricarica disposizione schermo" class="">Ricarica predefinito</button>
                     <button tabindex="1001" id="editLayout" title="Modifica disposizione schermo" class="">Modifica</button>
                     </div>

@@ -61,6 +61,11 @@ export class AliasManager {
             }    
             return;
         }
+        if (val == undefined) {
+            val = !t.enabled;
+        }
+        t.enabled = val
+        this.saveAliases()
     }
 
     public getById(id:string):TrigAlItem {

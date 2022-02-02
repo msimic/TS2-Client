@@ -71,7 +71,11 @@ export class TriggerManager {
             }    
             return;
         }
+        if (val == undefined) {
+            val = !t.enabled;
+        }
         t.enabled = val;
+        this.saveTriggers()
     }
 
     public getById(id:string):TrigAlItem {

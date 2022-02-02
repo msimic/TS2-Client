@@ -3,7 +3,7 @@ import { EventHook } from "./event";
 import { ControlType, LayoutManager } from "./layoutManager";
 import { Mapper } from "./mapper";
 import { MapperWindow } from "./mapperWindow";
-import { Messagebox, messagebox } from "./messagebox";
+import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 
 export interface WindowData {
@@ -15,6 +15,8 @@ export interface WindowData {
     visible:boolean;
     collapsed:boolean;
     docked:boolean;
+    font?:string;
+    fontSize?:number;
 }
 
 export interface WindowDefinition {
@@ -70,7 +72,7 @@ export class WindowManager {
             //console.log(wnds)
             await this.deleteWindows();
             //console.log("LOAD Deleted")
-            console.log("LOAD " + cp + ": " + wnds.map(v => v.name).join(","))
+            //console.log("LOAD " + cp + ": " + wnds.map(v => v.name).join(","))
             if (wnds) for (const iterator of wnds) {
                 this.windows.set(iterator.name, {
                     window: null,
@@ -127,7 +129,7 @@ export class WindowManager {
             }
         }
         let int:number = null;
-        int = setInterval(()=>{
+        int = <number><any>setInterval(()=>{
             for (const tw of toShow) {
                 if (!$(".win-"+tw.replace(" ","-")).length) {
                     return;
@@ -163,7 +165,7 @@ export class WindowManager {
         //this.save()
 
         let int:number = null;
-        int = setInterval(()=>{
+        int = <number><any>setInterval(()=>{
             for (const tw of toDestroy) {
                 if ($(".win-"+tw.replace(" ","-")).length) {
                     return;
@@ -190,11 +192,13 @@ export class WindowManager {
         const witm = this.layoutManager.getCurrent().items.find(i => i.type == ControlType.Window && i.content == window);
         let dockPos = $("#window-dock-"+window.replace(" ","-"));
         if (!witm) {
-            Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout.\nPer poter approdarla devi definire nel layout in che pannello va\napprodata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
+            this.windows.get(window).data.docked = false;
+            this.save();
+            Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout e rimarra' staccata.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
         }
         if (!dockPos.length) {
-            Messagebox.Show("Info", "Non trovo la posizione definita nel nel layout.\nPer poter approdarla devi definire nel layout in che pannello va\napprodata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
+            Messagebox.Show("Info", "Non trovo la posizione definita nel layout.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
         }
         let w = ui.parents(".jqx-window");
@@ -228,7 +232,7 @@ export class WindowManager {
         w.data("docked", true);
         this.windows.get(window).data.docked = true;
         if ((<any>$(w))[0].sizeChanged) {
-            setTimeout(() => (<any>$(w))[0].sizeChanged(), 10);
+            setTimeout(() => (<any>$(w))[0].sizeChanged(), 100);
         }
         this.save();
     }
@@ -248,12 +252,15 @@ export class WindowManager {
         //await this.destroyWindow(window,false);
         //this.createWindow(window);
         await this.show(window);
+        if ((<any>$(w))[0].sizeChanged) {
+            setTimeout(() => (<any>$(w))[0].sizeChanged(), 100);
+        }
         this.save();
     }
     
     public addDockButton(parent:JQuery, window:string) {
         parent = $(".jqx-window-header", parent);
-        let btnBack = $(`<div title="Approda la finestra" class="jqx-window-dock-button-background" style="float: left;visibility: visible; width: 16px; height: 16px; margin-right: 7px; margin-left: 0px;"><div class="jqx-window-pin-button" style="width: 100%; height: 100%; top: 0px;"></div></div>`)
+        let btnBack = $(`<div title="Ancora o stacca la finestra" class="jqx-window-dock-button-background" style="float: left;visibility: visible; width: 16px; height: 16px; margin-right: 7px; margin-left: 0px;"><div class="jqx-window-pin-button" style="width: 100%; height: 100%; top: 0px;"></div></div>`)
         parent.prepend(btnBack);
         btnBack.click(()=>{
             if (this.isDocked(window, parent)) {
@@ -262,6 +269,75 @@ export class WindowManager {
                 this.dock(window, parent);
             }
         });
+    }
+
+    public addSettingsButton(parent:JQuery, window:string) {
+        let btnBack = $(`<div title="Impostazioni" class="jqx-window-settings-button-background" style="visibility: visible; width: 16px; height: 16px; margin-right: 7px; margin-left: 0px;position:absolute;"><div class="jqx-window-settings-button" style="background-size: 16px;width: 16px; height: 16px;  top: 0px;"></div></div>`)
+        $(".jqx-window-header", parent).append(btnBack);
+        btnBack.click(()=>{
+            this.showSettings(window, parent);
+        });
+    }
+
+    async showSettings(window: string, parent:JQuery) {
+        const wnd = this.windows.get(window);
+        const r = await Messagebox.ShowMultiInput("Impostazioni finestra (campi vuoti per predefinito)", ["Font (nome o famiglia di font)", "Grandezza font (in pixel)"], [wnd.data.font||"",wnd.data.fontSize?wnd.data.fontSize.toString():""])
+        if (r.button == Button.Ok) {
+            if (r.results[0]) {
+                wnd.data.font = r.results[0]
+            } else {
+                wnd.data.font = undefined
+            }
+            if (r.results[1]) {
+                wnd.data.fontSize = Number(r.results[1])
+            } else {
+                wnd.data.fontSize = undefined
+            }
+            this.applySettings(wnd, parent);
+            this.save();
+        }
+    }
+
+    private applySettings(wnd: WindowDefinition, parent: JQuery) {
+        if (wnd.data.fontSize) {
+            let s = null;
+            s = $(".jqx-window-content", parent).attr('style');
+            s = (s || '').replace(/font-size\:[^\;]+\;/g, '') + 'font-size: ' + wnd.data.fontSize + 'px !important;'; 
+            $(".jqx-window-content", parent).attr('style', s)
+
+            s = $(".outputText", parent).attr('style');
+            s = (s || '').replace(/font-size\:[^\;]+\;/g, '') + 'font-size: ' + wnd.data.fontSize + 'px !important;'; 
+            $(".outputText", parent).attr('style', s)
+            
+        } else {
+            let s = null;
+            s = $(".jqx-window-content", parent).attr('style');
+            s = (s || '').replace(/font-size\:[^\;]+\;/g, '') + 'font-size: unset;'; 
+            $(".jqx-window-content", parent).attr('style', s)
+
+            s = $(".outputText", parent).attr('style');
+            s = (s || '').replace(/font-size\:[^\;]+\;/g, '') + 'font-size: unset;'; 
+            $(".outputText", parent).attr('style', s)
+        }
+        if (wnd.data.font) {
+            let s = null;
+            s = $(".jqx-window-content", parent).attr('style');
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: ' + wnd.data.font + ' !important;'; 
+            $(".jqx-window-content", parent).attr('style', s)
+
+            s = $(".outputText", parent).attr('style');
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: ' + wnd.data.font + ' !important;'; 
+            $(".outputText", parent).attr('style', s)
+        } else {
+            let s = null;
+            s = $(".jqx-window-content", parent).attr('style');
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: auto;'; 
+            $(".jqx-window-content", parent).attr('style', s)
+
+            s = $(".outputText", parent).attr('style');
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: auto;'; 
+            $(".outputText", parent).attr('style', s)
+        }
     }
 
     public async destroyWindow(name:string, permanent:boolean) {
@@ -291,7 +367,7 @@ export class WindowManager {
             }
             this.triggerChanged();
             let int:number = null;
-            int = setInterval(()=>{
+            int = <number><any>setInterval(()=>{
                 let tw = wdef.data.name;
                 if ($(".win-"+tw.replace(" ","-")).length) {
                     return;
@@ -306,7 +382,7 @@ export class WindowManager {
         }
         return p;
     }
-    public createWindow(name:string,createData?:any):WindowDefinition {
+    public createWindow(name:string,createData?:WindowData):WindowDefinition {
 
         //console.log("createWindow " + name);
         if (createData) {
@@ -344,10 +420,11 @@ export class WindowManager {
         }
 
         const hasLayout = this.profileManager.getCurrent()?this.profileManager.getProfile(this.profileManager.getCurrent()).useLayout:false;
-        let defaults = (this.windows.get(name) || createData);
+        let defaults = <WindowDefinition>(this.windows.get(name) || createData);
 
         if (createData) {
             defaults = {
+                custom: customOutput != null,
                 window: null,
                 output: null,
                 created:true,
@@ -360,7 +437,9 @@ export class WindowManager {
                     y: createData.y || 100,
                     visible: createData.visible || true,
                     collapsed: createData.collapsed || false,
-                    docked:createData.docked==undefined?(hasLayout?true:false):createData.docked
+                    docked:createData.docked==undefined?(hasLayout?true:false):createData.docked,
+                    font: createData.font,
+                    fontSize: createData.fontSize,
                 }
             }
         }
@@ -375,6 +454,7 @@ export class WindowManager {
 
         const $win = $(win);
         const w = (<any>$win).jqxWindow({width: (defaults&&defaults.data?defaults.data.w:450), height: (defaults&&defaults.data?defaults.data.h:250), showCollapseButton: true, autoOpen: false});
+
         let inresize=false;
         new ResizeObserver(()=>{
             if (inresize) return;
@@ -421,6 +501,7 @@ export class WindowManager {
                 wd.initialized = true;
                 setTimeout(() => {
                     self.addDockButton($(".win-"+name.replace(" ","-")),name);
+                    self.addSettingsButton($(".win-"+name.replace(" ","-")),name);
                     if (collapse) (<any>w).jqxWindow('collapse'); 
                     if (dock) self.dock(name,$(".jqx-window-header", $win));
                     $("#cmdInput").focus();
@@ -472,10 +553,14 @@ export class WindowManager {
                 y: 100,
                 visible: true,
                 collapsed: false,
-                docked: createData?createData.docked:(hasLayout?true:false)
+                docked: createData?createData.docked:(hasLayout?true:false),
+                font: (createData?createData.font:undefined)||(defaults?defaults.data.font:undefined),
+                fontSize: (createData?createData.fontSize:undefined)||(defaults?defaults.data.fontSize:undefined),
             }
         }
         this.windows.set(name, def);
+
+        this.applySettings(def, w)
 
         if ((defaults && defaults.data.visible)||!defaults) {
             this.show(name);

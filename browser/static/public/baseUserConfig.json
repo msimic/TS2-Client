@@ -6,7 +6,7 @@
   "enable-aliases": true,
   "enable-triggers": true,
   "font-size": "small-font",
-  "font": "vera",
+  "font": "consolas",
   "colorsEnabled": true,
   "logTime": false,
   "debugScripts": false,
@@ -134,8 +134,7 @@
       ]
     ]
   ],
-  "variables": [
-  ],
+  "variables": [],
   "triggers": [
     {
       "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto.",
@@ -517,7 +516,7 @@
     {
       "pattern": "^Il freddo che (.+) emette ti congela!",
       "id": "",
-      "value": "if (!this.preventAntispalm) {\n  send(\"ic\");\n}",
+      "value": "if (!this.preventAntispalm) {\n  send(\"ic\");\n  this.preventAntispalm=true\n}",
       "regex": true,
       "is_script": true,
       "class": "antispalm",
@@ -527,7 +526,7 @@
     {
       "pattern": "^(.+) ti colpisce con la sua palla di fuoco! - OUCH",
       "id": "",
-      "value": "if (!this.preventAntispalm) {\n  send(\"if\");\n}",
+      "value": "if (!this.preventAntispalm) {\n  send(\"if\");\n  this.preventAntispalm=true\n}",
       "regex": true,
       "is_script": true,
       "class": "antispalm",
@@ -537,7 +536,7 @@
     {
       "pattern": "^Urli di dolore quando vieni colpit[oa] dall'elettricita' di",
       "id": "",
-      "value": "if (!this.preventAntispalm) {\n  send(\"ie\");\n}",
+      "value": "if (!this.preventAntispalm) {\n  send(\"ie\");\n  this.preventAntispalm=true\n}",
       "regex": true,
       "is_script": true,
       "class": "antispalm",
@@ -547,7 +546,7 @@
     {
       "pattern": "^Non riesci ad evitare l'attacco acido di",
       "id": "",
-      "value": "if (!this.preventAntispalm) {\n  send(\"ia\");\n}",
+      "value": "if (!this.preventAntispalm) {\n  send(\"ia\");\n  this.preventAntispalm=true\n}",
       "regex": true,
       "is_script": true,
       "class": "antispalm",
@@ -587,7 +586,7 @@
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
       "id": "",
-      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.preventAntispalm = false;\nif (this.armaPrimaria) {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
+      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.preventAntispalm = false;\nif (this.armaPrimaria && this.autoarmi) {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
       "regex": true,
       "is_script": true,
       "class": "autoarmi",
@@ -635,7 +634,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "^\\[( 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|21|22)\\] .+\\((buono|a pezzi|discreto)\\)$",
+      "pattern": "^\\[( 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|21|22)\\] .+\\((ottimo|molto buono|buono|a pezzi|discreto)\\)$",
       "id": "",
       "value": "if (!this.oggettiRovinati || !this.oggettiRovinati.push) {\n  this.oggettiRovinati = [];\n}\nthis.oggettiRovinati.push(match[1].trim())",
       "regex": true,
@@ -1053,10 +1052,10 @@
       "is_prompt": false
     },
     {
-      "pattern": "disp",
+      "pattern": "^dispe?l?(.+)?",
       "id": "",
       "value": "cast 'dispel m' $1",
-      "regex": false,
+      "regex": true,
       "is_script": false,
       "class": "",
       "enabled": true,
@@ -1945,7 +1944,7 @@
     {
       "pattern": "^fixxa ?(.+)?$",
       "id": "",
-      "value": "if (match && match[1]) {\n  send(\"tell \"+match[1]+\" (trigger) Mi preparo a riparare l'eq su di te dopo il lag del True sight...\")\n}\nlet watchLag = 7\nsend(\"wear all\");\nif (this.healtype) {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  send(\"ts\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n} else {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  watchLag = 17\n  send(\"watch\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n}\ndelay(\"remeq\", watchLag*1000, ()=>{\n  toggleClass(\"fixxa\",true)\n  this.oggettiRovinati = [];\n  send(\"eq\");\n  delay(\"remeq\", 2000, ()=>{\n    toggleClass(\"fixxa\",false)\n  \tsend(\"togliOggettiRovinati \"+(match&&match[1]?match[1]:\"\"));\n  });\n});",
+      "value": "if (match && match[1]) {\n  send(\"tell \"+match[1]+\" (trigger) Mi preparo a riparare l'eq su di te dopo il lag del True sight...\")\n}\nlet watchLag = 7\nsend(\"wear all\");\nif (this.healtype) {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  send(\"ts\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n} else {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  watchLag = 17\n  send(\"watch\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n}\ndelay(\"remeq\", watchLag*1000, ()=>{\n  toggleClass(\"fixxa\",true)\n  this.oggettiRovinati = [];\n  send(\"eq\");\n  delay(\"remeq\", 2000, ()=>{\n    toggleClass(\"fixxa\",false)\n  \tsend(\"oggettiRovinati \"+(match&&match[1]?match[1]:\"\"));\n  });\n});",
       "regex": true,
       "is_script": true,
       "class": "util",
@@ -1953,9 +1952,9 @@
       "is_prompt": false
     },
     {
-      "pattern": "^togliOggettiRovinati ?(.+)$",
+      "pattern": "^oggettiRovinati ?(.+)?$",
       "id": "",
-      "value": "let repairer = (match && match[1] ? match[1] : \"\").trim();\nthis.oggettiRovinati = this.oggettiRovinati.reverse();\n\nfor (let ogg of this.oggettiRovinati) {\n  if (!ogg) continue;\n  send(\"rem \"+ogg);\n  if (!repairer) {\n    send(\"repair ed\"+this.TSPersonaggio);\n  }\n}\n\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Inizio a riparare, ti avverto quando ho finito...\");\n  for (let ogg of this.oggettiRovinati) {\n    if (!ogg) continue;\n    send(\"fix ed\"+this.TSPersonaggio + \" \" + repairer);\n    send(\"wear ed\"+this.TSPersonaggio);\n  }\n}\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Finito grazie\");\n}",
+      "value": "let repairer = (match && match[1] ? match[1] : \"\").trim();\nthis.oggettiRovinati = this.oggettiRovinati.reverse();\n\nfor (let ogg of this.oggettiRovinati) {\n  if (!ogg) continue;\n  send(\"rem \"+ogg);\n  if (!repairer) {\n    send(\"repair ed\"+this.TSPersonaggio);\n  }\n}\n\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Inizio a riparare, ti avverto quando ho finito...\");\n  for (let ogg of this.oggettiRovinati) {\n    if (!ogg) continue;\n    send(\"fix ed\"+this.TSPersonaggio + \" \" + repairer);\n    send(\"wear ed\"+this.TSPersonaggio);\n  }\n}\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Finito grazie\");\n}\n\n",
       "regex": true,
       "is_script": true,
       "class": "util",
@@ -2188,7 +2187,7 @@
       "cleric",
       {
         "name": "cleric",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -2202,7 +2201,7 @@
       "mage",
       {
         "name": "mage",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -2216,42 +2215,42 @@
       "autocleric",
       {
         "name": "autocleric",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autoassist",
       {
         "name": "autoassist",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autobash",
       {
         "name": "autobash",
-        "enabled": false
+        "enabled": true
       }
     ],
     [
       "autorescue",
       {
         "name": "autorescue",
-        "enabled": false
+        "enabled": true
       }
     ],
     [
       "autoarmi",
       {
         "name": "autoarmi",
-        "enabled": false
+        "enabled": true
       }
     ],
     [
       "antispalm",
       {
         "name": "antispalm",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -2265,14 +2264,14 @@
       "autogroup",
       {
         "name": "autogroup",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autoloot",
       {
         "name": "autoloot",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -2321,6 +2320,34 @@
       "automemorize",
       {
         "name": "automemorize",
+        "enabled": false
+      }
+    ],
+    [
+      "psionic",
+      {
+        "name": "psionic",
+        "enabled": false
+      }
+    ],
+    [
+      "sorcerer",
+      {
+        "name": "sorcerer",
+        "enabled": false
+      }
+    ],
+    [
+      "selfsanc",
+      {
+        "name": "selfsanc",
+        "enabled": false
+      }
+    ],
+    [
+      "selfshield",
+      {
+        "name": "selfshield",
         "enabled": true
       }
     ]

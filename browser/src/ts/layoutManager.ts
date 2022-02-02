@@ -724,7 +724,7 @@ export class LayoutManager {
                 if (isNumeric(compare)) {
                     compare = Number(compare);
                 }
-                let val = sthis[variable]||'('+variable+')';
+                let val = sthis[variable]==undefined?'?':sthis[variable];
                 if (parseVariable) {
                     if (!this.variableChangedMap.has(variable)) this.variableChangedMap.set(variable, []);
                     this.variableChangedMap.get(variable).push(ctrl);

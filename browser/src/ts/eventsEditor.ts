@@ -64,6 +64,9 @@ export class EventsEditor {
 
     constructor(private script:JsScript) {
         const title: string = "Eventi";
+        script.eventChanged.handle(e => {
+            this.refresh();
+        })
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -385,11 +388,15 @@ export class EventsEditor {
     }
 
     public show() {
-        this.clearEditor();
-        this.setEditorDisabled(true);
-        this.updateListBox();
+        this.refresh();
 
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    private refresh() {
+        this.clearEditor();
+        this.setEditorDisabled(true);
+        this.updateListBox();
     }
 }

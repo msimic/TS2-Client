@@ -11,12 +11,13 @@ import { ConfigIf } from "./util";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
-export let EvtScriptEmitError = new EventHook<{owner:string, err:any}>();
+export let EvtScriptEmitError = new EventHook<{owner:string, err:any, stack?:string}>();
 export let EvtScriptEmitCls = new EventHook<{owner:string, window?:string}>();
 export let EvtScriptEmitEvalError = new EventHook<any>();
 export let EvtScriptEmitToggleAlias = new EventHook<{owner:string, id:string, state:boolean}>();
 export let EvtScriptEmitToggleTrigger = new EventHook<{owner:string, id:string, state:boolean}>();
 export let EvtScriptEmitToggleClass = new EventHook<{owner:string, id:string, state:boolean}>();
+export let EvtScriptEmitToggleEvent = new EventHook<{owner:string, id:string, state:boolean}>();
 
 export let EvtScriptEvent = new EventHook<{event:ScripEventTypes, condition:string, value:any}>();
 
@@ -166,11 +167,14 @@ export class JsScript {
     private baseVariables: Map<string, Variable>;
     private baseEventList: ScriptEvent[] = [];
     private baseEvents: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
-
+    public variableChanged = new EventHook<string>();
+    public eventChanged = new EventHook<ScriptEvent>();
+    
     private self = this;
     constructor(private config: ConfigIf,private baseConfig: ConfigIf, private profileManager: ProfileManager, private mapper:Mapper) {
         this.loadBase();
         this.load();
+        EvtScriptEmitToggleEvent.handle(this.onToggleEvent, this);
         config.evtConfigImport.handle((d) => {
             this.loadBase();
             this.load();
@@ -184,12 +188,31 @@ export class JsScript {
             this.eventFired(e)
         });
     }
+    onToggleEvent(ev:{owner:string, id:string, state:boolean}) {
+        const t = this.getEvent(ev.id)
+        if (!t) {
+            if (this.config.getDef("debugScripts", false)) {
+                const msg = "Event " + ev.id + " non esiste!";
+                EvtScriptEmitPrint.fire({owner:"EventManager", message: msg});
+            }    
+            return;
+        }
+        if (ev.state == undefined) {
+            ev.state = !t.enabled;
+        }
+        t.enabled = ev.state;
+        this.save()
+    }
 
     eventFired(e: any) {
         let evt = ScripEventTypes[e.event];
         let cond = e.condition;
         let val = e.value;
         this.onEvent(<string>evt, cond, val);
+        if (e.event == ScripEventTypes.VariableChanged) {
+            this.variableChanged.fire(evt)
+            this.save();
+        }
     }
 
     checkEventCondition(ev:ScriptEvent, condition:string):boolean {
@@ -232,6 +255,7 @@ export class JsScript {
     clearEvents() {
         this.eventList = [];
         this.events.clear();
+        this.eventChanged.fire(null)
     }
 
     clearBaseEvents() {
@@ -248,7 +272,7 @@ export class JsScript {
     }
 
     getEvent(id:string):ScriptEvent {
-        return this.eventList.find(e => e.id == id) || null;
+        return this.eventList.find(e => e.id == id) || this.baseEventList.find(e => e.id == id);
     }
 
     addEvent(ev:ScriptEvent) {
@@ -257,6 +281,7 @@ export class JsScript {
             this.events.set(ev.type, []);
         }
         this.events.get(ev.type).push(ev);
+        this.eventChanged.fire(ev)
     }
 
     delEvent(ev:ScriptEvent) {
@@ -274,6 +299,7 @@ export class JsScript {
         if (this.eventList.length == 0) {
             this.events.clear();
         }
+        this.eventChanged.fire(ev)
     }
 
     getVariableValue(name:string):any {
@@ -369,7 +395,7 @@ export class JsScript {
 
     public makeScript(owner:string, text: string, argsSig: string): any {
         try {
-            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper);
+            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper, this);
             if (!scr) { return null; }
             return (...args: any[]) => {
                     let ret = scr(...args);
@@ -401,7 +427,8 @@ function makeScript(owner:string, text: string, argsSig: string,
     aliasManager: AliasManager,
     triggerManager: TriggerManager,
     outputManager: OutputManager,
-    map:Mapper) {
+    map:Mapper,
+    scriptManager:JsScript) {
 
     let _scriptFunc_: any;
     let own = owner;
@@ -485,6 +512,9 @@ function makeScript(owner:string, text: string, argsSig: string,
     const toggleClass = function(id:string, state: boolean) {
         EvtScriptEmitToggleClass.fire({owner: own, id: id, state: state});
     };
+    const toggleEvent = function(id:string, state: boolean) {
+        EvtScriptEmitToggleEvent.fire({owner: own, id: id, state: state});
+    };
 
     const classEnabled = function(id:string):boolean {
         if (classManager) return classManager.isEnabled(id);
@@ -494,6 +524,16 @@ function makeScript(owner:string, text: string, argsSig: string,
     const triggerEnabled = function(id:string):boolean {
         if (triggerManager) return triggerManager.isEnabled(id);
         return true;
+    };
+
+    const eventEnabled = function(id:string):boolean {
+        const ev = scriptManager.getEvent(id);
+        return (ev && ev.enabled)?true:false;
+    };
+
+    const getEvent = function(id:string):ScriptEvent {
+        const ev = scriptManager.getEvent(id);
+        return (ev || null);
     };
 
     const aliasEnabled = function(id:string):boolean {
@@ -520,7 +560,7 @@ function makeScript(owner:string, text: string, argsSig: string,
                     try {
                         ${text}
                     } catch (err) {
-                        _errEmit.fire({owner:owner, err: err});
+                        _errEmit.fire({owner:owner, err: err, stack: err.stack});
                     }
                 })()
         `;

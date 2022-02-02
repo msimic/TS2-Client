@@ -59,6 +59,9 @@ export class VariablesEditor {
 
     constructor(private script:JsScript) {
         const title: string = "Variabili";
+        /*script.variableChanged.handle(v => {
+            this.refresh()
+        })*/
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -250,11 +253,15 @@ export class VariablesEditor {
     }
 
     public show() {
-        this.clearEditor();
-        this.setEditorDisabled(true);
-        this.updateListBox();
+        this.refresh();
 
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    private refresh() {
+        this.clearEditor();
+        this.setEditorDisabled(true);
+        this.updateListBox();
     }
 }

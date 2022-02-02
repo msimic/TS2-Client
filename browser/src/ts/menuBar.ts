@@ -100,7 +100,7 @@ export class MenuBar {
             if (clickable) this.clickFuncs[name](this.config.get(storageKey));
         }
         if (clickable) {
-            console.log(`Attaching menu item ${name}`);
+            //console.log(`Attaching menu item ${name}`);
             let x = $(element);
             $(element).click((event: JQueryEventObject) => {
                 if (!event.target || event.target.tagName != "LI") return;
@@ -156,15 +156,18 @@ export class MenuBar {
 
         var userAgent = navigator.userAgent.toLowerCase();
 
-        if (userAgent.indexOf(' electron/') > -1) {
-            $("#menuBar").append("<span id='electronMenu'>+</span>");
-        }
-
-        $("#menuBar").append("<span id='currentTime'></span>");
+        $("#menuBar").append("<div class='rightMenu'><span class='electron' id='electronMenu'><button id='electronZoomOut'>-</button><span id='electronZoom'></span><button id='electronZoomIn'>+</button></span><span id='currentTime'></span></div>");
         var currentTimeSpan = $("#currentTime");
 
         if (userAgent.indexOf(' electron/') > -1) {
-            $("#menuBar").append("<span id='electronClose'>X</span>");
+            console.log("In electron")
+            $("#electronZoomOut").on('click', ()=> {
+                if ((<any>window).ipcRenderer) (<any>window).ipcRenderer.invoke('setZoom', 'out').then(()=>console.log("Invoked"))
+            })
+            $("#electronZoomIn").on('click', ()=> {
+                if ((<any>window).ipcRenderer) (<any>window).ipcRenderer.invoke('setZoom', 'in').then(()=>console.log("Invoked"))
+            })
+            $(".electron", "#menuBar").css({"display": "inline-block"}).show();
         }
 
         (<any>Date.prototype).timeNow = function () {

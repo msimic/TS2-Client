@@ -224,7 +224,7 @@ export class OutputWin extends OutWinBase {
         this.scrollBottom(true);
     }
 
-    handleScriptError(data:{owner:string, err:any}) {
+    handleScriptError(data:{owner:string, err:any, stack?:string}) {
 
         this.append(
             "<span style=\"color:red\"><br/>"

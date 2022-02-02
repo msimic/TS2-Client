@@ -406,7 +406,7 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
         if (this.autologinInterval) {
             clearInterval(this.autologinInterval);
         }
-        this.autologinInterval = setInterval(() => {
+        this.autologinInterval = <number><any>setInterval(() => {
             this.autologinTime--;
             $(this.connectButton).text(connectText + " (" + this.autologinTime + ")");
             if (this.autologinTime == 0 && this.client.socketConnected && !this.client.connected) {

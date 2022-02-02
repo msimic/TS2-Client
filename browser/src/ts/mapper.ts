@@ -229,7 +229,7 @@ export const Short2LongExitIta = new Map<string,string>([
     ['s','sud'],
     ['so','sudovest'],
     ['o','ovest'],
-    ['ne','nordovest'],
+    ['no','nordovest'],
     ['a','alto'],
     ['b','basso'],
 ]);
@@ -471,7 +471,11 @@ export class Mapper {
     public async loadVersion():Promise<MapVersion> {
         let data:MapVersion = null;
         try {
-            const response = await fetch("mapperVersion.json?rnd="+Math.random());
+            let prefix = ""
+            if ((<any>window).ipcRenderer) {
+                prefix = "https://temporasanguinis.it/client/"
+            }
+            const response = await fetch(prefix + "mapperVersion.json?rnd="+Math.random());
             data = await response.json();
         } catch {
             data = {
@@ -743,6 +747,7 @@ export class Mapper {
             this.setRoomByVNum(this.roomVnum);
         }
         
+        this.zoneChanged.fire({ id: null, zone:null})
         this.roomChanged.fire({id: -1, vnum: -1, room: null});
         this.roomChanged.fire({id: this.roomId, vnum: this.roomVnum, room: this.current});
         

@@ -57,6 +57,9 @@ export class ClassEditor {
     constructor(private classManager:ClassManager) {
         const title: string = "Classi";
         let myDiv = document.createElement("div");
+        classManager.changed.handle(()=>{
+            this.refresh()
+        })
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
         this.$win = $(myDiv);
@@ -244,11 +247,15 @@ export class ClassEditor {
     }
 
     public show() {
-        this.clearEditor();
-        this.setEditorDisabled(true);
-        this.updateListBox();
+        this.refresh();
 
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    private refresh() {
+        this.clearEditor();
+        this.setEditorDisabled(true);
+        this.updateListBox();
     }
 }

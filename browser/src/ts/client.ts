@@ -118,14 +118,18 @@ export class Client {
             if (v.version != 0) {
                 vn = v.version
             }
-            return this.mapper.load('mapperData.json?v='+vn)
+            let prefix = ""
+            if ((<any>window).ipcRenderer) {
+                prefix = "https://temporasanguinis.it/client/"
+            }
+            return this.mapper.load(prefix + 'mapperData.json?v='+vn)
         }), 2000);
         this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
         this.mapper.setScript(this.jsScript)
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
         this.variableEditor = new VariablesEditor(this.jsScript);
-        this.classManager = new ClassManager(this.profileManager.activeConfig);
+        this.classManager = new ClassManager(this.profileManager.activeConfig, profileManager);
         this.jsScriptWin = new JsScriptWin(this.jsScript);
         this.triggerManager = new TriggerManager(
             this.jsScript, this.profileManager.activeConfig, baseConfig, this.classManager, profileManager);
@@ -343,7 +347,7 @@ export class Client {
             const lines = linesToArray(data.message)
             //console.log(lines)
             for (const line of lines) {
-                this.commandInput.execCommand(line.trim(), line.trim(), true);    
+                this.commandInput.sendCmd(line.trim(), true, true);    
             }
             //this.socket.sendCmd(data);
         });
@@ -374,7 +378,7 @@ export class Client {
             }
         });
 
-        EvtScriptEmitError.handle((data: {owner:string, err: any}) => {
+        EvtScriptEmitError.handle((data: {owner:string, err: any, stack?:string}) => {
             this.outputWin.handleScriptError(data)
         });
 
@@ -532,7 +536,7 @@ export namespace Mudslinger {
         setDefault(cfg, "enable-aliases", true);
         setDefault(cfg, "enable-triggers", true);
         setDefault(cfg, "font-size", "small");
-        setDefault(cfg, "font", "Consolas");
+        setDefault(cfg, "font", "consolas");
         setDefault(cfg, "colorsEnabled", true);
         setDefault(cfg, "logTime", false);
         setDefault(cfg, "debugScripts", false);

@@ -235,7 +235,7 @@ export class OutWinBase {
 
         this.lineText += txt;
         this.appendBuffer += spanText;
-        this.appendToCurrentTarget($(spanText)[0]);
+        this.appendToCurrentTarget(spanText);
         
         if (txt.endsWith("\n")) {
             // firo i trigger qua prima che venga a schermo
@@ -326,6 +326,7 @@ export class OutWinBase {
         const time = this.padStart(new Date().toISOString().split("T")[1].split("Z")[0] + " ", 12, " ");
         return ('<span class="timeLog">' + time + "</span>");
     }
+    removing = false
     protected newLine() {
         while (this.$targetElems.length > 1) {
             let line = this.popElem(); // pop the old line
@@ -347,11 +348,16 @@ export class OutWinBase {
         
         if (this.lineCount > this.maxLines) {
             if (this.$rootElem.children().length>this.maxLines) {
-                this.$rootElem.children(":lt(" +
-                    (this.maxLines / 2) +
-                    ")"
-                ).remove();
+                if (this.removing) console.log("Bug removing in newLine")
+                this.removing = true
                 this.lineCount = this.$rootElem.children().length;
+                for (let i = 0; i < this.maxLines/4; i++) {
+                    if (this.$rootElem[0].firstChild) {
+                        this.lineCount--;
+                        this.$rootElem[0].removeChild(this.$rootElem[0].firstChild)
+                    }                 
+                }
+                this.removing = false
             } else {
                 this.lineCount = this.$rootElem.children().length;
             }
@@ -418,8 +424,9 @@ export class OutWinBase {
         if (this.scrollRequested) {
             return;
         }
-
-        requestAnimationFrame(() => this.privScrolBottom());
+        
+        requestAnimationFrame(() => {this.getOuterElement()[0].scrollTop = this.getOuterElement()[0].scrollHeight; this.scrollRequested = false;//this.privScrolBottom()
+        });
         this.scrollRequested = true;
     }
 }

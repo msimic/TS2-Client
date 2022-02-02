@@ -2,6 +2,7 @@ import { EventHook } from "./event";
 import { TrigAlItem } from "./trigAlEditBase";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleClass, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { ConfigIf } from "./util";
+import { ProfileManager } from "./profileManager";
 
 export interface Class{
     name: string;
@@ -12,10 +13,15 @@ export class ClassManager {
     public EvtEmitTriggerCmds = new EventHook<{orig: string, cmds: string[]}>();
 
     public classes: Map<string, Class> = new Map<string, Class>();
+    public changed = new EventHook()
 
-    constructor(private config: ConfigIf) {
+    constructor(private config: ConfigIf, private profileManager:ProfileManager) {
         EvtScriptEmitToggleClass.handle(this.onToggle, this);
         this.loadClasses();
+        profileManager.evtProfileChanged.handle(d => {
+            this.loadClasses();
+            this.changed.fire(true)
+        })
     }
 
     private onToggle(data: {owner: string, id:string, state:boolean}) {
@@ -45,6 +51,7 @@ export class ClassManager {
             val = !cls.enabled;
         }
         cls.enabled = val;
+        this.saveClasses()
         EvtScriptEvent.fire({event: ScripEventTypes.ClassChanged, condition: id, value: cls.enabled});
     }
 

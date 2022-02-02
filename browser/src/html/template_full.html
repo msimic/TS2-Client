@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/client.css?hash=${hash}">
 
   <script src="modules/corejs.min.js?hash=${hash}"></script>
-  <script src="modules/jquery.min.js?hash=${hash}"></script>
+  <script src="modules/jquery.min.js?hash=${hash}" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
   <script src="modules/jqwidgets_module.min.js?hash=${hash}"></script>
   <script src="modules/codemirror_module.min.js?hash=${hash}"></script>
   <script src="modules/tern_module.min.js?hash=${hash}"></script>
@@ -27,6 +27,15 @@
     $(document).ready(function() {
       Mudslinger.init();
     });
+
+    if (typeof require !== 'undefined') {
+      const {ipcRenderer} = require('electron');
+      console.log("IPC_RENDERER: "+!!ipcRenderer)
+      window.ipcRenderer = ipcRenderer;
+      if (ipcRenderer) ipcRenderer.on('set-text', (event, selector, text) => {
+          $(selector).text(text);
+      });
+    }
   </script>
 </head>
 <body>

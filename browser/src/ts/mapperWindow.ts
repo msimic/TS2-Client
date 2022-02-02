@@ -69,6 +69,7 @@ export class MapperWindow {
     onEmitMapperZoneChanged = (d:any) => {
         this.zoneId = d.id
         this.zones = [...this.mapper.idToZone.values()]
+        this.zoneMessage(d.zone ? d.zone.name : "Zona sconosciuta")
     }
 
     onEmitMapperRoomChanged = (d:any) => {
@@ -94,6 +95,7 @@ export class MapperWindow {
         (this.$contextMenu as any).jqxMenu('open', (data.x) + 5 + scrollLeft, (data.y) + 5 + scrollTop);
         return false;
     }
+    resizeSensor: ResizeSensor;
 
     constructor(private mapper:Mapper) {
 
@@ -112,7 +114,8 @@ export class MapperWindow {
                     <ul class='custom'>
                         <li  class='custom' data-option-name="load">Dati
                             <ul  class='custom'>
-                            <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa intera</li>
+                            <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
+                            <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="exportzone">Scarica zona corrente</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="importzone">Carica zona o zone</li>
                             </ul>
@@ -195,7 +198,12 @@ export class MapperWindow {
             self.drawing.levelChanged.handle(self.onLevelChange)
             self.drawing.showContext.handle(self.showContextMenu)
             self.onZoomChange(self.drawing.scale)
-            self.load.bind(self)();
+            if ((<any>window).ipcRenderer) {
+                self.loadSite.bind(self)();
+            } else {
+                self.load.bind(self)();
+            }
+            
         });
 
         w.on('close', function (evt:any) {
@@ -222,11 +230,10 @@ export class MapperWindow {
         });*/
         var ce = (self.canvas[0] as HTMLCanvasElement);
         var setSize = function () {
-            ce.height = self.canvas.parent().innerHeight();
-            ce.width = self.canvas.parent().innerWidth();
+            if (self.drawing) self.drawing.setSize()
         }
 
-        new ResizeSensor(jQuery('.midrow', w)[0], function(){ 
+        this.resizeSensor = new ResizeSensor(jQuery('.midrow', w)[0], function(){ 
             setSize()
         });
 
@@ -282,6 +289,9 @@ export class MapperWindow {
             switch (name) {
                 case "reload":
                     this.load();
+                    break;
+                case "reloadweb":
+                    this.loadSite();
                     break;
                 case "pathfind":
                     this.findpath();
@@ -426,25 +436,59 @@ export class MapperWindow {
 
     }
 
+    public loadSite() {
+        let version: MapVersion = null;
+        this.mapper.loadVersion().then(v => {
+            version = v;
+            let vn = Math.random()
+            if (v.version != 0) {
+                vn = v.version
+            }
+            return this.mapper.load('https://temporasanguinis.it/client/mapperData.json?v='+vn)
+        }).then(mDb => {
+            if (!version) {
+                version = mDb.version;
+            }
+            if (!version) {
+                this.message(`Caricato mappe - versione sconosciuta`)
+            } else 
+                this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
+        });
+
+        
+        /*const image = new Image(); // Using optional size for image
+        image.onload = () => {
+            const w = (<HTMLCanvasElement>this.canvas[0]).width;
+            const h = (<HTMLCanvasElement>this.canvas[0]).height;
+            this.ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, w, h);
+        }; // Draw when image has loaded
+
+        image.src = "https://www.temporasanguinis.it/mappa_small.jpg";
+        */
+
+    }
+
     public message(mess:string) {
         this.$bottomMessage.text(mess);
     }
     public zoneMessage(mess:string) {
-        this.$zoneList.empty()
+        if (mess == null || this.$zoneList.children().length < 2) {
+            this.$zoneList.empty()
 
-        if (mess) this.$zoneList.append($('<option disabled selected hidden>', {
-            value: null,
-            text: mess
-        }));
-
-        if (this.zones && this.zones.length) $.each(this.zones, (i, item) => {
-            this.$zoneList.append($('<option>', { 
-                value: item.id,
-                text : "[" + item.id + "] " + item.name 
+            if (mess) this.$zoneList.append($('<option disabled selected hidden>', {
+                value: null,
+                text: mess
             }));
-        });
 
-        if (mess) this.$zoneList.find("option").first().text(mess||"?")
+            if (this.zones && this.zones.length) $.each(this.zones, (i, item) => {
+                this.$zoneList.append($('<option>', { 
+                    value: item.id,
+                    text : "[" + item.id + "] " + item.name 
+                }));
+            });
+        } else {
+            this.$zoneList.find("option").first().text(mess||"?")
+        }
     }
 
     public show() {
@@ -453,6 +497,7 @@ export class MapperWindow {
     }
 
     public destroy() {
+        this.resizeSensor.detach();
         (<any>this.$win).jqxWindow("destroy");
     }
 

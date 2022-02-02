@@ -108,17 +108,21 @@ export class CommandInput {
         }
     }
 
-    private sendCmd(cmd: string = undefined, nohistory:boolean=false): void {
+    public sendCmd(cmd: string = undefined, nohistory:boolean=false, script:boolean=false): void {
 
         this.EvtEmitCommandsAboutToArrive.fire(true)
         if (cmd==undefined) cmd = this.$cmdInput.val();
 
-        if (cmd && cmd[0] == "." && cmd.match(/\.[neswudoab0-9]+$/i)) {
-            cmd = createPath(cmd);
-        }
-
         let cmds:string[] = [], ocmds:string[] = []
         this.prepareCommands(cmd, cmds, ocmds)
+        
+        for (let i = 0; i < cmds.length; i++) {
+            const c = cmds[i];
+            if (c && c[0] == "." && cmd.match(/\.[neswudoab0-9]+$/i)) {
+                cmds[i] = createPath(c);
+            }
+        }
+
         let pcmds:string[] = Array.from(cmds), pocmds:string[] = Array.from(ocmds)
         let pi = 0
 
@@ -139,10 +143,11 @@ export class CommandInput {
             ocmds = pocmds
         }
 
-        this.execCommands(cmds, ocmds, false);
-        this.EvtEmitScroll.fire(ScrollType.Bottom);
-
-        this.$cmdInput.select();
+        this.execCommands(cmds, ocmds, script);
+        if (!script) {
+            this.EvtEmitScroll.fire(ScrollType.Bottom);
+            this.$cmdInput.select();
+        }
 
         if (!nohistory) {
             if (cmd.trim() === "") {
