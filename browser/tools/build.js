@@ -161,6 +161,11 @@ function copyToPublic() {
         outputFolder: './dist/public/css'
         },
         {
+            path: './static/public',
+            regex: /^.*favicon\.png$/i,
+            outputFolder: './dist/public'
+        },
+        {
             path: './static/public/css/images',
             regex: /^.*\..*$/i,
             outputFolder: './dist/public/css/images'

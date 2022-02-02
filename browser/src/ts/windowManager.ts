@@ -192,7 +192,8 @@ export class WindowManager {
         const witm = this.layoutManager.getCurrent().items.find(i => i.type == ControlType.Window && i.content == window);
         let dockPos = $("#window-dock-"+window.replace(" ","-"));
         if (!witm) {
-            this.windows.get(window).data.docked = false;
+            const w = this.windows.get(window)
+            if (w) w.data.docked = false;
             this.save();
             Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout e rimarra' staccata.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
