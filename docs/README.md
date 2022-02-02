@@ -55,5 +55,8 @@ Il proxy fatto in Node.js tramite Socket.IO crea le connessioni telnet e trasfer
 Accettiamo contributi, anche di devs di altri mud se volete far girare il client per il vostro mud.
 Aiuti sono graditi in coding e desing grafico.
 
+Inoltre contributi monetari sono ben accetti e verranno usati per lo sviluppo e miglioramento del client:
+* https://www.paypal.com/paypalme/marinosimic 
+
 # Licenza
 [MIT](LICENSE.md)
