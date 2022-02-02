@@ -1,6 +1,6 @@
 TS2 Client e' il MUD client di Tempora Sanguinis 2.
 
-E' usato per il client online sul sito: http://temporasanguinis.it, e ha versioni binarie per windows, e linux (deb, rpm).
+E' usato per il client online sul sito: https://temporasanguinis.it, e ha versioni binarie per windows, e linux (deb, rpm).
 
 Sviluppato con tecnologie: Node.js, Socket.IO, HTML5
 
@@ -8,7 +8,7 @@ Linguaggi usati: Typescript, HTML5, CSS
 
 Il proxy Node.js Socket.IO create le connessioni telnet e trasferisce i dati telnet al browser.
 
-Versione live su: [http://temporasanguinis.it/play](Tempora Sanguinis)
+Versione live su Tempora Sanguinis: https://temporasanguinis.it/#play
 
 # Funzionalita' #
 * Colori ANSI
