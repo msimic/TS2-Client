@@ -6,7 +6,7 @@ Sviluppato con tecnologie: Node.js, Socket.IO, HTML5
 
 Linguaggi usati: Typescript, HTML5, CSS
 
-Il proxy Node.js Socket.IO create le connessioni telnet e trasferisce i dati telnet al browser.
+Il proxy fatto in Node.js tramite Socket.IO crea le connessioni telnet e trasferisce i dati telnet al browser ed e' hostato sul sito del gioco.
 
 Versione live su Tempora Sanguinis: https://temporasanguinis.it/#play
 
