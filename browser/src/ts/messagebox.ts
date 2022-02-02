@@ -3,8 +3,8 @@ export const ButtonOK = 1;
 export const ButtonCancel = 0;
 
 export enum Button {
+    Cancel = ButtonCancel,
     Ok = ButtonOK,
-    Cancel = ButtonCancel
 }
 
 export interface MessageboxResult {

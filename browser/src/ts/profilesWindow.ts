@@ -1,5 +1,5 @@
 import { Profile, ProfileManager } from "./profileManager";
-import { ButtonOK, Messagebox, messagebox } from "./messagebox";
+import { Button, ButtonOK, Messagebox, messagebox } from "./messagebox";
 import { ProfileWindow } from "./profileWindow";
 import { Client } from "./client";
 import { Acknowledge } from "./util";
@@ -222,7 +222,11 @@ export class ProfilesWindow {
     }
 
     private async ImportBaseTriggers() {
-        await $.ajax("./baseUserConfig.json?rnd="+Math.random()).done((code:any) => {
+        let prefix = ""
+        if ((<any>window).ipcRenderer) {
+            prefix = "https://temporasanguinis.it/client/"
+        }
+        await $.ajax(prefix + "baseUserConfig.json?rnd="+Math.random()).done((code:any) => {
             let baseConfig = this.manager.getBaseConfig()
             let config = baseConfig;
             if (!this.manager.getCurrent()) {
@@ -234,9 +238,9 @@ export class ProfilesWindow {
                 data: baseConfig.cfgVals
             })
             Messagebox.ShowWithButtons("Configurazione aggiornata",
-             "I trigger e alias sono stati importati.\nDovresti ora riavviare il client, vuoi farlo?",
+             "I trigger e alias sono stati importati.\nSarebbe consigliabile riavviare il client, vuoi farlo?",
              "Si", "No").then(v => {
-                if (v.button == 1) {
+                if (v.button == Button.Ok) {
                     window.location.reload()
                 }
             });
