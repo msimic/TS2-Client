@@ -1,23 +1,25 @@
-Mudslinger is a web based MUD client.
+TS2 Client e' il MUD client di Tempora Sanguinis 2.
 
-Core technologies used: Node.js, Socket.IO, Flask
+E' usato per il client online sul sito: http://temporasanguinis.it, e ha versioni binarie per windows, e linux (deb, rpm).
 
-Languages used: Typescript, HTML, CSS, Python
+Sviluppato con tecnologie: Node.js, Socket.IO, HTML5
 
-The Node.js Socket.IO server makes telnet connections to the target host/port and acts as a telnet proxy to the browser.
+Linguaggi usati: Typescript, HTML5, CSS
 
-Live version at: [https://mudslinger.net/play/](https://mudslinger.net/play/)
+Il proxy Node.js Socket.IO create le connessioni telnet e trasferisce i dati telnet al browser.
 
-Host and port can also be passed as URL parameters, e.g. [https://mudslinger.net/play/?host=aarchonmud.com&port=7000](https://mudslinger.net/play/?host=aarchonmud.com&port=7000)
+Versione live su: [http://temporasanguinis.it/#play](Tempora Sanguinis)
 
-# Features #
-* ANSI color
-* XTERM 256 colors
+# Funzionalita' #
+* Colori ANSI
+* 256 colori
 * UTF-8
-* MXP support (``<image>``, ``<send>``, ``<a>``, ``<i>``, ``<b>``, ``<u>``, and ``<s>`` tags)
-* Triggers (basic and regex)
-* Aliases (basic and regex)
-* [Scripting support (Javascript)](scripting.md)
+* MXP support (``<image>``, ``<send>``, ``<a>``, ``<i>``, ``<b>``, ``<u>``, ``<color>``, e ``<s>``)
+* Triggers (semplici and regex)
+* Aliases (semplici and regex)
+* Variabili
+* Eventi  
+* [Supporto per scripting (Javascript)](scripting.md)
 
-# License
+# Licenza
 [MIT](LICENSE.md)
