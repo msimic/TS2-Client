@@ -6,6 +6,11 @@ interface MouseData {
     button: number;
     state: boolean;
 }
+
+interface Point {
+    x: number;
+    y: number;
+}
 interface Rect {
     x:number;
     y:number;
@@ -23,12 +28,15 @@ function preloadImage(src:string):HTMLImageElement {
 export type ExitDataPos = {
     x:number,
     y:number,
+    xInner:number,
+    yInner:number,
     marker:boolean
 }
 
 export interface DrawData {
     room: Room,
     rect: Rect,
+    rectInner: Rect,
     exitData: Map<ExitDir, ExitDataPos>
 }
 
@@ -143,6 +151,7 @@ export class MapperDrawing {
     }
     markers = new Map<number,number>();
     $drawCache: any;
+    $wallsCache: any;
     current: Room = null;
     parent:JQuery;
     public zoomChanged = new EventHook<number>();
@@ -178,6 +187,7 @@ export class MapperDrawing {
         scale = Math.min(Math.max(.5, scale), 4);
         this.scale = scale;
         this.$drawCache = {};
+        this.$wallsCache = {};
         if (this.active) {
             this.focusActiveRoom()
         }
@@ -604,6 +614,7 @@ export class MapperDrawing {
                 drawDataBelow.set(room.id, {
                     room: room,
                     rect: rdr,
+                    rectInner: rdr,
                     exitData: this.createExitData(room, rdr)
                 });
             }
@@ -612,14 +623,17 @@ export class MapperDrawing {
                 drawDataAbove.set(room.id, {
                     room: room,
                     rect: rdr,
+                    rectInner: rdr,
                     exitData: this.createExitData(room, rdr)
                 });
             }
             else if (room.z == this.level) {
                 let rdr = this.roomDrawRect(room)
+                let rdr2 = this.roomInnerDrawRect(room)
                 drawData.set(room.id,{
                     room: room,
                     rect: rdr,
+                    rectInner: rdr2,
                     exitData: this.createExitData(room, rdr)
                 });
             }
@@ -645,6 +659,9 @@ export class MapperDrawing {
         
         let allLabels:LabelData[] = [];
 
+        for (const data of drawData.values()) {
+            this.DrawWalls(context, data.rect, data.room, forExport, this.scale);
+        }
         for (const data of drawData.values()) {
             allLabels = allLabels.concat(this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, 0, 0))  
         }
@@ -721,6 +738,7 @@ export class MapperDrawing {
             if (ex.to_room) {
                 let entranceDir = <ExitDir>roomExit
                 let marker = false;
+                let recursive = false;
                 let reox = 0, reoy = 0;
                 const exitData = roomData.exitData.get(<ExitDir>roomExit)
                 if (exitData) {
@@ -744,7 +762,7 @@ export class MapperDrawing {
                     this.drawTriangle(context, ExitDir.North,  roomData.rect.x + offsX + se.x,  roomData.rect.y + offsY + se.y, 4, this.scale, strokeColor)
                     continue;
                 }
-                if (destRoom && ex.to_dir && destRoom.exits[ex.to_dir] && destRoom.exits[ex.to_dir].to_room == roomData.room.id) {
+                if (destRoom && ex.to_dir && destRoom.exits[ex.to_dir] && destRoom.exits[ex.to_dir].to_room == roomData.room.id && destRoom != roomData.room) {
                     // ce room destinazione con uscita di destinazione (TWO WAY)
                     if (drawLabels && destRoom.zone_id != roomData.room.zone_id) {
                         // altra zona
@@ -795,10 +813,26 @@ export class MapperDrawing {
                     } else {
                         // disegna link da - a
                         if (!destDrawData) continue;
-                        const destExitData = destDrawData.exitData.get(ex.to_dir)
-                        this.drawLink(context, roomData.rect, destDrawData.rect, exitData, destExitData, strokeColor, offsX, offsY);
+                        let destExitData = destDrawData.exitData.get(ex.to_dir)
+                        if (!destExitData && roomData.room.z == destRoom.z) {
+                            destExitData = destDrawData.exitData.get(ReverseExitDir.get(<ExitDir>roomExit))
+                        } else if (!destExitData) {
+                            // todo other Z
+                            destExitData = exitData
+                        }
+                        if (!destExitData) continue;
+                        const steps:Point[] = [
+                            {
+                                x: destDrawData.rect.x + destExitData.x + offsX,
+                                y: destDrawData.rect.y + destExitData.y + offsY,
+                            }
+                        ];
+                        if (destRoom == roomData.room) {
+                            recursive = true
+                        }
+                        if (!recursive) this.drawLink(context, roomData.rect, steps, exitData, roomData.room.z != destDrawData.room.z ? "gray" : strokeColor, offsX, offsY);
                     }
-                } else if (destRoom && ex.to_dir && ex.to_dir != ExitDir.Other && (!destRoom.exits[ex.to_dir] || destRoom.exits[ex.to_dir].to_room != roomData.room.id)) {
+                } else if (destRoom && ex.to_dir && ex.to_dir != ExitDir.Other && (roomData.room == destRoom || !destRoom.exits[ex.to_dir] || destRoom.exits[ex.to_dir].to_room != roomData.room.id)) {
                     // one way
                     let destPosX=roomData.rect.x+reox+offsX,destPosy=roomData.rect.y+reoy+offsY;
                     if (drawLabels && destRoom.zone_id != roomData.room.zone_id) {
@@ -856,32 +890,70 @@ export class MapperDrawing {
                             destPosy = destDrawData.rect.y + destExitData.y + offsY
                             entranceDir = ReverseExitDir.get(ex.to_dir as ExitDir);
                         }
-                        if (destExitData && this.PointInRect(destDrawData.rect.x + destExitData.x, destDrawData.rect.y + destExitData.y, roomData.rect.x, roomData.rect.x2, roomData.rect.y, roomData.rect.y2))
-                        {
+                        /*if (destExitData && this.PointInRect(destDrawData.rect.x + destExitData.x, destDrawData.rect.y + destExitData.y, roomData.rect.x, roomData.rect.x2, roomData.rect.y, roomData.rect.y2))
+                        { // TODO OVERLAP - but not when close
                             destPosX=roomData.rect.x+reox+offsX,destPosy=roomData.rect.y+reoy+offsY;
-                        } else {
-                            this.drawLink(context, roomData.rect, destDrawData.rect, exitData, destExitData, strokeColor, offsX, offsY);
+                            if (destRoom == roomData.room) {
+                                recursive = true
+                            }
+                        } else */{
+                            const steps:Point[] = [ ];
+ 
+                            if (destRoom == roomData.room) {
+                                recursive = true
+                                destPosX = roomData.rect.x + exitData.xInner + offsX
+                                destPosy = roomData.rect.y + exitData.yInner + offsY
+                            } else if (destExitData) {
+                                steps.push({
+                                    x: destDrawData.rect.x + destExitData.x + offsX,
+                                    y: destDrawData.rect.y + destExitData.y + offsY,
+                                })
+                                steps.push({
+                                    x: destDrawData.rect.x + destExitData.xInner + offsX,
+                                    y: destDrawData.rect.y + destExitData.yInner + offsY,
+                                })
+                                destPosX = destDrawData.rect.x + destExitData.xInner + offsX
+                                destPosy = destDrawData.rect.y + destExitData.yInner + offsY
+                            }
+                            if (!recursive) this.drawLink(context, roomData.rect, steps, exitData, roomData.room.z != destDrawData.room.z ? "gray" : strokeColor, offsX, offsY);
                         }
                     }
                     
                     if (marker) { // freccetta per one way
                         switch (<ExitDir>roomExit) {
                             case ExitDir.North:
-                                this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, strokeColor)
+                                if (!recursive)
+                                    this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, destDrawData && roomData.room.z != destDrawData.room.z ? "gray" : strokeColor)
+                                else
+                                    this.drawCircle(context, destPosX, destPosy, 3, this.scale, strokeColor)
                                 break;
                             case ExitDir.East:
-                                this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, strokeColor)
+                                if (!recursive)
+                                    this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, destDrawData && roomData.room.z != destDrawData.room.z ? "gray" : strokeColor)
+                                else
+                                    this.drawCircle(context, destPosX, destPosy, 3, this.scale, strokeColor)
                                 break;
                             case ExitDir.South:
-                                this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, strokeColor)
+                                if (!recursive)
+                                    this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, destDrawData && roomData.room.z != destDrawData.room.z ? "gray" : strokeColor)
+                                else
+                                    this.drawCircle(context, destPosX, destPosy, 3, this.scale, strokeColor)
                                 break;
                             case ExitDir.West:
-                                this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, strokeColor)
+                                if (!recursive)
+                                    this.drawTriangle(context, entranceDir, destPosX, destPosy, 4, this.scale, destDrawData && roomData.room.z != destDrawData.room.z ? "gray" : strokeColor)
+                                else
+                                    this.drawCircle(context, destPosX, destPosy, 3, this.scale, strokeColor)
                                 break;
                             default:
                                 break;
                         }
                     }
+                } else if (destRoom == roomData.room && exitData) {
+                    recursive = true
+                    const destPosX = roomData.rect.x + exitData.xInner + offsX
+                    const destPosy = roomData.rect.y + exitData.yInner + offsY
+                    this.drawCircle(context, destPosX, destPosy, 3, this.scale, strokeColor)
                 }
             }
         }
@@ -889,21 +961,16 @@ export class MapperDrawing {
         return ret;
     }
 
-    drawLink(ctx:CanvasRenderingContext2D, rect1:Rect, rect2:Rect, exitData: ExitDataPos, destExitData: ExitDataPos, color:string, offsX:number, offsY:number) {
-        if (!exitData || !destExitData) return;
-        if (!destExitData)  {
-            ctx.save()
-            ctx.fillStyle = color
-            ctx.fillText("?", exitData.x, exitData.y)
-            ctx.restore()
-            return;
-        }
+    drawLink(ctx:CanvasRenderingContext2D, start:Rect, steps:Point[], exitData: ExitDataPos, color:string, offsX:number, offsY:number) {
+        if (!exitData) return;
         ctx.save()
         ctx.beginPath();
         ctx.strokeStyle = color
-        ctx.moveTo(rect1.x + exitData.x + offsX, rect1.y + exitData.y + offsY)
-        ctx.lineTo(rect2.x + destExitData.x + offsX, rect2.y + destExitData.y + offsY)
-        ctx.closePath()
+        ctx.moveTo(start.x + exitData.x + offsX, start.y + exitData.y + offsY)
+        for (const st of steps) {
+            ctx.lineTo(st.x, st.y)            
+        }
+        //ctx.closePath()
         ctx.stroke()
         ctx.restore()
     }
@@ -913,77 +980,109 @@ export class MapperDrawing {
 
         for (const re of Object.keys(ExitDir).map(k => (ExitDir as any)[k])) {
             let ex = room.exits[<ExitDir>re] as RoomExit;
-            let reox = 0, reoy = 0;
+            let reox = 0, reoy = 0, reox2 = 0, reoy2 = 0;
             switch (<ExitDir>re) {
                 case ExitDir.North:
-                    reox = rect.w/2+.5;
+                    reox = rect.w/2;
                     reoy = 0;
+                    reox2 = reox;
+                    reoy2 = rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.NorthEast:
                     reox = rect.w;
                     reoy = 0;
+                    reox2 = reox-rect.w/7;
+                    reoy2 = rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.East:
                     reox = rect.w;
-                    reoy = rect.h/2+.5;
+                    reoy = rect.h/2;
+                    reox2 = reox-rect.w/7;
+                    reoy2 = rect.h/2;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.SouthEast:
                     reox = rect.w;
                     reoy = rect.h;
+                    reox2 = reox-rect.w/7;
+                    reoy2 = reoy-rect.h/7;
                     ret.set(<ExitDir>re, {
                         x: reox,
                         y: reoy,
+                        xInner: reox2,
+                        yInner: reoy2,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.South:
-                    reox = rect.w/2+.5;
+                    reox = rect.w/2;
                     reoy = rect.h;
+                    reox2 = reox;
+                    reoy2 = reoy-rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.SouthWest:
                     reox = 0;
                     reoy = rect.h;
+                    reox2 = rect.w/7;
+                    reoy2 = reoy-rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.West:
                     reox = 0;
-                    reoy = rect.h/2+.5;
+                    reoy = rect.h/2;
+                    reox2 = rect.w/7;
+                    reoy2 = reoy;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
                 case ExitDir.NorthWest:
                     reox = 0;
                     reoy = 0;
+                    reox2 = rect.w/7;
+                    reoy2 = rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
@@ -999,6 +1098,15 @@ export class MapperDrawing {
         ctx.strokeStyle = stroke || 'transparent';
         ctx.fillRect(rect.x+ox, rect.y+oy,rect.w, rect.h);
         ctx.strokeRect(rect.x+ox, rect.y+oy,rect.w, rect.h);
+    }
+
+    public drawCircle(ctx:CanvasRenderingContext2D, cx:number, cy:number, radius:number, scale:number, color:string='black') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius*scale, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.lineWidth = (0.6 * scale)|0;
+        ctx.strokeStyle = color
+        ctx.stroke();
     }
 
     public drawTriangle(ctx:CanvasRenderingContext2D, dir:ExitDir, cx:number, cy:number, radius:number, scale:number, color:string='black') {
@@ -1183,22 +1291,50 @@ export class MapperDrawing {
         if (room.exits.other) {
             otherTp = !!(room.exits.other.name||"").toLowerCase().match("teleport")
         }
-        return this.isIndoor(room) + "," + otherTp + "," + room.type + "," + room.teleport + ',' + (room.color) + ',' + Object.keys(room.exits).map(v => v + room.exits[<ExitDir>v].type).join()
+        return this.isIndoor(room) + "," + otherTp + "," + room.type + "," + room.teleport + ',' + (room.color) + ',' + Object.keys(room.exits).filter(re => room.exits[<ExitDir>re].to_room != room.id).map(v => v + room.exits[<ExitDir>v].type).join()
+    }
+
+    wallsHash(room:Room) {
+        return this.isIndoor(room) + "," + room.type + ',' + Object.keys(room.exits).filter(e => this.isRealExit(room.exits[<ExitDir>e], room)).join()
+    }
+
+    public DrawWalls(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, scale?:number) {
+        const x = rect.x
+        const y = rect.y
+        if (!this.$wallsCache)
+            this.$wallsCache = {};
+        
+        if (!this.$drawCache)
+            this.$drawCache = {};
+
+        if (!scale) scale = this.scale;
+
+        const roomKey = this.roomHash(room);
+
+        this.cacheRoom(roomKey, scale, room);
+
+        const wallsKey = this.wallsHash(room);
+
+        this.cacheWalls(wallsKey, scale, room);
+
+
+
+        if (this.$wallsCache[wallsKey]) ctx.drawImage(this.$wallsCache[wallsKey], x | 0, y | 0);
+        
     }
 
     public DrawRoom(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, scale?:number) {
         const x = rect.x
         const y = rect.y
-        if (!this.$drawCache)
-            this.$drawCache = {};
-        if (!scale) scale = this.scale;
+
         const key = this.roomHash(room);
 
-        this.cacheRoom(key, scale, room);
-        //this.translate(ctx, -0.5, scale);
+        if (!this.$drawCache[key]) return;
+
+        if (!scale) scale = this.scale;
 
         ctx.drawImage(this.$drawCache[key], x | 0, y | 0);
-        //this.translate(ctx, 0.5, scale);
+
         this.DrawDoor(ctx,  (x + 12 * scale)|0, (y - 1 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.n);
         this.DrawDoor(ctx,  (x + 31 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.e);
         this.DrawDoor(ctx,  (x + 1 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.w);
@@ -1354,7 +1490,7 @@ export class MapperDrawing {
             let fill = false;
             tx.fillStyle = this.getFillColor(room);
             fill = tx.fillStyle != null;
-            let fillWalls = this._fillWalls
+            let fillWalls = false
             
             tx.strokeStyle = 'black';
             tx.lineWidth = (0.6 * scale)|0;
@@ -1400,13 +1536,14 @@ export class MapperDrawing {
 
             tx.beginPath();
             tx.fillStyle = '#ACADAC';
-            if (room.exits.n) {
+            if (room.exits.n && room.exits.n.to_room != room.id) {
                 tx.moveTo(((16 * scale)|0), ((0 * scale)|0));
                 tx.lineTo(((16 * scale)|0), ((8 * scale)|0));
             }
             else if (fillWalls)
                 tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);
-            if (room.exits.nw) {
+
+            if (room.exits.nw && room.exits.nw.to_room != room.id) {
                 if (!this.isIndoor(room)) {
                     tx.moveTo(0 * scale, 0 * scale);
                     tx.lineTo(10 * scale, 10 * scale);
@@ -1424,7 +1561,8 @@ export class MapperDrawing {
                 if (!room.exits.w)
                     tx.fillRect(0 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
-            if (room.exits.nw) {
+
+            if (room.exits.ne && room.exits.ne.to_room != room.id) {
                 if (!this.isIndoor(room)) {
                     tx.moveTo(32 * scale, 0 * scale);
                     tx.lineTo(22 * scale, 10 * scale);
@@ -1443,25 +1581,29 @@ export class MapperDrawing {
                 if (!room.exits.e)
                     tx.fillRect(28 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
-            if (room.exits.e) {
+
+            if (room.exits.e && room.exits.e.to_room != room.id) {
                 tx.moveTo((24 * scale)|0, (16 * scale)|0);
                 tx.lineTo((32 * scale)|0, (16 * scale)|0);
             }
             else if (fillWalls)
                 tx.fillRect(28 * scale, 9 * scale, 4 * scale, 14 * scale);
-            if (room.exits.w) {
+
+            if (room.exits.w && room.exits.w.to_room != room.id) {
                 tx.moveTo((0 * scale)|0, (16 * scale)|0);
                 tx.lineTo((8 * scale)|0, (16 * scale)|0);
             }
             else if (fillWalls)
                 tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
-            if (room.exits.s) {
+
+            if (room.exits.s && room.exits.s.to_room != room.id) {
                 tx.moveTo((16 * scale)|0, (24 * scale)|0);
                 tx.lineTo((16 * scale)|0, (32 * scale)|0);
             }
             else if (fillWalls)
                 tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);
-            if (room.exits.se) {
+
+            if (room.exits.se && room.exits.se.to_room != room.id) {
                 if (!this.isIndoor(room)) {
                     tx.moveTo(32 * scale, 32 * scale);
                     tx.lineTo(22 * scale, 22 * scale);
@@ -1479,7 +1621,8 @@ export class MapperDrawing {
                 if (!room.exits.e)
                     tx.fillRect(28 * scale, 23 * scale, 4 * scale, 5 * scale);
             }
-            if (room.exits.sw) {
+
+            if (room.exits.sw && room.exits.sw.to_room != room.id) {
                 if (!this.isIndoor(room)) {
                     tx.moveTo(0 * scale, 32 * scale);
                     tx.lineTo(10 * scale, 22 * scale);
@@ -1497,6 +1640,7 @@ export class MapperDrawing {
                 if (!room.exits.w)
                     tx.fillRect(0 * scale, 23 * scale, 4 * scale, 5 * scale);
             }
+
             tx.closePath();
             tx.stroke();
             tx.fillStyle = 'black';
@@ -1551,6 +1695,86 @@ export class MapperDrawing {
             tx.setTransform(1, 0, 0, 1, 0, 0);
             this.translate(tx, -0.5, scale);
         }
+    }
+
+    private cacheWalls(key: string, scale: number, room: Room) {
+        if (!this.isIndoor(room)) return;
+
+        if (!this.$wallsCache[key]) {
+            this.$wallsCache[key] = document.createElement('canvas');
+            this.$wallsCache[key].classList.add('map-canvas');
+            this.$wallsCache[key].height = (32 * scale)|0;
+            this.$wallsCache[key].width = (32 * scale)|0;
+            const tx = this.$wallsCache[key].getContext('2d') as CanvasRenderingContext2D;
+            this.translate(tx, 0.5, scale);
+            tx.beginPath();
+   
+            let fillWalls = this._fillWalls
+            
+            tx.strokeStyle = 'black';
+            tx.lineWidth = (0.6 * scale)|0;
+            
+            tx.fillStyle = '#ACADAC';
+
+            if (!this.isRealExit(room.exits.n, room) &&  fillWalls)
+                tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);
+
+            if (!this.isRealExit(room.exits.nw, room) &&  fillWalls) {
+                tx.fillRect(2 * scale, 0 * scale, 2 * scale, 2 * scale);
+                tx.fillRect(0 * scale, 2 * scale, 4 * scale, 2 * scale);
+                if (!this.isRealExit(room.exits.n, room))
+                    tx.fillRect(4 * scale, 0 * scale, 5 * scale, 4 * scale);
+                if (!this.isRealExit(room.exits.w, room))
+                    tx.fillRect(0 * scale, 4 * scale, 4 * scale, 5 * scale);
+            }
+
+            if (!this.isRealExit(room.exits.ne, room) &&  fillWalls) {
+                tx.fillRect(28 * scale, 0 * scale, 2 * scale, 2 * scale);
+                tx.fillRect(28 * scale, 2 * scale, 4 * scale, 2 * scale);
+                tx.clearRect(30 * scale, 0 * scale, 2 * scale, 2 * scale);
+                if (!this.isRealExit(room.exits.n, room))
+                    tx.fillRect(23 * scale, 0 * scale, 5 * scale, 4 * scale);
+                if (!this.isRealExit(room.exits.e, room))
+                    tx.fillRect(28 * scale, 4 * scale, 4 * scale, 5 * scale);
+            }
+
+            if (!this.isRealExit(room.exits.e, room) &&  fillWalls)
+                tx.fillRect(28 * scale, 9 * scale, 4 * scale, 14 * scale);
+            
+            if (!this.isRealExit(room.exits.w, room) &&  fillWalls)
+                tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
+            
+            if (!this.isRealExit(room.exits.s, room) &&  fillWalls)
+                tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);
+            
+            if (!this.isRealExit(room.exits.se, room) && fillWalls) {
+                tx.fillRect(28 * scale, 28 * scale, 4 * scale, 2 * scale);
+                tx.fillRect(28 * scale, 30 * scale, 2 * scale, 2 * scale);
+                if (!this.isRealExit(room.exits.s, room))
+                    tx.fillRect(23 * scale, 28 * scale, 5 * scale, 4 * scale);
+                if (!this.isRealExit(room.exits.e, room))
+                    tx.fillRect(28 * scale, 23 * scale, 4 * scale, 5 * scale);
+            }
+
+            if (!this.isRealExit(room.exits.sw, room) && fillWalls) {
+                tx.fillRect(0 * scale, 28 * scale, 4 * scale, 2 * scale);
+                tx.fillRect(2 * scale, 30 * scale, 2 * scale, 2 * scale);
+                if (!this.isRealExit(room.exits.s, room))
+                    tx.fillRect(4 * scale, 28 * scale, 5 * scale, 4 * scale);
+                if (!this.isRealExit(room.exits.w, room))
+                    tx.fillRect(0 * scale, 23 * scale, 4 * scale, 5 * scale);
+            }
+
+            tx.closePath();
+            tx.stroke();
+            tx.setTransform(1, 0, 0, 1, 0, 0);
+
+            this.translate(tx, -0.5, scale);
+        }
+    }
+
+    isRealExit(re: RoomExit, room:Room) : boolean {
+        return re && re.to_room != room.id;
     }
 
     public drawMarker(ctx:CanvasRenderingContext2D, x:number, y:number, size:number, color:string, scale:number) {

@@ -30,6 +30,7 @@ export interface ConfigIf {
     set(key: string, val: any): void;
     get(key:string): any;
     onSet(key: string, cb: (val: any) => void): void;
+    onSetRelease(key: string, cb: (val: any) => void): void;
     getDef(key: string, def: any): any;
     evtConfigImport: EventHook<{data: {[k: string]: any}, owner: any}>;
 }
@@ -76,6 +77,30 @@ export function linesToArray(str:string):string[] {
     ret = str.replace('\r', '').split('\n');
     return ret;
 }
+
+export function throttle(fn:Function, threshhold:number, scope?:any):Function {
+    threshhold || (threshhold = 250);
+    return function () {
+        var last:number,
+        deferTimer:number;
+        
+        var context = scope || this;
+  
+      var now = +new Date,
+          args = arguments;
+      if (last && now < last + threshhold) {
+        // hold on to it
+        clearTimeout(deferTimer);
+        deferTimer = setTimeout(function () {
+          last = now;
+          fn.apply(context, args);
+        }, threshhold);
+      } else {
+        last = now;
+        fn.apply(context, args);
+      }
+    };
+  }
 
 export function stripHtml(sText:string):string {
     let intag = false;

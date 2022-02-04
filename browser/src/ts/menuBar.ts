@@ -26,6 +26,7 @@ export class MenuBar {
     private clickFuncs: {[k: string]: (value:any) => void} = {};
     private windowManager:WindowManager;
     private layout:LayoutManager;
+    private config:UserConfig;
     private optionMappingToStorage = new Map([
         ["connect", ""],
         ["use-profile", ""],
@@ -92,8 +93,9 @@ export class MenuBar {
             };
             onStorageChanged(storageVal);
             this.config.onSet(storageKey, onStorageChanged);
+            let config = this.config
             $(checkbox).change((event: JQueryEventObject) => {
-                this.config.set(storageKey, (<any>event.target).checked);
+                config.set(storageKey, (<any>event.target).checked);
                 if (clickable) this.clickFuncs[name]((<any>event.target).checked);
             });
         } else if (storageKey) {
@@ -145,7 +147,7 @@ export class MenuBar {
         private jsScriptWin: JsScriptWin,
         private aboutWin: AboutWin,
         private profileWin: ProfilesWindow,
-        private config: UserConfig,
+        config: UserConfig,
         private variableEditor:VariablesEditor,
         private classEditor: ClassEditor,
         private eventEditor: EventsEditor,
@@ -181,8 +183,7 @@ export class MenuBar {
 
         this.makeClickFuncs();
         setTimeout(() => {
-        this.attachMenu();
-        this.handleNewConfig();
+            this.setConfig(config)
         }, 0);
 
         setupWorkers();
@@ -221,8 +222,8 @@ export class MenuBar {
     }
 
     private onImport = ()=> {
-        this.detachMenu();
-        this.attachMenu();
+        //this.detachMenu();
+        //this.attachMenu();
     }
 
     private handleNewConfig() {

@@ -297,8 +297,17 @@ export class Client {
                 + rawToHtml(data.command)
                 + "<br>"
                 + "</span>"
-                this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
-                this.outputWin.scrollBottom(!data.fromScript);
+                const f = () => {
+                    this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
+                    this.outputWin.scrollBottom(!data.fromScript);
+                }
+                if (data.fromScript) {
+                    setTimeout(() => {
+                        f()
+                    }, 0);
+                } else {
+                    f();
+                }
             }
             this.socket.sendCmd(data.command);
         });
@@ -353,6 +362,7 @@ export class Client {
         });
 
         EvtScriptEmitPrint.handle((data:{owner:string, message:string, window?:string, raw?:any}) => {
+            setTimeout(()=>{
             if (data.window) {
                 this.outputManager.sendToWindow(data.window, data.message, data.message, true);
             } else {
@@ -367,7 +377,7 @@ export class Client {
                 } else {
                     this.outputWin.append(data.raw, true)
                 }
-            }
+            }},0)
         });
 
         EvtScriptEmitCls.handle((data:{owner:string, window?:string}) => {

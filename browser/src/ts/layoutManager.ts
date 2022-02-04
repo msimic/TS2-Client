@@ -5,7 +5,7 @@ import { EventHook } from "./event";
 import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
-import { isTrue, rawToHtml } from "./util";
+import { isTrue, rawToHtml, throttle } from "./util";
 
 export enum PanelPosition {
     Floating = 0,
@@ -104,6 +104,7 @@ export class LayoutManager {
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.load();
         });
+        this.onVariableChangedThrottled = throttle(this.onVariableChanged, 500);
         this.deleteLayout();
         this.load();
         EvtScriptEvent.handle((e) => this.handleEvent(e));
@@ -111,8 +112,9 @@ export class LayoutManager {
 
     handleEvent(e:{event:ScripEventTypes, condition:string, value:any}) {
         if (e.event != ScripEventTypes.VariableChanged) return;
-        this.onVariableChanged(e.condition);
+        this.onVariableChangedThrottled(e.condition);
     }
+    public onVariableChangedThrottled:any;
 
     public onVariableChanged(variableName:string) {
         let ctrls;

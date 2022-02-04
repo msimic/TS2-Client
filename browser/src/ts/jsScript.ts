@@ -7,7 +7,7 @@ import { OutputManager } from "./outputManager";
 import { ProfileManager } from "./profileManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
-import { ConfigIf } from "./util";
+import { ConfigIf, throttle } from "./util";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
@@ -174,6 +174,7 @@ export class JsScript {
     constructor(private config: ConfigIf,private baseConfig: ConfigIf, private profileManager: ProfileManager, private mapper:Mapper) {
         this.loadBase();
         this.load();
+        this.saveVariablesAndEventsToConfig = throttle(this.saveVariablesAndEventsToConfigInternal, 500);
         EvtScriptEmitToggleEvent.handle(this.onToggleEvent, this);
         config.evtConfigImport.handle((d) => {
             this.loadBase();
@@ -221,7 +222,7 @@ export class JsScript {
 
     triggerEvent(ev:ScriptEvent, param:any) {
         if (!ev.script) {
-            ev.script = this.makeScript("event " +ev.type, ev.value, "args");
+            ev.script = this.makeScript("event " +ev.type + "(" + ev.condition + ")", ev.value, "args");
         }
         ev.script(param);
     }
@@ -387,8 +388,13 @@ export class JsScript {
                 this.variables.delete(k);
             }
         }
-        this.config.set("script_events", [...this.events]);
-        this.config.set("variables", [...this.variables]);
+        this.saveVariablesAndEventsToConfig(this.events, this.variables);
+    }
+
+    private saveVariablesAndEventsToConfig:any;
+    private saveVariablesAndEventsToConfigInternal(ev:any, vars:any) {
+        this.config.set("script_events", [...ev]);
+        this.config.set("variables", [...vars]);
     }
 
     public getScriptThis() { return this.scriptThis; }

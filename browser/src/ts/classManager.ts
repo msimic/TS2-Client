@@ -27,7 +27,9 @@ export class ClassManager {
     private onToggle(data: {owner: string, id:string, state:boolean}) {
         this.Toggle(data.id, data.state);
         const msg = "La classe " + data.id + " e' ora " + (this.isEnabled(data.id) ? "ABILITATA" : "DISABILITATA");
-        if (this.config.getDef("debugScripts", false)) EvtScriptEmitPrint.fire({owner:"ClassManager", message: msg});
+        if (this.config.getDef("debugScripts", false)) {
+            EvtScriptEmitPrint.fire({owner:"ClassManager", message: msg});
+        }
     }
 
     public Delete(id:string) {

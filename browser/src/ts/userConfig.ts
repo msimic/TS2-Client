@@ -1,10 +1,11 @@
 import { EventHook } from "./event";
+import { throttle } from "./util";
 
 
 export class UserConfig {
     name:string;
     cfgVals: {[k: string]: any};
-    private setHandlers: {[k: string]: EventHook<any>[]} = {};
+    private setHandlers: {[k: string]: EventHook<any>} = {};
     public evtConfigImport = new EventHook<{data: {[k: string]: any}, owner: any}>();
 
     private saveFunc: (v: string) => string;
@@ -12,9 +13,10 @@ export class UserConfig {
     public init(name:string, userConfigStr: string, saveFunc_: (v: string) => string) {
         this.name = name;
         this.saveFunc = saveFunc_;
-
+        
         if (userConfigStr) {
-            this.cfgVals = JSON.parse(userConfigStr);
+            this.cfgVals = {};
+            this.copy(userConfigStr);
         } else {
             this.cfgVals = {};
         }
@@ -46,19 +48,28 @@ export class UserConfig {
         for (const key in this.setHandlers) {
             if (Object.prototype.hasOwnProperty.call(this.setHandlers, key)) {
                 const element = this.setHandlers[key];
-                this.setHandlers[key].map(v => {v.fire(this.get(key))});
+                this.setHandlers[key].fire(this.get(key));
             }
         }
     }
 
     public onSet(key: string, cb: (val: any) => void) {
         if (key in this.setHandlers === false) {
-            this.setHandlers[key] = [];
+            this.setHandlers[key] = new EventHook<any>();
         }
-        const hook = new EventHook<any>();
-        this.setHandlers[key].push(hook);
         if (cb) {
-            hook.handle(cb);
+            this.setHandlers[key].handle(cb);
+        } else {
+            delete this.setHandlers[key];
+        }
+    }
+
+    public onSetRelease(key: string, cb: (val: any) => void) {
+        if (key in this.setHandlers === false) {
+            return
+        }
+        if (cb) {
+            this.setHandlers[key].release(cb);
         } else {
             delete this.setHandlers[key];
         }
@@ -83,9 +94,7 @@ export class UserConfig {
         if (!nosave) this.saveConfig();
         if (prev != val && key in this.setHandlers) {
             this.firing = true;
-            this.setHandlers[key].map(v => {
-                v.fire(val)
-            });
+            this.setHandlers[key].fire(val)
             this.firing = false;
         }
     }

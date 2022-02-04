@@ -212,7 +212,7 @@ export class AliasManager {
                 }
             }
         }
-        return null;
+        return  null;
     }   
     checkLoop(source: string):boolean {
         let cnt = 0;

@@ -17,6 +17,7 @@ export class OutputWin extends OutWinBase {
         super($("#winOutput"), config);
         this.outer = $("#winOutput").parent();
         this.postInit();
+        this.setupLogTime();
         $(document).ready(() => {
             window.onerror = this.handleWindowError.bind(this);
         });
@@ -50,16 +51,19 @@ export class OutputWin extends OutWinBase {
 
     handleScriptSendCommand(owner:string, cmd: string) {
         if (!this.debugScripts) return;
+        setTimeout(()=>{
         this.append(
             "<span style=\"color:cyan\">[" + owner /*": "
             + Util.rawToHtml(cmd)*/
             + "]<br>"
             + "</span>", true);
         this.scrollBottom(false);
+        },0)
     }
 
     handleTriggerSendCommands(orig:string, cmds:string[]) {
         if (!this.debugScripts) return;
+        setTimeout(()=>{
         let html = "<span style=\"color:magenta\">[" + orig + "]<br></span>";
 
         /*for (let i = 0; i < data.length; i++) {
@@ -72,10 +76,12 @@ export class OutputWin extends OutWinBase {
         }*/
         this.append(html, true);
         this.scrollBottom(false);
+        },0)
     }
 
     handleAliasSendCommands(orig: string, cmds: string[]) {
         if (!this.debugScripts) return;
+        setTimeout(()=>{
         let html = "<span style=\"color:cyan\">[" + orig+ "]<br></span>";
         /*html += Util.rawToHtml(orig);
         html += "</span><span style=\"color:cyan\"> --> ";
@@ -91,6 +97,7 @@ export class OutputWin extends OutWinBase {
         */
         this.append(html, true);
         this.scrollBottom(false);
+        },0)
     }
 
     private connIntervalId: number = null;

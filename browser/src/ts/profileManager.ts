@@ -5,6 +5,7 @@ import { Messagebox, messagebox } from "./messagebox";
 import { AppInfo } from "./appInfo";
 import { WindowData } from "./windowManager";
 import { LayoutDefinition } from "./layoutManager";
+import { throttle } from "./util";
 
 export class Profile {
     public name:string;
@@ -39,6 +40,7 @@ export class ProfileManager {
     private activeChanged = (v:string):string => {
         const ac = this.getCurrentConfig();
         ac.copy(v);
+        console.log("active changed " + this._current)
         return v;
     }
 
@@ -60,8 +62,8 @@ export class ProfileManager {
         if (pstr) {
             try {
                 this.profiles = new Map(JSON.parse(pstr));
-                for (const iterator of this.profiles) {
-                    this.configs.set(iterator[0], this.createConfig(localStorage.getItem("config_" + iterator[0]), iterator[0]));
+                for (const profKvp of this.profiles) {
+                    this.configs.set(profKvp[0], this.createConfig(localStorage.getItem("config_" + profKvp[0]), profKvp[0]));
                 }
             } catch (err) {
                 Messagebox.Show("Errore", "Non riesco a leggere i profili");
@@ -76,11 +78,11 @@ export class ProfileManager {
     }
 
     private saveConfigToStorage(key:string): (val: string) => string {
-        return (val: string):string => {
+        return /*<any>throttle(*/(val: string):string => {
             localStorage.setItem("config_" + key, val);
             this.saveProfiles();
             return val;
-        };
+        }/*, 1000);*/
     }
 
     public getProfile(name:string):Profile {

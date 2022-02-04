@@ -31,43 +31,63 @@ export class OutWinBase {
         }
     }
 
+    onLogTime = (v:any) => { this.logTime = v; }
+    onDebugScripts = (v:any) => {
+         this.debugScripts = v; 
+    }
+    onMaxLinesChanged = (val: any) => { this.setMaxLines(val); }
+    onColorsEnabledChanged = (val: any) => { this.setColorsEnabled(val); }
+    onCopyOnMOuseUpChanged = (val: any) => { 
+        this.copyOnMouseUp = val;
+        this.$rootElem[0].removeEventListener("mousedown", this.onMouseDown);
+        this.$rootElem[0].removeEventListener("mouseup", this.onMouseUp);
+        if (this.copyOnMouseUp) {
+            this.$rootElem[0].addEventListener("mousedown", this.onMouseDown);
+            this.$rootElem[0].addEventListener("mouseup", this.onMouseUp);
+        }
+    }
+
+    releaseOnSetHandlers = () => {
+        this.config.onSetRelease("logTime", this.onLogTime)
+        this.config.onSetRelease("debugScripts", this.onDebugScripts)
+        this.config.onSetRelease("maxLines", this.onMaxLinesChanged)
+        this.config.onSetRelease("colorsEnabled", this.onColorsEnabledChanged)
+        this.config.onSetRelease("copyOnMouseUp", this.onCopyOnMOuseUpChanged)
+    }
+
+    setupLogTime() {
+        this.logTime = this.config.getDef("logTime", false);
+        this.config.onSet("logTime", this.onLogTime);
+    }
+
     constructor(rootElem: JQuery, private config: ConfigIf) {
         this.$rootElem = rootElem;
         this.$targetElems = [rootElem];
         this.$target = rootElem;
-        this.maxLines = config.getDef("maxLines", 1000);
-        this.debugScripts = config.getDef("debugScripts", true);
-        config.onSet("debugScripts", (val) => {
-            this.debugScripts = val;
-        });
 
         // direct children of the root will be line containers, let"s push the first one.
         this.pushElem($("<span>").appendTo(rootElem));
 
+        this.onDebugScripts(config.getDef("debugScripts", false));
+        this.config.onSet("debugScripts", this.onDebugScripts);        
+
+        this.maxLines = config.getDef("maxLines", 1000);
+        this.config.onSet("maxLines", this.onMaxLinesChanged);
+
         this.colorsEnabled = this.config.getDef("colorsEnabled", true);
+        this.config.onSet("colorsEnabled", this.onColorsEnabledChanged);
+
         this.copyOnMouseUp = this.config.getDef("copyOnMouseUp", true);
-        this.logTime = this.config.getDef("logTime", false);
-        this.config.onSet("logTime", (v) => {
-            this.logTime = v;
-        });
-        
+        this.config.onSet("copyOnMouseUp", this.onCopyOnMOuseUpChanged);
         if (this.copyOnMouseUp) {
             this.$rootElem.mousedown(this.onMouseDown);
             this.$rootElem.mouseup(this.onMouseUp);
         }
 
-        this.config.onSet("maxLines", (val: any) => { this.setMaxLines(val); });
+    }
 
-        this.config.onSet("colorsEnabled", (val: any) => { this.setColorsEnabled(val); });
-        this.config.onSet("copyOnMouseUp", (val: any) => { 
-            this.copyOnMouseUp = val;
-            this.$rootElem[0].removeEventListener("mousedown", this.onMouseDown);
-            this.$rootElem[0].removeEventListener("mouseup", this.onMouseUp);
-            if (this.copyOnMouseUp) {
-                this.$rootElem[0].addEventListener("mousedown", this.onMouseDown);
-                this.$rootElem[0].addEventListener("mouseup", this.onMouseUp);
-            }
-        });
+    public destroy() {
+        this.releaseOnSetHandlers()
     }
 
     protected postInit() {
@@ -323,7 +343,8 @@ export class OutWinBase {
     }
 
     private time() {
-        const time = this.padStart(new Date().toISOString().split("T")[1].split("Z")[0] + " ", 12, " ");
+        const d = new Date()
+        const time = `${this.padStart(d.getHours().toString(), 2, "0")}:${this.padStart(d.getMinutes().toString(), 2, "0")}:${this.padStart(d.getSeconds().toString(), 2, "0")}.${this.padStart(d.getMilliseconds().toString(), 3, "0")} `;
         return ('<span class="timeLog">' + time + "</span>");
     }
     removing = false
