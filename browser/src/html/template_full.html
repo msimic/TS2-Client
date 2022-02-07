@@ -42,8 +42,9 @@
 <div id="mudslinger">
   <div id="menuBar">
     <ul>
-      <li id="menuBar-conn-disconn" data-option-name="connect">Connetti
+      <li>Connessione
         <ul>
+          <li id="menuBar-conn-disconn" data-option-name="connect">Connetti</li>
           <li data-option-name="use-profile">Personaggi</li>
         </ul>
       </li>
@@ -161,7 +162,7 @@
           </div>
           <div id="row-input">
             <div id="cmdCont">
-              <textarea autofocus rows="1" id="cmdInput" aria-label="Barra comandi" autocapitalize="off"></textarea>
+              <textarea autofocus rows="1" id="cmdInput" aria-label="Barra comandi" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" style="-webkit-user-modify: read-write-plaintext-only;"></textarea>
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">
                 <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="polite" title="Abilita o disabilita Triggers"></label>

@@ -89,7 +89,17 @@ CanvasRenderingContext2D.prototype.strokeRoundedRect = function (this:CanvasRend
     this.stroke();
 };
 export class MapperDrawing {
-    private rooms:Room[] = [];
+    private _rooms: Room[] = [];
+    public font:string = null;
+    public fontSize?:number = null;
+    
+    showOffset: boolean;
+    public get rooms(): Room[] {
+        return this._rooms;
+    }
+    public set rooms(value: Room[]) {
+        this._rooms = value;
+    }
     private _level: number;
     contextRoom: Room;
     public get level(): number {
@@ -229,6 +239,11 @@ export class MapperDrawing {
                         this.MouseDrag.x -= x * 1 * this.scale;
                         this.MouseDrag.y -= y * 1 * this.scale;
                         this.scrollBy(x*2, y*2);
+                        if (event.shiftKey) {
+                            this.showOffset = true;
+                        } else {
+                            this.showOffset = false;
+                        }
                         $(this.canvas).css('cursor', 'move');
                     }
                 }
@@ -431,7 +446,7 @@ export class MapperDrawing {
     public focusActiveRoom() {
         if (!this.active) return;
         //console.log("Room xy: ", this.active.x/8 , this.active.y/8)
-        this.scrollTo((this.active.x/8), (this.active.y/8));
+        this.scrollTo((this.active.x/7.5)+16, (this.active.y/7.5)+16);
     }
     public setActive(room:Room) {
         this.active = room;
@@ -506,19 +521,19 @@ export class MapperDrawing {
         //console.log("Scroll xy: ", this.vscroll,this.hscroll)
     }
 
-    roomDrawRect(room:Room) : Rect {
+    roomDrawRect(room:Room, canvas:HTMLCanvasElement) : Rect {
         const x = this.vscroll ;
         const y = this.hscroll ;
-        let ox = (this.canvas.width/2) - 32/this.scale;
-        let oy = (this.canvas.height/2) - 32/ this.scale;
+        let ox = (canvas.width/2) //- 16/this.scale;
+        let oy = (canvas.height/2) //- 16/ this.scale;
 
-        if (this.canvas.width % 2 != 0)
+        if (canvas.width % 2 != 0)
             ox += 0.5;
-        if (this.canvas.height % 2 != 0)
+        if (canvas.height % 2 != 0)
             oy  += 0.5;
 
-        let rX = (room.x / 8  - x) * this.scale + ox;
-        let rY = (room.y/ 8   - y) * this.scale + oy;
+        let rX = (room.x /7.5  - x) * this.scale + ox;
+        let rY = (room.y/7.5   - y) * this.scale + oy;
         return {
             x: (rX)|0,
             y: (rY)|0,
@@ -528,19 +543,19 @@ export class MapperDrawing {
             h: (32*this.scale)|0,
         };
     }
-    roomInnerDrawRect(room:Room) : Rect {
+    roomInnerDrawRect(room:Room, canvas:HTMLCanvasElement) : Rect {
         const x = this.vscroll ;
         const y = this.hscroll ;
-        let ox = (this.canvas.width/2) - 32/this.scale;
-        let oy = (this.canvas.height/2) - 32/ this.scale;
+        let ox = (canvas.width/2) //- 16/this.scale;
+        let oy = (canvas.height/2) //- 16/ this.scale;
 
-        if (this.canvas.width % 2 != 0)
+        if (canvas.width % 2 != 0)
             ox += 0.5;
-        if (this.canvas.height % 2 != 0)
+        if (canvas.height % 2 != 0)
             oy  += 0.5;
 
-        let rX = (room.x / 8  - x) * this.scale + ox;
-        let rY = (room.y/ 8   - y) * this.scale + oy;
+        let rX = (room.x /7.5  - x) * this.scale + ox;
+        let rY = (room.y/7.5   - y) * this.scale + oy;
         return {
             x: (rX+ 8*this.scale)|0,
             y: (rY+ 8*this.scale)|0,
@@ -556,9 +571,9 @@ export class MapperDrawing {
         const x = rx*2;
         const y= ry*2;
 
-        const rows = !this.active ? null : this.mapper.zoneRooms.get(this.active.zone_id).filter(room => {
+        const rows = !this.active || !this.mapper.zoneRooms.get(this.active.zone_id) ? null : this.mapper.zoneRooms.get(this.active.zone_id).filter(room => {
             if (room.z != this.level) return false;
-            let rRect = this.roomDrawRect(room);
+            let rRect = this.roomDrawRect(room, this.canvas);
             return this.PointInRect(x,y,rRect.x,rRect.x2, rRect.y, rRect.y2)
         })
 
@@ -593,7 +608,8 @@ export class MapperDrawing {
         if (canvas.height % 2 != 0)
             oy  += 0.5;
 
-        context.font = '14pt monospace';
+        context.font = `${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        context.lineWidth = (0.6 * this.scale)|0;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#C5BFB1';
@@ -610,7 +626,7 @@ export class MapperDrawing {
         for (let i = 0; i < this.rooms.length; i++) {
             let room = this.rooms[i]
             if (room.z == this.level-1) {
-                let rdr = this.roomInnerDrawRect(room)
+                let rdr = this.roomInnerDrawRect(room, canvas)
                 drawDataBelow.set(room.id, {
                     room: room,
                     rect: rdr,
@@ -619,7 +635,7 @@ export class MapperDrawing {
                 });
             }
             else if (room.z == this.level+1) {
-                let rdr = this.roomInnerDrawRect(room)
+                let rdr = this.roomInnerDrawRect(room, canvas)
                 drawDataAbove.set(room.id, {
                     room: room,
                     rect: rdr,
@@ -628,8 +644,8 @@ export class MapperDrawing {
                 });
             }
             else if (room.z == this.level) {
-                let rdr = this.roomDrawRect(room)
-                let rdr2 = this.roomInnerDrawRect(room)
+                let rdr = this.roomDrawRect(room, canvas)
+                let rdr2 = this.roomInnerDrawRect(room, canvas)
                 drawData.set(room.id,{
                     room: room,
                     rect: rdr,
@@ -676,45 +692,53 @@ export class MapperDrawing {
         this.DrawLegend(context, 1, -4, 0);
         //this.translate(context, -0.5, this._scale);
         if (this.hover) {
-            context.save()
-            context.font = "bold 14pt Tahoma"
-            const text1 = this.hover.name
-            let text2 = `#${this.hover.id||"Pos:"}`
-            if (this.hover.x != undefined) {
-                text2 += ` x:${this.hover.x}, y:${this.hover.y}`
-            } else {
-                text2+= "Map"
-            }
-            let w = context.measureText(text1).width
-            context.font = "12pt Tahoma"
-            let w2 = context.measureText(text2).width
-            if (w<w2) w=w2;
-            w+=10
-            context.beginPath();
-            let x = this.Mouse.x*2+32
-            let y = this.Mouse.y*2+48
-            if (x + w > this.canvas.width) {
-                x -= w;
-                x -= 64;
-            }
-            if (y + 50 > this.canvas.height) {
-                y -= 50;
-                y -= 64;
-            }
-            context.fillStyle = 'rgba(255,255,255,0.75)'
-            context.fillRect(x,y,w,50)
-            context.rect(x+5,y+5,w-10,50-10);
-            context.clip();
-            context.fillStyle = 'black'
-            context.font = "bold 14pt Tahoma"
-            context.fillText(text1,x+5,y+20);
-            context.font = "12pt Tahoma"
-            context.fillText(text2,x+5,y+40);
-            context.closePath()
-            context.restore()
+            this.drawHoverInfo(context);
         }
-        //if (this.Mouse) this.drawTriangle(context, ExitDir.SouthWest, this.Mouse.x*2+32, this.Mouse.y*2+32, 14, 1)
+
+        if (this.showOffset) {
+            context.fillText(`${this.vscroll|0}, ${this.hscroll|0}`, 20, 20)
+        }
         if (callback) callback();
+    }
+
+    private drawHoverInfo(context: CanvasRenderingContext2D) {
+        context.save();
+        context.font = `bold ${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        const text1 = this.hover.name;
+        let text2 = `#${this.hover.id || "Pos:"}`;
+        if (this.hover.x != undefined) {
+            text2 += ` x:${this.hover.x}, y:${this.hover.y}`;
+        } else {
+            text2 += "Map";
+        }
+        let w = context.measureText(text1).width;
+        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'monospace'}`;
+        let w2 = context.measureText(text2).width;
+        if (w < w2)
+            w = w2;
+        w += 10;
+        context.beginPath();
+        let x = this.Mouse.x * 2 + 32;
+        let y = this.Mouse.y * 2 + 48;
+        if (x + w > this.canvas.width) {
+            x -= w;
+            x -= 64;
+        }
+        if (y + 50 > this.canvas.height) {
+            y -= 50;
+            y -= 64;
+        }
+        context.fillStyle = 'rgba(255,255,255,0.75)';
+        context.fillRect(x, y, w, 50);
+        context.rect(x + 5, y + 5, w - 10, 50 - 10);
+        context.clip();
+        context.fillStyle = 'black';
+        context.font =  `bold ${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        context.fillText(text1, x + 5, y + 20);
+        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'monospace'}`;
+        context.fillText(text2, x + 5, y + 40);
+        context.closePath();
+        context.restore();
     }
 
     calculateLabelsAndDrawLinks(context:CanvasRenderingContext2D, roomData:DrawData, drawData:Map<number,DrawData>, drawDataBelow:Map<number,DrawData>, drawDataAbove:Map<number,DrawData>, strokeColor:string, drawLabels:boolean, offsX:number, offsY:number) : LabelData[] {
@@ -758,8 +782,8 @@ export class MapperDrawing {
                     && ex.to_dir == ExitDir.Other
                     && destRoom) {
                     const se = roomData.exitData.get(ExitDir.SouthEast)
-                    this.drawTriangle(context, ExitDir.South, roomData.rect.x + offsX + se.x,  roomData.rect.y + offsY + se.y, 4, this.scale, strokeColor)
-                    this.drawTriangle(context, ExitDir.North,  roomData.rect.x + offsX + se.x,  roomData.rect.y + offsY + se.y, 4, this.scale, strokeColor)
+                    this.drawTriangle(context, ExitDir.South, roomData.rect.x + offsX + se.xInner,  roomData.rect.y + offsY + se.yInner, 4, this.scale, strokeColor)
+                    this.drawTriangle(context, ExitDir.North,  roomData.rect.x + offsX + se.xInner,  roomData.rect.y + offsY + se.yInner, 4, this.scale, strokeColor)
                     continue;
                 }
                 if (destRoom && ex.to_dir && destRoom.exits[ex.to_dir] && destRoom.exits[ex.to_dir].to_room == roomData.room.id && destRoom != roomData.room) {
@@ -823,8 +847,8 @@ export class MapperDrawing {
                         if (!destExitData) continue;
                         const steps:Point[] = [
                             {
-                                x: destDrawData.rect.x + destExitData.x + offsX,
-                                y: destDrawData.rect.y + destExitData.y + offsY,
+                                x: (destDrawData.rect.x + destExitData.x + offsX)|0,
+                                y: (destDrawData.rect.y + destExitData.y + offsY)|0,
                             }
                         ];
                         if (destRoom == roomData.room) {
@@ -834,7 +858,7 @@ export class MapperDrawing {
                     }
                 } else if (destRoom && ex.to_dir && ex.to_dir != ExitDir.Other && (roomData.room == destRoom || !destRoom.exits[ex.to_dir] || destRoom.exits[ex.to_dir].to_room != roomData.room.id)) {
                     // one way
-                    let destPosX=roomData.rect.x+reox+offsX,destPosy=roomData.rect.y+reoy+offsY;
+                    let destPosX=(roomData.rect.x+reox+offsX)|0,destPosy=(roomData.rect.y+reoy+offsY)|0;
                     if (drawLabels && destRoom.zone_id != roomData.room.zone_id) {
                         // altra zona
                         if (marker) this.drawMarker(context, roomData.rect.x+reox, roomData.rect.y+reoy, 2, strokeColor, this.scale)
@@ -886,8 +910,8 @@ export class MapperDrawing {
                         if (!destDrawData) continue;
                         const destExitData = destDrawData.exitData.get(ex.to_dir)
                         if (destExitData) {
-                            destPosX = destDrawData.rect.x + destExitData.x + offsX
-                            destPosy = destDrawData.rect.y + destExitData.y + offsY
+                            destPosX = (destDrawData.rect.x + destExitData.x + offsX)|0
+                            destPosy = (destDrawData.rect.y + destExitData.y + offsY)|0
                             entranceDir = ReverseExitDir.get(ex.to_dir as ExitDir);
                         }
                         /*if (destExitData && this.PointInRect(destDrawData.rect.x + destExitData.x, destDrawData.rect.y + destExitData.y, roomData.rect.x, roomData.rect.x2, roomData.rect.y, roomData.rect.y2))
@@ -901,19 +925,19 @@ export class MapperDrawing {
  
                             if (destRoom == roomData.room) {
                                 recursive = true
-                                destPosX = roomData.rect.x + exitData.xInner + offsX
-                                destPosy = roomData.rect.y + exitData.yInner + offsY
+                                destPosX = (roomData.rect.x + exitData.xInner + offsX)|0
+                                destPosy = (roomData.rect.y + exitData.yInner + offsY)|0
                             } else if (destExitData) {
                                 steps.push({
-                                    x: destDrawData.rect.x + destExitData.x + offsX,
-                                    y: destDrawData.rect.y + destExitData.y + offsY,
+                                    x: (destDrawData.rect.x + destExitData.x + offsX)|0,
+                                    y: (destDrawData.rect.y + destExitData.y + offsY)|0,
                                 })
                                 steps.push({
-                                    x: destDrawData.rect.x + destExitData.xInner + offsX,
-                                    y: destDrawData.rect.y + destExitData.yInner + offsY,
+                                    x: (destDrawData.rect.x + destExitData.xInner + offsX)|0,
+                                    y: (destDrawData.rect.y + destExitData.yInner + offsY)|0,
                                 })
-                                destPosX = destDrawData.rect.x + destExitData.xInner + offsX
-                                destPosy = destDrawData.rect.y + destExitData.yInner + offsY
+                                destPosX = (destDrawData.rect.x + destExitData.xInner + offsX)|0
+                                destPosy = (destDrawData.rect.y + destExitData.yInner + offsY)|0
                             }
                             if (!recursive) this.drawLink(context, roomData.rect, steps, exitData, roomData.room.z != destDrawData.room.z ? "gray" : strokeColor, offsX, offsY);
                         }
@@ -966,9 +990,9 @@ export class MapperDrawing {
         ctx.save()
         ctx.beginPath();
         ctx.strokeStyle = color
-        ctx.moveTo(start.x + exitData.x + offsX, start.y + exitData.y + offsY)
+        ctx.moveTo(.5+((start.x + exitData.x + offsX)|0), .5+((start.y + exitData.y + offsY)|0))
         for (const st of steps) {
-            ctx.lineTo(st.x, st.y)            
+            ctx.lineTo(.5+(st.x|0), .5+(st.y|0))            
         }
         //ctx.closePath()
         ctx.stroke()
@@ -1027,10 +1051,10 @@ export class MapperDrawing {
                     reox2 = reox-rect.w/7;
                     reoy2 = reoy-rect.h/7;
                     ret.set(<ExitDir>re, {
-                        x: reox,
-                        y: reoy,
-                        xInner: reox2,
-                        yInner: reoy2,
+                        x: reox|0,
+                        y: reoy|0,
+                        xInner: reox2|0,
+                        yInner: reoy2|0,
                         marker: !!(ex && ex.to_room)
                     })
                     break;
@@ -1335,10 +1359,10 @@ export class MapperDrawing {
 
         ctx.drawImage(this.$drawCache[key], x | 0, y | 0);
 
-        this.DrawDoor(ctx,  (x + 12 * scale)|0, (y - 1 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.n);
-        this.DrawDoor(ctx,  (x + 31 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.e);
+        this.DrawDoor(ctx,  (x + 12 * scale)|0, (y + 1 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.n);
+        this.DrawDoor(ctx,  (x + 30 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.e);
         this.DrawDoor(ctx,  (x + 1 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.w);
-        this.DrawDoor(ctx,  (x + 12 * scale)|0, (y + 29 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.s);
+        this.DrawDoor(ctx,  (x + 12 * scale)|0, (y + 30 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.s);
         this.DrawDDoor(ctx, (x)|0, (y)|0, (5 * scale)|0, (5 * scale)|0, room.exits.nw);
         this.DrawDDoor(ctx, (x + 32 * scale)|0, (y)|0, (-5 * scale)|0, (5 * scale)|0, room.exits.ne);
         this.DrawDDoor(ctx, (x + 32 * scale)|0, (y + 32 * scale)|0, (-5 * scale)|0, (-5 * scale)|0, room.exits.se);

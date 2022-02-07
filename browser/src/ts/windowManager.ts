@@ -17,6 +17,8 @@ export interface WindowData {
     docked:boolean;
     font?:string;
     fontSize?:number;
+    anchorWidth?:number;
+    anchorHeight?:number;
 }
 
 export interface WindowDefinition {
@@ -37,7 +39,7 @@ export class WindowManager {
     
     constructor(private profileManager:ProfileManager) {
         profileManager.evtProfileChanged.handle(async (ev:{[k: string]: any})=>{
-            await this.deleteWindows()
+            //await this.deleteWindows()
             await this.load();
         });
         this.load();
@@ -126,7 +128,7 @@ export class WindowManager {
         for (const w of this.windows) {
             if (w[1].data.visible) {
                 let wnd = this.createWindow(w[1].data.name);
-                this.show(w[0]);
+                await this.show(w[0]);
                 toShow.push(w[0])
             }
         }
@@ -217,12 +219,9 @@ export class WindowManager {
         });
         (<any>$(w)).jqxWindow({ draggable: false });
 
-        w.css({
-            "width": "unset",
-            "height": "unset",
-        });
+        this.applyDockSizes(this.windows.get(window))
         $(".jqx-resize", w).css({
-            "width": "unset",
+            "width": "100%",
             "height": "unset",
         });
         $(".jqx-window-header", w).css({
@@ -289,7 +288,7 @@ export class WindowManager {
 
     async showSettings(window: string, parent:JQuery) {
         const wnd = this.windows.get(window);
-        const r = await Messagebox.ShowMultiInput("Impostazioni finestra (campi vuoti per predefinito)", ["Font (nome o famiglia di font)", "Grandezza font (in pixel)"], [wnd.data.font||"",wnd.data.fontSize?wnd.data.fontSize.toString():""])
+        const r = await Messagebox.ShowMultiInput("Impostazioni finestra (campi vuoti per predefinito)", ["Font (nome o famiglia di font)", "Grandezza font (in pixel)", "Larghezza ancorata", "Altezza ancorata"], [wnd.data.font||"",wnd.data.fontSize?wnd.data.fontSize.toString():"",wnd.data.anchorWidth?wnd.data.anchorWidth.toString():"",wnd.data.anchorHeight?wnd.data.anchorHeight.toString():""])
         if (r.button == Button.Ok) {
             if (r.results[0]) {
                 wnd.data.font = r.results[0]
@@ -301,12 +300,25 @@ export class WindowManager {
             } else {
                 wnd.data.fontSize = undefined
             }
+            if (r.results[2]) {
+                wnd.data.anchorWidth = Number(r.results[2])
+            } else {
+                wnd.data.anchorWidth = undefined
+            }
+            if (r.results[3]) {
+                wnd.data.anchorHeight = Number(r.results[3])
+            } else {
+                wnd.data.anchorHeight = undefined
+            }
             this.applySettings(wnd, parent);
             this.save();
         }
     }
 
     private applySettings(wnd: WindowDefinition, parent: JQuery) {
+        if (wnd.window) {
+            this.applyDockSizes(wnd);
+        }
         if (wnd.data.fontSize) {
             let s = null;
             s = $(".jqx-window-content", parent).attr('style');
@@ -346,6 +358,25 @@ export class WindowManager {
             s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: auto;'; 
             $(".outputText", parent).attr('style', s)
         }
+        this.EvtEmitWindowsChanged.fire([wnd.data.name])
+    }
+
+    private applyDockSizes(wnd: WindowDefinition) {
+        if (!wnd || !wnd.data) return;
+
+        if (wnd.data.anchorWidth) {
+            wnd.window.css({
+                "width": `${wnd.data.anchorWidth}px`
+            });
+            //((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important")
+        } else { wnd.window.css({ "width": "unset", "display": "unset" }); }
+
+        if (wnd.data.anchorHeight) {
+            wnd.window.css({
+                "height": `${wnd.data.anchorHeight}px`
+            });
+            ((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important");
+        } else { wnd.window.css({ "height": "unset", "display": "unset" }); }
     }
 
     public async destroyWindow(name:string, permanent:boolean) {
@@ -357,7 +388,7 @@ export class WindowManager {
         let wdef = this.windows.get(name);
         if (wdef) {
             
-            console.log("DESTROY " + wdef.data.name)
+            //console.log("DESTROY " + wdef.data.name)
             wdef.initialized = false;
             wdef.created = false;
             if (wdef.output) {
@@ -426,7 +457,7 @@ export class WindowManager {
             `;
 
         } else {
-            customOutput = new MapperWindow(this.mapper)
+            customOutput = new MapperWindow(this.mapper, this)
             win = customOutput.Instance();
         }
 
@@ -451,6 +482,8 @@ export class WindowManager {
                     docked:createData.docked==undefined?(hasLayout?true:false):createData.docked,
                     font: createData.font,
                     fontSize: createData.fontSize,
+                    anchorWidth: createData.anchorWidth,
+                    anchorHeight: createData.anchorHeight,
                 }
             }
         }
@@ -567,19 +600,15 @@ export class WindowManager {
                 docked: createData?createData.docked:(hasLayout?true:false),
                 font: (createData?createData.font:undefined)||(defaults?defaults.data.font:undefined),
                 fontSize: (createData?createData.fontSize:undefined)||(defaults?defaults.data.fontSize:undefined),
+                anchorWidth: (createData?createData.anchorWidth:undefined)||(defaults?defaults.data.anchorWidth:undefined),
+                anchorHeight: (createData?createData.anchorHeight:undefined)||(defaults?defaults.data.anchorHeight:undefined),
             }
         }
         this.windows.set(name, def);
 
         this.applySettings(def, w)
 
-        if ((defaults && defaults.data.visible)||!defaults) {
-            this.show(name);
-        }
 
-        if (defaults && defaults.data.collapsed) {
-            (<any>$win).jqxWindow('collapse');
-        }
 
         def.data.w = w.jqxWindow('width');
         def.data.h = w.jqxWindow('height');
@@ -589,9 +618,19 @@ export class WindowManager {
 
         def.data.collapsed = ((defaults && defaults.data) ? defaults.data.collapsed : w.jqxWindow('collapsed'));
         def.data.visible = ((defaults && defaults.data) ? defaults.data.visible : true);
-        def.data.docked = ((defaults && defaults.data) ? defaults.data.docked : false);
+        def.data.font = ((defaults && defaults.data) ? defaults.data.font : undefined);
+        def.data.fontSize = ((defaults && defaults.data) ? defaults.data.fontSize : undefined);
+        def.data.anchorWidth = ((defaults && defaults.data) ? defaults.data.anchorWidth : undefined);
+        def.data.anchorHeight = ((defaults && defaults.data) ? defaults.data.anchorHeight : undefined);
 
+        if ((defaults && defaults.data.visible)||!defaults) {
+            (async () => {await this.show(name);})()
+        }
         this.save();
+
+        if (defaults && defaults.data.collapsed) {
+            (<any>$win).jqxWindow('collapse');
+        }
 
         this.EvtEmitWindowsChanged.fire([...this.windows.keys()]);
         return def;
@@ -605,7 +644,7 @@ export class WindowManager {
             (this.windows as any).loadedFrom = usr
             loadedFrom = usr;
         }
-         console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
+        // console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
         if (loadedFrom != usr) {
             return;
         }
@@ -617,8 +656,10 @@ export class WindowManager {
         //console.log("SHOW " + w.data.name)
         if (!w.output && !w.custom) {
             const data = w.data;
+            data.visible = false
             await this.destroyWindow(window, true);
             w = this.createWindow(window, data);
+            w.data.visible = true
         }
         if ((w && w.window) && !this.loading) {
             if (!(<any>w.window).jqxWindow('isOpen')) (<any>w.window).jqxWindow("open");

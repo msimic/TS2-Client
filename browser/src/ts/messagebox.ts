@@ -128,7 +128,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         }
     }));
 
-    (<any>$win).jqxWindow({minWidth: width || 350, minHeight: height || 100, showCollapseButton: false, isModal: true, resizable: true});
+    (<any>$win).jqxWindow({minWidth: width || 350, minHeight: height || 100, showCollapseButton: false, isModal: true, height:'auto', resizable: true});
 
     $(acceptButton).text(okbuttontext);
     if (!okbuttontext) $(acceptButton).hide();
@@ -165,7 +165,10 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     
     if (!height) {
         (<any>$win).find('.jqx-window-content').append('<div id="bottomOfContent"></div>');
+        let offset = (<any>$win).find('.jqx-window-content #bottomOfContent').position();
+        $('.jqx-window-content #bottomOfContent', $win).remove();
 
+        /*
         let height = [...messageText.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
         let inputheight = [...messageInput.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
         // get new height based on position of marker
@@ -174,9 +177,9 @@ export async function messagebox(title: string, text: string, callback:(val:stri
              $('.jqx-window-header', $win).height() +
              (input ? inputheight : 0)+
               70;
-
+        */
         // apply new height
-        (<any>$win).jqxWindow({height: newHeight});
+        (<any>$win).jqxWindow({height: offset.top + 70});
     }
 
     if (!width) {

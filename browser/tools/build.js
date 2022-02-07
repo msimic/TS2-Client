@@ -83,8 +83,13 @@ function mergeJqwidgets(next) {
     compressor: noCompress,
     input: [
         './static/public/jqwidgets/jqxcore.js',
+        './static/public/jqwidgets/jqxdata.js',
         './static/public/jqwidgets/jqxmenu.js',
         './static/public/jqwidgets/jqxwindow.js',
+        './static/public/jqwidgets/jqxscrollbar.js',
+        './static/public/jqwidgets/jqxbuttons.js',
+        './static/public/jqwidgets/jqxlistbox.js',
+        './static/public/jqwidgets/jqxdropdownlist.js',
         './static/public/jqwidgets/jqxsplitter.js'],
     output: './dist/jqwidgets_module.js',
     callback: function(err, min) { if (!err && next) next(); }

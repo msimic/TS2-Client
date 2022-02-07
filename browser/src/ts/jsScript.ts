@@ -58,9 +58,9 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
                 if (typeof (propValue) != 'function') {
 
 
-                    var oldValue = self._oldValues[propName];
+                    var oldValue = self._oldValues ? self._oldValues[propName] : undefined;
 
-                    if (propValue != oldValue) {
+                    if (propValue != oldValue || (oldValue == undefined && propValue != undefined)) {
 
                         onWatch({ obj: self, propName: propName, oldValue: oldValue, newValue: propValue });
                         self._oldValues[propName] = propValue;
@@ -442,6 +442,9 @@ function makeScript(owner:string, text: string, argsSig: string,
     /* Scripting API section */
     const mapper = map;
     const color = colorize;
+    const variable = function(vr: string) {
+        return scriptManager.getVariableValue(vr)
+    };
     const sub = function(sWhat: string, sWith:string) {
         if (triggerManager) triggerManager.subBuffer(sWhat, sWith);
     };
@@ -495,10 +498,17 @@ function makeScript(owner:string, text: string, argsSig: string,
             outputManager.getWindowManager().destroyWindow(window,true);
         }
     };
+    const getWindow = function(window:string) {
+        if (outputManager) {
+            return outputManager.getWindowManager().windows.get(window);
+        }
+        return null;
+    };
     const createWindow = function(window:string, data:any) {
         if (outputManager) {
-            outputManager.getWindowManager().createWindow(window,data);
+            return outputManager.getWindowManager().createWindow(window,data);
         }
+        return null;
     };
     const send = function(cmd: string) {
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString()});

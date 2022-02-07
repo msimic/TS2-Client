@@ -1,7 +1,7 @@
 import * as Util from "./util";
 import { colorIdToHtml } from "./color";
 import { EventHook } from "./event";
-import { ConfigIf } from "./util";
+import { ConfigIf, padStart } from "./util";
 
 /*export interface ConfigIf {
     onSet(key: string, cb: (val: any) => void): void;
@@ -285,20 +285,6 @@ export class OutWinBase {
         }
     }
 
-    private padStart(str:string, targetLength:number, padString:string) {
-        targetLength = targetLength >> 0; //truncate if number, or convert non-number to 0;
-        padString = String(typeof padString !== 'undefined' ? padString : ' ');
-        if (str.length >= targetLength) {
-            return String(str);
-        } else {
-            targetLength = targetLength - str.length;
-            if (targetLength > padString.length) {
-                padString += padString.repeat(targetLength / padString.length); //append to original to ensure we are longer than needed
-            }
-            return padString.slice(0, targetLength) + String(str);
-        }
-    };
-
     protected appendToCurrentTarget(o:any) {
         if (this.$target == this.$rootElem) {
             this.lineCount++;
@@ -320,7 +306,7 @@ export class OutWinBase {
         }
         //const time = new Date();
         /*if (this.logTime && o) {
-            const time = this.padStart(new Date().toISOString().split("T")[1].split("Z")[0] + " ", 12, " ");
+            const time = padStart(new Date().toISOString().split("T")[1].split("Z")[0] + " ", 12, " ");
             this.appendToCurrentTarget('<span class="timeLog">' + time + "</span>");
         }*/
         if (toRoot) {
@@ -344,7 +330,7 @@ export class OutWinBase {
 
     private time() {
         const d = new Date()
-        const time = `${this.padStart(d.getHours().toString(), 2, "0")}:${this.padStart(d.getMinutes().toString(), 2, "0")}:${this.padStart(d.getSeconds().toString(), 2, "0")}.${this.padStart(d.getMilliseconds().toString(), 3, "0")} `;
+        const time = `${padStart(d.getHours().toString(), 2, "0")}:${padStart(d.getMinutes().toString(), 2, "0")}:${padStart(d.getSeconds().toString(), 2, "0")}.${padStart(d.getMilliseconds().toString(), 3, "0")} `;
         return ('<span class="timeLog">' + time + "</span>");
     }
     removing = false

@@ -1279,13 +1279,6 @@ ul.select {
     box-sizing: border-box;
 }
 
-#content-wrapper #zonelist {
-    border: 0px solid transparent !important;
-    border-right: 5px solid transparent !important;
-    background-color: transparent;
-    color: lightgray;
-}
-
 #content-wrapper option {
     background: rgb(202, 202, 202);
     color: black;
@@ -1457,3 +1450,23 @@ div::-webkit-scrollbar {
       scrollbar-width: thin;
       scrollbar-color: rgba(21, 106, 167, 0.77) transparent;
   }
+
+  .jqx-listbox-container {
+      font-size: 10px;
+  }
+
+  .jqx-listitem-element span {
+      white-space: nowrap !important;
+  }
+
+  #content-wrapper #zonelist {
+    border: 0px solid transparent !important;
+    border-right: 5px solid transparent !important;
+    background-color: transparent;
+    color: lightgray;
+    height: 20px !important;
+}
+
+#innerListBoxzonelist span {
+    font-size: 10px !important;
+}

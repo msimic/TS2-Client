@@ -40,7 +40,7 @@ export class ProfileManager {
     private activeChanged = (v:string):string => {
         const ac = this.getCurrentConfig();
         ac.copy(v);
-        console.log("active changed " + this._current)
+        //console.log("active changed " + this._current)
         return v;
     }
 

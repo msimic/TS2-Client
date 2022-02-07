@@ -145,10 +145,9 @@ export class AliasManager {
             let alias = this.allAliases[i];
             if (!alias.enabled || (alias.class && !this.classManager.isEnabled(alias.class))) continue;
             if (alias.regex) {
-                let re = RegExp(alias.pattern.charAt(0) == "^" ? alias.pattern : ("^" + alias.pattern), "i");
-                let alias_match:RegExpMatchArray;
-                alias_match = cmd.match(re);
-                if (!alias_match || alias_match == undefined) {
+                const re = RegExp(alias.pattern.charAt(0) == "^" ? alias.pattern : ("^" + alias.pattern), "i");
+                const match = cmd.match(re);
+                if (!match || match == undefined) {
                     continue;
                 }
                 if (fromScript && this.checkLoop(re.source)) {
@@ -159,29 +158,36 @@ export class AliasManager {
                 if (alias.is_script) {
                     if (!alias.script) {
                         let value = alias.value;
-                        value = value.replace(/\$(\d+)/g, function(m, d) {
-                            return alias_match[parseInt(d)] || "";
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                            if (d==undefined) return m;
+                            return d == 0 ? match.input.substring(match[0].length) : "(match["+parseInt(d)+"] || '')";
                         });
-                        alias.script = this.jsScript.makeScript(alias.id || alias.pattern, value, "match, input");
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                            if (d==undefined) return m;
+                            return "variable('"+d+"')";
+                        });
+                        alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
                     }
                     if (alias.script) {
-                        alias.script(alias_match, cmd);
+                        alias.script(match, cmd);
                     };
                     return true;
                 } else {
                     let value = alias.value;
 
-                    value = value.replace(/\$(\d+)/g, function(m, d) {
-                        return alias_match[parseInt(d)] || "";
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                        if (d==undefined) return m;
+                        return d == 0 ? match.input.substring(match[0].length) :  match[parseInt(d)] || "";
                     });
-                    value = value.replace(/(\@\w+)/g, function(m, d) {
-                        return aliasManager.jsScript.getVariableValue(d.substring(1)) || "";
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                        if (d==undefined) return m;
+                        return aliasManager.jsScript.getVariableValue(d) || "";
                     });
                     return value;
                 }
             } else {
-                let re = RegExp("^" + alias.pattern + "(?:\\s+(.*))?$","i");
-                let match = cmd.match(re);
+                const re = RegExp("^" + alias.pattern + "(?:\\s+(.*))?$","i");
+                const match = cmd.match(re);
                 if (!match) {
                     continue;
                 }
@@ -193,20 +199,29 @@ export class AliasManager {
                 if (alias.is_script) {
                     if (!alias.script) {
                         let value = alias.value;
-                        value = value.replace(/\$(\d+)/g, function(m, d) {
-                            return "match["+parseInt(d)+"] || ''";
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                            if (d==undefined) return m;
+                            return d == 0 ? match.input.substring(match[0].length) : "(match["+parseInt(d)+"] || '')";
                         });
-                        alias.script = this.jsScript.makeScript(alias.id || alias.pattern, value, "match, input");
+                        // var regex = /\\"|"(?:\\"|[^"])*"|(\+)/g;
+                         // var regex = /\\"|"(?:\\"|[^"])*"|(\@\w+)/g;
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                            if (d==undefined) return m;
+                            return "variable('"+d+"')";
+                        });
+                        alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
                     }
                     if (alias.script) { alias.script(match, cmd); };
                     return true;
                 } else {
                     let value = alias.value;
-                    value = value.replace(/\$(\d+)/g, function(m, d) {
-                        return match[parseInt(d)] || "";
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                        if (d==undefined) return m;
+                        return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
                     });
-                    value = value.replace(/(\@\w+)/g, function(m, d:string) {
-                        return aliasManager.jsScript.getVariableValue(d.substring(1)) || "";
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                        if (d==undefined) return m;
+                        return aliasManager.jsScript.getVariableValue(d) || "";
                     });
                     return value;
                 }

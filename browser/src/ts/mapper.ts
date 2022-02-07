@@ -363,12 +363,12 @@ export class Mapper {
         this._selected = value;
         this.resyncato = false;
         if (this._prevZoneId != this._zoneId) {
+            this._prevZoneId = this._zoneId
             this.zoneChanged.fire({
                 id: this._zoneId,
                 zone: this.idToZone.get(this._zoneId)
             })
         }
-        this._prevZoneId = this._zoneId
     }
     public roomVnum: number = -1;
     public roomId: number = -1;
@@ -554,8 +554,13 @@ export class Mapper {
 
     public async load(url:string):Promise<MapDatabase> {
         this.emitMessage.fire("Inizializzo mapper... attendere.");
-        const response = await fetch(url);
-        console.log("Mappe:" + response.statusText  + "(" + response.status + ")")
+        let response;
+        try {
+        response = await fetch(url);
+        //console.log("Mappe:" + response.statusText  + "(" + response.status + ")")
+        } catch {
+            this.emitMessage.fire("Errore nello scaricamento mappe.");
+        }
         const data = await response.json();
         /*
         const r2 = await fetch(url);
@@ -766,8 +771,12 @@ export class Mapper {
         if (id == -1) {
             this.current = null;
         } else {
-            this.current = this.idToRoom.get(id);
-            if (this.current) this.roomVnum = this.current.vnum;
+            const newCurrent = this.idToRoom.get(id)
+            if (newCurrent) {
+                this.current = newCurrent;
+                this.current = newCurrent; // twice in case there was a zoneChanged which would set it to the first room of the zone
+                this.roomVnum = this.current.vnum;
+            }
         }
         if (old != this.current) {
             this.roomChanged.fire({ id: this.roomId, vnum: this.roomVnum, room: this.current })

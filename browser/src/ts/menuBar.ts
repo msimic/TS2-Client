@@ -154,7 +154,7 @@ export class MenuBar {
         private jsScript: JsScript
         ) 
     {
-        <JQuery>((<any>$("#menuBar")).jqxMenu());
+        <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: false}));
 
         var userAgent = navigator.userAgent.toLowerCase();
 

@@ -5,55 +5,51 @@ import { WindowManager } from "./windowManager";
 import { EvtScriptEmitPrint } from "./jsScript";
 import { MapperDrawing } from "./mapperDrawing";
 import { ResizeSensor } from 'css-element-queries'
-import { downloadJsonToFile, importFromFile } from './util'
+import { downloadJsonToFile, importFromFile, padStart } from './util'
 
 export enum UpdateType { none = 0, draw = 1 }
 
-
-class Room1 {
-    public ID: string = null;
-    public x: number = 0;
-    public y: number = 0;
-    public z: number = 0;
-    public area: string = null;
-    public zone: number = 0;
-    public notes?: string;
-    public background?: string;
-    public env?: string;
-    //public details?: RoomDetails;
-    public indoors?: number;
-    public exits?: any;
-    public name?: string;
-}
-
-interface MouseData {
-    x: number;
-    y: number;
-    button: number;
-    state: boolean;
-}
+interface ClipboardItem {
+    readonly types: string[];
+    readonly presentationStyle: "unspecified" | "inline" | "attachment";
+    getType(): Promise<Blob>;
+  }
+  
+  interface ClipboardItemData {
+    [mimeType: string]: Blob | string | Promise<Blob | string>;
+  }
+  
+  declare var ClipboardItem: {
+    prototype: ClipboardItem;
+    new (itemData: ClipboardItemData): ClipboardItem;
+  };
 
 export class MapperWindow {
-    private $win: JQuery;
+    setMapFont() {
+        const mdef = this.windowManager.windows.get("Mapper")
+        if (!mdef || !mdef.data) return;
+        this.drawing.font = mdef.data.font
+        this.drawing.fontSize = mdef.data.fontSize
+    }
 
-    private $serverName: JQuery;
-    private $serverRow: JQuery;
-    private $name: JQuery;
-    private $char: JQuery;
-    private $pass: JQuery;
-    private $serverList: JQuery;
-    private $autoLogin: JQuery;
-    private okButton: HTMLButtonElement;
-    private cancelButton: HTMLButtonElement;
-    private reloadLayoutButton: JQuery;
-    private windowManager: WindowManager;
+    private $win: JQuery;
     private ctx: CanvasRenderingContext2D;
     private $bottomMessage:JQuery;
     private $zoneList:JQuery;
     canvas: JQuery;
     drawing: MapperDrawing;
     private zones:Zone[] = []
-    private zoneId:number = -1
+    private _zoneId: number = -1;
+    public get zoneId(): number {
+        return this._zoneId;
+    }
+    public set zoneId(value: number) {
+        this._zoneId = value;
+        const sel = !this.zoneId ? null : (<any>this.$zoneList).jqxDropDownList('getItemByValue', this.zoneId.toString());
+        if (sel && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=sel.index) {
+            (<any>this.$zoneList).jqxDropDownList('selectIndex', sel.index );
+        }
+    }
     $zoom: JQuery;
     $level: JQuery;
     $contextMenu: JQuery;
@@ -73,6 +69,7 @@ export class MapperWindow {
     }
 
     onEmitMapperRoomChanged = (d:any) => {
+        this.zoneId = d.room ? d.room.zone_id : -1
         this.message(this.mapper.getRoomName(d.room))
         if (!d.room) {
             this.zoneMessage("Zona sconosciuta")
@@ -97,7 +94,7 @@ export class MapperWindow {
     }
     resizeSensor: ResizeSensor;
 
-    constructor(private mapper:Mapper) {
+    constructor(private mapper:Mapper,private windowManager: WindowManager) {
 
         let win = document.createElement("div");
         win.style.display = "none";
@@ -116,6 +113,7 @@ export class MapperWindow {
                             <ul  class='custom'>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
+                            <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="exportzone">Scarica zona corrente</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="importzone">Carica zona o zone</li>
                             </ul>
@@ -125,6 +123,7 @@ export class MapperWindow {
                             <li  class='custom' data-option-type="mapper" data-option-name="pathfind">Vai a num. locazione</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="search">Cerca locazione</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="sync">Sincronizza mappa</li>
+                            <li  class='custom' data-option-type="mapper" data-option-name="export">Esporta immagine</li>
                             </ul>
                         </li>
                     </ul>
@@ -138,7 +137,7 @@ export class MapperWindow {
                         <button title="Ingrandisci (mouse scroll up)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomin">+</button></div>
                 </div>
                 <div id="zonemessage">
-                    <select id="zonelist" required></select>
+                    <select id="zonelist"></select>
                 </div>
             </div>
             <div class="midrow"><canvas tabindex="999" id="mapcanvas"></canvas></div>
@@ -156,18 +155,23 @@ export class MapperWindow {
         
         this.$win = $(win);
 
-        <JQuery>((<any>$(".menuBar",this.$win)).jqxMenu());
+        <JQuery>((<any>$(".menuBar",this.$win)).jqxMenu({autoOpen: false}));
         this.$bottomMessage = $("#mapmessage", this.$win);
         this.$zoneList = $("#zonelist", this.$win);
+        <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
         this.$zoom = $("#zoom", this.$win);
         this.$level = $("#level", this.$win);
      
 
-        this.$zoneList.on("change", ev => {
-            var selection = this.$zoneList.find("option:selected").val()
+        $("#zonelist", this.$win).on("select", (ev:any) => {
+            var selection = ev.args.item.value
             if (selection) {
                 this.mapper.setZoneById(parseInt(selection))
             }
+        })
+
+        $("#zonelist", this.$win).on("open", (ev:any) => {
+            (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
         })
 
         this.canvas = <JQuery>((<any>$("#mapcanvas",this.$win)));
@@ -190,13 +194,14 @@ export class MapperWindow {
                 self.drawing.destroy()
                 delete self.drawing;  
             }
-            self.attachMapperHandlers(mapper);
+            self.attachHandlers(mapper, self.windowManager);
             self.detachMenu()
             self.attachMenu()
             self.drawing = new MapperDrawing(self.mapper, <HTMLCanvasElement>self.canvas[0], self.ctx);
             self.drawing.zoomChanged.handle(self.onZoomChange)
             self.drawing.levelChanged.handle(self.onLevelChange)
             self.drawing.showContext.handle(self.showContextMenu)
+            self.setMapFont()
             self.onZoomChange(self.drawing.scale)
             if ((<any>window).ipcRenderer) {
                 self.loadSite.bind(self)();
@@ -207,7 +212,7 @@ export class MapperWindow {
         });
 
         w.on('close', function (evt:any) {
-            self.detachMapperHandlers(self.mapper)
+            self.detachHandlers(self.mapper, self.windowManager)
             self.detachMenu()
             if (self.drawing) {
                 self.drawing.destroy()
@@ -241,24 +246,40 @@ export class MapperWindow {
         (<any>$(w))[0].sizeChanged = setSize;
         
         this.attachMenu();
+        this.setMapFont()
     }
+
+    getFontSize():number {
+        const w = this.windowManager.windows.get("Mapper")
+        if (!w) return NaN;
+        return w.data.fontSize
+    }
+
     onLevelChange = (lv: number) => {
         this.$level.text("Lv. "+lv)
     }
 
 
-    private attachMapperHandlers(mapper: Mapper) {
+    private attachHandlers(mapper: Mapper, windowManager:WindowManager) {
         mapper.emitMessage.handle(this.onEmitMapperMessage);
         mapper.emitSearch.handle(this.onEmitMapperSearch);
         mapper.zoneChanged.handle(this.onEmitMapperZoneChanged);
         mapper.roomChanged.handle(this.onEmitMapperRoomChanged);
+        windowManager.EvtEmitWindowsChanged.handle(this.onEmitWindowsChanged);
     }
 
-    private detachMapperHandlers(mapper: Mapper) {
+    private detachHandlers(mapper: Mapper, windowManager:WindowManager) {
         mapper.emitMessage.release(this.onEmitMapperMessage);
         mapper.emitSearch.release(this.onEmitMapperSearch);
         mapper.zoneChanged.release(this.onEmitMapperZoneChanged);
         mapper.roomChanged.release(this.onEmitMapperRoomChanged);
+        windowManager.EvtEmitWindowsChanged.release(this.onEmitWindowsChanged);
+    }
+
+    onEmitWindowsChanged = (windows: string[]) => {
+        if (this.drawing && windows.indexOf("Mapper")>-1) {
+            this.setMapFont()
+        }
     }
 
     private detachMenuOption(name:string, element:Element, checkbox:Element) {
@@ -317,6 +338,9 @@ export class MapperWindow {
                 case "levelup":
                     this.drawing.setLevel(this.drawing.level+1)
                     break;
+                case "export":
+                    this.exportImage()
+                    break;
                 case "sync":
                     const r = this.mapper.syncToRoom();
                     if (r) this.mapper.setRoomById(r.id)
@@ -334,6 +358,81 @@ export class MapperWindow {
                     break;
             }
         });
+    }
+    exportImage() {
+        const zone = this.mapper.getRoomZone(this.mapper.roomId)
+        let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+        if (!this.drawing.rooms || !this.drawing.rooms.length) {
+            Messagebox.Show("Errore","Non ci sono room nel mapper.")
+            return
+        }
+        for (let i = 0; i < this.drawing.rooms.length; i++) {
+            let room = this.drawing.rooms[i]
+            if (room.z == this.drawing.level-1) {
+                if (room.x > maxX) maxX = room.x;
+                if (room.x < minX) minX = room.x;
+                if (room.y > maxY) maxY = room.y;
+                if (room.y < minY) minY = room.y;
+            }
+            else if (room.z == this.drawing.level+1) {
+                if (room.x > maxX) maxX = room.x;
+                if (room.x < minX) minX = room.x;
+                if (room.y > maxY) maxY = room.y;
+                if (room.y < minY) minY = room.y;                
+            }
+            else if (room.z == this.drawing.level) {
+                if (room.x > maxX) maxX = room.x;
+                if (room.x < minX) minX = room.x;
+                if (room.y > maxY) maxY = room.y;
+                if (room.y < minY) minY = room.y;
+            }
+        }
+        var c = document.createElement("canvas")
+        const roomSize = 32*this.drawing.scale
+
+        const borderRooms = 2;
+        const w = (1+2*borderRooms)*roomSize+(((maxX-minX)/7.5)*this.drawing.scale)|0
+        const h = (1+2*borderRooms)*roomSize+(((maxY-minY)/7.5)*this.drawing.scale)|0
+        
+
+        const roomsWide = w / roomSize
+        const roomsTall = h / roomSize
+        
+
+        const mx = (minX/7.5) - borderRooms*32 + w/2/this.drawing.scale
+        const my = (minY/7.5) - borderRooms*32 + h/2/this.drawing.scale
+
+        if (h < 10 || h > 10000 || w < 10 || h > 10000) {
+            Messagebox.Show("Errore", "Grandezza immagine non valida per export")
+            return;
+        }
+
+        const vscroll = mx //(mx/16*this.drawing.scale)|0
+        const hscroll = my //(my/16*this.drawing.scale)|0
+
+        c.width = w
+        c.height = h
+        this.drawing.hscroll = hscroll
+        this.drawing.vscroll = vscroll
+
+        const ctx = c.getContext("2d")
+        this.drawing.draw(c, ctx, true, () => {
+            var imageURI = c.toDataURL("image/png");
+            let link = document.createElement("a");
+            link.setAttribute("href", imageURI);
+
+            link.setAttribute("download", `${zone?zone.name:"[Zona sconosciuta]"}_Mappa_liv${this.drawing.level}.png`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(imageURI);
+            c.toBlob((blob) => {
+                if ((<any>navigator.clipboard).write) (<any>navigator.clipboard).write([
+                    new ClipboardItem({ "image/png": blob })
+                ]);
+              }, "image/png");
+        })
     }
     editRoom(room: Room) {
         Messagebox.ShowInput("Edit Room",
@@ -472,23 +571,44 @@ export class MapperWindow {
         this.$bottomMessage.text(mess);
     }
     public zoneMessage(mess:string) {
-        if (mess == null || this.$zoneList.children().length < 2) {
-            this.$zoneList.empty()
+        const items = (<any>this.$zoneList).jqxDropDownList('getItems');
+        if (mess == null || !items || !items.length) {
+            (<any>this.$zoneList).jqxDropDownList('clear');
 
-            if (mess) this.$zoneList.append($('<option disabled selected hidden>', {
+            /*if (mess) this.$zoneList.append($('<option disabled selected hidden>', {
                 value: null,
                 text: mess
-            }));
+            }));*/
 
-            if (this.zones && this.zones.length) $.each(this.zones, (i, item) => {
-                this.$zoneList.append($('<option>', { 
-                    value: item.id,
-                    text : "[" + item.id + "] " + item.name 
-                }));
+            const zones = this.zones && this.zones.length ? [...this.zones].sort(this.zoneSort) : null
+            if (zones && zones.length) $.each(zones, (i, item) => {
+                (<any>this.$zoneList).jqxDropDownList("addItem", { 
+                    value: item.id.toString(),
+                    label : item.name + " (#" + item.id.toString() + ")"
+                });
             });
+            //(<any>this.$zoneList).jqxDropDownList('loadFromSelect', 'zonelist_jqxDropDownList');
+            
+            (<any>this.$zoneList).jqxDropDownList('selectIndex', 0 ); 
         } else {
-            this.$zoneList.find("option").first().text(mess||"?")
+            /*this.$zoneList.find("option").first().text(mess||"?")*/
+            /*const items = (<any>this.$zoneList).jqxDropDownList('getItems');
+            if (items) {
+                const sel = !this.zoneId ? null : items.filter((i:any) => i.value == this.zoneId.toString());
+                if (sel && sel.length && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=sel[0].index) {
+                    (<any>this.$zoneList).jqxDropDownList('selectIndex', sel[0].index );
+                }
+            }*/
+            //(<any>this.$zoneList).jqxDropDownList('val', this.zoneId);
         }
+    }
+
+    zoneSort(z1:Zone, z2:Zone):number {
+        let a = z1.name
+        let b = z2.name
+        a = a.replace(/^il |lo |la |le |l\' |i /i, "").trim()
+        b = b.replace(/^il |lo |la |le |l\' |i /i, "").trim()
+        return a.localeCompare(b);
     }
 
     public show() {

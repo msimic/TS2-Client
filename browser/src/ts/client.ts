@@ -371,9 +371,15 @@ export class Client {
                     + raw(data.message)
                     + "<br>"
                     + "</span>"
-                    //this.outputWin.handleScriptPrint(data.owner, data.message);
-                    this.outputManager.handlePreformatted(msg);
-                    this.outputWin.scrollBottom(false);
+                    this.outputWin.handleScriptSendCommand(data.owner, data.message);
+                    const f = () => {
+                        this.outputManager.handlePreformatted(msg);
+                        this.outputWin.scrollBottom(false);
+                    }
+                    setTimeout(() => {
+                        f()
+                    }, 0);
+                    
                 } else {
                     this.outputWin.append(data.raw, true)
                 }
@@ -381,11 +387,13 @@ export class Client {
         });
 
         EvtScriptEmitCls.handle((data:{owner:string, window?:string}) => {
-            if (data.window) {
-                this.outputManager.clearWindow(data.window);
-            } else {
-                this.outputWin.clearWindow(data.owner);
-            }
+            setTimeout(() => {
+                if (data.window) {
+                    this.outputManager.clearWindow(data.window);
+                } else {
+                    this.outputWin.clearWindow(data.owner);
+                }    
+            }, 0);
         });
 
         EvtScriptEmitError.handle((data: {owner:string, err: any, stack?:string}) => {

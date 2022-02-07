@@ -1,7 +1,7 @@
 import { EventHook } from "./event";
 import { TrigAlItem } from "./trigAlEditBase";
 import { ClassManager } from "./classManager";
-import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, ScripEventTypes } from "./jsScript";
+import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import { ProfileManager } from "./profileManager";
 import { Mudslinger } from "./client";
 import { ConfigIf, stripHtml } from "./util";
@@ -25,7 +25,7 @@ export class TriggerManager {
     public allTriggers: Array<TrigAlItem> = null;
     public changed = new EventHook()
 
-    constructor(private jsScript: ScriptIf, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
+    constructor(private jsScript: JsScript, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
         /* backward compatibility */
         let savedTriggers = localStorage.getItem("triggers");
         if (savedTriggers && baseConfig) {
@@ -174,6 +174,8 @@ export class TriggerManager {
 
     public runTrigger(trig:TrigAlItem, line:string) {
         let fired:boolean = false;
+        const jsScript = this.jsScript
+
         if (trig.regex) {
             if (line.endsWith("\n") && trig.pattern.endsWith("$")) {
                 line = line.substring(0, line.length-1);
@@ -189,12 +191,18 @@ export class TriggerManager {
             this.logScriptTrigger(trig.pattern);
 
             if (trig.is_script) {
-                let value = trig.value;
-                value = value.replace(/\$(\d+)/g, function(m, d) {
-                    return match[parseInt(d)] || "";
-                });
-
-                if (!trig.script) trig.script = this.jsScript.makeScript(trig.id || trig.pattern, value, "match, line");
+                if (!trig.script) {
+                    let value = trig.value;
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                        if (d==undefined) return m;
+                        return d == 0 ? "`"+line+"`" : "(match["+parseInt(d)+"] || '')";
+                    });
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                        if (d==undefined) return m;
+                        return "variable('"+d+"')";
+                    });
+                    trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
+                }
                 if (trig.script) {
                     trig.script(match, line); 
                     fired = true;
@@ -204,8 +212,14 @@ export class TriggerManager {
             } else {
                 let value = trig.value;
 
-                value = value.replace(/\$(\d+)/g, function(m, d) {
-                    return match[parseInt(d)] || "";
+                value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                    if (d==undefined) return m;
+                    return d == 0 ? "`"+line+"`" : (match[parseInt(d)] || '');
+                });
+
+                value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                    if (d==undefined) return m;
+                    return jsScript.getVariableValue(d) || "";
                 });
 
                 let cmds = value.replace("\r", "").split("\n");
@@ -214,7 +228,7 @@ export class TriggerManager {
             }
         } else {
             let pattern = trig.pattern;
-            pattern = pattern.replace(/\$(\d+)/g, function(m, d) {
+            pattern = pattern.replace(/\$|\%(\d+)/g, function(m, d) {
                 return "(.+)";
             });
             let match = line.match(pattern);
@@ -226,15 +240,38 @@ export class TriggerManager {
                 this.logScriptTrigger(pattern);
 
                 if (trig.is_script) {
-                    if (!trig.script) trig.script = this.jsScript.makeScript(trig.id || trig.pattern, trig.value, "line");
+                    if (!trig.script) {
+                        let value = trig.value
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                            if (d==undefined) return m;
+                            return d == 0 ? "`"+line+"`" : "(match["+parseInt(d)+"] || '')";
+                        });
+                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                            if (d==undefined) return m;
+                            return "variable('"+d+"')";
+                        });
+                         trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
+                    }
                     if (trig.script) {
-                        trig.script(line); 
+                        trig.script(match, line); 
                         fired = true;
                     } else {
                         throw `Trigger '${trig.pattern}' e' una script malformata`;
                     }
                 } else {
-                    let cmds = trig.value.replace("\r", "").split("\n");
+                    let value = trig.value;
+
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
+                        if (d==undefined) return m;
+                        return d == 0 ? "`"+line+"`"  : (match[parseInt(d)] || '');
+                    });
+
+                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
+                        if (d==undefined) return m;
+                        return jsScript.getVariableValue(d) || "";
+                    });
+
+                    let cmds = value.replace("\r", "").split("\n");
                     this.EvtEmitTriggerCmds.fire({orig: trig.id || trig.pattern, cmds: cmds});
                     fired = true;
                 }
