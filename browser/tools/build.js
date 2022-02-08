@@ -244,11 +244,17 @@ function copyToPublic() {
     });
 }
 
+if (!fs.existsSync("./dist")) {
+    fs.mkdirSync("dist")
+}
+
 buildAndMinify(
 (async () => {
     console.log(`Merge and Minify completed`);
     try {
+
         await del("dist/public");
+        
         console.log(`dist/public is deleted!`);
         copyToPublic();
         console.log(`Build done in: dist/public!`);
