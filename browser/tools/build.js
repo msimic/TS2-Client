@@ -9,6 +9,7 @@ const terser = require('@node-minify/terser');
 const htmlMinifier = require('@node-minify/html-minifier');
 
 function minifyHtml(next) {
+    console.log("Minifying HTML")
     minify({
         compressor: htmlMinifier,
         input: './buildfiles/index-prod.html',
@@ -28,6 +29,7 @@ function minifyHtml(next) {
 }
 
 function minifyTern(next) {
+    console.log("Minifying TERN")
     minify({
         compressor: terser,
         input: ['./dist/tern_module.js'],
@@ -37,6 +39,7 @@ function minifyTern(next) {
 }
 
 function minifyCodemirror(next) {
+    console.log("Minifying Codemirror")
     minify({
         compressor: terser,
         input: ['./dist/codemirror_module.js'],
@@ -46,6 +49,7 @@ function minifyCodemirror(next) {
 }
 
 function minifyJqWidgets(next) {
+    console.log("Minifying jqWidgets")
     minify({
         compressor: terser,
         input: ['./dist/jqwidgets_module.js'],
@@ -55,6 +59,7 @@ function minifyJqWidgets(next) {
 }
 
 function minifyCss(next) {
+    console.log("Minifying CSS")
     minify({
         compressor: cleanCSS,
         input: [
@@ -70,6 +75,7 @@ function minifyCss(next) {
 }
 
 function mergeTern(next) {
+    console.log("Merging Tern")
     minify({
     compressor: noCompress,
     input: ['./tern/acorn.js','./tern/acorn-loose.js','./tern/walk.js','./tern/signal.js','./tern/tern.js','./tern/def.js','./tern/comment.js','./tern/infer.js','./tern/doc_comment.js'],
@@ -79,6 +85,7 @@ function mergeTern(next) {
 }
 
 function mergeJqwidgets(next) {
+    console.log("Merging jqWidgets")
     minify({
     compressor: noCompress,
     input: [
@@ -97,6 +104,7 @@ function mergeJqwidgets(next) {
 }
 
 function mergeCodemirror(next) {
+    console.log("Merging Codemirror")
     minify({
     compressor: noCompress,
     input: [
@@ -112,14 +120,41 @@ function mergeCodemirror(next) {
     });
 }
 
-mergeTern(
-    () => mergeCodemirror(
-        () => mergeJqwidgets(
-            () => minifyCss(
-                () => minifyTern(
-                    () => minifyCodemirror(
-                        () => minifyJqWidgets(
-                            )))))));
+function mergeCoreJs(next) {
+    console.log("Merging CoreJS")
+    minify({
+    compressor: noCompress,
+    input: [
+        './static/public/modules/corejs.min.js'
+    ],
+    output: './dist/corejs.min.js',
+    callback: function(err, min) { if (!err && next) next(); }
+    });
+}
+
+function mergeJQuery(next) {
+    console.log("Merging JQuery")
+    minify({
+    compressor: noCompress,
+    input: [
+        './static/public/modules/jquery.min.js'
+    ],
+    output: './dist/jquery.min.js',
+    callback: function(err, min) { if (!err && next) next(); }
+    });
+}
+
+function buildAndMinify(callback) {
+    mergeJQuery(() => 
+    mergeCoreJs(() =>
+    mergeTern(() =>
+    mergeCodemirror(() =>
+    mergeJqwidgets(() =>
+    minifyCss(() =>
+    minifyTern(() =>
+    minifyCodemirror(() =>
+    minifyJqWidgets(callback)))))))));
+}
 
 function copyToPublic() {
     fs.mkdirSync("dist/public/modules/images", { recursive: true });
@@ -209,14 +244,15 @@ function copyToPublic() {
     });
 }
 
-
+buildAndMinify(
 (async () => {
+    console.log(`Merge and Minify completed`);
     try {
         await del("dist/public");
         console.log(`dist/public is deleted!`);
         copyToPublic();
         console.log(`Build done in: dist/public!`);
     } catch (err) {
-        console.error(`Error while deleting dist/public.`);
+        console.error(`Error during build: ` + err);
     }
-})();
+}));

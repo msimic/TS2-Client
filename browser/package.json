@@ -22,6 +22,7 @@
   "scripts": {
     "postinstall": "node tools/postinstall.js && electron-builder install-app-deps",
     "compile": "tsc -p tsconfig.json",
+    "webpack": "webpack",
     "build": "node tools/genAppInfo.js \"git rev-parse HEAD\" && node tools/generateHtmlHashes.js && tsc --sourceMap false -p tsconfig.json && webpack && node tools/build.js",
     "build-dev": "node tools/genAppInfo.js \"git rev-parse HEAD\" && tsc -p tsconfig.json && webpack --mode=development --config webpack.config.dev.js",
     "start": "tsc -p tsconfig.json && webpack-dev-server --config ./webpack.config.dev.js --inline --hot",
