@@ -1,5 +1,6 @@
 import { Messagebox } from "./messagebox";
 import * as Util from "./util";
+import { circleNavigate } from "./util";
 
 declare let CodeMirror: any;
 
@@ -73,7 +74,6 @@ export abstract class TrigAlEditBase {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <label class="filter-label">Filtra:</label>
                         <input class="winEdit-filter" type="text" placeholder="<filtro>"/>
                     </div>
                     <div class="list">
@@ -153,6 +153,10 @@ export abstract class TrigAlEditBase {
 
         (<any>this.$win).jqxWindow({width: Math.min(600, win_w), height: Math.min(400, win_h), showCollapseButton: true});
 
+        this.$win.on('open', (event) => {
+            this.$win.focusable().focus()
+        })
+
         this.$win.on('close', (event) => {
             if (this.isDirty()) {
                 Messagebox.ShowWithButtons("Salvataggio", `Sono stati rilevati cambiamenti.
@@ -191,15 +195,33 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$codeMirrorWrapper.hide();
 
         this.$listBox.click(this.itemClick.bind(this));
+        this.$listBox.keyup(this.itemSelect.bind(this));
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
         this.$scriptCheckbox.change(this.handleScriptCheckboxChange.bind(this));
+        circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
     }
 
+    itemSelect(ev: KeyboardEvent) {
+        if (ev.keyCode == 13 || ev.keyCode == 32) {
+            const el = this.$listBox.find("LI:focus")
+            this.selectItem(el)
+            this.handleListBoxChange();
+        }
+    }
+
+    private selectItem(item: JQuery) {
+        item.addClass('selected');
+        item.siblings().removeClass('selected');
+        const index = item.parent().children().index(item);
+        this.$listBox.data("selectedIndex", index);
+    }
+
     protected isDirty():boolean {
+
         let ind = this.$listBox.data("selectedIndex");
         let item = this.getItem(ind);
 
@@ -232,10 +254,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     private itemClick(e:MouseEvent) {
         var item = $(e.target);
         if (item.is("li")) {
-            item.addClass('selected');
-            item.siblings().removeClass('selected');
-            const index = item.parent().children().index(item);
-            this.$listBox.data("selectedIndex", index);
+            this.selectItem(item)
         } else {
             item.children().removeClass('selected');
             this.$listBox.data("selectedIndex", -1);
@@ -279,7 +298,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         let lst = this.getList();
         let html = "";
         for (let i = 0; i < lst.length; i++) {
-            html += "<li>" + Util.rawToHtml(lst[i]) + "</option>";
+            html += "<li tabindex='0'>" + Util.rawToHtml(lst[i]) + "</li>";
         }
         this.$listBox.html(html);
         this.ApplyFilter();
@@ -377,6 +396,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$enabledCheckbox.prop("checked", item.enabled ? true : false);
         this.$regexCheckbox.prop("checked", item.regex ? true : false);
         this.$scriptCheckbox.prop("checked", item.is_script ? true : false);
+        this.$pattern.focus()
     }
 
     private handleScriptCheckboxChange() {

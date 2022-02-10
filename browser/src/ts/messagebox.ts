@@ -39,13 +39,13 @@ export class Messagebox {
         let res = await messagebox(title||"Domanda", text, null, "OK", "Annulla", true, [defaultText], null, null, false, multiline);
         return res;
     }
-    public static async ShowMultiInput(title: string, labels: string[], defaultValues:string[]): Promise<MessageboxResult> {
+    public static async ShowMultiInput(title: string, labels: string[], defaultValues:any[]): Promise<MessageboxResult> {
         let res = await messagebox(title||"Domanda", labels.join('\n'), null, "OK", "Annulla", true, defaultValues, null, null, true);
         return res;
     }
 }
 
-export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:string[], width:number, height:number, multiinput:boolean, multiline:boolean=false): Promise<MessageboxResult> {
+export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, multiline:boolean=false): Promise<MessageboxResult> {
 
     let resolveFunc:Function = null;
     let rejectFunc:Function = null;
@@ -74,20 +74,35 @@ export async function messagebox(title: string, text: string, callback:(val:stri
 
     for (let index = 0; index < inputLabels.length; index++) {
         const label = inputLabels[index];
-
-        let inputTemplate = `<input type="text" style="box-sizing:border-box;width:100%;" id="messageboxinput${index}">`
+        let type = "text"
+        if (inputDefault && typeof inputDefault[index] == "boolean") {
+            type = "checkbox"
+        }
+        let inputTemplate = `<input type="${type}" style="box-sizing:border-box;width:${numInputs>1?"auto":"100%"};" id="messageboxinput${index}">`
+        let rowOrCell = "row"
+        let tableorRow = "table;width:100%"
+        let innercell = "display: table-cell;"
+        let align = "left"
+        if (numInputs > 1) {
+            align = "right"
+            rowOrCell = "cell"
+            innercell = ""
+            tableorRow = "table-row"
+        }
         if (multiline) {
             inputTemplate = `<textarea style="min-height:200px;height:100%;box-sizing:border-box;width:100%;" id="messageboxinput${index}"></textarea>`
         }
         const template =`
-            <div style="display: table-row;height:auto;">
-                <div class="messageboxtext" style="display: table-cell;vertical-align: middle;text-align:center;white-space: nowrap;" id="message${index}"></div>
+        <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
+            <div style="display: table-${rowOrCell};height:auto;">
+                <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};white-space: nowrap;padding:5px" id="message${index}"></div>
             </div>
-            <div style="display: table-row;height:${multiline?100:1}%;">
-                <div style="display: table-cell;">
+            <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
+                ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
                     ${inputTemplate}
-                </div>
+                ${rowOrCell=="row"?"</div>":""}
             </div>
+        </div>
             `;
         innserMessageboxBody += template
     }
@@ -98,9 +113,11 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     <!--content-->
     <div>
         <div style="display: table;height: 100%;width: 100%;box-sizing: border-box;position:relative;">
+            <div style="display: table;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
             ${innserMessageboxBody}
-            <div style="display: table-row;height:1%">
-                <div class="messageboxbuttons" style="display: table-cell;">
+            </div>
+            <div style="display: table-row;height:auto">
+                <div class="messageboxbuttons" style="display: table-cell">
                     <button id="accept" class="acceptbutton greenbutton"></button>
                     <button id="cancel" class="cancelbutton redbutton"></button>
                 </div>
@@ -119,7 +136,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     if (!input) {
         messageInput.map(v => v.hide());
     } else if (inputDefault) {
-        messageInput.map((v,i) => v.val(inputDefault[i]));
+        messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked", inputDefault[i]) : v.val(inputDefault[i]));
     }
 
     if (!multiline) messageInput.map(v => v.keyup(k => {
@@ -146,7 +163,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         (<any>$win).jqxWindow("close");
     });
     $(titleText).text(title);
-    messageText.map((v,i) => v.html("<p style='margin:0;padding:0;'>" + inputLabels[i].replace(/\n/g, "<br/>") +"</p>"));
+    messageText.map((v,i) => v.html("<span style='margin:0;padding:0;'>" + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
 
     (<any>$win).jqxWindow("open");
     (<any>$win).jqxWindow('bringToFront');
@@ -156,7 +173,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         if (input) {
             ret.result = messageInput[0].val();
             if (multiinput) {
-                ret.results = messageInput.map(v => v.val())
+                ret.results = messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked") : v.val())
             }
         }
         if (resolveFunc) resolveFunc(ret);
@@ -179,12 +196,15 @@ export async function messagebox(title: string, text: string, callback:(val:stri
               70;
         */
         // apply new height
-        (<any>$win).jqxWindow({height: offset.top + 70});
+        (<any>$win).jqxWindow({height: offset.top + 50}); 
     }
 
     if (!width) {
         let newWidth = Math.max(...messageText.map(v => v.outerWidth()+10));
-        (<any>$win).jqxWindow({width: newWidth});
+        if (numInputs>1) {
+            newWidth += Math.max(...messageInput.map(v => v.outerWidth()+10));
+        }
+        (<any>$win).jqxWindow({width: newWidth}); 
     }
 
     setTimeout(()=>{

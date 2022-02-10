@@ -2,7 +2,7 @@ import { Profile, ProfileManager } from "./profileManager";
 import { Button, ButtonOK, Messagebox, messagebox } from "./messagebox";
 import { ProfileWindow } from "./profileWindow";
 import { Client } from "./client";
-import { Acknowledge } from "./util";
+import { Acknowledge, circleNavigate } from "./util";
 import { Mudslinger } from "./client";
 import { EventHook } from "./event";
 import { LayoutManager } from "./layoutManager";
@@ -111,6 +111,8 @@ export class ProfilesWindow {
         $(this.connectButton).click(() => setTimeout(()=>this.handleConnectButtonClick(),1));
         $(this.editButton).click(this.handleEditButtonClick.bind(this));
         $(this.deleteButton).click(this.handleDeleteButtonClick.bind(this));
+
+        circleNavigate(this.profileList, this.offlineButton, null, this.$win);
 
         (<any>this.$win).on("close", () => {
             this.EvtClosedClicked.fire(this.manualClose);
@@ -221,7 +223,7 @@ export class ProfilesWindow {
         }
     }
 
-    private async ImportBaseTriggers() {
+    public async ImportBaseTriggers() {
         let prefix = ""
         if ((<any>window).ipcRenderer) {
             prefix = "https://temporasanguinis.it/client/"

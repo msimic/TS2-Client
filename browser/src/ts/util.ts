@@ -280,6 +280,15 @@ export function addIntellisense(editor:any) {
             "F2": function(cm:any) { server.rename(cm); },
             "Ctrl-.": function(cm:any) { server.selectName(cm); }
         })
+        editor.on("keydown", function(cm:any, event:any) {
+            if (event.code == "Escape") {
+                $(cm.getTextArea()).closest("div.jqx-window-content").find(":button:visible").last().focus()
+                event.preventDefault()
+                event.stopPropagation()
+                return false 
+            }
+            return true
+        });
         editor.on("cursorActivity", function(cm:any) { server.updateArgHints(cm); });
         var ExcludedIntelliSenseTriggerKeys:{[k: string]: string} =
         {
@@ -352,5 +361,30 @@ export function addIntellisense(editor:any) {
                 editor.showHint({hint: server.getHint, completeSingle:false});
             }
         });
+    });
+}
+
+export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement, fallback:JQuery|HTMLElement, win:JQuery) {
+    (<any>win).jqxWindow("close");
+    $(last).on("keydown", (ev) => {
+        if (ev.keyCode == 9 && !ev.shiftKey) {
+            ev.preventDefault()
+            ev.stopPropagation()
+            if ((<any>win).jqxWindow("isOpen")) $(first).focus()
+        }
+    });
+    if (fallback) $(fallback).on("keydown", (ev) => {
+        if (ev.keyCode == 9 && !ev.shiftKey && $(last).is(":disabled")) {
+            ev.preventDefault()
+            ev.stopPropagation()
+            if ((<any>win).jqxWindow("isOpen")) $(first).focus()
+        }
+    });
+    $(first).on("keydown", (ev) => {
+        if (ev.keyCode == 9 && ev.shiftKey) {
+            ev.preventDefault()
+            ev.stopPropagation()
+            if ((<any>win).jqxWindow("isOpen")) $(last).focus()
+        }
     });
 }

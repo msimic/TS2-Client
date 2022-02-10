@@ -154,7 +154,47 @@ export class MenuBar {
         private jsScript: JsScript
         ) 
     {
-        <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: false}));
+        const mnu:any = <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: false, theme: "menuBar", clickToOpen: true, keyboardNavigation: true}));
+
+        $("#menuBar").on('itemclick', (event) =>
+        {
+            if (event.originalEvent instanceof KeyboardEvent) {
+                $((<any>event).args).click()
+                return;
+            }
+            if ($((<any>event).args).find(".jqx-icon-arrow-right").length) return;
+            mnu.jqxMenu('closeItem',"connessione")
+            mnu.jqxMenu('closeItem',"impostazioni")
+            mnu.jqxMenu('closeItem',"scripting")
+            mnu.jqxMenu('closeItem',"altro")
+        });
+
+        $(document).on("keydown", (ev)=>{
+            if (ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
+                ev.preventDefault()
+                ev.stopPropagation()
+            }
+        });
+        window.addEventListener("blur", (ev)=>{
+            setTimeout(()=>{if (document.activeElement == document.body) $("#cmdInput").focus()},10)
+        }, true);
+        window.addEventListener("focus", (ev)=>{
+            setTimeout(()=>{if (document.activeElement == document.body) $("#cmdInput").focus()},10)
+        }, true);
+
+        $(document).on("keyup", (ev)=>{
+            if (!ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
+                if (document.activeElement != mnu[0]) {
+                    mnu.jqxMenu('focus');
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                } else {
+                    $("#cmdInput").focus()
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                }
+            }
+        })
 
         var userAgent = navigator.userAgent.toLowerCase();
 
@@ -260,6 +300,10 @@ export class MenuBar {
         this.clickFuncs["import-layout"] = () => {
             this.layout.importFromFile();
         };
+
+        this.clickFuncs["update-triggers"] = () => {
+            this.profileWin.ImportBaseTriggers();
+        }
 
         this.clickFuncs["mapper"] = () => {
             //let script = this.jsScript.makeScript("Mapper", "createWindow('Mapper')", "");
@@ -460,12 +504,12 @@ export class MenuBar {
     }
 
     handleTelnetConnect() {
-        $("#menuBar-conn-disconn").text("Disconnetti");
+        $("#menuBar-conn-disconn").html("<img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Disconnetti");
         $("#menuBar-conn-disconn")[0].setAttribute("data-checked", "true");
     }
 
     handleTelnetDisconnect() {
-        $("#menuBar-conn-disconn").text("Connetti");
+        $("#menuBar-conn-disconn").html("<img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti");
         $("#menuBar-conn-disconn")[0].setAttribute("data-checked", "false");
     }
 }

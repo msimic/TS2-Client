@@ -37,6 +37,12 @@ import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
 import {  } from './cacheServiceWorker'
 
+declare global {
+    interface JQuery {
+        focusable(): JQuery;
+    }
+}
+
 interface ConnectionTarget {
     host: string,
     port: number
@@ -141,7 +147,7 @@ export class Client {
 
         this.commandInput = new CommandInput(this.aliasManager, this.profileManager.activeConfig);
         this.commandInput.EvtEmitCommandsAboutToArrive.handle(v=>{
-            this.mapper.clearManualSteps()
+            //this.mapper.clearManualSteps()
         })
         this.commandInput.EvtEmitPreparseCommands.handle((d)=>{
             d.callback(this.mapper.parseCommandsForDirection(d.commands))
@@ -299,9 +305,10 @@ export class Client {
                 + "</span>"
                 const f = () => {
                     this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
+                    if (!data.fromScript) this.outputWin.scrollLock = false
                     this.outputWin.scrollBottom(!data.fromScript);
                 }
-                if (data.fromScript) {
+                if (true/*data.fromScript*/) {
                     setTimeout(() => {
                         f()
                     }, 0);
@@ -676,6 +683,37 @@ export namespace Mudslinger {
 
     export async function init() {
         
+        jQuery.fn.extend({
+            focusable: function() {
+                const inputs = this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()
+                if (inputs.length) return  {
+                    focus: () => {
+                        setTimeout(()=>{
+                            this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()[0].focus()
+                        }, 150)
+                    }
+                };
+                const codemirror = this.find('.CodeMirror').first()
+                if (codemirror.length && codemirror[0].CodeMirror) {
+                    return {
+                        focus: () => {
+                            setTimeout(()=>{
+                                this.find('.CodeMirror').first()[0].CodeMirror.focus()
+                                this.find('.CodeMirror').first()[0].CodeMirror.setCursor({line: 1, ch: 0})
+                            }, 150)
+                        }
+                    }
+                }
+                return  {
+                    focus: () => {
+                        setTimeout(()=>{
+                            this.find(':button:visible, a:visible, input:visible, select:visible, textarea:visible, [tabindex]:not([tabindex="-1"]):visible').first().focus()
+                        }, 150)
+                    }
+                };
+            }
+        })
+
         let componentsFetched = async (components:component[]) => {
             let hashStr = "";
             for (const iterator of components) {

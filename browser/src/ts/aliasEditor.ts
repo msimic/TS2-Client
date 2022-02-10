@@ -48,6 +48,8 @@ export class AliasEditor extends TrigAlEditBase {
     }
 
     protected getItem(ind: number) {
+        if (!this.aliasManager) return null;
+        
         let aliases = this.aliasManager.aliases;
         if (ind < 0 || ind >= aliases.length) {
             return null;

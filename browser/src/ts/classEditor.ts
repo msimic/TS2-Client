@@ -2,6 +2,7 @@ import * as Util from "./util";
 import { JsScript, Variable } from "./jsScript";
 import { Class, ClassManager } from "./classManager";
 import { Messagebox } from "./messagebox";
+import { circleNavigate } from "./util";
 declare let CodeMirror: any;
 
 export class ClassEditor {
@@ -72,7 +73,6 @@ export class ClassEditor {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <label class="filter-label">Filtra:</label>
                         <input class="winClass-filter" type="text" placeholder="<filtro>"/>
                     </div>
                     <div class="list">
@@ -127,13 +127,34 @@ export class ClassEditor {
             orientation: "vertical",
             panels: [{size: "50%"}, {size: "50%"}]
         });
+        
+        circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
         this.$listBox.click(this.itemClick.bind(this));
+        this.$listBox.keyup(this.itemSelect.bind(this));
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
 
+        this.$win.on('open', (event) => {
+            this.$win.focusable().focus()
+        })
+    }
+
+    itemSelect(ev: KeyboardEvent) {
+        if (ev.keyCode == 13 || ev.keyCode == 32) {
+            const el = this.$listBox.find("LI:focus")
+            this.selectItem(el)
+            this.handleListBoxChange();
+        }
+    }
+
+    private selectItem(item: JQuery) {
+        item.addClass('selected');
+        item.siblings().removeClass('selected');
+        const index = item.parent().children().index(item);
+        this.$listBox.data("selectedIndex", index);
     }
 
     private ApplyFilter() {
@@ -176,7 +197,7 @@ export class ClassEditor {
         this.values = [...this.classManager.classes.values()];
         let html = "";
         for (let i = 0; i < this.list.length; i++) {
-            html += "<li>" + Util.rawToHtml(this.list[i]) + "</option>";
+            html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";
         }
         this.$listBox.html(html);
         this.ApplyFilter();

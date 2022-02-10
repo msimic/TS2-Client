@@ -44,6 +44,8 @@ export class TriggerEditor extends TrigAlEditBase {
     }
 
     protected getItem(ind: number) {
+        if (!this.triggerManager) return null;
+        
         let triggers = this.triggerManager.triggers;
         if (ind < 0 || ind >= triggers.length) {
             return null;

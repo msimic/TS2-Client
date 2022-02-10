@@ -542,7 +542,7 @@ export class LayoutManager {
             style+= ctrl.css + ";";
         }
 
-        const btn = `<button style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
+        const btn = `<button tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
         const b = $(btn);
         if (ctrl.commands) {
             const index = this.layout.items.indexOf(ctrl);
@@ -639,7 +639,7 @@ export class LayoutManager {
             style+= ctrl.css +";";
         }
 
-        const btn = `<div style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;${containerStyle}">${this.createContent(ctrl,true)}</div></div>`;
+        const btn = `<div tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;${containerStyle}">${this.createContent(ctrl,true)}</div></div>`;
         const b = $(btn);
         if (ctrl.commands) {
             const index = this.layout.items.indexOf(ctrl);
@@ -738,7 +738,7 @@ export class LayoutManager {
                         return isTrue(val) ? params[1] : params[2];
                     }
                 } else if (params.length==2) {
-                    return (val||"-").toString().substr(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
+                    return (val==undefined?"-":val).toString().substr(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
                 } else {
                     return (compare ? (compareOP(val,compare)) : val);
                 }

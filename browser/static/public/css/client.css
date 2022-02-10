@@ -365,15 +365,22 @@ body {
     font-size: 10px !important;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* Hide scrollbar for Chrome, Safari and Opera*/ 
 #row-center::-webkit-scrollbar {
   display: none;
 }
-
-/* Hide scrollbar for IE, Edge and Firefox */
+#row-center:hover::-webkit-scrollbar {
+    display: unset;
+  }
+  
+/* Hide scrollbar for IE, Edge and Firefox  */
 #row-center {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+#row-center:hover {
+    -ms-overflow-style: auto; 
+  scrollbar-width:unset; 
 }
 
 .smallest-text {
@@ -506,6 +513,15 @@ body {
 
 .cancelbutton {
     min-width: 100px;
+}
+
+.jqx-window-modal {
+    background-color: rgb(0,0,0);
+    opacity: 0.5 !important;
+}
+
+.winEdit-filter, .winVar-filter, .winClass-filter, .winEvents-filter {
+    flex: 1;
 }
 
 .winProfiles-modifica {
@@ -660,8 +676,9 @@ select[invalid] {
 input,textarea,button {
     outline:none;
 }
-input:focus,textarea:focus,button:focus {
-    outline:1px dotted gray;
+input:focus,button:focus {
+    outline: 1px solid gray;
+    filter: drop-shadow(0 0 2px black);
 }
 #menuBar {
 	background: black !important;
@@ -750,7 +767,7 @@ input:focus,textarea:focus,button:focus {
 
 .jqx-window {
     /*border: 1px solid #a8a8a869 !important;*/
-    box-shadow: 0px 0px 1px 1px rgb(75, 133, 221);
+    box-shadow: 0px 0px 5px 1px black;
 }
 
 .jqx-window-header {
@@ -967,6 +984,27 @@ input:focus,textarea:focus,button:focus {
 
 .jqx-menu-popup, .jqx-menu-dropdown {
     width: 140px !important;
+    box-sizing: border-box !important;
+    filter: drop-shadow(0 0 4px black);
+    border: 1px solid gray;
+}
+
+.jqx-listbox {
+    box-sizing: border-box !important;
+    filter: drop-shadow(0 0 4px black);
+    border: 1px solid gray;
+}
+
+.jqx-menu-popup-menuBar {
+    width: 170px !important;
+}
+.jqx-menu-dropdown-menuBar {
+    width: 170px !important;
+}
+
+input[type=checkbox] {
+    margin-right: 10px;
+    vertical-align: middle;
 }
 
 .left-pane {

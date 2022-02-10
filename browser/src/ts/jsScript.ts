@@ -363,7 +363,7 @@ export class JsScript {
         }
         this.variables = new Map<string, Variable>(this.config.getDef("variables", []));
         for (const v of this.variables) {
-            if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
+            if (v[0] && v[1].Value != undefined && v[1].Value != null) this.scriptThis[v[0]] = v[1].Value;
         }
     }
 

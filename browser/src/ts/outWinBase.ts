@@ -160,7 +160,7 @@ export class OutWinBase {
         return this.$rootElem;
     }
 
-    private scrollLock = false; // true when we should not scroll to bottom
+    public scrollLock = false; // true when we should not scroll to bottom
     private handleScroll() {
         let scrollHeight = this.getOuterElement().prop("scrollHeight");
         let scrollTop = this.getOuterElement().scrollTop();

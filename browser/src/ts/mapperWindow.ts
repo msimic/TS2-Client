@@ -1,5 +1,5 @@
 import { MapDatabase, Mapper, MapVersion, Room, Zone } from "./mapper";
-import { Messagebox, MessageboxResult, messagebox } from "./messagebox";
+import { Messagebox, MessageboxResult, messagebox, Button } from "./messagebox";
 import { isNumeric } from "jquery";
 import { WindowManager } from "./windowManager";
 import { EvtScriptEmitPrint } from "./jsScript";
@@ -107,9 +107,9 @@ export class MapperWindow {
         <!--content-->
         <div id="win-Mapper" class="expand">
             <div class="toprow">
-                <div class="menuBar">
+                <div id="mapperMenubar" class="menuBar">
                     <ul class='custom'>
-                        <li  class='custom' data-option-name="load">Dati
+                        <li id="dati" class='custom' data-option-name="load">Dati
                             <ul  class='custom'>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
@@ -118,7 +118,7 @@ export class MapperWindow {
                             <li  class='custom' data-option-type="mapper" data-option-name="importzone">Carica zona o zone</li>
                             </ul>
                         </li>
-                        <li  class='custom'>Azioni
+                        <li id="azioni" class='custom'>Azioni
                             <ul  class='custom'>
                             <li  class='custom' data-option-type="mapper" data-option-name="pathfind">Vai a num. locazione</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="search">Cerca locazione</li>
@@ -155,7 +155,14 @@ export class MapperWindow {
         
         this.$win = $(win);
 
-        <JQuery>((<any>$(".menuBar",this.$win)).jqxMenu({autoOpen: false}));
+        const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
+
+        $("#mapperMenubar").on('itemclick', (event: any) => {
+            if ($((<any>event).args).find(".jqx-icon-arrow-right").length)
+                return;
+            this.closeMenues(mnu);
+        });
+        
         this.$bottomMessage = $("#mapmessage", this.$win);
         this.$zoneList = $("#zonelist", this.$win);
         <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
@@ -249,6 +256,11 @@ export class MapperWindow {
         this.setMapFont()
     }
 
+    private closeMenues(mnu: any) {
+        mnu.jqxMenu('closeItem', "dati");
+        mnu.jqxMenu('closeItem', "azioni");
+    }
+
     getFontSize():number {
         const w = this.windowManager.windows.get("Mapper")
         if (!w) return NaN;
@@ -306,6 +318,7 @@ export class MapperWindow {
     private attachMenuOption(name:string, element:Element, checkbox:Element) {
         $(element).click((event: JQueryEventObject) => {
             if (!event.target || (event.target.tagName != "LI" && event.target.tagName != "BUTTON")) return;
+            this.closeMenues($("#mapperMenubar",this.$win));
             (this.$contextMenu as any).jqxMenu('close')
             switch (name) {
                 case "reload":
@@ -446,8 +459,8 @@ export class MapperWindow {
     }
 
     search() {
-        Messagebox.ShowMultiInput("Campi di ricerca locazione", ["Nome:", "Descrizione"], ["",""]).then(r => {
-            this.mapper.search(r.results[0], r.results[1])
+        Messagebox.ShowMultiInput("Campi di ricerca locazione", ["Nome", "Descrizione"], ["",""]).then(r => {
+            if (r.button == Button.Ok) this.mapper.search(r.results[0], r.results[1])
         })
     }
 

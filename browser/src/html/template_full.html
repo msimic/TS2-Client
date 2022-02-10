@@ -42,13 +42,14 @@
 <div id="mudslinger">
   <div id="menuBar">
     <ul>
-      <li>Connessione
+      <li id="connessione">Connessione
         <ul>
-          <li id="menuBar-conn-disconn" data-option-name="connect">Connetti</li>
-          <li data-option-name="use-profile">Personaggi</li>
+          <li data-option-name="use-profile"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/profiles.png' />Personaggi</li>
+          <li type="separator"></li>
+          <li id="menuBar-conn-disconn" data-option-name="connect"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti</li>
         </ul>
       </li>
-      <li class="configMenuItem" data-option-name="config">Impostazioni
+      <li id="impostazioni" class="configMenuItem" data-option-name="config">Impostazioni
         <ul>
           <li data-option-name="text-settings">Testo
             <ul>
@@ -81,29 +82,34 @@
                   <li data-option-name="extra-large-font">Enorme</li>
                 </ul>
               </li>
+              <li type="separator"></li>
               <li data-option-name="wrap-lines"><label for="menuBar-chkWrapLines"><input id="menuBar-chkWrapLines" type="checkbox" checked>Capolinea</label></li>
               <li data-option-name="enable-utf8"><label for="menuBar-chkEnableUtf8"><input id="menuBar-chkEnableUtf8" type="checkbox" checked>UTF-8</label></li>
             </ul>
           </li>
           
-          <li data-option-name="enable-mxp"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
+          <li data-option-name="enable-mxp" title="Il protocollo MXP permette al server di mandare variabili ed altro al client (preferibile abilitato)"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
           
           <li type="separator"></li>
-
           <li data-option-name="enable-triggers"><label for="menuBar-chkEnableTrig"><input id="menuBar-chkEnableTrig" type="checkbox" checked>Triggers</label></li>
           <li data-option-name="enable-aliases"><label for="menuBar-chkEnableAlias"><input id="menuBar-chkEnableAlias" type="checkbox" checked>Aliases</label></li>
           <li type="separator"></li>
-          <li data-option-name="log-time"><label><input type="checkbox">Timestamp</label></li>
-          <li data-option-name="debug-scripts"><label><input type="checkbox">ScriptInfo</label></li>
-          <li type="separator"></li>
-          <li data-option-name="reset-settings">Ripristina</li>
-          <li data-option-name="import-settings">Importa Configurazione</li>
-          <li data-option-name="export-settings">Esporta Configurazione</li>
-          <li data-option-name="import-layout">Importa Layout</li>
-          <li data-option-name="export-layout">Esporta Layout</li>
+          
+          <li>Avanzate
+            <ul>
+              <li data-option-name="log-time"><label><input type="checkbox">Marca tempo nell'output</label></li>
+              <li data-option-name="debug-scripts"><label><input type="checkbox">Informazioni scripting (debug)</label></li>
+              <li type="separator"></li>
+              <li data-option-name="reset-settings">Ripristina</li>
+              <li data-option-name="import-settings">Importa Configurazione</li>
+              <li data-option-name="export-settings">Esporta Configurazione</li>
+              <li data-option-name="import-layout">Importa Layout</li>
+              <li data-option-name="export-layout">Esporta Layout</li>
+            </ul>
+          </li>
         </ul>
       </li>
-      <li>Scripting
+      <li id="scripting">Scripting
         <ul>
           <li data-option-name="aliases">Aliases</li>
           <li data-option-name="triggers">Triggers</li>
@@ -111,6 +117,8 @@
           <li data-option-name="classes">Classi</li>
           <li data-option-name="events">Eventi</li>
           <li data-option-name="script">Script</li>
+          <li type="separator"></li>
+          <li data-option-name="update-triggers"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/update.png' />Aggiorna scripting</li>
           <li>Avanzate
             <ul>
               <li data-option-name="base_aliases">Alias preimpostati</li>
@@ -119,7 +127,7 @@
           </li>
         </ul>
       </li>
-      <li>Altro
+      <li id="altro">Altro
         <ul>
           <li data-option-name="windows">Finestre
             <ul id="windowList">

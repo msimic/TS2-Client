@@ -1,6 +1,7 @@
 import * as Util from "./util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "./jsScript";
 import { Messagebox } from "./messagebox";
+import { circleNavigate } from "./util";
 declare let CodeMirror: any;
 
 export class EventsEditor {
@@ -80,7 +81,6 @@ export class EventsEditor {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <label class="filter-label">Filtra:</label>
                         <input class="winEvents-filter" type="text" placeholder="<filtro>"/>
                     </div>
                     <div class="list">
@@ -210,13 +210,25 @@ export class EventsEditor {
         
 
         this.$listBox.click(this.itemClick.bind(this));
+        this.$listBox.keyup(this.itemSelect.bind(this));
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
         this.load(null);
         this.setEditorDisabled(true);
+        circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
+        this.$win.on('open', (event) => {
+            this.$win.focusable().focus()
+        })
+    }
 
+    itemSelect(ev: KeyboardEvent) {
+        if (ev.keyCode == 13 || ev.keyCode == 32) {
+            const el = this.$listBox.find("LI:focus")
+            this.selectItem(el)
+            this.handleListBoxChange();
+        }
     }
 
     private ApplyFilter() {
@@ -242,15 +254,19 @@ export class EventsEditor {
     private itemClick(e:MouseEvent) {
         var item = $(e.target);
         if (item.is("li")) {
-            item.addClass('selected');
-            item.siblings().removeClass('selected');
-            const index = item.parent().children().index(item);
-            this.$listBox.data("selectedIndex", index);
+            this.selectItem(item);
         } else {
             item.children().removeClass('selected');
             this.$listBox.data("selectedIndex", -1);
         }
         this.handleListBoxChange();
+    }
+
+    private selectItem(item: JQuery) {
+        item.addClass('selected');
+        item.siblings().removeClass('selected');
+        const index = item.parent().children().index(item);
+        this.$listBox.data("selectedIndex", index);
     }
 
     private setEditorDisabled(state: boolean): void {
@@ -296,7 +312,7 @@ export class EventsEditor {
         this.values = this.script.getEvents();
         let html = "";
         for (let i = 0; i < this.list.length; i++) {
-            html += "<li>" + Util.rawToHtml(this.list[i]) + "</option>";
+            html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";
         }
         this.$listBox.html(html);
         this.ApplyFilter();

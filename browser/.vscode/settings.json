@@ -22,5 +22,7 @@
         "**/static/**/*.js.map": true,
         "**/build/**/*.js": true,
         "**/build/**/*.js.map": true,
+        "**/dist": true,
+        "**/_dist": true,
     },
 }

@@ -267,12 +267,14 @@ export class Mapper {
     }
 
     parseCommandsForDirection(command: string): string[] {
-        if (!this.current) return [command];
+        if (!this.current || this.acknowledgingWalkStep) return [command];
         const lastStepRoom = this.manualSteps.length ? this.idToRoom.get(this.manualSteps[this.manualSteps.length-1].exit.to_room) : this.current
         if (!lastStepRoom) return [command];
         const ret:string[] = <string[]>[command];
+        let doLog = false;
         if (IsDirectionalCommand(command, this.useItalian)) {
             const dir = this.parseDirectionalCommand(command);
+            this.checkValidManualSteps(dir, lastStepRoom);
             const st = {
                 dir: dir,
                 room: lastStepRoom,
@@ -280,14 +282,40 @@ export class Mapper {
             }
             if (!st.exit) return [command];
             this.manualSteps.push(st)
+            doLog = true
             const queue:WalkCommand[] = []
-            this.handlePossibleDoor(st, false, queue)
+            this.handlePossibleDoor(st, this.manualSteps.length == 1 && this.doorAlreadyOpen(st.room, st.dir), queue)
             ret.splice(0, ret.length)
             if (queue.length) {
                 queue.map(q => ret.push(q.command))
             }
         }
+        
+        if (doLog && this.manualSteps.length) console.log("Steps: " + this.manualSteps.reduce((ps, cs, i, arr) => ps + ", " + cs.room.name, ""))
+            
         return ret;
+    }
+    checkValidManualSteps( dir: ExitDir, room:Room) {
+        if (!this.manualSteps.length) return;
+
+        const wrongRooms = this.manualSteps.filter(ms => ms.room.id == room.id)
+        if (wrongRooms.length) {
+            this.manualSteps.splice(0, this.manualSteps.length)
+            return
+        }
+
+        const dirs = [ExitDir.Down,ExitDir.Up,ExitDir.North,ExitDir.NorthEast,ExitDir.East,ExitDir.SouthEast,ExitDir.South,ExitDir.SouthWest,ExitDir.West,ExitDir.NorthWest]
+        let ok = false;
+        for (const dir of dirs) {
+            const ex = this.manualSteps[this.manualSteps.length-1].room.exits[dir]
+            if (ex && (ex.to_room == room.id || (this.current && ex.to_room == this.current.id))) {
+                ok = true
+            }
+        }
+        if (!ok) {
+            this.manualSteps.splice(0, this.manualSteps.length)
+            return
+        }        
     }
 
     parseDirectionalCommand(cmd: string): ExitDir {
@@ -892,6 +920,20 @@ export class Mapper {
         if (!name || !name.length || !rooms) return null;
 
         rooms = rooms.filter(r => r.name == name);
+        if (!rooms.length && this._previous) {
+            if (name.toLowerCase() == this._previous.name.toLowerCase()) {
+                rooms = [this._previous]
+            } else {
+                const checkDir = (ex:ExitDir)=> (this._previous.exits[ex] && this._previous.exits[ex].to_room && this.getRoomById(this._previous.exits[ex].to_room)?.name.toLowerCase() == name.toLowerCase())
+                const dirs = Object.keys(ExitDir).map(k => (<any>ExitDir)[k])
+                for (let dir of dirs) {
+                    if (checkDir(dir as ExitDir)) {
+                        rooms = [this.getRoomById(this._previous.exits[dir as ExitDir].to_room)]
+                        break;
+                    }
+                }
+            }
+        }
         if (desc && desc.length) {
             const descLine1 = (desc||'').split("\n")[0].replace("\r","")
             rooms = rooms.filter(r => {
@@ -1021,6 +1063,8 @@ export class Mapper {
         this.walkFromTo(this.current.id, destRM.id);
     }
 
+    acknowledgingWalkStep = false
+
     acknowledgeStep(vnum:number) {
         if (!this.currentWalk || !this.current)
             return;
@@ -1060,7 +1104,9 @@ export class Mapper {
             else if (walkCommand.type == WalkCommandType.Other) {
                 this.walkQueue.push(step);
             }
+            this.acknowledgingWalkStep = true
             EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command})
+            this.acknowledgingWalkStep = false
         }
     }
 
@@ -1103,7 +1149,7 @@ export class Mapper {
     }
 
     doorAlreadyOpen(room:Room, dir:ExitDir):boolean {
-        if (this.activeExits.map(v => Long2ShortExit.get(v)).indexOf(dir)>=0) {
+        if (this.activeExits && this.activeExits.map(v => Long2ShortExit.get(v)).indexOf(dir)>=0) {
             return true;
         }
         return false;
