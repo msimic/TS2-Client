@@ -177,7 +177,9 @@ function copyToPublic() {
     let imageFiles = [
         'static/public/jqwidgets/styles/images/close.png',
         'static/public/jqwidgets/styles/images/icon-up.png',
+        'static/public/jqwidgets/styles/images/icon-down.png',
         'static/public/jqwidgets/styles/images/icon-right.png',
+        'static/public/jqwidgets/styles/images/icon-left.png',
     ];
 
     for (const file of imageFiles) {
@@ -219,6 +221,11 @@ function copyToPublic() {
             path: './static/public/images/roomtype',
             regex: /^.*\..*$/i,
             outputFolder: './dist/public/images/roomtype'
+        },
+        {
+            path: './static/public/images/menu',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/images/menu'
         },
         {
         path: './static/public',
