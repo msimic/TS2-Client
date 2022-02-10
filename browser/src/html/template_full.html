@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="modules/modules.min.css?hash=${hash}">
   <link rel="stylesheet" href="css/client.css?hash=${hash}">
+  <link rel="manifest" href="ts2client.webmanifest">
 
   <script src="modules/corejs.min.js?hash=${hash}"></script>
   <script src="modules/jquery.min.js?hash=${hash}" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
@@ -118,7 +119,7 @@
           <li data-option-name="events">Eventi</li>
           <li data-option-name="script">Script</li>
           <li type="separator"></li>
-          <li data-option-name="update-triggers"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/update.png' />Aggiorna scripting</li>
+          <li data-option-name="update-triggers"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/update.png' />Aggiorna preimpostati</li>
           <li>Avanzate
             <ul>
               <li data-option-name="base_aliases">Alias preimpostati</li>
@@ -160,7 +161,7 @@
             </div>
           </div>
           <div id="row-center">
-              <pre id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
+              <pre tabindex="2" id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
           </div>
           <div id="row-bottom">
             <div id="row-bottom-left">

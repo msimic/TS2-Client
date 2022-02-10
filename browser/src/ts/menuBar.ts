@@ -176,10 +176,18 @@ export class MenuBar {
             }
         });
         window.addEventListener("blur", (ev)=>{
-            setTimeout(()=>{if (document.activeElement == document.body) $("#cmdInput").focus()},10)
+            setTimeout(()=>{
+                if (document.activeElement == document.body)
+                //console.log("blur " + (ev.currentTarget as any)?.id)
+                     $("#cmdInput").focus()
+                },10)
         }, true);
         window.addEventListener("focus", (ev)=>{
-            setTimeout(()=>{if (document.activeElement == document.body) $("#cmdInput").focus()},10)
+            setTimeout(()=>{
+                if (document.activeElement == document.body)
+                //console.log("blur " + (ev.currentTarget as any)?.id)
+                     $("#cmdInput").focus()
+                },10)
         }, true);
 
         $(document).on("keyup", (ev)=>{
