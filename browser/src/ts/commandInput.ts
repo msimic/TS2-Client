@@ -2,7 +2,7 @@ import { EventHook } from "./event";
 
 import {AliasManager} from "./aliasManager";
 import { UserConfig } from "./userConfig";
-import { createPath, isTrue } from "./util";
+import { createPath, isTrue, throttle } from "./util";
 
 export enum ScrollType {
     Bottom,
@@ -55,7 +55,8 @@ export class CommandInput {
         })
 
         this.$cmdInput.keydown((event: KeyboardEvent) => { return this.keydown(event); });
-        this.$cmdInput.bind("input propertychange", () => { return this.inputChange(); });
+        const thrInputChange = throttle(this.inputChange, 200, this)
+        this.$cmdInput.bind("keyup", v => <any>thrInputChange(v));
 
         $(document).ready(() => {
             this.loadHistory();
@@ -278,11 +279,11 @@ export class CommandInput {
     }
 
     private inputChange(): void {
+        console.log("key")
         let input = this.$cmdInput;
-        input.height("1px");
-        let scrollHeight = Math.max(input[0].scrollHeight, 20);
-        let new_height = scrollHeight;
-        input.height(new_height + "px");
+        (input[0] as HTMLElement).style.height = "0";
+        const nh = input[0].scrollHeight;
+        (input[0] as HTMLElement).style.height = nh + "px";
     }
 
     private saveHistory(): void {

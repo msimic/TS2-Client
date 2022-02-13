@@ -93,24 +93,31 @@ export function linesToArray(str:string):string[] {
 }
 
 export function throttle(fn:Function, threshhold:number, scope?:any):Function {
-    threshhold || (threshhold = 250);
+    threshhold = threshhold || (threshhold = 250);
+    var last:number;
+    var deferTimer:number;
+
+
     return function () {
-        var last:number,
-        deferTimer:number;
-        
+
         var context = scope || this;
-  
       var now = +new Date,
           args = arguments;
       if (last && now < last + threshhold) {
         // hold on to it
         clearTimeout(deferTimer);
+        /*try {
+        console.log("deferring " + JSON.stringify(args))
+        } catch (err) {
+            return
+        }*/
         deferTimer = setTimeout(function () {
           last = now;
           fn.apply(context, args);
         }, threshhold);
       } else {
         last = now;
+        //console.log("executing")
         fn.apply(context, args);
       }
     };

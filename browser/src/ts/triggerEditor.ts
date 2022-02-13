@@ -1,12 +1,21 @@
-import { TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
+import { EventHook } from "./event";
+import { copyData, TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
 
+export const EvtCopyTriggerToBase = new EventHook<copyData>()
+
 export class TriggerEditor extends TrigAlEditBase {
-    constructor(private triggerManager: TriggerManager, title?:string) {
-        super(title || "Triggers");
+
+    constructor(private triggerManager: TriggerManager,  isBase:boolean, private title?:string) {
+        super(title || "Triggers", isBase);
         triggerManager.changed.handle(()=>{
             super.refresh()
         })
+    }
+
+    protected copyToOther(ind: number): void {
+        const item = this.getItem(ind)
+        EvtCopyTriggerToBase.fire({item: item, source: this.title, isBase: this.isBase})
     }
 
     protected defaultValue: string =

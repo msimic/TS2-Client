@@ -24,6 +24,7 @@ export class TriggerManager {
     public triggers: Array<TrigAlItem> = null;
     public allTriggers: Array<TrigAlItem> = null;
     public changed = new EventHook()
+    private precompiledRegex = new Map<TrigAlItem, RegExp>()
 
     constructor(private jsScript: JsScript, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
         /* backward compatibility */
@@ -103,10 +104,25 @@ export class TriggerManager {
         return false;
     }
 
+    public precompileTriggers() {
+        //console.log("precompile triggers")
+        this.precompiledRegex.clear()
+        for (const t of this.allTriggers) {
+            let pattern = t.pattern;
+            if (!t.regex) {
+                pattern = pattern.replace(/\$|\%(\d+)/g, function(m, d) {
+                    return "(.+)";
+                });
+            }
+            this.precompiledRegex.set(t, new RegExp(pattern));
+        }
+    }
+
     public mergeTriggers() {
         const prof = this.profileManager.getProfile(this.profileManager.getCurrent());
         if ((prof && !prof.baseTriggers) || !this.baseConfig) {
             this.allTriggers = $.merge([], this.config.get("triggers") || []);
+            this.precompileTriggers()
             return;
         }
 
@@ -121,6 +137,7 @@ export class TriggerManager {
                 continue;
             }
         }
+        this.precompileTriggers()
     }
 
     private saving = false;
@@ -180,106 +197,76 @@ export class TriggerManager {
             if (line.endsWith("\n") && trig.pattern.endsWith("$")) {
                 line = line.substring(0, line.length-1);
             }
-            let match = line.match(trig.pattern);
-            if (!match) {
-                return;
+        }
+
+        let match = line.match(this.precompiledRegex.get(trig));
+        if (!match) {
+            return;
+        }
+        /*if (this.checkLoop(trig.pattern)) {
+            EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito tra i trigger: " +trig.pattern})
+            return;
+        }
+        this.logScriptTrigger(trig.pattern);*/
+
+        if (trig.is_script) {
+            if (!trig.script) {
+                this.createTriggerScript(trig, line, jsScript);
             }
-            if (this.checkLoop(trig.pattern)) {
-                EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito tra i trigger: " +trig.pattern})
-                return;
-            }
-            this.logScriptTrigger(trig.pattern);
-
-            if (trig.is_script) {
-                if (!trig.script) {
-                    let value = trig.value;
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                        if (d==undefined) return m;
-                        return d == 0 ? "`"+line+"`" : "(match["+parseInt(d)+"] || '')";
-                    });
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                        if (d==undefined) return m;
-                        return "variable('"+d+"')";
-                    });
-                    trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
-                }
-                if (trig.script) {
-                    trig.script(match, line); 
-                    fired = true;
-                } else {
-                    throw `Trigger '${trig.pattern}' e' una script malformata`;
-                }
-            } else {
-                let value = trig.value;
-
-                value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                    if (d==undefined) return m;
-                    return d == 0 ? "`"+line+"`" : (match[parseInt(d)] || '');
-                });
-
-                value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                    if (d==undefined) return m;
-                    return jsScript.getVariableValue(d) || "";
-                });
-
-                let cmds = value.replace("\r", "").split("\n");
-                this.EvtEmitTriggerCmds.fire({orig: trig.id || trig.pattern, cmds: cmds});
+            if (trig.script) {
+                trig.script(match, line); 
                 fired = true;
+            } else {
+                throw `Trigger '${trig.pattern}' e' una script malformata`;
             }
         } else {
-            let pattern = trig.pattern;
-            pattern = pattern.replace(/\$|\%(\d+)/g, function(m, d) {
-                return "(.+)";
-            });
-            let match = line.match(pattern);
-            if (match) {
-                if (this.checkLoop(pattern)) {
-                    EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito tra i trigger: " +pattern})
-                    return;
-                }
-                this.logScriptTrigger(pattern);
-
-                if (trig.is_script) {
-                    if (!trig.script) {
-                        let value = trig.value
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                            if (d==undefined) return m;
-                            return d == 0 ? "`"+line+"`" : "(match["+parseInt(d)+"] || '')";
-                        });
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                            if (d==undefined) return m;
-                            return "variable('"+d+"')";
-                        });
-                         trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
-                    }
-                    if (trig.script) {
-                        trig.script(match, line); 
-                        fired = true;
-                    } else {
-                        throw `Trigger '${trig.pattern}' e' una script malformata`;
-                    }
-                } else {
-                    let value = trig.value;
-
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                        if (d==undefined) return m;
-                        return d == 0 ? "`"+line+"`"  : (match[parseInt(d)] || '');
-                    });
-
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                        if (d==undefined) return m;
-                        return jsScript.getVariableValue(d) || "";
-                    });
-
-                    let cmds = value.replace("\r", "").split("\n");
-                    this.EvtEmitTriggerCmds.fire({orig: trig.id || trig.pattern, cmds: cmds});
-                    fired = true;
-                }
+            //if (!trig.script) {
+                trig.script = this.createSimpleTriggerCommands(trig.value, line, match, jsScript);
+            //}
+            if (trig.script) {
+                this.EvtEmitTriggerCmds.fire({orig: trig.id || trig.pattern, cmds: trig.script});
+                fired = true;
+            } else {
+                throw `Trigger '${trig.pattern}' e' ha comandi malformati`;
             }
         }
+        
         if (fired) {
             EvtScriptEvent.fire({event: ScripEventTypes.TriggerFired, condition: trig.id || trig.pattern, value: line});
         }
+    }
+
+    private createSimpleTriggerCommands(value: string, line: string, match: RegExpMatchArray, jsScript: JsScript) {
+
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+            if (d == undefined)
+                return m;
+            return d == 0 ? "`" + line + "`" : (match[parseInt(d)] || '');
+        });
+
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+            if (d == undefined)
+                return m;
+            return jsScript.getVariableValue(d) || "";
+        });
+
+        let cmds = value.replace("\r", "").split("\n");
+        return cmds;
+    }
+
+    private createTriggerScript(trig: TrigAlItem, line: string, jsScript: JsScript) {
+        let value = trig.value;
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+            if (d == undefined)
+                return m;
+            return d == 0 ? "`" + line + "`" : "(match[" + parseInt(d) + "] || '')";
+        });
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+            if (d == undefined)
+                return m;
+            return "variable('" + d + "')";
+        });
+        trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
     }
 
     checkLoop(source: string):boolean {

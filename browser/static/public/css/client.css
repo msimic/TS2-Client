@@ -3,6 +3,10 @@
     display: none;
 }
 
+html {
+    overflow: hidden;
+}
+
 a {
     color: inherit;
 }
@@ -678,7 +682,7 @@ input,textarea,button {
 }
 input:focus,button:focus {
     outline: 1px solid gray;
-    filter: drop-shadow(0 0 2px black);
+    filter: drop-shadow(0 0 1px black);
 }
 #menuBar {
 	background: black !important;
@@ -982,7 +986,7 @@ input:focus,button:focus {
     background: #ddd !important;
 }
 
-.jqx-menu-popup, .jqx-menu-dropdown {
+.jqx-menu-popup, .jqx-menu-dropdown, .jqx-menu-vertical {
     width: 140px !important;
     box-sizing: border-box !important;
     filter: drop-shadow(0 0 4px black);
@@ -991,7 +995,7 @@ input:focus,button:focus {
 
 .jqx-listbox {
     box-sizing: border-box !important;
-    filter: drop-shadow(0 0 4px black);
+    filter: drop-shadow(0 0 2px black);
     border: 1px solid gray;
 }
 

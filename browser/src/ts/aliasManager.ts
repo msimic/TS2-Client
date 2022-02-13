@@ -20,7 +20,9 @@ export class AliasManager {
     public aliases: Array<TrigAlItem> = null;
     public allAliases: Array<TrigAlItem> = null;
     private aliasLog = new Array<{key:string, time:number}>();
-    public changed = new EventHook()
+    public changed = new EventHook();
+    private precompiledRegex = new Map<TrigAlItem,RegExp>();
+
 
     constructor(private jsScript: ScriptIf, private config: ConfigIf, private baseConfig: ConfigIf, private classManager:ClassManager, private profileManager:ProfileManager) {
         this.loadAliases(config);
@@ -108,10 +110,25 @@ export class AliasManager {
         return false;
     }
 
+    public precompileAliases() {
+        //console.log("precompile triggers")
+        this.precompiledRegex.clear()
+        for (const a of this.allAliases) {
+            let rex:RegExp;
+            if (!a.regex) {
+                rex =  RegExp("^" + a.pattern + "(?:\\s+(.*))?$","i");
+            } else {
+                rex = RegExp(a.pattern.charAt(0) == "^" ? a.pattern : ("^" + a.pattern), "i");
+            }
+            this.precompiledRegex.set(a, rex);
+        }
+    }
+
     private mergeAliases() {
         const prof = this.profileManager.getProfile(this.profileManager.getCurrent());
         if ((prof && !prof.baseTriggers) || !this.baseConfig) {
             this.allAliases = $.merge([], this.config.get("aliases") || []);
+            this.precompileAliases();
             return;
         }
 
@@ -126,6 +143,7 @@ export class AliasManager {
                 continue;
             }
         }
+        this.precompileAliases();
     }
     
     private loadAliases(config:ConfigIf) {
@@ -144,91 +162,64 @@ export class AliasManager {
         for (let i = 0; i < this.allAliases.length; i++) {
             let alias = this.allAliases[i];
             if (!alias.enabled || (alias.class && !this.classManager.isEnabled(alias.class))) continue;
-            if (alias.regex) {
-                const re = RegExp(alias.pattern.charAt(0) == "^" ? alias.pattern : ("^" + alias.pattern), "i");
-                const match = cmd.match(re);
-                if (!match || match == undefined) {
-                    continue;
-                }
-                if (fromScript && this.checkLoop(re.source)) {
-                    EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito negli alias: " +alias.pattern})
-                    continue;
-                }
-                if (fromScript) this.logScriptAlias(re.source);
-                if (alias.is_script) {
-                    if (!alias.script) {
-                        let value = alias.value;
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                            if (d==undefined) return m;
-                            return d == 0 ? match.input.substring(match[0].length) : "(match["+parseInt(d)+"] || '')";
-                        });
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                            if (d==undefined) return m;
-                            return "variable('"+d+"')";
-                        });
-                        alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
-                    }
-                    if (alias.script) {
-                        alias.script(match, cmd);
-                    };
-                    return true;
-                } else {
-                    let value = alias.value;
 
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                        if (d==undefined) return m;
-                        return d == 0 ? match.input.substring(match[0].length) :  match[parseInt(d)] || "";
-                    });
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                        if (d==undefined) return m;
-                        return aliasManager.jsScript.getVariableValue(d) || "";
-                    });
-                    return value;
-                }
+            const re = this.precompiledRegex.get(alias);
+            const match = cmd.match(re);
+            if (!match || match == undefined) {
+                continue;
+            }
+            /*if (fromScript && this.checkLoop(re.source)) {
+                EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito negli alias: " +alias.pattern})
+                continue;
+            }
+            if (fromScript) this.logScriptAlias(re.source);*/
+            if (alias.is_script) {
+                this.createAliasScript(alias, match);
+                if (alias.script) {
+                    alias.script(match, cmd);
+                };
+                return true;
             } else {
-                const re = RegExp("^" + alias.pattern + "(?:\\s+(.*))?$","i");
-                const match = cmd.match(re);
-                if (!match) {
-                    continue;
-                }
-                if (fromScript && this.checkLoop(re.source)) {
-                    EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito negli alias: " +alias.pattern})
-                    continue;
-                }
-                if (fromScript) this.logScriptAlias(re.source);
-                if (alias.is_script) {
-                    if (!alias.script) {
-                        let value = alias.value;
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                            if (d==undefined) return m;
-                            return d == 0 ? match.input.substring(match[0].length) : "(match["+parseInt(d)+"] || '')";
-                        });
-                        // var regex = /\\"|"(?:\\"|[^"])*"|(\+)/g;
-                         // var regex = /\\"|"(?:\\"|[^"])*"|(\@\w+)/g;
-                        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                            if (d==undefined) return m;
-                            return "variable('"+d+"')";
-                        });
-                        alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
-                    }
-                    if (alias.script) { alias.script(match, cmd); };
-                    return true;
-                } else {
-                    let value = alias.value;
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function(m, d) {
-                        if (d==undefined) return m;
-                        return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
-                    });
-                    value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function(m, d:string) {
-                        if (d==undefined) return m;
-                        return aliasManager.jsScript.getVariableValue(d) || "";
-                    });
-                    return value;
-                }
+                let value = this.createSimpleAliasCommands(alias, match, aliasManager);
+                return value;
             }
         }
         return  null;
-    }   
+    }
+    
+    private createSimpleAliasCommands(alias: TrigAlItem, match: RegExpMatchArray, aliasManager: this) {
+        let value = alias.value;
+
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+            if (d == undefined)
+                return m;
+            return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
+        });
+        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+            if (d == undefined)
+                return m;
+            return aliasManager.jsScript.getVariableValue(d) || "";
+        });
+        return value;
+    }
+
+    private createAliasScript(alias: TrigAlItem, match: RegExpMatchArray) {
+        if (!alias.script) {
+            let value = alias.value;
+            value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+                if (d == undefined)
+                    return m;
+                return d == 0 ? match.input.substring(match[0].length) : "(match[" + parseInt(d) + "] || '')";
+            });
+            value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+                if (d == undefined)
+                    return m;
+                return "variable('" + d + "')";
+            });
+            alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
+        }
+    }
+
     checkLoop(source: string):boolean {
         let cnt = 0;
         for (const k of this.aliasLog) {

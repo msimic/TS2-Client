@@ -252,8 +252,16 @@ export function IsDirectionalCommand(cmd:string, ita:boolean):boolean {
 }
 
 export class Mapper {
+    scripting: JsScript;
+    loadLastPosition() {
+        this.roomVnum = parseInt(this.scripting.getVariableValue(this.vnumVariable))
+        this.setRoomByVNum(this.roomVnum)
+    }
 
     private _useItalian: boolean = true;
+    defaultDoorName: string = "porta";
+    virtualCurrent: Room;
+    public loading = false;
     public get useItalian(): boolean {
         return this._useItalian;
     }
@@ -267,12 +275,18 @@ export class Mapper {
     }
 
     parseCommandsForDirection(command: string): string[] {
-        if (!this.current || this.acknowledgingWalkStep) return [command];
+        if (!this.current) return [command];
+        
         const lastStepRoom = this.manualSteps.length ? this.idToRoom.get(this.manualSteps[this.manualSteps.length-1].exit.to_room) : this.current
         if (!lastStepRoom) return [command];
         const ret:string[] = <string[]>[command];
         let doLog = false;
         if (IsDirectionalCommand(command, this.useItalian)) {
+            if (this.acknowledgingWalkStep) 
+            {
+                this.acknowledgingWalkStep = false;
+                return [command];
+            }
             const dir = this.parseDirectionalCommand(command);
             this.checkValidManualSteps(dir, lastStepRoom);
             const st = {
@@ -356,6 +370,7 @@ export class Mapper {
     }
 
     setZoneById(zid: number) {
+        if (this.current && this.current.zone_id == zid) return;
         const zr = this.getZoneRooms(zid)
         if (zr && zr.length) {
             this.setRoomById(zr[0].id)
@@ -390,6 +405,8 @@ export class Mapper {
         this._current = value;
         this._selected = value;
         this.resyncato = false;
+        this.roomId = value?.id
+        this.roomVnum = value?.vnum
         if (this._prevZoneId != this._zoneId) {
             this._prevZoneId = this._zoneId
             this.zoneChanged.fire({
@@ -492,8 +509,9 @@ export class Mapper {
     private resyncato = false;
 
     setScript(script:JsScript) {
-        this.roomVnum = script.getVariableValue(this.vnumVariable)
+        this.roomVnum = parseInt(script.getVariableValue(this.vnumVariable))
         if (this.roomVnum) this.setRoomByVNum(this.roomVnum);
+        this.scripting = script;
     }
 
     public async loadVersion():Promise<MapVersion> {
@@ -519,12 +537,14 @@ export class Mapper {
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.vnumVariable) {
                 if (d.value) {
                     //this.roomName = null;
-                    this.roomDesc = null;
+                    //this.roomDesc = null;
                     const newVnum = (<any>d.value).newValue;
+                    this.virtualCurrent = null;
+                    console.log("got vnum " + newVnum)
                     setTimeout(() => {
                         this.setRoomByVNum(parseInt(newVnum));
                         this.acknowledgeStep(newVnum);                            
-                    }, 1);
+                    }, 0);
                 } 
                 else
                     this.setRoomByVNum(-1);
@@ -536,7 +556,7 @@ export class Mapper {
                     this.activeExits = []
             } else if (d.event == ScripEventTypes.VariableChanged && d.condition == this.roomNameVariable) {
                 if (this.manualSteps.length) this.manualSteps.splice(0,1)
-                this.roomDesc = null
+                //this.roomDesc = null
                 if (d.value) {
                     this.roomName = (<any>d.value).newValue as string;
                 }
@@ -633,6 +653,7 @@ export class Mapper {
         this.zoneRooms.clear();
         this.currentWalk = null;
         this.current = null;
+        this.manualSteps = [];
         this.walkQueue = [];
         if (!this.db) return;
 
@@ -770,21 +791,32 @@ export class Mapper {
     }
 
     public loadDb(mapDb: MapDatabase):MapDatabase {
-        this.db = mapDb;
+        try {
+            this.loading = true
+            this.db = mapDb;
 
-        this.prepare();
+            this.acknowledgingWalkStep = false;
+            const currentRoom = this.current;
+            const currentVnum = this.roomVnum;
+            const currentId = this.roomId;
 
-        if (!this.current && this.roomId>=0) {
-            this.setRoomById(this.roomId);
-        } else if (!this.current && this.roomVnum>=0) {
-            this.setRoomByVNum(this.roomVnum);
+            this.prepare();
+
+            if (!this.current && currentId>=0) {
+                this.setRoomById(currentId);
+            } else if (!this.current && currentVnum>=0) {
+                this.setRoomByVNum(currentVnum);
+            }
+            else if (currentRoom) {
+                this.roomChanged.fire({id: currentRoom.id, vnum: currentRoom.vnum, room: currentRoom});
+            } else {
+                this.zoneChanged.fire({ id: null, zone:null})
+            }
+            return mapDb;
+        } finally {
+            this.loading = false;
         }
-        
-        this.zoneChanged.fire({ id: null, zone:null})
-        this.roomChanged.fire({id: -1, vnum: -1, room: null});
-        this.roomChanged.fire({id: this.roomId, vnum: this.roomVnum, room: this.current});
-        
-        return mapDb;
+
     }
 
     public getRoomById(id:number) {
@@ -803,10 +835,11 @@ export class Mapper {
             if (newCurrent) {
                 this.current = newCurrent;
                 this.current = newCurrent; // twice in case there was a zoneChanged which would set it to the first room of the zone
-                this.roomVnum = this.current.vnum;
+                this.roomVnum = newCurrent.vnum;
             }
         }
         if (old != this.current) {
+            console.log("roomchanged " + old?.id + " -> " + this.current?.id)
             this.roomChanged.fire({ id: this.roomId, vnum: this.roomVnum, room: this.current })
         }
     }
@@ -815,6 +848,7 @@ export class Mapper {
         this.roomVnum = vnum;
         const old = this.current;
         const prev = this._previous;
+        console.log("room by vnum " + vnum)
         if (vnum == -1) {
             this.roomId = -1;
             this.current = null;
@@ -834,12 +868,14 @@ export class Mapper {
                             return candidate.exits[<ExitDir>shortExit];
                         })) {
                             found = candidate
+                            console.log("resync by name and exits" + vnum)
                         }
                     }
                 }
             }
             this.current = found || this.syncToRoom()
             if (this.current) {
+                console.log("full resync for vnum " + vnum + " to id " + this.current.id)
                 this.setRoomById(this.current.id)
                 this.resyncato = true;
             }
@@ -854,6 +890,7 @@ export class Mapper {
                         this.roomId = backupRoom.id
                         this.roomVnum = backupRoom.vnum
                         this.current = backupRoom
+                        console.log("resync for walkqueue to id " + this.roomId)
                     }
                 }
             }
@@ -868,11 +905,11 @@ export class Mapper {
         }
     }
 
-    search(name:string, desc?:string) {
+    search(name:string, desc?:string):Room[] {
         let totLen = name.length + (desc||"").length
         if (totLen < 3) {
             EvtScriptEmitPrint.fire({owner:"Mapper", message: "Errore: Minima lunghezza di ricerca: 3 caratteri."})
-            return
+            return []
         }
         let rooms = this.searchRoomsByNameAndDesc(name, desc)
         const len = rooms ? rooms.length : 0
@@ -880,7 +917,7 @@ export class Mapper {
             rooms = rooms.slice(0, 19)
         } else if (len == 0) {
             EvtScriptEmitPrint.fire({owner:"Mapper", message: "Nessuna room trovata"})
-            return
+            return []
         }
 
         let line = $(`<span><span style="color:white">Risultati ricerca:</span><br/> Nome:<span style="color:green">[${name||"-"}]</span> Descrizione:<span style="color:green">[${desc||"-"}]</span><br /><br /></span>`)
@@ -901,6 +938,7 @@ export class Mapper {
             EvtScriptEmitPrint.fire({owner:"Mapper", message: null, raw:line})
         }
         this.emitSearch.fire(name)
+        return rooms;
     }
 
     searchRoomsByNameAndDesc(name:string, desc:string):Room[] {
@@ -1006,6 +1044,7 @@ export class Mapper {
 
     public failWalk(reason:string):boolean {
         const ret = !!this.currentWalk
+        console.log("fail walk")
         if (reason && reason.length && ret) EvtScriptEmitPrint.fire( { owner: "Mapper", message: reason})
         /*if (this.currentWalk) {
             EvtScriptEmitPrint.fire( { owner: "Mapper", message: JSON.stringify(this.currentWalk, null, 2)})
@@ -1022,21 +1061,25 @@ export class Mapper {
         if (typeof id != 'number')
             id = parseInt(id);
 
+        const virtualCurrent = this.virtualCurrent || this.current
         this.cancelWalk();
-        if (!this.current) {
+        if (!virtualCurrent) {
             this.failWalk("Il mapper non ha una room iniziale.")
             return;
         }
 
-        this.walkFromTo(this.current.id, id, this.current.id);
+        console.log("walkto id " + id + " from vnum " + virtualCurrent.vnum)
+        this.walkFromTo(virtualCurrent.id, id, virtualCurrent.id);
     }
 
     public walkToVnum(vnum:number) {
         if (typeof vnum != 'number')
             vnum = parseInt(vnum);
-
+        
+        const virtualCurrent = this.virtualCurrent || this.current
+    
         this.cancelWalk();
-        if (!this.current) {
+        if (!virtualCurrent) {
             this.failWalk("Il mapper non ha una room iniziale.")
             return;
         }
@@ -1048,26 +1091,44 @@ export class Mapper {
             return;
         }
 
-        this.walkFromTo(this.current.id, destId, this.current.id);
+        console.log("walkto vnum " + vnum + " from vnum " + virtualCurrent.vnum)
+        
+        this.walkFromTo(virtualCurrent.id, destId, virtualCurrent.id);
     }
 
     public walkToRoomShortName(shname:string) {
         shname = shname.toLowerCase();
+        const virtualCurrent = this.virtualCurrent || this.current
+    
         this.cancelWalk();
-        if (!this.current) return;
+        if (!virtualCurrent) return;
         const destRM = this.shortNameToRoom.get(shname);
         if (!destRM) {
             this.failWalk("Non c'e' stanza con quella parola chiave.")
             return;
         }
-        this.walkFromTo(this.current.id, destRM.id);
+        console.log("walkto shortname from " + virtualCurrent.vnum + " to vnum " + destRM.vnum)
+        this.walkFromTo(virtualCurrent.id, destRM.id);
     }
 
     acknowledgingWalkStep = false
 
+    recalculating = false;
+
     acknowledgeStep(vnum:number) {
+
+        const wasRecalculating = this.recalculating;
+        this.recalculating = false;
+
+        if (typeof vnum == "string") {
+            vnum = Number(vnum)
+        }
+        this.acknowledgingWalkStep = false
+
         if (!this.currentWalk || !this.current)
             return;
+
+        console.log("acknowledgeStep " + vnum)
 
         if (!this.currentWalk.steps || this.currentWalk.index >= this.currentWalk.steps.length) {
             if (this.currentWalk.index >= this.currentWalk.steps.length) this.failWalk( `Arrivato a destinazione.`)
@@ -1077,7 +1138,14 @@ export class Mapper {
         let stepVnum = this.currentWalk.steps[this.currentWalk.index].room.vnum
         if (stepVnum &&
             stepVnum != vnum) {
+            if (wasRecalculating) {
+                this.failWalk("Non posso ricalcolare percorso");
+                return;
+            }
             const lastStepDir = this.currentWalk.steps[this.currentWalk.steps.length-1].direction;
+            console.log("ricalcolo " + stepVnum + " - " + this.currentWalk.end.exits[lastStepDir].to_room)
+            this.recalculating = true;
+            this.failWalk("");
             this.walkToId(this.currentWalk.end.exits[lastStepDir].to_room);
             EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${this.currentWalk.end.name}`})
             //this.failWalk( `Percorso fallito. Sei in ${vnum} ma il percorso aspettava ${stepVnum}`)
@@ -1105,8 +1173,10 @@ export class Mapper {
                 this.walkQueue.push(step);
             }
             this.acknowledgingWalkStep = true
+            const nr = this.getRoomById(step.room.exits[step.direction].to_room)
+            console.log("sending next dir for vnum " + nr.vnum)
+            this.virtualCurrent = nr;
             EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command})
-            this.acknowledgingWalkStep = false
         }
     }
 
@@ -1120,7 +1190,13 @@ export class Mapper {
             this.walkQueue = []
         }
         const room = this.currentWalk.steps[this.currentWalk.index||0].room;
-        if (room.id == this.roomId || room.vnum == this.roomVnum) this.acknowledgeStep(room.vnum); 
+        if (room.id == this.roomId || room.vnum == this.roomVnum) {
+            this.acknowledgeStep(room.vnum);
+        } else {
+            // resync
+            this.loadLastPosition()
+            this.acknowledgeStep(this.roomVnum);
+        } 
     }
 
     speedWalk(safeWalk:SafeWalk) {
@@ -1224,9 +1300,8 @@ export class Mapper {
         /*if (exit.name) {
             this.openSpecialExit(exit.name);
         }*/
-        if (exit.param) {
-            this.unlockDoor(exit.param, dir, walkQueue);
-        }
+        this.unlockDoor(exit.param||this.defaultDoorName, dir, walkQueue);
+        
     }
 
     handleClosedDoor(dir: ExitDir, exit: RoomExit, walkQueue: WalkCommand[]) {
@@ -1235,13 +1310,15 @@ export class Mapper {
         }
         if (exit.param) {
             this.openDoor(exit.param, dir, walkQueue, exit.type == ExitType.Door);
+        } else {
+            this.openDoor(this.defaultDoorName, dir, walkQueue, exit.type == ExitType.Door);
         }
 
         
     }
     openSpecialExit(name: string, walkQueue: WalkCommand[]) {
         walkQueue.push({
-            command: name,
+            command: name.replace(/\;/g,",").split(",").join("\n"),
             type: WalkCommandType.Other
         });
     }

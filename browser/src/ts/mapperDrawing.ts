@@ -115,6 +115,7 @@ export class MapperDrawing {
     private MouseDrag: MouseData = { x: 0, y: 0, button: 0, state: false };
     private drag: boolean = false;
     hover: Room;
+    mouseInside = false;
     lastKey: any;
     setActiveRoom(room: Room) {
         const prevZone = this.active ? this.active.zone_id : -1;
@@ -131,10 +132,12 @@ export class MapperDrawing {
             }
         }
         this.focusActiveRoom()
+        this.forcePaint = true
     }
-
+    wallColor = '#B0ABA2'//'#ACADAC';
     rendererId: number;
     stop:boolean;
+    forcePaint:boolean;
     private _fillWalls: boolean = true;
     private _showLegend = false;
     private ready = true;
@@ -285,10 +288,12 @@ export class MapperDrawing {
         });
         $(this.canvas).mouseenter((event) => {
             this.hover = null;
+            this.mouseInside = true;
             this.Mouse = this.getMapMousePos(event);
         });
         $(this.canvas).mouseleave((event) => {
             this.hover = null;
+            this.mouseInside = false;
             this.Mouse = this.getMapMousePos(event);
             if (this.drag) {
                 this.drag = false;
@@ -458,9 +463,16 @@ export class MapperDrawing {
     }
 
     renderFrame(time: DOMHighResTimeStamp): void {
+
         if (this.stop) return;
         var ctx = this.ctx;
-        
+
+        if (!this.mouseInside && !this.forcePaint && (time|0) % 16 > 3) {
+            window.requestAnimationFrame(this.renderFrame.bind(this));
+            return
+        }
+        this.forcePaint = false;
+
         try {
             if (this.canvas && this.canvas.width) {
                 this.setSize();
@@ -608,7 +620,7 @@ export class MapperDrawing {
         if (canvas.height % 2 != 0)
             oy  += 0.5;
 
-        context.font = `${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        context.font = `${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         context.lineWidth = (0.6 * this.scale)|0;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -703,7 +715,7 @@ export class MapperDrawing {
 
     private drawHoverInfo(context: CanvasRenderingContext2D) {
         context.save();
-        context.font = `bold ${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        context.font = `bold ${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         const text1 = this.hover.name;
         let text2 = `#${this.hover.id || "Pos:"}`;
         if (this.hover.x != undefined) {
@@ -712,7 +724,7 @@ export class MapperDrawing {
             text2 += "Map";
         }
         let w = context.measureText(text1).width;
-        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'monospace'}`;
+        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         let w2 = context.measureText(text2).width;
         if (w < w2)
             w = w2;
@@ -733,9 +745,9 @@ export class MapperDrawing {
         context.rect(x + 5, y + 5, w - 10, 50 - 10);
         context.clip();
         context.fillStyle = 'black';
-        context.font =  `bold ${this.fontSize || 14}pt ${this.font || 'monospace'}`;
+        context.font =  `bold ${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         context.fillText(text1, x + 5, y + 20);
-        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'monospace'}`;
+        context.font = `${(this.fontSize || 14)-2}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         context.fillText(text2, x + 5, y + 40);
         context.closePath();
         context.restore();
@@ -1738,7 +1750,7 @@ export class MapperDrawing {
             tx.strokeStyle = 'black';
             tx.lineWidth = (0.6 * scale)|0;
             
-            tx.fillStyle = '#ACADAC';
+            tx.fillStyle = this.wallColor;
 
             if (!this.isRealExit(room.exits.n, room) &&  fillWalls)
                 tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);

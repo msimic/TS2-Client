@@ -4,7 +4,7 @@ import { AppInfo } from "./appInfo";
 import * as Fingerprint2 from "@fingerprintjs/fingerprintjs";
 import {Md5} from 'ts-md5/dist/md5';
 import * as aesjs from "aes-js";
-import { AliasEditor } from "./aliasEditor";
+import { AliasEditor, EvtCopyAliasToBase } from "./aliasEditor";
 import { AliasManager } from "./aliasManager";
 import { CommandInput, ScrollType } from "./commandInput";
 import { JsScript, EvtScriptEmitCmd, EvtScriptEmitPrint, EvtScriptEmitEvalError, EvtScriptEmitError, EvtScriptEmitCls, EvtScriptEvent, ScripEventTypes } from "./jsScript";
@@ -15,7 +15,7 @@ import { Mxp } from "./mxp";
 import { OutputManager } from "./outputManager";
 import { OutputWin } from "./outputWin";
 import { Socket } from "./socket";
-import { TriggerEditor } from "./triggerEditor";
+import { TriggerEditor, EvtCopyTriggerToBase } from "./triggerEditor";
 import { TriggerManager } from "./triggerManager";
 import { AboutWin } from "./aboutWin";
 import { ConnectWin } from "./connectWin";
@@ -36,6 +36,7 @@ import { LayoutManager } from "./layoutManager";
 import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
 import {  } from './cacheServiceWorker'
+import { copyData } from "./trigAlEditBase";
 
 declare global {
     interface JQuery {
@@ -52,6 +53,7 @@ export class Client {
     private aliasEditor: AliasEditor;
     private baseAliasEditor: AliasEditor;
     private aliasManager: AliasManager;
+    private baseAliasManager: AliasManager;
     private commandInput: CommandInput;
     private jsScript: JsScript;
     private jsScriptWin: JsScriptWin;
@@ -66,6 +68,7 @@ export class Client {
     private triggerEditor: TriggerEditor;
     private baseTriggerEditor: TriggerEditor;
     private triggerManager: TriggerManager;
+    private baseTriggerManager: TriggerManager;
     private aboutWin: AboutWin;
     private connectWin: ConnectWin;
     private contactWin: ContactWin;
@@ -132,6 +135,9 @@ export class Client {
         }), 2000);
         this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
         this.mapper.setScript(this.jsScript)
+        profileManager.evtProfileChanged.handle(p=>{
+            this.mapper.loadLastPosition()
+        });
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
         this.variableEditor = new VariablesEditor(this.jsScript);
@@ -156,16 +162,16 @@ export class Client {
         this.outputWin = new OutputWin(this.profileManager.activeConfig, this.triggerManager);
 
         this.classEditor = new ClassEditor(this.classManager);
-        this.aliasEditor = new AliasEditor(this.aliasManager);
+        this.aliasEditor = new AliasEditor(this.aliasManager, false);
         this.eventsEditor = new EventsEditor(this.jsScript);
-        this.triggerEditor = new TriggerEditor(this.triggerManager);
+        this.triggerEditor = new TriggerEditor(this.triggerManager, false);
 
-        const baseAliasManager = new AliasManager(
+        this.baseAliasManager = new AliasManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseAliasEditor = new AliasEditor(baseAliasManager, "Alias preimpostati (abbi cautela)");
-        const baseTriggerManager = new TriggerManager(
+        this.baseAliasEditor = new AliasEditor(this.baseAliasManager, true, "Alias preimpostati (abbi cautela)");
+        this.baseTriggerManager = new TriggerManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseTriggerEditor = new TriggerEditor(baseTriggerManager, "Trigger preimpostati (abbi cautela)");
+        this.baseTriggerEditor = new TriggerEditor(this.baseTriggerManager, true, "Trigger preimpostati (abbi cautela)");
         
         this.windowManager = new WindowManager(this.profileManager);
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
@@ -383,9 +389,9 @@ export class Client {
                         this.outputManager.handlePreformatted(msg);
                         this.outputWin.scrollBottom(false);
                     }
-                    setTimeout(() => {
+                    //setTimeout(() => {
                         f()
-                    }, 0);
+                    //}, 0);
                     
                 } else {
                     this.outputWin.append(data.raw, true)
@@ -448,6 +454,9 @@ export class Client {
             this.mxp.handleMxpTag(data);
         });
 
+        EvtCopyAliasToBase.handle(this.copyAliasToOther, this)
+        EvtCopyTriggerToBase.handle(this.copyTriggerToOther, this)
+
         this.socket.open().then((success) => {
             if (!success) { return; }
             
@@ -461,6 +470,33 @@ export class Client {
             }
         });
     }
+
+    copyAliasToOther(data: copyData) {
+        var src = data.isBase ? this.baseAliasManager : this.aliasManager
+        var dest = !data.isBase ? this.baseAliasManager : this.aliasManager
+        const i = dest.aliases.findIndex(a => a.pattern == data.item.pattern)
+        const clone = JSON.parse(JSON.stringify(data.item))
+        if (i>=0) {
+            dest.aliases[i] = clone
+        } else {
+            dest.aliases.push(clone)
+        }
+        dest.saveAliases()
+    }
+
+    copyTriggerToOther(data: copyData) {
+        var src = data.isBase ? this.baseTriggerManager : this.triggerManager
+        var dest = !data.isBase ? this.baseTriggerManager : this.triggerManager
+        const i = dest.triggers.findIndex(a => a.pattern == data.item.pattern)
+        const clone = JSON.parse(JSON.stringify(data.item))
+        if (i>=0) {
+            dest.triggers[i] = clone
+        } else {
+            dest.triggers.push(clone)
+        }
+        dest.saveTriggers()
+    }
+
     public save():void {
         this.jsScript.save();
         this.profileManager.saveProfiles();

@@ -6,6 +6,7 @@ import { EvtScriptEmitPrint } from "./jsScript";
 import { MapperDrawing } from "./mapperDrawing";
 import { ResizeSensor } from 'css-element-queries'
 import { downloadJsonToFile, importFromFile, padStart } from './util'
+import { NewLineKind } from "typescript";
 
 export enum UpdateType { none = 0, draw = 1 }
 
@@ -173,7 +174,8 @@ export class MapperWindow {
         $("#zonelist", this.$win).on("select", (ev:any) => {
             var selection = ev.args.item.value
             if (selection) {
-                this.mapper.setZoneById(parseInt(selection))
+                if (!this.mapper.loading)
+                    this.mapper.setZoneById(parseInt(selection))
             }
         })
 
@@ -228,6 +230,13 @@ export class MapperWindow {
             }
         });
         w.on('destroy', function() {
+            self.detachHandlers(self.mapper, self.windowManager)
+            self.detachMenu()
+            if (self.drawing) {
+                self.drawing.destroy()
+                delete self.drawing;  
+                self.drawing = null;
+            }
             delete self.ctx;
             delete self.canvas;
         });
@@ -584,7 +593,8 @@ export class MapperWindow {
         this.$bottomMessage.text(mess);
     }
     public zoneMessage(mess:string) {
-        const items = (<any>this.$zoneList).jqxDropDownList('getItems');
+        let items = (<any>this.$zoneList).jqxDropDownList('getItems');
+        let newIndex:number;
         if (mess == null || !items || !items.length) {
             (<any>this.$zoneList).jqxDropDownList('clear');
 
@@ -594,6 +604,9 @@ export class MapperWindow {
             }));*/
 
             const zones = this.zones && this.zones.length ? [...this.zones].sort(this.zoneSort) : null
+            if (zones) {
+                newIndex = zones.findIndex((z) => z.name == mess)
+            }
             if (zones && zones.length) $.each(zones, (i, item) => {
                 (<any>this.$zoneList).jqxDropDownList("addItem", { 
                     value: item.id.toString(),
@@ -601,8 +614,7 @@ export class MapperWindow {
                 });
             });
             //(<any>this.$zoneList).jqxDropDownList('loadFromSelect', 'zonelist_jqxDropDownList');
-            
-            (<any>this.$zoneList).jqxDropDownList('selectIndex', 0 ); 
+           (<any>this.$zoneList).jqxDropDownList('selectIndex', newIndex > -1 ? newIndex : 0 ); 
         } else {
             /*this.$zoneList.find("option").first().text(mess||"?")*/
             /*const items = (<any>this.$zoneList).jqxDropDownList('getItems');
@@ -612,6 +624,8 @@ export class MapperWindow {
                     (<any>this.$zoneList).jqxDropDownList('selectIndex', sel[0].index );
                 }
             }*/
+            //newIndex = items.findIndex((i:any) => i.name == mess)
+            //(<any>this.$zoneList).jqxDropDownList('selectIndex', newIndex > -1 ? newIndex : 0 ); 
             //(<any>this.$zoneList).jqxDropDownList('val', this.zoneId);
         }
     }

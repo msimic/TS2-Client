@@ -88,6 +88,7 @@ export class LayoutManager {
     public parents = new Map<string, JQuery>();
     public variableChangedMap = new Map<string, Control[]>();
     public variableStyleChangedMap = new Map<string, Control[]>();
+    public onVariableChangedThrottled = new Map<string, Function>();
 
     private defaultPanes = [
         {position: PanelPosition.PaneTopLeft, id: "row-top-left"},
@@ -104,7 +105,6 @@ export class LayoutManager {
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.load();
         });
-        this.onVariableChangedThrottled = throttle(this.onVariableChanged, 500);
         this.deleteLayout();
         this.load();
         EvtScriptEvent.handle((e) => this.handleEvent(e));
@@ -112,9 +112,13 @@ export class LayoutManager {
 
     handleEvent(e:{event:ScripEventTypes, condition:string, value:any}) {
         if (e.event != ScripEventTypes.VariableChanged) return;
-        this.onVariableChangedThrottled(e.condition);
+        let func = this.onVariableChangedThrottled.get(e.condition);
+        if (!func) {
+            func = throttle(this.onVariableChanged, 500, this);
+            this.onVariableChangedThrottled.set(e.condition, func)
+        }
+        func(e.condition);
     }
-    public onVariableChangedThrottled:any;
 
     public onVariableChanged(variableName:string) {
         let ctrls;

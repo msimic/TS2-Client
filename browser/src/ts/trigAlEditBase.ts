@@ -1,4 +1,4 @@
-import { Messagebox } from "./messagebox";
+import { Button, messagebox, Messagebox } from "./messagebox";
 import * as Util from "./util";
 import { circleNavigate } from "./util";
 
@@ -14,6 +14,10 @@ export interface TrigAlItem {
     is_script: boolean;
     script?: any;
     is_prompt: boolean;
+}
+
+export interface copyData {
+    item:TrigAlItem, source:string, isBase:boolean
 }
 
 export abstract class TrigAlEditBase {
@@ -36,13 +40,15 @@ export abstract class TrigAlEditBase {
     protected $mainSplit: JQuery;
     protected $saveButton: JQuery;
     protected $cancelButton: JQuery;
-    $filter: JQuery;
+    protected $filter: JQuery;
+    protected $copyButton: JQuery;
 
     /* these need to be overridden */
     protected abstract getList(): Array<string>;
     protected abstract getItem(ind: number): TrigAlItem;
     protected abstract saveItem(ind: number, item:TrigAlItem): void;
     protected abstract deleteItem(ind: number): void;
+    protected abstract copyToOther(ind: number): void;
 
     protected abstract defaultPattern: string;
     protected abstract defaultValue: string;
@@ -60,7 +66,7 @@ export abstract class TrigAlEditBase {
         })
     }
 
-    constructor(title: string) {
+    constructor(title: string, protected isBase:boolean) {
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -81,6 +87,7 @@ export abstract class TrigAlEditBase {
                     </div>
                     <div class="buttons">
                         <button title="Crea nuovo" class="winEdit-btnNew greenbutton">Aggiungi</button>
+                        <button title="Copia in privato o preimpostato" class="winEdit-btnCopy">!</button>
                         <button title="Elimina selezionato" class="winEdit-btnDelete redbutton">Elimina</button>
                     </div>
                 </div>
@@ -130,6 +137,7 @@ export abstract class TrigAlEditBase {
 
         this.$mainSplit = $(myDiv.getElementsByClassName("winEdit-mainSplit")[0]);
         this.$newButton = $(myDiv.getElementsByClassName("winEdit-btnNew")[0]);
+        this.$copyButton = $(myDiv.getElementsByClassName("winEdit-btnCopy")[0]);
         this.$deleteButton = $(myDiv.getElementsByClassName("winEdit-btnDelete")[0]);
         this.$listBox = $(myDiv.getElementsByClassName("winEdit-listBox")[0]);
         this.$pattern = $(myDiv.getElementsByClassName("winEdit-pattern")[0]);
@@ -197,12 +205,25 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$listBox.click(this.itemClick.bind(this));
         this.$listBox.keyup(this.itemSelect.bind(this));
         this.$newButton.click(this.handleNewButtonClick.bind(this));
+        this.$copyButton.click(this.handleCopyButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
         this.$scriptCheckbox.change(this.handleScriptCheckboxChange.bind(this));
         circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
+    }
+    async handleCopyButtonClick(ev: any) {
+        let ind = this.$listBox.data("selectedIndex");
+        if (ind == undefined || ind < 0) return;
+        if (this.isDirty()) {
+            await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
+            return
+        }
+        const ans = await Messagebox.Question("Sei sicuro di voler copiare nel profilo " + (this.isBase ? "PRIVATO":"BASE") + "?\nQuesta azione potrebbe sovrascrivere quello esistente.")
+        if (ans.button == Button.Ok) {
+            this.copyToOther(ind);
+        }
     }
 
     itemSelect(ev: KeyboardEvent) {
@@ -240,10 +261,10 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         } else {
             modified = modified || (this.$textArea.val() != item.value);
         }
-        modified = modified || (this.$isPromptCheckbox.prop("checked") != item.is_prompt)
-        modified = modified || (this.$enabledCheckbox.prop("checked") != item.enabled);
-        modified = modified || (this.$regexCheckbox.prop("checked") != item.regex);
-        modified = modified || (this.$scriptCheckbox.prop("checked") != item.is_script);
+        modified = modified || (item.is_prompt != undefined && this.$isPromptCheckbox.prop("checked") != item.is_prompt)
+        modified = modified || (item.enabled != undefined && this.$enabledCheckbox.prop("checked") != item.enabled);
+        modified = modified || (item.regex != undefined && this.$regexCheckbox.prop("checked") != item.regex);
+        modified = modified || (item.is_script != undefined && this.$scriptCheckbox.prop("checked") != item.is_script);
         return modified;
     }
 

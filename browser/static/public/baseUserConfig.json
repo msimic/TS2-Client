@@ -18,6 +18,7 @@
     "black",
     "low"
   ],
+  "variables": [],
   "script_events": [
     [
       "VariableChanged",
@@ -28,14 +29,6 @@
           "id": "printGruppo",
           "value": "send(\"printGruppo\");",
           "class": "",
-          "enabled": true
-        },
-        {
-          "type": "VariableChanged",
-          "condition": "TSRoom",
-          "id": "",
-          "value": "print(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
-          "class": "debug",
           "enabled": true
         },
         {
@@ -104,17 +97,26 @@
         },
         {
           "type": "VariableChanged",
-          "condition": "TSRoom",
-          "id": "",
-          "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;",
+          "condition": "TSTank,TSTankCond",
+          "id": "checkAass",
+          "value": "send(\"checkAssist\")",
           "class": "",
           "enabled": true
         },
         {
           "type": "VariableChanged",
-          "condition": "TSTank,TSTankCond",
-          "id": "checkAass",
-          "value": "send(\"checkAssist\")",
+          "condition": "TSRoom",
+          "id": "",
+          "value": "\n\tprint(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
+          "class": "debug",
+          "enabled": true,
+          "script": null
+        },
+        {
+          "type": "VariableChanged",
+          "condition": "TSRoom",
+          "id": "",
+          "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)",
           "class": "",
           "enabled": true
         }
@@ -134,7 +136,6 @@
       ]
     ]
   ],
-  "variables": [],
   "triggers": [
     {
       "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto.",
@@ -143,7 +144,10 @@
       "regex": true,
       "is_script": false,
       "class": "",
-      "enabled": true
+      "enabled": true,
+      "script": [
+        "initialize"
+      ]
     },
     {
       "pattern": "Ogni modifica e novita' per immortali",
@@ -161,7 +165,10 @@
       "regex": false,
       "is_script": false,
       "class": "",
-      "enabled": true
+      "enabled": true,
+      "script": [
+        "preinit"
+      ]
     },
     {
       "pattern": "Sei a sedere! Non puoi farlo!|Non sarebbe meglio che ti alzassi prima?",
@@ -291,7 +298,10 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "soloSettings"
+      ]
     },
     {
       "pattern": "Sei entrat(o|a) a far parte del gruppo di",
@@ -381,7 +391,10 @@
       "is_script": false,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "sayStatus Non c'e' spazio per entrare li'!"
+      ]
     },
     {
       "pattern": "^(.+) (va|vola) verso",
@@ -494,9 +507,9 @@
       "is_prompt": false
     },
     {
-      "pattern": "^Ricevi (\\d+) [Ss]igilli (?:del |dell'|della )?(\\w+)\\.$",
+      "pattern": "^Ricevi (\\d+) [Ss]igilli (?:del |dell' ?|della )?(\\w+)",
       "id": "",
-      "value": "const tipo = match[2]\nconst quantita = Number(match[1])\nswitch (tipo) {\n  case 'Divini':\n    this.TSSigDivini = Number(this.TSSigDivini)+quantita;\n    this.stat(\"Divini\", quantita)\n    if (!this._stat_pqsess) this._stat_pqsess=0;\n    this._stat_pqsess+=quantita;\n    break;\n  case 'terra':\n    this.TSSigTerra = Number(this.TSSigTerra)+quantita;\n    this.stat(\"Terra\", quantita)\n    break;\n  case 'aria':\n    this.TSSigAria = Number(this.TSSigAria)+quantita;\n    this.stat(\"Aria\", quantita)\n    break;\n  case 'acqua':\n    this.TSSigAcqua = Number(this.TSSigAcqua)+quantita;\n    this.stat(\"Acqua\", quantita)\n    break;\n  case 'fuoco':\n    this.TSSigFuoco = Number(this.TSSigFuoco)+quantita;\n    this.stat(\"Fuoco\", quantita)\n    break;\n}",
+      "value": "const tipo = match[2].toLowerCase()\nconst quantita = Number(match[1])\nswitch (tipo) {\n  case 'divini':\n    this.TSSigDivini = Number(this.TSSigDivini)+quantita;\n    this.stat(\"Divini\", quantita)\n    if (!this._stat_pqsess) this._stat_pqsess=0;\n    this._stat_pqsess+=quantita;\n    break;\n  case 'terra':\n    this.TSSigTerra = Number(this.TSSigTerra)+quantita;\n    this.stat(\"Terra\", quantita)\n    break;\n  case 'aria':\n    this.TSSigAria = Number(this.TSSigAria)+quantita;\n    this.stat(\"Aria\", quantita)\n    break;\n  case 'acqua':\n    this.TSSigAcqua = Number(this.TSSigAcqua)+quantita;\n    this.stat(\"Acqua\", quantita)\n    break;\n  case 'fuoco':\n    this.TSSigFuoco = Number(this.TSSigFuoco)+quantita;\n    this.stat(\"Fuoco\", quantita)\n    break;\n}",
       "regex": true,
       "is_script": true,
       "class": "",
@@ -761,7 +774,11 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "selfsanc off",
+        "autosanc off"
+      ]
     },
     {
       "pattern": "^Ti allontani dalla tastiera",
@@ -774,9 +791,9 @@
       "is_prompt": false
     },
     {
-      "pattern": "^Ahi ahi, non puoi andare da quella parte...",
+      "pattern": "^Ahi ahi, non puoi andare da quella parte|^.+ non si apre\\.|^Hai fallito a forzare la serratura\\.",
       "id": "",
-      "value": "mapper.failWalk(\"Percorso fallito. Direzione sbagliata.\")",
+      "value": "mapper.failWalk(\"Percorso fallito.\")",
       "regex": false,
       "is_script": true,
       "class": "mapper",
@@ -786,12 +803,72 @@
     {
       "pattern": "^Fuggi a tutta velocita'\\.|^Con abilita' ti ritiri dalla battaglia\\.",
       "id": "",
-      "value": "",
+      "value": "this.autoassist = false",
       "regex": false,
       "is_script": true,
       "class": "stab",
       "enabled": true,
       "is_prompt": true
+    },
+    {
+      "pattern": "^\\[Dhethor il questor\\] dice 'Cerca nei paraggi di (.*?)\\.",
+      "id": "",
+      "value": "if (this.questorPg && this.TSPersonaggio &&\n   this.questorPg.toLowerCase() == this.TSPersonaggio.toLowerCase()) {\n  print(\"Room quest: \" + $1)\n  let res = mapper.searchRoomsByNameAndDesc($1)\n  res = res.filter(r => r.name === $1)\n  this.searchRooms = () => res\n  send(\"ricercaPrecedente\")\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "^Una (verga) carica di potere levita ad un palmo da terra\\.|^Una (spada) dalla lama formata da fiamme bianche giace qui\\.|^Una (mappa) arrotolata giace qui nella polvere\\.|^Una (bilancia) in equilibrio precario e' posata qui\\.|^Un'(ascia) con incisioni di draghi sulla lama e' piantata in terra\\.|^Un (ramo) d'alloro e' piantato a terra qui\\.|^un (medaglione) sacro ai cinque Dei creatori del mondo giace qui\\.|^Un (elmo) fatto di puro cristallo e' posato qui\\.|^Un (corno) da caccia in argento e' posato qui\\.|^Questa (pietra) e' tutto cio' che rimane della citta' di Lamwothor\\.|^Due (fedi) in oro sono qui posate su un cuscino\\.|^Un'antica moneta d'oro ti attira, ma hai un cattivo presentimento\\.",
+      "id": "",
+      "value": "let obj = null;\nfor (let i = 1; i<12; i++) {\n\tif (match[i]) {\n    \tobj = match[i]\n      \tbreak\n    }\n}\n\nobj = obj || \"doblone\"\nsend(\"get \"+obj)\nmapper.cancelWalk()\nthis.questComplete=true\nsend(\"vai dhethor\")",
+      "regex": true,
+      "is_script": true,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "^Dhethor, il questor, e' qui in attesa di volontari",
+      "id": "",
+      "value": "if (this.questComplete) {\n\tthis.questComplete = false\n\tsend(\"quest complete\")\n}",
+      "regex": false,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "^\\[Dhethor il questor\\] dice 'e chiedono a te, (.+?), di recuperare",
+      "id": "",
+      "value": "this.questorPg = $1",
+      "regex": true,
+      "is_script": true,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "^\\[Dhethor il questor\\] dice 'Vai a riposarti un po'",
+      "id": "",
+      "value": "quest time",
+      "regex": true,
+      "is_script": false,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "^Senti una leggera vibrazione e il mondo intorno a te cambia",
+      "id": "",
+      "value": "look",
+      "regex": false,
+      "is_script": false,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
     }
   ],
   "aliases": [
@@ -1774,7 +1851,7 @@
     {
       "pattern": "calcoloPerHour",
       "id": "",
-      "value": "function addMinutes(date, minutes) {\n    return new Date(date.getTime() + minutes*60000);\n}\nlet sumLista = (lista) => {\n  let ret = {\n    \"ph\":0,\n    \"p5m\":0,\n    \"p15m\":0,\n    \"p1h\":0\n  }\n  const _1h = addMinutes(new Date(), -60);\n  const _15m = addMinutes(new Date(), -15);\n  const _5m = addMinutes(new Date(), -5);\n  lista.forEach((value,key) => {\n    value = Number(value)\n    if (key > _1h) {\n      ret.p1h += value\n    }\n    if (key > _15m) {\n      ret.p15m += value\n    }\n    if (key > _5m) {\n      ret.p5m += value\n    }\n  });\n  ret.ph = (0.42*ret.p5m*12 + 0.33*ret.p15m*4 + 0.25*ret.p1h);\n  //print(JSON.stringify(ret));\n  return ret;\n}\n\nif (this.listaDivini && this.listaDivini.has) {\n  const ret = sumLista(this.listaDivini)\n  this._stat_pqh = Math.ceil(ret.ph);\n  this._stat_pq5m = ret.p5m;\n  this._stat_pq15m = ret.p15m;\n  this._stat_pq1h = ret.p1h;\n}\n\nif (this.listaXP && this.listaXP.has) {\n  const ret = sumLista(this.listaXP)\n  this._stat_xph = Math.ceil(ret.ph);\n  this._stat_xp5m = ret.p5m;\n  this._stat_xp15m = ret.p15m;\n  this._stat_xp1h = ret.p1h;\n}\n",
+      "value": "function addMinutes(date, minutes) {\n    return new Date(date.getTime() + minutes*60000);\n}\nlet sumLista = (lista) => {\n  let ret = {\n    \"ph\":0,\n    \"p5m\":0,\n    \"p15m\":0,\n    \"p1h\":0\n  }\n  const _1h = addMinutes(new Date(), -60);\n  const _15m = addMinutes(new Date(), -15);\n  const _5m = addMinutes(new Date(), -5);\n  lista.forEach((value,key) => {\n    value = Number(value)\n    if (key > _1h) {\n      ret.p1h += value\n    }\n    if (key > _15m) {\n      ret.p15m += value\n    }\n    if (key > _5m) {\n      ret.p5m += value\n    }\n  });\n  ret.ph = (0.42*ret.p5m*12 + 0.33*ret.p15m*4 + 0.25*ret.p1h);\n  return ret;\n}\n\nif (this.listaDivini && this.listaDivini.has) {\n  const ret = sumLista(this.listaDivini)\n  this._stat_pqh = Math.ceil(ret.ph);\n  this._stat_pq5m = ret.p5m;\n  this._stat_pq15m = ret.p15m;\n  this._stat_pq1h = ret.p1h;\n}\n\nif (this.listaXP && this.listaXP.has) {\n  const ret = sumLista(this.listaXP)\n  this._stat_xph = Math.ceil(ret.ph);\n  this._stat_xp5m = ret.p5m;\n  this._stat_xp15m = ret.p15m;\n  this._stat_xp1h = ret.p1h;\n}\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -2124,7 +2201,7 @@
     {
       "pattern": "vai",
       "id": "",
-      "value": "if (!isNaN($1))\n  mapper.walkToId($1);\nelse\n  mapper.walkToRoomShortName($1);",
+      "value": "console.log(\"vai \" + $1)\nif ($1 && !isNaN($1)) {\n  mapper.cancelWalk()\n  mapper.walkToId($1);\n  this.walkingToId = $1\n}\nelse if (!$1 && this.searchRooms) {\n  if (typeof this.searchRooms !=\"function\" || !this.searchRooms().length) {\n  \tprint(\"Non c'e' nessuna altra room del 'cerca' da visitare.\")\n  \tthis.searchRooms = null;\n    return;\n  }\n  let rNext = this.searchRooms()[0]\n  if (rNext.id == mapper.current?.id) {\n  \t  this.searchRooms().splice(0,1)\n      rNext = this.searchRooms()[0]\n  }\n  if (rNext) {\n    print(\"Continuo alla prossima room dell'ultimo cerca: '\"+rNext.name+\"'.\")\n    this.searchRooms().splice(0,1)\n    send(\"vai \"+rNext.id)\n  }\n}\nelse if (!!$1) {\n  mapper.walkToRoomShortName($1);\n}",
       "regex": false,
       "is_script": true,
       "class": "mapper",
@@ -2174,7 +2251,7 @@
     {
       "pattern": "cerca",
       "id": "",
-      "value": "mapper.search($1)",
+      "value": "if ($1) {\n  \tconst res = mapper.search($1)\n\tthis.searchRooms = () => res\n} else if (this.searchRooms) {\n  send(\"ricercaPrecedente\")\n} else {\n  print(\"Si, ok, cerca, ma quale stanza? Non hai ancora eseguito nessuna ricerca precedente da mostrare.\")\n}",
       "regex": false,
       "is_script": true,
       "class": "mapper",
@@ -2198,6 +2275,66 @@
       "regex": false,
       "is_script": true,
       "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "qr",
+      "id": "",
+      "value": "quest request",
+      "regex": false,
+      "is_script": false,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "qc",
+      "id": "",
+      "value": "quest complete",
+      "regex": false,
+      "is_script": false,
+      "class": "questor",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "ricercaPrecedente",
+      "id": "",
+      "value": "if (this.searchRooms) for (let r of this.searchRooms())\n{\n  let rid = r.id;\n  let zname = mapper.getRoomZone(r.id).name\n  let rnd = Math.floor(Math.random()*10000)\n  let line = `<span><a id=\"walk${rnd}\" class=\"underline clickable\" title=\"Vai a room ${r.id}\"><span style=\"color:yellow\">${r.id}</span></a> <span style=\"color:white\">${r.name}</span> <span style=\"color:gray\">(${zname})</span></span>`\n  print(line)\n  setTimeout(() => {\n    const link = $(\"#walk\"+rnd)\n    link.click(()=>{\n    \tprint(\"Vado a room \"+rid)\n    \tmapper.walkToId(rid)\n    })\n   }, 0)\n}",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "onroomenter",
+      "id": "",
+      "value": "const room = mapper.current\n\n//if (room) print(room.id + \"/\" + room.vnum)\nif (room && this.searchRooms && this.walkingToId == room.id) {\n\tvar rooms = this.searchRooms()\n    let removeIndex = rooms.findIndex(r => r.id == room.id)\n    if (removeIndex>-1) {\n      rooms.splice(removeIndex, 1)\n      if (rooms.length) {\n         this.searchRooms = () => rooms;\n      } else {\n      \t this.searchRooms = null;\n      }\n    }\n}\n\n\nif (room && this.returnRoom) {\n  let backId = this.returnRoom;\n  this.returnRoom = null;\n  \n  const exdirs =    ['n','e','s','w','u','d'];\n  //const exdirsRev = ['s','w','n','e','d','u'];\n  \n  for (let i=0; i<exdirs.length;i++) {\n    let dir = exdirs[i]\n  \tif (room.exits[dir] && room.exits[dir].to_room == backId) {\n   \t  send(exdirs[i])\n      if (this.stabTarget) {\n        send(\"backstab \"+ this.stabTarget)\n      \tthis.stabTarget = null;\n      }\n      return;\n    }\n  }\n}\n",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "restab",
+      "id": "",
+      "value": "if (this.mobKey==\"*\") {\n\tprint(\"Restab solo in combat\")\n  return;\n}\nthis.returnRoom = mapper.roomId\nif (this.TSPosizione == \"Seduto\") {\n\tsend(\"stand\")\n}\nthis.stabTarget = this.mobKey\nsend(\"flee\")",
+      "regex": false,
+      "is_script": true,
+      "class": "thief",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "rs",
+      "id": "",
+      "value": "restab",
+      "regex": false,
+      "is_script": false,
+      "class": "thief",
       "enabled": true,
       "is_prompt": false
     }

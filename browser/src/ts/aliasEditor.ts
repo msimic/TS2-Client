@@ -1,13 +1,20 @@
 import { AliasManager } from "./aliasManager";
-import { TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
+import { EventHook } from "./event";
+import { copyData, TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
+export const EvtCopyAliasToBase = new EventHook<copyData>()
 
 export class AliasEditor extends TrigAlEditBase {
-    constructor(private aliasManager: AliasManager, title?:string) {
-        super(title || "Alias");
+    constructor(private aliasManager: AliasManager,  isBase:boolean, private title?:string) {
+        super(title || "Alias", isBase);
         aliasManager.changed.handle(()=>{
             super.refresh()
         })
         this.$isPromptCheckbox.parent().hide();
+    }
+
+    protected copyToOther(ind: number): void {
+        const item = this.getItem(ind)
+        EvtCopyAliasToBase.fire({item: item, source: this.title, isBase: this.isBase})
     }
 
     protected defaultPattern: string = null;
