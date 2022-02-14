@@ -279,6 +279,7 @@ export class CommandInput {
     }
 
     private inputChange(): void {
+        return;
         console.log("key")
         let input = this.$cmdInput;
         (input[0] as HTMLElement).style.height = "0";

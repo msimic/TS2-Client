@@ -7,7 +7,7 @@ export class OutputWin extends OutWinBase {
     private outer:JQuery;
     clearWindow(owner: string) {
         this.cls();
-        if (!this.debugScripts) this.append(
+        if (this.debugScripts) this.append(
             "<span style=\"color:orange\">CLS:" /*+ owner + ": "*/
             + Util.rawToHtml(owner)
             + "<br>"

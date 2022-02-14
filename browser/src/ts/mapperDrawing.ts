@@ -186,13 +186,20 @@ export class MapperDrawing {
         const sW = $(this.canvas).width();
         const sH = $(this.canvas).height();
         if (sW != pw || sH != ph) {
+            console.log("setting size jq")
             $(this.canvas).width("unset");
             $(this.canvas).height("unset");
             $(this.canvas).width(pw);
             $(this.canvas).height(ph);
         }
-        if (this.canvas.height != ph*2) this.canvas.height = ph*2;
-        if (this.canvas.width != pw*2) this.canvas.width = pw*2;
+        if (this.canvas.height != ph*2) {
+            this.canvas.height = ph*2;
+            console.log("setting he")
+        }
+        if (this.canvas.width != pw*2) {
+            this.canvas.width = pw*2;
+            console.log("setting size wi")
+        }
     }
 
     setScale(scale:number) {
@@ -475,7 +482,7 @@ export class MapperDrawing {
 
         try {
             if (this.canvas && this.canvas.width) {
-                this.setSize();
+                //this.setSize();
                 this.draw(this.canvas, ctx, false, null)
             }
         } catch (ex) {

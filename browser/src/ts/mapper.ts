@@ -1053,6 +1053,7 @@ export class Mapper {
             EvtScriptEmitPrint.fire( { owner: "Mapper", message: this.walkQueue.join(",")})
         }*/
         this.walkQueue = []
+        this.manualSteps = [];
         this.currentWalk = null;
         return ret;
     }
@@ -1143,11 +1144,13 @@ export class Mapper {
                 return;
             }
             const lastStepDir = this.currentWalk.steps[this.currentWalk.steps.length-1].direction;
-            console.log("ricalcolo " + stepVnum + " - " + this.currentWalk.end.exits[lastStepDir].to_room)
+            const endRoom = this.currentWalk.end;
+            const nextId = endRoom.exits[lastStepDir].to_room
+            console.log("ricalcolo " + stepVnum + " - " + nextId)
             this.recalculating = true;
             this.failWalk("");
-            this.walkToId(this.currentWalk.end.exits[lastStepDir].to_room);
-            EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${this.currentWalk.end.name}`})
+            EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${nextId}`})
+            this.walkToId(nextId);
             //this.failWalk( `Percorso fallito. Sei in ${vnum} ma il percorso aspettava ${stepVnum}`)
             return;
         }
@@ -1181,6 +1184,7 @@ export class Mapper {
     }
 
     safeWalk(safeWalk:SafeWalk) {
+        
         if (this.currentWalk != safeWalk) {
             this.failWalk("");
             this.currentWalk = safeWalk
@@ -1190,7 +1194,8 @@ export class Mapper {
             this.walkQueue = []
         }
         const room = this.currentWalk.steps[this.currentWalk.index||0].room;
-        if (room.id == this.roomId || room.vnum == this.roomVnum) {
+        if ((this.current && (room.id == this.current.id || room.vnum == this.current.vnum)) ||
+            (this.virtualCurrent && (room.id == this.virtualCurrent.id || room.vnum == this.virtualCurrent.vnum))) {
             this.acknowledgeStep(room.vnum);
         } else {
             // resync

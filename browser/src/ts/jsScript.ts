@@ -53,7 +53,11 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
 
 
         setInterval(function () {
+            const oldKeys = new Map<string,boolean>(Object.keys(self._oldValues).map(v => [v ,true]));
             for (var propName in self) {
+                
+                oldKeys.delete(propName)
+
                 var propValue = self[propName];
                 if (typeof (propValue) != 'function') {
 
@@ -67,6 +71,13 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
 
                     }
 
+                }
+            }
+            for (const key in oldKeys.keys()) {
+                var oldValue = self._oldValues ? self._oldValues[key] : undefined;
+                if (oldValue) {
+                    onWatch({ obj: self, propName: key, oldValue: oldValue, newValue: undefined });
+                    self._oldValues[key] = undefined;
                 }
             }
         }, 30);
