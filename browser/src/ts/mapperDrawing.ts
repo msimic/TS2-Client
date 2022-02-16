@@ -125,7 +125,10 @@ export class MapperDrawing {
         if (room) {
             this.level = room.z;
             if (room.zone_id && (prevZone != room.zone_id || this.rooms.length <= 1)) {
+                console.log("map drawing changing zone")
                 this.rooms = this.mapper.getZoneRooms(this.active.zone_id)
+                this.$drawCache = []
+                this.$wallsCache = []
             }
             else if (!room.zone_id) {
                 this.rooms = [this.active];
@@ -590,7 +593,9 @@ export class MapperDrawing {
         const x = rx*2;
         const y= ry*2;
 
-        const rows = !this.active || !this.mapper.zoneRooms.get(this.active.zone_id) ? null : this.mapper.zoneRooms.get(this.active.zone_id).filter(room => {
+        let zoneId = this.active?.zone_id || this.rooms[0]?.zone_id
+
+        const rows = !zoneId || !this.mapper.zoneRooms.get(zoneId) ? null : this.mapper.zoneRooms.get(zoneId).filter(room => {
             if (room.z != this.level) return false;
             let rRect = this.roomDrawRect(room, this.canvas);
             return this.PointInRect(x,y,rRect.x,rRect.x2, rRect.y, rRect.y2)

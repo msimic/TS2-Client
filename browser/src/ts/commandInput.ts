@@ -278,13 +278,23 @@ export class CommandInput {
         return false;
     }
 
-    private inputChange(): void {
-        return;
-        console.log("key")
+    private lastVal = "";
+    private inputChange(): number {
         let input = this.$cmdInput;
-        (input[0] as HTMLElement).style.height = "0";
+        const newVal = this.$cmdInput.val()||""
+        if (this.lastVal.length > newVal.length) {
+            (input[0] as HTMLElement).style.height = "0";
+        } 
+        this.lastVal = newVal;
         const nh = input[0].scrollHeight;
-        (input[0] as HTMLElement).style.height = nh + "px";
+        setTimeout(()=>{
+            const style = (input[0] as HTMLElement).style
+            if (style.height != nh + "px") {
+                console.log("changing command input height")
+                style.height = nh + "px"
+            }
+        },0);
+        return nh;
     }
 
     private saveHistory(): void {

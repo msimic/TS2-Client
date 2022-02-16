@@ -364,12 +364,17 @@ export class Client {
         });
 
         // JsScript events
-        EvtScriptEmitCmd.handle((data:{owner:string, message:string}) => {
+        EvtScriptEmitCmd.handle((data:{owner:string, message:string, silent:boolean}) => {
             this.outputWin.handleScriptSendCommand(data.owner, data.message);
             const lines = linesToArray(data.message)
             //console.log(lines)
-            for (const line of lines) {
-                this.commandInput.sendCmd(line.trim(), true, true);    
+            try {
+                this.serverEcho = data.silent;
+                for (const line of lines) {
+                    this.commandInput.sendCmd(line.trim(), true, true);    
+                }
+            } finally {
+                this.serverEcho = false;
             }
             //this.socket.sendCmd(data);
         });

@@ -256,6 +256,15 @@ export class Mapper {
     loadLastPosition() {
         this.roomVnum = parseInt(this.scripting.getVariableValue(this.vnumVariable))
         this.setRoomByVNum(this.roomVnum)
+        if (!this.current) {
+            const name = this.scripting.getVariableValue(this.roomNameVariable)
+            const desc = this.scripting.getVariableValue(this.roomDescVariable)
+            const candidates = this.searchRoomsByNameAndDesc(name, desc)
+            if (candidates && candidates.length) {
+                this.setRoomById(candidates[0].id)
+            }
+        }
+        return !!this.current
     }
 
     private _useItalian: boolean = true;
@@ -284,7 +293,7 @@ export class Mapper {
         if (IsDirectionalCommand(command, this.useItalian)) {
             if (this.acknowledgingWalkStep) 
             {
-                this.acknowledgingWalkStep = false;
+                //this.acknowledgingWalkStep = false;
                 return [command];
             }
             const dir = this.parseDirectionalCommand(command);
@@ -432,6 +441,7 @@ export class Mapper {
     public idToZone: Map<number, Zone> = new Map<number, Zone>(); 
     public roomIdToZoneId: Map<number, number> = new Map<number, number>(); 
     private _zoneRooms: Map<number, Room[]> = new Map<number, Room[]>(); 
+    private _zoneRoomsByLevel: Map<number, Map<number, Room[]>> = new Map<number, Map<number, Room[]>>(); 
     public get zoneRooms(): Map<number, Room[]> {
         return this._zoneRooms;
     }
@@ -539,11 +549,24 @@ export class Mapper {
                     //this.roomName = null;
                     //this.roomDesc = null;
                     const newVnum = (<any>d.value).newValue;
-                    this.virtualCurrent = null;
-                    console.log("got vnum " + newVnum)
+
                     setTimeout(() => {
+                        this.virtualCurrent = null;
+                        console.log("got vnum " + newVnum)
+
+                        if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
+                            console.log("discarding " + this.discardWalkStep)
+                            this.discardWalkStep = -1;
+                            this.acknowledgingWalkStep = false
+                            this.recalculating = false
+                            return;
+                        }
+    
+                        this.acknowledgingWalkStep = false
+
                         this.setRoomByVNum(parseInt(newVnum));
-                        this.acknowledgeStep(newVnum);                            
+                        this.acknowledgeStep(newVnum);
+                        if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
                     }, 0);
                 } 
                 else
@@ -555,7 +578,7 @@ export class Mapper {
                 else
                     this.activeExits = []
             } else if (d.event == ScripEventTypes.VariableChanged && d.condition == this.roomNameVariable) {
-                if (this.manualSteps.length) this.manualSteps.splice(0,1)
+                
                 //this.roomDesc = null
                 if (d.value) {
                     this.roomName = (<any>d.value).newValue as string;
@@ -651,6 +674,7 @@ export class Mapper {
         this.idToZone.clear();
         this.roomIdToZoneId.clear();
         this.zoneRooms.clear();
+        this._zoneRoomsByLevel.clear();
         this.currentWalk = null;
         this.current = null;
         this.manualSteps = [];
@@ -661,6 +685,7 @@ export class Mapper {
             if (zn.id) {
                 this.idToZone.set(zn.id, zn);
                 this.zoneRooms.set(zn.id, []);
+                this._zoneRoomsByLevel.set(zn.id, new Map<number, Room[]>());
             }
         }
 
@@ -672,6 +697,18 @@ export class Mapper {
                 const z = this.zoneRooms.get(rm.zone_id);
                 if (z) {
                     z.push(rm);
+
+                    const zrl = this._zoneRoomsByLevel.get(rm.zone_id);
+                    if (zrl) {
+                        let lv = zrl.get(rm.z)
+                        if (!lv) {
+                            zrl.set(rm.z, [])
+                        }
+                        lv = zrl.get(rm.z)
+                        if (lv) {
+                            lv.push(rm)
+                        }
+                    }
                 }
             }
             if (rm.vnum) this.vnumToRoom.set(rm.vnum, rm);
@@ -810,7 +847,9 @@ export class Mapper {
             else if (currentRoom) {
                 this.roomChanged.fire({id: currentRoom.id, vnum: currentRoom.vnum, room: currentRoom});
             } else {
-                this.zoneChanged.fire({ id: null, zone:null})
+                if (!this.loadLastPosition()) {
+                    this.zoneChanged.fire({ id: null, zone:null})
+                }
             }
             return mapDb;
         } finally {
@@ -882,8 +921,8 @@ export class Mapper {
         }
         if (old != this.current) {
             const lastStep = this.walkQueue.shift()
-            if (!this.current && lastStep && prev) {
-                const exitFromPrevious = prev.exits[lastStep.direction];
+            if (!this.current && lastStep && old) {
+                const exitFromPrevious = old.exits[lastStep.direction];
                 if (exitFromPrevious && exitFromPrevious.to_room) {
                     const backupRoom = this.idToRoom.get(exitFromPrevious.to_room);
                     if (backupRoom) {
@@ -891,6 +930,19 @@ export class Mapper {
                         this.roomVnum = backupRoom.vnum
                         this.current = backupRoom
                         console.log("resync for walkqueue to id " + this.roomId)
+                    }
+                }
+            }
+            const lastStepManual = this.manualSteps.shift()
+            if (!this.current && lastStepManual && old) {
+                const exitFromPrevious = old.exits[lastStepManual.dir];
+                if (exitFromPrevious && exitFromPrevious.to_room) {
+                    const backupRoom = this.idToRoom.get(exitFromPrevious.to_room);
+                    if (backupRoom) {
+                        this.roomId = backupRoom.id
+                        this.roomVnum = backupRoom.vnum
+                        this.current = backupRoom
+                        console.log("resync for manualQueue to id " + this.roomId)
                     }
                 }
             }
@@ -1044,8 +1096,16 @@ export class Mapper {
 
     public failWalk(reason:string):boolean {
         const ret = !!this.currentWalk
-        console.log("fail walk")
-        if (reason && reason.length && ret) EvtScriptEmitPrint.fire( { owner: "Mapper", message: reason})
+        console.log("fail walk " + ret + " '" + (reason||"") + "'")
+        if (this.virtualCurrent) {
+            this.current = this.virtualCurrent;
+            if (this.acknowledgingWalkStep) {
+                this.discardWalkStep = this.virtualCurrent.vnum;
+                console.log("about to discard " + this.discardWalkStep)
+            }
+        }
+        this.virtualCurrent = null;
+        if (reason && reason.length) EvtScriptEmitPrint.fire( { owner: "Mapper", message: reason})
         /*if (this.currentWalk) {
             EvtScriptEmitPrint.fire( { owner: "Mapper", message: JSON.stringify(this.currentWalk, null, 2)})
         }
@@ -1063,12 +1123,12 @@ export class Mapper {
             id = parseInt(id);
 
         const virtualCurrent = this.virtualCurrent || this.current
-        this.cancelWalk();
+
         if (!virtualCurrent) {
             this.failWalk("Il mapper non ha una room iniziale.")
             return;
         }
-
+        this.cancelWalk();
         console.log("walkto id " + id + " from vnum " + virtualCurrent.vnum)
         this.walkFromTo(virtualCurrent.id, id, virtualCurrent.id);
     }
@@ -1079,7 +1139,6 @@ export class Mapper {
         
         const virtualCurrent = this.virtualCurrent || this.current
     
-        this.cancelWalk();
         if (!virtualCurrent) {
             this.failWalk("Il mapper non ha una room iniziale.")
             return;
@@ -1091,7 +1150,7 @@ export class Mapper {
             this.failWalk("Non c'e' stanza con quel Vnum.")
             return;
         }
-
+        this.cancelWalk();
         console.log("walkto vnum " + vnum + " from vnum " + virtualCurrent.vnum)
         
         this.walkFromTo(virtualCurrent.id, destId, virtualCurrent.id);
@@ -1101,19 +1160,20 @@ export class Mapper {
         shname = shname.toLowerCase();
         const virtualCurrent = this.virtualCurrent || this.current
     
-        this.cancelWalk();
+
         if (!virtualCurrent) return;
         const destRM = this.shortNameToRoom.get(shname);
         if (!destRM) {
             this.failWalk("Non c'e' stanza con quella parola chiave.")
             return;
         }
+        this.cancelWalk();
         console.log("walkto shortname from " + virtualCurrent.vnum + " to vnum " + destRM.vnum)
         this.walkFromTo(virtualCurrent.id, destRM.id);
     }
 
     acknowledgingWalkStep = false
-
+    discardWalkStep = -1
     recalculating = false;
 
     acknowledgeStep(vnum:number) {
@@ -1124,6 +1184,7 @@ export class Mapper {
         if (typeof vnum == "string") {
             vnum = Number(vnum)
         }
+        const wasAcknowledging = this.acknowledgingWalkStep;
         this.acknowledgingWalkStep = false
 
         if (!this.currentWalk || !this.current)
@@ -1137,6 +1198,13 @@ export class Mapper {
             return;
         }
         let stepVnum = this.currentWalk.steps[this.currentWalk.index].room.vnum
+        if (wasAcknowledging && this.currentWalk.steps.length>0 && this.currentWalk.index>=0) {
+            if (this.currentWalk.steps[this.currentWalk.index].room.vnum == vnum) {
+                // extra step when changing walk to another
+                return;
+            }
+        }
+
         if (stepVnum &&
             stepVnum != vnum) {
             if (wasRecalculating) {
@@ -1177,9 +1245,9 @@ export class Mapper {
             }
             this.acknowledgingWalkStep = true
             const nr = this.getRoomById(step.room.exits[step.direction].to_room)
-            console.log("sending next dir for vnum " + nr.vnum)
+            console.log("sending next dir for vnum " + nr.vnum + " -> in " + (this.virtualCurrent?.vnum||this.current?.vnum) + ":" + step.direction )
             this.virtualCurrent = nr;
-            EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command})
+            EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command, silent: false})
         }
     }
 
@@ -1208,7 +1276,7 @@ export class Mapper {
         this.walkQueue = []
         for (const walkData of this.currentWalk.steps) {
             for (const walkCommand of walkData.commands) {
-                EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command})
+                EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command, silent: false})
                 if (walkCommand.type == WalkCommandType.Directional) {
                     this.walkQueue.push(walkData);
                 }
@@ -1339,6 +1407,12 @@ export class Mapper {
                 return ret > 0;
             })
             openTemplate = openCmds.map(v => v.trim() + (this.addDirectionToDoors ? (" " + Short2LongExit.get(dir)) : "")).join("\n")
+        } else if (unlock && unlockCommands.find(oc => param.indexOf(oc+" ")>=0) /*&& !walkQueue.some(wk => wk.type == WalkCommandType.DoorUnlock)*/) {
+            const openCmds = param.toLowerCase().split(",").filter(part => {
+                let ret:number = unlockCommands.find(oc => part.trim().indexOf(oc+" ")>=0) ? 1 : 0;
+                return ret > 0;
+            })
+            openTemplate = openCmds.map(v => v.trim() + (this.addDirectionToDoors && v.toLowerCase().indexOf(Short2LongExit.get(dir))==-1 ? (" " + Short2LongExit.get(dir)) : "")).join("\n")
         } else {
             openTemplate = `${this.openCommand} ${param}` + (this.addDirectionToDoors ? (" " + Short2LongExit.get(dir)) : "")
         }

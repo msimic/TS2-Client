@@ -9,7 +9,7 @@ import { TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
 import { ConfigIf, throttle } from "./util";
 
-export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string}>();
+export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string, silent:boolean}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
 export let EvtScriptEmitError = new EventHook<{owner:string, err:any, stack?:string}>();
 export let EvtScriptEmitCls = new EventHook<{owner:string, window?:string}>();
@@ -521,8 +521,8 @@ function makeScript(owner:string, text: string, argsSig: string,
         }
         return null;
     };
-    const send = function(cmd: string) {
-        EvtScriptEmitCmd.fire({owner: own, message: cmd.toString()});
+    const send = function(cmd: string, silent = false) {
+        EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
     const print = function(message: string, window?:string) {
         EvtScriptEmitPrint.fire({owner: own, message: message.toString(), window: window});

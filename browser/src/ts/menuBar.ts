@@ -162,7 +162,7 @@ export class MenuBar {
                 $((<any>event).args).click()
                 return;
             }
-            if ($((<any>event).args).find(".jqx-icon-arrow-right").length) return;
+            if ($((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).args).closest(".jqx-menu-popup").length==0) return;
             mnu.jqxMenu('closeItem',"connessione")
             mnu.jqxMenu('closeItem',"impostazioni")
             mnu.jqxMenu('closeItem',"scripting")

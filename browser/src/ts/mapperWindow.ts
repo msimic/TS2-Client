@@ -159,7 +159,7 @@ export class MapperWindow {
         const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
 
         $("#mapperMenubar").on('itemclick', (event: any) => {
-            if ($((<any>event).args).find(".jqx-icon-arrow-right").length)
+            if ($((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).target).closest(".jqx-menu-popup").length==0)
                 return;
             this.closeMenues(mnu);
         });
@@ -174,6 +174,7 @@ export class MapperWindow {
         $("#zonelist", this.$win).on("select", (ev:any) => {
             var selection = ev.args.item.value
             if (selection) {
+                (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
                 if (!this.mapper.loading)
                     this.mapper.setZoneById(parseInt(selection))
             }
@@ -327,7 +328,7 @@ export class MapperWindow {
     private attachMenuOption(name:string, element:Element, checkbox:Element) {
         $(element).click((event: JQueryEventObject) => {
             if (!event.target || (event.target.tagName != "LI" && event.target.tagName != "BUTTON")) return;
-            this.closeMenues($("#mapperMenubar",this.$win));
+            if ($((<any>event).target).closest(".jqx-menu-popup").length!=0) this.closeMenues($("#mapperMenubar",this.$win));
             (this.$contextMenu as any).jqxMenu('close')
             switch (name) {
                 case "reload":
