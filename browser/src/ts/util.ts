@@ -143,7 +143,7 @@ export function Acknowledge(ack:string, str:string) {
     if (val == 'true') return;
     messagebox("Informazione", str, () => {
         localStorage.setItem('ack_'+ack, "true");
-    }, "OK", "", false, [""], 500, null, false);
+    }, "OK", "", false, [""], 500, null, false, "");
 }
 
 export function downloadJsonToFile(json:any, filename:string) {
