@@ -489,6 +489,7 @@ body {
     font-size: medium;
     font-family: "Consolas", monospace;
     float: left;
+    height:20px;
 }
 
 .courier {

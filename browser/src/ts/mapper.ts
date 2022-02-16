@@ -251,7 +251,45 @@ export function IsDirectionalCommand(cmd:string, ita:boolean):boolean {
     return ret;
 }
 
+export interface Favorite {
+    roomId:number;
+    key:string;
+    color:string;
+};
+
 export class Mapper {
+    private favorites = new Map<number, Favorite>();
+
+    private saveFavorites() {
+        const fv = [...this.favorites.values()]
+        localStorage.setItem("mapper_favorites", JSON.stringify(fv))
+        if (this.db) this.loadDb(this.db)
+    }
+
+    public getFavorites():Favorite[] {
+        return [...this.favorites.values()]
+    }
+
+    public addFavorite(fv:Favorite) {
+        this.favorites.set(fv.roomId, fv);
+        this.saveFavorites();
+    }
+
+    public removeFavorite(id:number) {
+        this.favorites.delete(id);
+        const rm = this.getRoomById(id)
+        if (rm) rm.color = "rgb(255,255,255)"
+        this.saveFavorites();
+    }
+
+    private loadFavorites() {
+        this.favorites.clear()
+        const fv = JSON.parse(localStorage.getItem("mapper_favorites")) as Favorite[];
+        if (fv) for (const f of fv) {
+            this.favorites.set(f.roomId, f);
+        }
+    }
+
     scripting: JsScript;
     loadLastPosition() {
         this.roomVnum = parseInt(this.scripting.getVariableValue(this.vnumVariable))
@@ -266,7 +304,7 @@ export class Mapper {
         }
         return !!this.current
     }
-
+    
     private _useItalian: boolean = true;
     defaultDoorName: string = "porta";
     virtualCurrent: Room;
@@ -543,6 +581,7 @@ export class Mapper {
     }
 
     constructor() {
+        this.loadFavorites();
         EvtScriptEvent.handle(d => {
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.vnumVariable) {
                 if (d.value) {
@@ -679,6 +718,7 @@ export class Mapper {
         this.current = null;
         this.manualSteps = [];
         this.walkQueue = [];
+        this.loadFavorites();
         if (!this.db) return;
 
         for (const zn of this.db.zones) {
@@ -691,6 +731,15 @@ export class Mapper {
 
         for (const rm of this.db.rooms) {
             if (rm.id) {
+                if (this.favorites.has(rm.id)) {
+                    const f = this.favorites.get(rm.id)
+                    if (f.color) {
+                        rm.color = f.color
+                    }
+                    if (f.key) {
+                        rm.shortName = f.key
+                    }
+                }
                 this.idToRoom.set(rm.id, rm);
                 this.roomIdToZoneId.set(rm.id, rm.zone_id);
                 if (rm.shortName && rm.shortName.length) this.shortNameToRoom.set(rm.shortName.toLowerCase(), rm);

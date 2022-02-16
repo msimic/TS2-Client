@@ -1,4 +1,4 @@
-import { MapDatabase, Mapper, MapVersion, Room, Zone } from "./mapper";
+import { Favorite, MapDatabase, Mapper, MapVersion, Room, Zone } from "./mapper";
 import { Messagebox, MessageboxResult, messagebox, Button } from "./messagebox";
 import { isNumeric } from "jquery";
 import { WindowManager } from "./windowManager";
@@ -127,12 +127,22 @@ export class MapperWindow {
                             <li  class='custom' data-option-type="mapper" data-option-name="export">Esporta immagine</li>
                             </ul>
                         </li>
+                        <li id="mapperaltro" class='custom'>Altro
+                            <ul  class='custom'>
+                                <li id="favorites" class='custom'>Favoriti
+                                    <ul  class='custom' id="mapFavorites">
+                                        <li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>&lt;nesuno&gt;</li> 
+                                    </ul>
+                                </li>
+                                <li  class='custom' data-option-type="mapper" data-option-name="info">Informazioni</li>
+                            </ul>
+                        </li>
                     </ul>
                     <div id="mappertoolbar">
                         <button title="Livello inferiore" class="maptoolbarbutton" data-option-type="mapper" data-option-name="leveldown">&#9660;</button>
                         <span id="level">Lv. 0</span>
                         <button title="Livello superiore" class="maptoolbarbutton" data-option-type="mapper" data-option-name="levelup">&#9650;</button>
-                        <button title="Sincronizza mappa" class="maptoolbarbutton" data-option-type="mapper" data-option-name="sync">&#128269;</button>
+                        <!--<button title="Sincronizza mappa" class="maptoolbarbutton" data-option-type="mapper" data-option-name="sync">&#128269;</button>-->
                         <button title="Abbassa zoom (mouse scroll down)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomout">-</button>
                         <span id="zoom">Zoom 100%</span>
                         <button title="Ingrandisci (mouse scroll up)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomin">+</button></div>
@@ -145,8 +155,12 @@ export class MapperWindow {
             <div class="bottomrow"><span id="mapmessage"></span></div>
             <div id='mapperContextMenu' style="display:none">
                 <ul>
+                <li  class='custom' data-option-type="mapper" data-option-name="addfavorite">Aggiungi a favoriti</li>
+                <li  class='custom' data-option-type="mapper" data-option-name="removefavorite">Rimuovi da favoriti</li>
+                <li type='separator'></li>
                 <li  class='custom' data-option-type="mapper" data-option-name="vai">Vai</li>
                 <li  class='custom' data-option-type="mapper" data-option-name="set">Posiziona</li>
+                <li type='separator'></li>
                 <li  class='custom' data-option-type="mapper" data-option-name="edit">Modifica</li>
                 </ul>
             </div>
@@ -159,7 +173,7 @@ export class MapperWindow {
         const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
 
         $("#mapperMenubar").on('itemclick', (event: any) => {
-            if ($((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).target).closest(".jqx-menu-popup").length==0)
+            if ($((<any>event).args).find(".jqx-icon-arrow-left").length || $((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).target).closest(".jqx-menu-popup").length==0)
                 return;
             this.closeMenues(mnu);
         });
@@ -167,6 +181,7 @@ export class MapperWindow {
         this.$bottomMessage = $("#mapmessage", this.$win);
         this.$zoneList = $("#zonelist", this.$win);
         <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
+        mnu.jqxMenu('setItemOpenDirection', 'favorites', 'left', 'up');
         this.$zoom = $("#zoom", this.$win);
         this.$level = $("#level", this.$win);
      
@@ -194,7 +209,9 @@ export class MapperWindow {
         
         var w = (<any>this.$win).jqxWindow({width: 450, height: 290, showCollapseButton: true, isModal: false});
         this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu"))).jqxMenu({ width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
-           
+        
+        this.refreshFavorites();
+
         var self = this;
         w.on('open', function (evt:any) {
             if (self.drawing) {
@@ -218,7 +235,7 @@ export class MapperWindow {
             } else {
                 self.load.bind(self)();
             }
-            
+            self.refreshFavorites();
         });
 
         w.on('close', function (evt:any) {
@@ -269,6 +286,7 @@ export class MapperWindow {
     private closeMenues(mnu: any) {
         mnu.jqxMenu('closeItem', "dati");
         mnu.jqxMenu('closeItem', "azioni");
+        mnu.jqxMenu('closeItem', "mapperaltro");
     }
 
     getFontSize():number {
@@ -334,6 +352,32 @@ export class MapperWindow {
                 case "reload":
                     this.load();
                     break;
+                case "info":
+                    Messagebox.Show("Informazioni", 
+`L'Autore delle mappe "Traxter" ed i suoi contributori, cedono in esclusiva ed in
+via definitiva a TemporaSanguinis.it, che accetta, tutti i diritti (inclusivi ed
+esclusivi) di pubblicazione e utilizzazione economica, a mezzo stampa o con ogni
+altro tipo di supporto e comunque in ogni forma e modo, originale e/o derivato,
+vantati dallo stesso sull' Opera. In particolare, la cessione comprende in via
+esemplificativa e non esclusiva:
+
+  a) il diritto del Cessionario di pubblicare l'Opera in qualsiasi forma e modo,
+     compreso Internet;
+  b) il diritto di tradurre l'Opera in qualsiasi lingua diversa dall'Italiano;
+  c) il diritto di adattare ed elaborare l'Opera, o parte della stessa, per la
+     pubblicazione a titolo esemplificativo e non esclusivo a mezzo, stampa, via
+     filo e/o satellite, per l'utilizzazione su supporti sonori e/o strumenti
+     audiovisivi di ogni tipo, su supporti elettronici, magnetici, o su strumenti
+     analoghi o similari a quelli sopra indicati, nonché all'interno di banche dati,
+     o per mezzo di Internet, ed ancora per finalità meramente pubblicitarie o di
+     promozione sia dell'Opera che di sue singole parti;
+ d) diritti di diffondere l'Opera, distribuirla e commercializzarla con i mezzi di
+    cui alle lettere precedenti, o con ogni altro mezzo disponibile;
+ e) la facoltà di trasferire a terzi i diritti di cui alle lettere precedenti.
+
+Nota: Per eventuali errori o richieste rivolgetevi
+nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bidi: embed;font-family: monospace;white-space: pre;")
+                    break;
                 case "reloadweb":
                     this.loadSite();
                     break;
@@ -377,10 +421,54 @@ export class MapperWindow {
                 case "edit":
                     if (this.drawing.contextRoom) this.editRoom((this.drawing.contextRoom))
                     break;
+                case "addfavorite":
+                    if (this.drawing.contextRoom) this.addFavorite((this.drawing.contextRoom))
+                    break;
+                case "removefavorite":
+                    if (this.drawing.contextRoom) this.removeFavorite((this.drawing.contextRoom))
+                    break;
                 default:
                     break;
             }
         });
+    }
+    refreshFavorites() {
+        const fv = this.mapper.getFavorites()
+        console.log("refresh favorites " + (fv||[]).length)
+        this.addFavoritesToMenu(fv)
+    }
+
+    addFavoritesToMenu(favs: Favorite[]) {
+        $("#mapFavorites").empty();
+        if (favs.length == 0) {
+            $("#mapFavorites").append("<li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>&lt;nessuno&gt;</li>");
+            return;
+        }
+        for (const fv of favs) {
+            let li = $("<li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>" + fv.key + "</li>");
+            let self = this;
+            li.on("click", () => {
+                this.closeMenues($("#mapperMenubar",this.$win))
+                this.mapper.walkToId(fv.roomId)
+            });
+            $("#mapFavorites").append(li);
+        }
+    }
+
+    removeFavorite(r: Room) {
+        this.mapper.removeFavorite(r.id);
+        this.refreshFavorites()
+    }
+    async addFavorite(r: Room) {
+        const fvi = await Messagebox.ShowMultiInput("Crea favorito", ["Nome (per vai, opzionale)", "Colore (opzionale)"], [r.shortName, r.color])
+        if (fvi.button != Button.Ok) return;
+
+        this.mapper.addFavorite({
+            roomId: r.id,
+            key: fvi.results[0]||r.name,
+            color: fvi.results[1]
+        });
+        this.refreshFavorites()
     }
     exportImage() {
         const zone = this.mapper.getRoomZone(this.mapper.roomId)

@@ -14,38 +14,38 @@ export interface MessageboxResult {
 }
 
 export class Messagebox {
-    public static async Show(title: string, text: string) {
-        return await messagebox(title, text, null, "OK", "", false, [""], null, null, false);
+    public static async Show(title: string, text: string, labelStyle:string = "") {
+        return await messagebox(title, text, null, "OK", "", false, [""], null, null, false, labelStyle);
     }
     public static async ShowWithButtons(title: string, text: string, okButton:string, cancelButton:string): Promise<MessageboxResult> {
-        return await messagebox(title, text, null, okButton, cancelButton, false, [""], null, null, false);
+        return await messagebox(title, text, null, okButton, cancelButton, false, [""], null, null, false, "");
     }
     public static async Question(text: string): Promise<MessageboxResult> {
-        return await messagebox("Domanda", text, null, "Si", "No", false, [""], null, null, false);
+        return await messagebox("Domanda", text, null, "Si", "No", false, [""], null, null, false, "");
     }
     public static async ShowWithWithCallback(title: string, text: string, callback:(val:string)=>void): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, "OK", "", false, [""], null, null, false);
+        return await messagebox(title, text, callback, "OK", "", false, [""], null, null, false, "");
     }
     public static async ShowWithWithButtonsAndCallback(title: string, text: string, okButton:string, cancelButton:string, callback:(val:string)=>void): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], null, null, false);
+        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], null, null, false, "");
     }
     public static async ShowFull(title: string, text: string, okButton:string, cancelButton:string, callback:(val:string)=>void, width:number, height:number): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], width, height, false);
+        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], width, height, false, "");
     }
     public static async ShowInputWithButtons(title: string, text: string, defaultText:string, okButton:string, cancelButton:string): Promise<MessageboxResult> {
-        return await messagebox(title, text, null, okButton, cancelButton, true, [defaultText], null, null, false);
+        return await messagebox(title, text, null, okButton, cancelButton, true, [defaultText], null, null, false, "");
     }
     public static async ShowInput(title: string, text: string, defaultText:string, multiline:boolean=false): Promise<MessageboxResult> {
-        let res = await messagebox(title||"Domanda", text, null, "OK", "Annulla", true, [defaultText], null, null, false, multiline);
+        let res = await messagebox(title||"Domanda", text, null, "OK", "Annulla", true, [defaultText], null, null, false, "", multiline);
         return res;
     }
     public static async ShowMultiInput(title: string, labels: string[], defaultValues:any[]): Promise<MessageboxResult> {
-        let res = await messagebox(title||"Domanda", labels.join('\n'), null, "OK", "Annulla", true, defaultValues, null, null, true);
+        let res = await messagebox(title||"Domanda", labels.join('\n'), null, "OK", "Annulla", true, defaultValues, null, null, true, "");
         return res;
     }
 }
 
-export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, multiline:boolean=false): Promise<MessageboxResult> {
+export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, labelStyle:string, multiline:boolean=false): Promise<MessageboxResult> {
 
     let resolveFunc:Function = null;
     let rejectFunc:Function = null;
@@ -163,7 +163,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         (<any>$win).jqxWindow("close");
     });
     $(titleText).text(title);
-    messageText.map((v,i) => v.html("<span style='margin:0;padding:0;'>" + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
+    messageText.map((v,i) => v.html(`<span style='${labelStyle?labelStyle+";":""}margin:0;padding:0;'>` + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
 
     (<any>$win).jqxWindow("open");
     (<any>$win).jqxWindow('bringToFront');
