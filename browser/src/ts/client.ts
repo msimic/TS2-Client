@@ -31,7 +31,7 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { Messagebox } from "./messagebox";
+import { Button, Messagebox } from "./messagebox";
 import { LayoutManager } from "./layoutManager";
 import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
@@ -121,18 +121,7 @@ export class Client {
         (<any>window)["Messagebox"] = Messagebox;
         this.aboutWin = new AboutWin();
         this.mapper = new Mapper();
-        setTimeout(()=>this.mapper.loadVersion().then(v => {
-            const version = v;
-            let vn = Math.random()
-            if (v.version != 0) {
-                vn = v.version
-            }
-            let prefix = ""
-            if ((<any>window).ipcRenderer) {
-                prefix = "https://temporasanguinis.it/client/"
-            }
-            return this.mapper.load(prefix + 'mapperData.json?v='+vn)
-        }), 2000);
+
         this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
         this.mapper.setScript(this.jsScript)
         profileManager.evtProfileChanged.handle(p=>{
@@ -189,6 +178,27 @@ export class Client {
         this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.jsScript);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
+
+        setTimeout(()=>this.mapper.loadVersion().then(async v => {
+            let vn = Math.random()
+            if (v.version != 0) {
+                vn = v.version
+            }
+            let prefix = ""
+            if ((<any>window).ipcRenderer) {
+                prefix = "https://temporasanguinis.it/client/"
+            }
+            let remVer:number;
+            if ((remVer = await this.profilesWin.checkNewTriggerVersion())) {
+                const r = await Messagebox.ShowWithButtons("Aggiornamento preimpostati", "C'e' una nuova versione dei trigger preimpostati.\nVuoi aggiornare ora?\n\nP.S. Se rispondi No, salterai la versione e dovrai aggiornare manualmente dal menu Scripting.", "Si", "No")
+                if (r.button == Button.Ok) {
+                    this.profilesWin.ImportBaseTriggers();
+                } else {
+                    this.baseConfig.set("version", remVer)
+                }
+            }
+            return this.mapper.load(prefix + 'mapperData.json?v='+vn)
+        }), 2000);
 
         // MenuBar events
         this.menuBar.EvtChangeDefaultColor.handle((data: [string, string]) => {

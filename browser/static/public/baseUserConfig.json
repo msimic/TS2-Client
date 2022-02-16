@@ -1,4 +1,5 @@
 {
+  "version":3,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,

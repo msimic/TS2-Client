@@ -223,6 +223,23 @@ export class ProfilesWindow {
         }
     }
 
+    public async checkNewTriggerVersion():Promise<number> {
+        let prefix = ""
+        if ((<any>window).ipcRenderer) {
+            prefix = "https://temporasanguinis.it/client/"
+        }
+        const code = await $.ajax(prefix + "baseUserConfig.json?rnd="+Math.random());
+    
+        let baseConfigS = localStorage.getItem("userConfig")
+        if (!baseConfigS) return 0;
+        let baseConfig = JSON.parse(baseConfigS)
+        if (!baseConfig || !baseConfig.triggers) return 0;
+        if (!code) return 0;
+        let baseConfigRemote = typeof code == "string" ? JSON.parse(code) : code;
+        if (baseConfigRemote && baseConfigRemote.version > (baseConfig.version||0)) return baseConfigRemote.version;
+        return 0;
+    }
+
     public async ImportBaseTriggers() {
         let prefix = ""
         if ((<any>window).ipcRenderer) {
