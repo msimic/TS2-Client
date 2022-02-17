@@ -252,7 +252,9 @@ export class ProfilesWindow {
             if (!this.manager.getCurrent()) {
                 config = this.manager.activeConfig
             }
-            config.ImportText(code);
+            
+            if (!config.ImportText(code)) return;
+
             baseConfig.evtConfigImport.fire({
                 owner: baseConfig,
                 data: baseConfig.cfgVals

@@ -118,6 +118,7 @@
     },
     "mac": {
       "icon": "src/icons/favicon-256x256.icns",
+      "category": "public.app-category.games",
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "win": {
@@ -127,6 +128,7 @@
     },
     "linux": {
       "icon": "src/icons/favicon-256x256.png",
+      "category": "Game",
       "target": [
         "deb",
         "rpm"

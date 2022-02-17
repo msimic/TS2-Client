@@ -1,5 +1,8 @@
 {
   "version":5,
+  "requiresClientMajor": 1,
+  "requiresClientMinor": 1,
+  "requiresClientRevision": 0,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,

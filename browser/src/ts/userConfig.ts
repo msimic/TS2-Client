@@ -1,6 +1,7 @@
 import { EventHook } from "./event";
-import { throttle } from "./util";
-
+import { denyClientVersion, throttle } from "./util";
+import { AppInfo } from './appInfo'
+import { Messagebox } from "./messagebox";
 
 export class UserConfig {
     name:string;
@@ -160,10 +161,18 @@ export class UserConfig {
         document.body.removeChild(inp);
     }
 
-    public ImportText(text: any) {
+
+
+    public ImportText(text: any):boolean {
         let vals = typeof text == "string" ? JSON.parse(text) : text;
+        let denyReason = "";
+        if ((denyReason = denyClientVersion(vals))) {
+            Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.`)
+            return false;
+        }
         this.cfgVals = vals;
         this.saveConfig()
         this.evtConfigImport.fire({data: vals, owner: this});
+        return true;
     }
 }

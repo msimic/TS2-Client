@@ -1,3 +1,4 @@
+import { AppInfo } from "./appInfo";
 import { EventHook } from "./event";
 import { messagebox } from "./messagebox";
 import { TrigAlItem } from "./trigAlEditBase";
@@ -408,4 +409,44 @@ export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement
             if ((<any>win).jqxWindow("isOpen")) $(last).focus()
         }
     });
+}
+
+export function getVersionNumbers(ver:string):number[] {
+    const rx = new RegExp("(\\d+)\\.(\\d+)\\.(\\d+)(beta(\\d*))?");
+
+    let m:RegExpMatchArray = null;
+    if (!(m = ver.match(rx)))
+        return null;
+
+    return [ parseInt(m[1]),  // major
+            parseInt(m[2]),             // minor
+            parseInt(m[3]),             // rev.
+            m[4] == null ? 100000    // no beta suffix
+                    : !m[5] ? 1        // "beta"
+                    : parseInt(m[5])    // "beta3"
+    ];
+}
+
+export function isVersionNewer(current:string, required:string):boolean {
+
+    const testVer:number[] = getVersionNumbers(current);
+    const baseVer:number[] = getVersionNumbers(required);
+
+    for (let i = 0; i < testVer.length; i++)
+        if (testVer[i] != baseVer[i])
+            return testVer[i] > baseVer[i];
+
+    return true;
+}
+
+export function denyClientVersion(cfg:any):string {
+    const minMajor = cfg.requiresClientMajor || 1;
+    const minMinor = cfg.requiresClientMinor || 0;
+    const minRev = cfg.requiresClientRevision || 0;
+    const ver = AppInfo.Version;
+    const required = `${minMajor}.${minMinor}.${minRev}`;
+    if (!isVersionNewer(ver, required)) {
+        return required;
+    }
+    return null;
 }
