@@ -29,6 +29,7 @@ function createWindow() {
                     icon: path.join(__dirname, 'src/icons/favicon-32x32.png'),
                     fullscreenable: true,
                     fullscreen: false,
+                    show:false,
                     webPreferences: {
                       nodeIntegration: true,
                       devTools: true
@@ -96,7 +97,9 @@ mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
   mainWindow.on('close', function(e) { 
     e.preventDefault();
     mainWindow.destroy();
-});
+  });
+  mainWindow.maximize()
+  mainWindow.show()
 }
 
 // This method will be called when Electron has finished

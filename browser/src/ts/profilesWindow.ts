@@ -140,13 +140,14 @@ export class ProfilesWindow {
         });
     }
 
-    private profileCreateChar:string = `Creare un profilo non vuol dire create un personaggio.
+    private profileCreateChar:string = `Creare un profilo non vuol dire creare un personaggio.
     I personaggi devono essere creati nel terminale del gioco.
+    Se non hai ancora un personaggio, connettiti con il profilo base e crealo prima.
     
-    Un profilo viene legato a uno (o piu') personaggi gia esistenti.
+    Un profilo viene legato a uno (o piu') personaggi gia' esistenti.
     
     Il profilo base connette sempre al server live. E puo' contenere alias e trigger
-    basilari usabili da tutti gli altri profili. Premi il bottone per modificare il profilo
+    preimpostati usabili da tutti gli altri profili. Premi il bottone per modificare il profilo
     base per ulteriori informazioni.`;
 
     private async handleNew() {

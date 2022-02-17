@@ -270,117 +270,6 @@
       }
     }
   },
-  "color": {
-    "!type": "fn(testo: string, foreground: string, background?: string, bold?: bool, underline?: bool, blink?: bool) -> string",
-    "!doc": "Colora del testo per visualizzarlo nel client."
-  },
-  "print": {
-    "!type": "fn(testo: string, finestra?: string)",
-    "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
-  },
-  "sub": {
-    "!type": "fn(cosa: RegExp, conCosa:string)",
-    "!doc": "All interno di un trigger viene usato per cambiare 'cosa' con 'conCosa' nell'output a schermo."
-  },
-  "gag": {
-    "!type": "fn()",
-    "!doc": "Se usato all interno di un trigger la linea che ha scattato il trigger verra' rimossa dall' output."
-  },
-  "cap": {
-    "!type": "fn(window: string)",
-    "!doc": "Se usato all interno di un trigger la linea che ha scattato il trigger verra' mostrata nell'output della finestra 'window'."
-  },
-  "cls": {
-    "!type": "fn(window: string)",
-    "!doc": "Cancella il contenuto della finestra 'window', oppure se non passato il parametro quella principale."
-  },
-  "send": {
-    "!type": "fn(command: string)",
-    "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati."
-  },
-  "delay": {
-    "!type": "fn(id: string, milliseconds:number, function:Function)",
-    "!doc": "Esegue la funzione 'function' dopo 'milliseconds' secondi.\nI'ID e' necessario e se esiste gia' un delay con quell'ID esso verra sovrascritto e anullato."
-  },
-  "repeat": {
-    "!type": "fn(id: string, milliseconds:number, function:Function)",
-    "!doc": "Esegue la funzione 'function' ogni 'milliseconds' secondi e ripete per sempre.\nI'ID e' necessario e se esiste gia' un repeat con quell'ID esso verra sovrascritto e anullato.\nSe function non viene dato, un repeat esistente verra anullato."
-  },
-  "toggleTrigger": {
-    "!type": "fn(id: string, state: bool)",
-    "!doc": "Abilita o disabilita un trigger (id e l'id del trigger e state e' il nuovo stato)."
-  },
-  "toggleAlias": {
-    "!type": "fn(id: string, state: bool)",
-    "!doc": "Abilita o disabilita un alias (id e l'id dell'alias e state e' il nuovo stato)."
-  },
-  "toggleClass": {
-    "!type": "fn(id: string, state: bool)",
-    "!doc": "Abilita o disabilita una classe di alias o trigger (id e l'id della classe e state e' il nuovo stato)."
-  },
-  "toggleEvent": {
-    "!type": "fn(id: string, state: bool)",
-    "!doc": "Abilita o disabilita un evento con ID."
-  },
-  "trigger_o_alias": {
-    "!doc": "Un trigger o alias.",
-    "pattern": {
-      "!type": "string",
-      "!doc": "Il pattern che fa scattare il trigger o alias."
-    },
-    "value": {
-      "!type": "string",
-      "!doc": "Il valore del trigger o alias (i comandi, o script)"
-    },
-    "id": {
-      "!type": "string",
-      "!doc": "L'ID con il quale identificarlo."
-    },
-    "class": {
-      "!type": "string",
-      "!doc": "La classe alla quale appartiene."
-    },
-    "regex": {
-      "!type": "bool",
-      "!doc": "Se il trigger o alias ha un pattern RegExp o solo testuale."
-    },
-    "enabled": {
-      "!type": "bool",
-      "!doc": "Se abilitato o meno."
-    },
-    "is_script": {
-      "!type": "bool",
-      "!doc": "Se ha una script o e' composto solo da comandi da lanciare"
-    },
-    "is_prompt": {
-      "!type": "bool",
-      "!doc": "Se prompt o meno. Se e' prompt puo' scattare anche se una linea di output non e' finita."
-    }
-  },
-  "getTrigger": {
-    "!type": "fn(id: string) -> trigger_o_alias",
-    "!doc": "Accede al triggerManager e cerca il trigger con l'id provveduto e lo ritorna."
-  },
-  "getAlias": {
-    "!type": "fn(id: string) -> trigger_o_alias",
-    "!doc": "Accede al aliasManager e cerca l'alias con l'id provveduto e lo ritorna."
-  },
-  "triggerEnabled": {
-    "!type": "fn(id: string) -> bool",
-    "!doc": "Ritorna lo stato del trigger con ID 'id': true se abilitato, false altrimenti."
-  },
-  "aliasEnabled": {
-    "!type": "fn(id: string) -> bool",
-    "!doc": "Ritorna lo stato dell'alias con ID 'id': true se abilitato, false altrimenti."
-  },
-  "classEnabled": {
-    "!type": "fn(id: string) -> bool",
-    "!doc": "Ritorna lo stato dellla classe con ID 'id': true se abilitata, false altrimenti."
-  },
-  "match": {
-    "!type": "[string]",
-    "!doc": "I risultati della regex del trigger o alias."
-  },
   "Infinity": {
     "!type": "number",
     "!url": "https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Infinity",
@@ -752,6 +641,191 @@
     },
     "!url": "https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array",
     "!doc": "The JavaScript Array global object is a constructor for arrays, which are high-level, list-like objects."
+  },
+  "color": {
+    "!type": "fn(testo: string, foreground: string, background?: string, bold?: bool, underline?: bool, blink?: bool) -> string",
+    "!doc": "Colora del testo per visualizzarlo nel client."
+  },
+  "print": {
+    "!type": "fn(testo: string, finestra?: string)",
+    "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
+  },
+  "highlight": {
+    "!type": "fn(foreground: string, background: string, blink?: bool)",
+    "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink."
+  },
+  "sub": {
+    "!type": "fn(cosa: RegExp, conCosa:string)",
+    "!doc": "All interno di un trigger viene usato per cambiare 'cosa' con 'conCosa' nell'output a schermo."
+  },
+  "gag": {
+    "!type": "fn()",
+    "!doc": "Se usato all interno di un trigger la linea che ha scattato il trigger verra' rimossa dall' output."
+  },
+  "cap": {
+    "!type": "fn(window: string)",
+    "!doc": "Se usato all interno di un trigger la linea che ha scattato il trigger verra' mostrata nell'output della finestra 'window'."
+  },
+  "send": {
+    "!type": "fn(command: string)",
+    "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati."
+  },
+  "toggleTrigger": {
+    "!type": "fn(id: string, state: bool)",
+    "!doc": "Abilita o disabilita un trigger (id e l'id del trigger e state e' il nuovo stato)."
+  },
+  "toggleAlias": {
+    "!type": "fn(id: string, state: bool)",
+    "!doc": "Abilita o disabilita un alias (id e l'id dell'alias e state e' il nuovo stato)."
+  },
+  "toggleClass": {
+    "!type": "fn(id: string, state: bool)",
+    "!doc": "Abilita o disabilita una classe di alias o trigger (id e l'id della classe e state e' il nuovo stato)."
+  },
+  "toggleEvent": {
+    "!type": "fn(id: string, state: bool)",
+    "!doc": "Abilita o disabilita un evento con ID."
+  },
+  "link": {
+    "!type": "fn(text: string, click: fn(), hover?: string)",
+    "!doc": "Crea a schermo un link clickabile che esegue la funzione 'click'. Opzionalmente 'hover' viene mostrato quando il mouse e' sopra al link."
+  },
+  "variable": {
+    "!type": "fn(name: string)",
+    "!doc": "Ritorna il valore della variabile con il nome richiesto."
+  },
+  "playAudio": {
+    "!type": "fn(url: string)",
+    "!doc": "Suona un file audio dall'URL assegnato."
+  },
+  "stopAudio": {
+    "!type": "fn()",
+    "!doc": "Interrompe ogni audio che sta suonando al momento."
+  },
+  "Room": {
+    "!doc": "Una locazione (room) del mapper.",
+    "id": {
+      "!type": "number",
+      "!doc": "L'ID della locazione."
+    },
+    "name": {
+      "!type": "string",
+      "!doc": "Il nome della locazione."
+    },
+    "description": {
+      "!type": "string",
+      "!doc": "La desrizione della locazione."
+    },
+    "shortName": {
+      "!type": "string",
+      "!doc": "Il nome breve della locazione usabile con il comando vai."
+    },
+    "color": {
+      "!type": "string",
+      "!doc": "Il colore della locazione (formato web - css)."
+    }
+  },
+  "mapper": {
+    "!doc": "Per comandare il mapper via script.",
+    "current": {
+      "!type": "Room",
+      "!doc": "La locazione corrente nel mapper."
+    },
+    "search": {
+      "!type": "fn(name: string, desc?: string) -> Room[]",
+      "!doc": "Cerca le room per nome e opzionalmente descrizione e visualizza a schermo."
+    },
+    "searchRooms": {
+      "!type": "fn(name: string, desc?: string) -> Room[]",
+      "!doc": "Cerca e ritorna le room per nome e opzionalmente descrizione e NON visualizza a schermo."
+    },
+    "walkToId": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Vai all'ID di una locazione (crea percorso e lo segue)."
+    },
+    "walkToVnum": {
+      "!type": "fn(vnum: number) -> void",
+      "!doc": "Vai al numero virtuale di una locazione (crea percorso e lo segue)."
+    },
+    "setZoneById": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Assegna la zona con ID specificato come la corrente nel mapper."
+    },
+    "setRoomByVnum": {
+      "!type": "fn(vnum: number) -> void",
+      "!doc": "Assegna la locazione con numero virtuale come corrente nel mapper."
+    },
+    "setRoomById": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Assegna la locazione con ID come corrente nel mapper."
+    }
+  },
+  "delay": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' dopo 'milliseconds' secondi.\nI'ID e' necessario e se esiste gia' un delay con quell'ID esso verra sovrascritto e anullato."
+  },
+  "repeat": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' ogni 'milliseconds' secondi e ripete per sempre.\nI'ID e' necessario e se esiste gia' un repeat con quell'ID esso verra sovrascritto e anullato.\nSe function non viene dato, un repeat esistente verra anullato."
+  },
+  "trigger_o_alias": {
+    "!doc": "Un trigger o alias.",
+    "pattern": {
+      "!type": "string",
+      "!doc": "Il pattern che fa scattare il trigger o alias."
+    },
+    "value": {
+      "!type": "string",
+      "!doc": "Il valore del trigger o alias (i comandi, o script)"
+    },
+    "id": {
+      "!type": "string",
+      "!doc": "L'ID con il quale identificarlo."
+    },
+    "class": {
+      "!type": "string",
+      "!doc": "La classe alla quale appartiene."
+    },
+    "regex": {
+      "!type": "bool",
+      "!doc": "Se il trigger o alias ha un pattern RegExp o solo testuale."
+    },
+    "enabled": {
+      "!type": "bool",
+      "!doc": "Se abilitato o meno."
+    },
+    "is_script": {
+      "!type": "bool",
+      "!doc": "Se ha una script o e' composto solo da comandi da lanciare"
+    },
+    "is_prompt": {
+      "!type": "bool",
+      "!doc": "Se prompt o meno. Se e' prompt puo' scattare anche se una linea di output non e' finita."
+    }
+  },
+  "getTrigger": {
+    "!type": "fn(id: string) -> trigger_o_alias",
+    "!doc": "Accede al triggerManager e cerca il trigger con l'id provveduto e lo ritorna."
+  },
+  "getAlias": {
+    "!type": "fn(id: string) -> trigger_o_alias",
+    "!doc": "Accede al aliasManager e cerca l'alias con l'id provveduto e lo ritorna."
+  },
+  "triggerEnabled": {
+    "!type": "fn(id: string) -> bool",
+    "!doc": "Ritorna lo stato del trigger con ID 'id': true se abilitato, false altrimenti."
+  },
+  "aliasEnabled": {
+    "!type": "fn(id: string) -> bool",
+    "!doc": "Ritorna lo stato dell'alias con ID 'id': true se abilitato, false altrimenti."
+  },
+  "classEnabled": {
+    "!type": "fn(id: string) -> bool",
+    "!doc": "Ritorna lo stato dellla classe con ID 'id': true se abilitata, false altrimenti."
+  },
+  "match": {
+    "!type": "[string]",
+    "!doc": "I risultati della regex del trigger o alias."
   },
   "String": {
     "!type": "fn(value: ?) -> string",

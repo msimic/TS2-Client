@@ -671,6 +671,7 @@ export namespace Mudslinger {
     }
 
     export function decrypt(text: string):string {
+        if ((<any>window).ipcRenderer) return text;
         var key = aesjs.utils.hex.toBytes(localStorage.getItem("browserHash"));
         var encryptedBytes = aesjs.utils.hex.toBytes(text);
     
@@ -686,6 +687,7 @@ export namespace Mudslinger {
     }
 
     export function encrypt(text: string):string {
+        if ((<any>window).ipcRenderer) return text; 
         var key = aesjs.utils.hex.toBytes(localStorage.getItem("browserHash"));
 
         var textBytes = aesjs.utils.utf8.toBytes(text);
@@ -779,7 +781,7 @@ export namespace Mudslinger {
             }
             hashStr = Md5.hashStr(hashStr).toString();
 
-            await initEncryption(hashStr);
+            if (!(<any>window).ipcRenderer) await initEncryption(hashStr);
             await initClient();
         };
 

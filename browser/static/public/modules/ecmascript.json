@@ -682,6 +682,10 @@
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita una classe di alias o trigger (id e l'id della classe e state e' il nuovo stato)."
   },
+  "toggleEvent": {
+    "!type": "fn(id: string, state: bool)",
+    "!doc": "Abilita o disabilita un evento con ID."
+  },
   "link": {
     "!type": "fn(text: string, click: fn(), hover?: string)",
     "!doc": "Crea a schermo un link clickabile che esegue la funzione 'click'. Opzionalmente 'hover' viene mostrato quando il mouse e' sopra al link."
@@ -755,6 +759,14 @@
       "!type": "fn(id: number) -> void",
       "!doc": "Assegna la locazione con ID come corrente nel mapper."
     }
+  },
+  "delay": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' dopo 'milliseconds' secondi.\nI'ID e' necessario e se esiste gia' un delay con quell'ID esso verra sovrascritto e anullato."
+  },
+  "repeat": {
+    "!type": "fn(id: string, milliseconds:number, function:Function)",
+    "!doc": "Esegue la funzione 'function' ogni 'milliseconds' secondi e ripete per sempre.\nI'ID e' necessario e se esiste gia' un repeat con quell'ID esso verra sovrascritto e anullato.\nSe function non viene dato, un repeat esistente verra anullato."
   },
   "trigger_o_alias": {
     "!doc": "Un trigger o alias.",

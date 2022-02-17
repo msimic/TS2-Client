@@ -256,6 +256,8 @@ function copyToPublic() {
     });
 }
 
+fsx.copy('./src/ecmascript.json', './static/public/modules/ecmascript.json');
+
 if (!fs.existsSync("./dist")) {
     fs.mkdirSync("dist")
 }
