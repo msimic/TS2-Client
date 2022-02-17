@@ -146,9 +146,21 @@ export function Acknowledge(ack:string, str:string) {
     }, "OK", "", false, [""], 500, null, false, "");
 }
 
+export function escapeRegExp(string:string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+export function escapeRegexReplacement(string:string) {
+    return string.replace(/\$/g, '$$$$');
+}
+
 export function downloadJsonToFile(json:any, filename:string) {
     let jsonstr = JSON.stringify(json, null, 2);
-    let blob = new Blob([jsonstr], {type: "octet/stream"});
+    downloadString(jsonstr, filename);
+}
+
+export function downloadString(jsonstr: string, filename: string) {
+    let blob = new Blob([jsonstr], { type: "octet/stream" });
     let url = window.URL.createObjectURL(blob);
 
     let link = document.createElement("a");

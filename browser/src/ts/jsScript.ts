@@ -182,7 +182,7 @@ export class JsScript {
     public eventChanged = new EventHook<ScriptEvent>();
     
     private self = this;
-    constructor(private config: ConfigIf,private baseConfig: ConfigIf, private profileManager: ProfileManager, private mapper:Mapper) {
+    constructor(private config: ConfigIf,private baseConfig: ConfigIf, public profileManager: ProfileManager, private mapper:Mapper) {
         this.loadBase();
         this.load();
         this.saveVariablesAndEventsToConfig = throttle(this.saveVariablesAndEventsToConfigInternal, 500);
@@ -457,7 +457,33 @@ function makeScript(owner:string, text: string, argsSig: string,
         return scriptManager.getVariableValue(vr)
     };
     const sub = function(sWhat: string, sWith:string) {
-        if (triggerManager) triggerManager.subBuffer(sWhat, sWith);
+        if (triggerManager) triggerManager.subBuffer(sWhat.split("\n")[0], sWith);
+    };
+    const link = function(text: string, func:Function, hover?:string) {
+        let rnd = Math.floor(Math.random()*10000)
+        let line = `<span><a id="customLink${rnd}" class="underline clickable" title="${hover?hover:""}">${text}</a></span>`
+        print(line)
+        setTimeout(() => {
+            const link = $("#customLink"+rnd)
+            link.click(()=>{
+                func();
+            })
+        }, 0)
+    };
+    const playAudio = function(url: string) {
+        if (scriptManager.profileManager.activeConfig.getDef("soundsEnabled", true)==false) return; 
+        if ((<any>window).audio) {
+            (<any>window).audio.pause();
+        }
+        (<any>window).audio = new Audio(url);
+        (<any>window).audio.play();
+    };
+    const stopAudio = function() {
+        (<any>window).audio?.pause();
+        (<any>window).audio = null;
+    };
+    const highlight = function(fore: string, back:string, blink:boolean = false) {
+        if (triggerManager) triggerManager.subBuffer(triggerManager.line.split("\n")[0], color(triggerManager.line.split("\n")[0], fore, back, true, false, blink));
     };
     const delay = function(id: string, time:number, func:Function) {
         if (!window.timeouts) {

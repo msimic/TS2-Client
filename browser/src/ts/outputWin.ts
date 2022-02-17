@@ -27,6 +27,13 @@ export class OutputWin extends OutWinBase {
         });
     }
 
+    protected logLine(): void {
+        if (this.log) {
+            const line = this.lineText;
+            localStorage.setItem("log", localStorage.getItem("log") + line)
+        }
+    }
+
     protected getOuterElement():JQuery {
         return this.outer;
     }

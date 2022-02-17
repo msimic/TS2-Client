@@ -1042,6 +1042,10 @@ export class Mapper {
         return rooms;
     }
 
+    searchRooms(name:string, desc:string):Room[] {
+        return this.searchRoomsByNameAndDesc(name, desc);
+    };
+
     searchRoomsByNameAndDesc(name:string, desc:string):Room[] {
         if (!this.db || !this.db.rooms) return null
         let rooms = this.db.rooms

@@ -650,6 +650,10 @@
     "!type": "fn(testo: string, finestra?: string)",
     "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
   },
+  "highlight": {
+    "!type": "fn(foreground: string, background: string, blink?: bool)",
+    "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink."
+  },
   "sub": {
     "!type": "fn(cosa: RegExp, conCosa:string)",
     "!doc": "All interno di un trigger viene usato per cambiare 'cosa' con 'conCosa' nell'output a schermo."
@@ -677,6 +681,80 @@
   "toggleClass": {
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita una classe di alias o trigger (id e l'id della classe e state e' il nuovo stato)."
+  },
+  "link": {
+    "!type": "fn(text: string, click: fn(), hover?: string)",
+    "!doc": "Crea a schermo un link clickabile che esegue la funzione 'click'. Opzionalmente 'hover' viene mostrato quando il mouse e' sopra al link."
+  },
+  "variable": {
+    "!type": "fn(name: string)",
+    "!doc": "Ritorna il valore della variabile con il nome richiesto."
+  },
+  "playAudio": {
+    "!type": "fn(url: string)",
+    "!doc": "Suona un file audio dall'URL assegnato."
+  },
+  "stopAudio": {
+    "!type": "fn()",
+    "!doc": "Interrompe ogni audio che sta suonando al momento."
+  },
+  "Room": {
+    "!doc": "Una locazione (room) del mapper.",
+    "id": {
+      "!type": "number",
+      "!doc": "L'ID della locazione."
+    },
+    "name": {
+      "!type": "string",
+      "!doc": "Il nome della locazione."
+    },
+    "description": {
+      "!type": "string",
+      "!doc": "La desrizione della locazione."
+    },
+    "shortName": {
+      "!type": "string",
+      "!doc": "Il nome breve della locazione usabile con il comando vai."
+    },
+    "color": {
+      "!type": "string",
+      "!doc": "Il colore della locazione (formato web - css)."
+    }
+  },
+  "mapper": {
+    "!doc": "Per comandare il mapper via script.",
+    "current": {
+      "!type": "Room",
+      "!doc": "La locazione corrente nel mapper."
+    },
+    "search": {
+      "!type": "fn(name: string, desc?: string) -> Room[]",
+      "!doc": "Cerca le room per nome e opzionalmente descrizione e visualizza a schermo."
+    },
+    "searchRooms": {
+      "!type": "fn(name: string, desc?: string) -> Room[]",
+      "!doc": "Cerca e ritorna le room per nome e opzionalmente descrizione e NON visualizza a schermo."
+    },
+    "walkToId": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Vai all'ID di una locazione (crea percorso e lo segue)."
+    },
+    "walkToVnum": {
+      "!type": "fn(vnum: number) -> void",
+      "!doc": "Vai al numero virtuale di una locazione (crea percorso e lo segue)."
+    },
+    "setZoneById": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Assegna la zona con ID specificato come la corrente nel mapper."
+    },
+    "setRoomByVnum": {
+      "!type": "fn(vnum: number) -> void",
+      "!doc": "Assegna la locazione con numero virtuale come corrente nel mapper."
+    },
+    "setRoomById": {
+      "!type": "fn(id: number) -> void",
+      "!doc": "Assegna la locazione con ID come corrente nel mapper."
+    }
   },
   "trigger_o_alias": {
     "!doc": "Un trigger o alias.",

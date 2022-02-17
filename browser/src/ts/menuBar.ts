@@ -12,9 +12,10 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { isTrue } from "./util";
+import { downloadString, isTrue } from "./util";
 import { LayoutManager } from "./layoutManager";
-import { JsScript } from "./jsScript";
+import { EvtScriptEmitPrint, JsScript } from "./jsScript";
+import { OutputWin } from "./outputWin";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -29,6 +30,7 @@ export class MenuBar {
     private config:UserConfig;
     private optionMappingToStorage = new Map([
         ["connect", ""],
+        ["log", ""],
         ["use-profile", ""],
         ["aliases", ""],
         ["variables", ""],
@@ -48,6 +50,7 @@ export class MenuBar {
         ["enable-mxp", "mxpEnabled"],
         ["enable-aliases", "aliasesEnabled"],
         ["enable-triggers", "triggersEnabled"],
+        ["enable-sounds", "soundsEnabled"],
         ["smallest-font", "font-size"],
         ["extra-small-font", "font-size"],
         ["small-font", "font-size"],
@@ -98,6 +101,10 @@ export class MenuBar {
                 config.set(storageKey, (<any>event.target).checked);
                 if (clickable) this.clickFuncs[name]((<any>event.target).checked);
             });
+        } else if (checkbox && !storageKey) {
+            $(checkbox).change((event: JQueryEventObject) => {
+                if (clickable) this.clickFuncs[name](!(<any>event.target).checked);
+            });
         } else if (storageKey) {
             if (clickable) this.clickFuncs[name](this.config.get(storageKey));
         }
@@ -105,7 +112,7 @@ export class MenuBar {
             //console.log(`Attaching menu item ${name}`);
             let x = $(element);
             $(element).click((event: JQueryEventObject) => {
-                if (!event.target || event.target.tagName != "LI") return;
+                if (!event.target || (event.target.tagName != "LI" /*&& event.target.tagName != "LABEL"*/)) return;
                 if (!checkbox && storageKey) {
                     this.config.set(storageKey, name);
                     this.clickFuncs[name](name);
@@ -124,18 +131,22 @@ export class MenuBar {
     }
 
     private attachMenu() {
-        $("[data-option-name]").each((i, e) => {
-            const name = $(e)[0].getAttribute("data-option-name");
-            const chk = $(e).find("input[type='checkbox']")[0];
-            this.attachMenuOption(name, e, chk);
+        $("document").ready(()=>{
+            $("[data-option-name]").each((i, e) => {
+                const name = $(e)[0].getAttribute("data-option-name");
+                const chk = $(e).find("input[type='checkbox']")[0];
+                this.attachMenuOption(name, e, chk);
+            });
         });
     }
 
     private detachMenu() {
-        $("[data-option-name]").each((i, e) => {
-            const name = $(e)[0].getAttribute("data-option-name");
-            const chk = $(e).find("input[type='checkbox']")[0];
-            this.detachMenuOption(name, e, chk);
+        $("document").ready(()=>{
+            $("[data-option-name]").each((i, e) => {
+                const name = $(e)[0].getAttribute("data-option-name");
+                const chk = $(e).find("input[type='checkbox']")[0];
+                this.detachMenuOption(name, e, chk);
+            });
         });
     }
 
@@ -151,13 +162,15 @@ export class MenuBar {
         private variableEditor:VariablesEditor,
         private classEditor: ClassEditor,
         private eventEditor: EventsEditor,
-        private jsScript: JsScript
+        private jsScript: JsScript,
+        private outWin:OutputWin
         ) 
     {
         const mnu:any = <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: false, theme: "menuBar", clickToOpen: true, keyboardNavigation: true}));
 
         $("#menuBar").on('itemclick', (event) =>
         {
+            document.getSelection().removeAllRanges();
             if (event.originalEvent instanceof KeyboardEvent) {
                 $((<any>event).args).click()
                 return;
@@ -178,14 +191,12 @@ export class MenuBar {
         window.addEventListener("blur", (ev)=>{
             if (document.activeElement == document.body) setTimeout(()=>{
                 if (document.activeElement == document.body)
-                //console.log("blur " + (ev.currentTarget as any)?.id)
                      $("#cmdInput").focus()
                 },10)
         }, true);
         window.addEventListener("focus", (ev)=>{
             if (document.activeElement == document.body) setTimeout(()=>{
                 if (document.activeElement == document.body)
-                //console.log("blur " + (ev.currentTarget as any)?.id)
                      $("#cmdInput").focus()
                 },10)
         }, true);
@@ -285,6 +296,23 @@ export class MenuBar {
             }
             else {
                 this.EvtConnectClicked.fire();
+            }
+        };
+
+        this.clickFuncs["log"] = (val) => {
+            let newVal = !isTrue(val);
+            $("#menuBar-conn-log")[0].setAttribute("data-checked", newVal.toString())
+            $("#menuBar-chkLog").attr('checked', newVal.toString());
+            $("#menuBar-chkLog").prop('checked', newVal);
+            if (isTrue(newVal)) {
+                this.outWin.log = true
+                EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log"})
+            }
+            else {
+                this.outWin.log = false
+                EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Fine log"})
+                downloadString(localStorage.getItem("log"), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+                localStorage.setItem("log","")
             }
         };
 

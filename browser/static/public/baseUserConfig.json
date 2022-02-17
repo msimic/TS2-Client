@@ -1,5 +1,5 @@
 {
-  "version":3,
+  "version":5,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,
@@ -142,37 +142,34 @@
       "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto.",
       "id": "inizializzazione",
       "value": "initialize",
-      "regex": true,
+      "regex": false,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "script": [
-        "initialize"
-      ]
+      "is_prompt": false
     },
     {
-      "pattern": "Ogni modifica e novita' per immortali",
+      "pattern": "^Ogni modifica e novita' per immortali",
       "id": "",
       "value": "this.Immortal = true",
       "regex": false,
       "is_script": true,
       "class": "",
-      "enabled": true
+      "enabled": true,
+      "is_prompt": false
     },
     {
-      "pattern": "Connessione a \"Tempora Sanguinis",
+      "pattern": "^Connessione a \"Tempora Sanguinis",
       "id": "",
       "value": "preinit",
       "regex": false,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "script": [
-        "preinit"
-      ]
+      "is_prompt": false
     },
     {
-      "pattern": "Sei a sedere! Non puoi farlo!|Non sarebbe meglio che ti alzassi prima?",
+      "pattern": "^Sei a sedere! Non puoi farlo!|^Non sarebbe meglio che ti alzassi prima?",
       "id": "",
       "value": "this.seduto = true;\nif (!this.memorizing) {\n\tsend(\"stand\");\n}",
       "regex": true,
@@ -182,7 +179,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Ti alzi.|Sei gia' in piedi.",
+      "pattern": "^Ti alzi\\.|^Sei gia' in piedi\\.",
       "id": "",
       "value": "this.seduto = false;\nthis.alzando = false;\nif (this.memorizing) delete this.memorizing",
       "regex": true,
@@ -194,7 +191,7 @@
     {
       "pattern": "^(\\([^)']+\\) )?(OT:)?\\[?([^\\]]+)?\\]?(?:Tu)? ?((?:ti )?[cC]hied[ei](?: a [^,]+)?,?|url[ai]|dic[ei] agli Eroi|(?:ti )?sussurr[ia](?: a [^,]+)?,?|dic[ei](?: a [^,]+,)?|dic[ei] al gruppo|(?:ti )?mand[ai] il pensiero(?: a [^,]+)?,|(?:ti )?mand[ai] il messaggio(?: a [^,]+)?,|ti dice) '(.*)'$",
       "id": "capSocial",
-      "value": "function isMob(str) {\n  let mob = false;\n  if (str.toLowerCase().indexOf(\"strillone\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"dhethor\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"guardia\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"matteo\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"elminster\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"uno\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"una\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"biff\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\",\")!=-1) mob = true;\n  if (str.toLowerCase().startsWith(\"il\")) mob = true;\n  if (str.toLowerCase().startsWith(\"la\")) mob = true;\n  if (str.toLowerCase().startsWith(\"un\")) mob = true;\n  if (str.toLowerCase().startsWith(\"una\")) mob = true;\n  if (str.toLowerCase().startsWith(\"uno\")) mob = true;\n  return mob;\n}\nlet time=new Date().getHours()+\":\"+new Date().getMinutes();\nlet gtPg = (match[3]||\"Tu\").split(\"]\")[0];\ngtPg = gtPg || \"Tu\";\nif (!isMob((match[3]||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1 &&\n   match[0].indexOf(\"al gruppo\")==-1) {\n  //cap(\"Social\");\n  /*for (let i = 0; i < 6; i++) {\n    print(i + \":\" + match[i]);\n  }*/\n  let tipo = \"\";\n  gtPg = color(gtPg.split(\" \")[0], \"lightgray\");\n  let textColor = \"yellow\"\n  if (match[2] && match[2]==\"OT:\") {\n    tipo=\"OT\"\n    textColor = \"yellowgreen\"\n  } else if (!match[3] && match[4].startsWith(\"Chiedi a \")) {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n    gtPg = \"Tu a \" + match[4].trim().replace(\"Chiedi a \",\"\").split(/[^a-z]/i)[0]\n    gtPg = color(gtPg, \"lightgray\");\n  } else if (match[1] && match[1].trim().startsWith(\"(\") && match[1].trim().endsWith(\")\")) {\n    tipo=\"Guild\"\n    textColor=\"#4eb2f9\"\n  } else if (match[4] && match[4].trim()==\"urli\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"dici agli Eroi\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"dici\" && match[3] && (match[3].trim()==\"Tu\" || match[3].trim()==\"Con i segni\")) {\n     if (match[3].trim().endsWith(\"i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n       gtPg = color(\"Tu\", \"lightgray\");\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"dice\" && match[3] && !match[3].trim().endsWith(\"ti\")) {\n    if (match[3].trim().endsWith(\"con i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"ti chiede\") {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n  } else if (match[4] && match[4].trim()==\"dice agli Eroi\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"urla\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"ti manda il pensiero,\") {\n    tipo=\"Tele\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim()==\"ti manda il messaggio,\") {\n    tipo=\"Mess\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti dice\")) {\n    tipo=\"Tell\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"dici a \")) {\n    tipo=\"Tell\"\n    let tmp = match[4].trim().replace(\"dici a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il messaggio a \")) {\n    tipo=\"Mess\"\n    let tmp = match[4].trim().replace(\"mandi il messaggio a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il pensiero a \")) {\n    tipo=\"Tele\"\n    let tmp = match[4].trim().replace(\"mandi il pensiero a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"sussurri a \")) {\n    tipo=\"Suss\"\n    let tmp = match[4].trim().replace(\"sussurri a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti sussurra,\")) {\n    tipo=\"Suss\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  }\n  tipo=color(tipo, \"lightgray\")\n  let detto = color(match[5], textColor);\n  if (this.afk) {\n    time=color(\"@\" +time,\"gray\");\n  } else {\n    time=\"\";\n  }\n  print(`[${tipo}]${time}:${gtPg}> ${detto}`,\"Social\")\n}\nif (!isMob((gtPg||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1) {\n  if (match[0].indexOf(\"al gruppo\")!=-1) {\n    gtPg = color(gtPg.split(\" \")[0]+\":\", \"lightgray\");\n    let detto = color(\" \"+match[5], \"#6060FF\");\n    print(`${gtPg}`,\"Group Tell\")\n  \tprint(`${detto}`,\"Group Tell\")\n  }\n}",
+      "value": "function isMob(str) {\n  let mob = false;\n  if (str.toLowerCase().indexOf(\"strillone\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"dhethor\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"guardia\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"matteo\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"elminster\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"uno\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"una\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"biff\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\",\")!=-1) mob = true;\n  if (str.toLowerCase().startsWith(\"il\")) mob = true;\n  if (str.toLowerCase().startsWith(\"la\")) mob = true;\n  if (str.toLowerCase().startsWith(\"un\")) mob = true;\n  if (str.toLowerCase().startsWith(\"una\")) mob = true;\n  if (str.toLowerCase().startsWith(\"uno\")) mob = true;\n  return mob;\n}\nlet time=new Date().getHours()+\":\"+new Date().getMinutes();\nlet gtPg = (match[3]||\"Tu\").split(\"]\")[0];\ngtPg = gtPg || \"Tu\";\nif (!isMob((match[3]||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1 &&\n   match[0].indexOf(\"al gruppo\")==-1) {\n  //cap(\"Social\");\n  /*for (let i = 0; i < 6; i++) {\n    print(i + \":\" + match[i]);\n  }*/\n  let tipo = \"\";\n  gtPg = color(gtPg.split(\" \")[0], \"lightgray\");\n  let textColor = \"yellow\"\n  if (match[2] && match[2]==\"OT:\") {\n    tipo=\"OT\"\n    textColor = \"yellowgreen\"\n  } else if (!match[3] && match[4].startsWith(\"Chiedi a \")) {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n    gtPg = \"Tu a \" + match[4].trim().replace(\"Chiedi a \",\"\").split(/[^a-z]/i)[0]\n    gtPg = color(gtPg, \"lightgray\");\n  } else if (match[1] && match[1].trim().startsWith(\"(\") && match[1].trim().endsWith(\")\")) {\n    tipo=\"Guild\"\n    textColor=\"#4eb2f9\"\n  } else if (match[4] && match[4].trim()==\"urli\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"dici agli Eroi\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"dici\" && match[3] && (match[3].trim()==\"Tu\" || match[3].trim()==\"Con i segni\")) {\n     if (match[3].trim().endsWith(\"i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n       gtPg = color(\"Tu\", \"lightgray\");\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"dice\" && match[3] && !match[3].trim().endsWith(\"ti\")) {\n    if (match[3].trim().endsWith(\"con i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"ti chiede\") {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n  } else if (match[4] && match[4].trim()==\"dice agli Eroi\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"urla\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"ti manda il pensiero,\") {\n    tipo=\"Tele\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim()==\"ti manda il messaggio,\") {\n    tipo=\"Mess\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti dice\")) {\n    tipo=\"Tell\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"dici a \")) {\n    tipo=\"Tell\"\n    let tmp = match[4].trim().replace(\"dici a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il messaggio a \")) {\n    tipo=\"Mess\"\n    let tmp = match[4].trim().replace(\"mandi il messaggio a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il pensiero a \")) {\n    tipo=\"Tele\"\n    let tmp = match[4].trim().replace(\"mandi il pensiero a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"sussurri a \")) {\n    tipo=\"Suss\"\n    let tmp = match[4].trim().replace(\"sussurri a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti sussurra,\")) {\n    tipo=\"Suss\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  }\n  if (match[5]==\"ping\") {\n    print(\"Ti sta cercando \" + gtPg + \"!\")\n    switch (tipo) {\n      case 'Tele':\n      case 'Mess':\n      case 'Tell':\n        playAudio(\"./sounds/disconnect.ogg\")\n        break;\n    }\n  }\n  tipo=color(tipo, \"lightgray\")\n  let detto = color(match[5], textColor);\n  if (this.afk) {\n    time=color(\"@\" +time,\"gray\");\n  } else {\n    time=\"\";\n  }\n  print(`[${tipo}]${time}:${gtPg}> ${detto}`,\"Social\")\n}\nif (!isMob((gtPg||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1) {\n  if (match[0].indexOf(\"al gruppo\")!=-1) {\n    gtPg = color(gtPg.split(\" \")[0]+\":\", \"lightgray\");\n    let detto = color(\" \"+match[5], \"#6060FF\");\n    print(`${gtPg}`,\"Group Tell\")\n  \tprint(`${detto}`,\"Group Tell\")\n  }\n}",
       "regex": true,
       "is_script": true,
       "class": "",
@@ -222,7 +219,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Prendi parte ad un magnifico banchetto preparato da",
+      "pattern": "^Prendi parte ad un magnifico banchetto preparato da",
       "id": "",
       "value": "this.feastFatto = true;",
       "regex": false,
@@ -252,7 +249,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Ti perdi nei tuoi pensieri",
+      "pattern": "^Ti perdi nei tuoi pensieri",
       "id": "",
       "value": "~afk",
       "regex": false,
@@ -262,7 +259,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "^C'erano (\\d+) monete.",
+      "pattern": "^C'erano (\\d+) monete\\.",
       "id": "",
       "value": "if (this.pgInGruppo().length > 1) {\n\tsend(\"split \" + match[1])\n}",
       "regex": true,
@@ -272,7 +269,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "^(.*) (si immerge nello stagno.|entra in un Portale Luminoso, e scompare!)",
+      "pattern": "^(.*) (si immerge nello stagno\\.|entra in un Portale Luminoso, e scompare!)",
       "id": "stagno_portale",
       "value": "if (this.Gruppo && this.Gruppo.length && this.autofollow) {\n  if (this.isCapogruppo(match[1].split(\" \")[0])) {\n    if (match[2].indexOf(\"stagno\")!=-1) {\n      send(\"es\");\n    } else {\n      send(\"ep\");\n    }\n  }\n}",
       "regex": true,
@@ -292,20 +289,17 @@
       "is_prompt": false
     },
     {
-      "pattern": "Smetti di seguire",
+      "pattern": "^Smetti di seguire",
       "id": "",
       "value": "soloSettings",
       "regex": false,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false,
-      "script": [
-        "soloSettings"
-      ]
+      "is_prompt": false
     },
     {
-      "pattern": "Sei entrat(o|a) a far parte del gruppo di",
+      "pattern": "^Sei entrat(o|a) a far parte del gruppo di",
       "id": "",
       "value": "send(\"groupSettings\");\nthis.listaAutosanc = [];",
       "regex": true,
@@ -315,7 +309,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Sei in una zona silenziosa, non puoi emettere suoni!",
+      "pattern": "^Sei in una zona silenziosa, non puoi emettere suoni!",
       "id": "",
       "value": "this.pauseAutocleric = true;",
       "regex": false,
@@ -335,7 +329,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "L'aura rossa intorno al tuo corpo svanisce",
+      "pattern": "^L'aura rossa intorno al tuo corpo svanisce",
       "id": "",
       "value": "if (this.selfshield) {\n  setTimeout(()=>{\n  \tsend(\"fs\");\n  }, 2000);\n}",
       "regex": false,
@@ -365,14 +359,17 @@
       "is_prompt": false
     },
     {
-      "pattern": "Il tuo gruppo e' stato rimosso",
+      "pattern": "^Il tuo gruppo e' stato rimosso",
       "id": "",
       "value": "soloSettings",
       "regex": false,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "soloSettings"
+      ]
     },
     {
       "pattern": "^Il tuo allineamento e'\\: \\w+ \\(([^\\)]+)\\)",
@@ -385,17 +382,14 @@
       "is_prompt": false
     },
     {
-      "pattern": "Spiacente, non c'e' spazio per entrare li'",
+      "pattern": "^Spiacente, non c'e' spazio per entrare li'",
       "id": "",
       "value": "sayStatus Non c'e' spazio per entrare li'!",
       "regex": false,
       "is_script": false,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false,
-      "script": [
-        "sayStatus Non c'e' spazio per entrare li'!"
-      ]
+      "is_prompt": false
     },
     {
       "pattern": "^(.+) (va|vola) verso",
@@ -418,7 +412,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Intravedi (.+) nel corpo di",
+      "pattern": "^Intravedi (.+) nel corpo di",
       "id": "lootRandomPop",
       "value": "print(color(\"&lt;&lt; -- INTRAVEDO LOOT !!! -- &gt;&gt;\",\"black\",\"yellow\",true, true, true));  \nif (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n  let loot = \"\";\n  if (match[1].toLowerCase().indexOf(\"cristallo\")!=-1) loot = \"cristallo\";\n  if (match[1].toLowerCase().indexOf(\"gemma\")!=-1) loot = \"gemma\";\n  if (match[1].toLowerCase().indexOf(\"sangue\")!=-1) loot = \"goccia\";\n  if (match[1].toLowerCase().indexOf(\"ramo\")!=-1) loot = \"ramo\";\n  if (loot.length) {\n    send(`get ${loot} corpo`);\n    send(`get ${loot} ossa`);\n  }\n}",
       "regex": true,
@@ -438,14 +432,17 @@
       "is_prompt": false
     },
     {
-      "pattern": "Ma se non sei alla tastiera, dove vuoi andare?",
+      "pattern": "^Ma se non sei alla tastiera, dove vuoi andare?",
       "id": "",
       "value": "~afk",
       "regex": false,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "~afk"
+      ]
     },
     {
       "pattern": "^(Con una rapida mossa della sua arma, (.+) colpisce con decisione il tuo braccio|(.+)  esegue un rapido calcio, che va a colpire la tua mano con estrema precisione!)!",
@@ -468,7 +465,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "La Luce Divina che ti illumina inizia ad attenuarsi.",
+      "pattern": "^La Luce Divina che ti illumina inizia ad attenuarsi.",
       "id": "",
       "value": "if (window.sancTimeout) {\n  clearTimeout(window.sancTimeout);\n  window.sancTimeout = null;\n}\nwindow.sancTimeout = setTimeout(()=>{\n  this.scadenzaSanc = true;\n  window.sancTimeout = null;\n},100000);",
       "regex": false,
@@ -478,7 +475,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "L'aura rossa intorno al tuo corpo inizia a sbiadire.",
+      "pattern": "^L'aura rossa intorno al tuo corpo inizia a sbiadire.",
       "id": "",
       "value": "if (window.scudoTimeout) {\n  clearTimeout(window.scudoTimeout);\n  window.scudoTimeout = null;\n}\nwindow.scudoTimeout = setTimeout(()=>{\n  this.scadenzaScudo = true;\n  window.scudoTimeout = null;\n},100000);",
       "regex": false,
@@ -568,7 +565,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Fallisci il tuo tentativo di salvataggio",
+      "pattern": "^Fallisci il tuo tentativo di salvataggio",
       "id": "",
       "value": "this.TSTank=\"\"\nthis.TSMob=\"\"",
       "regex": false,
@@ -600,7 +597,7 @@
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
       "id": "",
-      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.preventAntispalm = false;\nif (this.armaPrimaria && this.autoarmi) {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
+      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.preventAntispalm = false;\nif (this.armaPrimaria && this.autoarmi && (this.zoneDaNonRimettereArma||0).toString()!=\"0\") {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
       "regex": true,
       "is_script": true,
       "class": "autoarmi",
@@ -720,7 +717,7 @@
     {
       "pattern": "^(.*) ti cade dalle mani$",
       "id": "",
-      "value": "send(`hold ${this.holdItem}`);\n",
+      "value": "if (this.holdItem) send(`hold ${this.holdItem}`);\n",
       "regex": true,
       "is_script": true,
       "class": "armi",
@@ -730,7 +727,7 @@
     {
       "pattern": "^E ti casca anche (.*)!$",
       "id": "",
-      "value": "send(`wield ${this.ultimaArma}`);",
+      "value": "if (this.ultimaArma) send(`wield ${this.ultimaArma}`);",
       "regex": true,
       "is_script": true,
       "class": "armi",
@@ -738,7 +735,7 @@
       "is_prompt": false
     },
     {
-      "pattern": "Apri il tuo libro e inizi a leggere e meditare",
+      "pattern": "^Apri il tuo libro e inizi a leggere e meditare",
       "id": "iniziomemorize",
       "value": "toggleTrigger(\"iniziomemorize\", false)\ndelay(\"iniziomemorize\",4000,()=>{\n  toggleTrigger(\"iniziomemorize\", classEnabled(\"automemorize\"))\n});\nlet now = new Date();\nvar dif = Math.round((now.getTime() - this.lastTickTime.getTime())/1000);\nif (dif < 10 && this.automemo) {\n  print(\"Sembra che automemorize sia andato a brutto fine. Synco il libro.\")\n  send(\"stand;mem\")\n}",
       "regex": false,
@@ -768,18 +765,14 @@
       "is_prompt": false
     },
     {
-      "pattern": "^(.+) esegue un complesso rituale ed invoca l'aiuto del dio Nalith. La stanza si riempie di luce",
+      "pattern": "^(.+) esegue un complesso rituale ed invoca l'aiuto del dio Nalith\\. La stanza si riempie di luce",
       "id": "",
       "value": "selfsanc off\nautosanc off",
       "regex": true,
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false,
-      "script": [
-        "selfsanc off",
-        "autosanc off"
-      ]
+      "is_prompt": false
     },
     {
       "pattern": "^Ti allontani dalla tastiera",
@@ -798,7 +791,7 @@
       "pattern": "^Ahi ahi, non puoi andare da quella parte|^.+ non si apre\\.|^Hai fallito a forzare la serratura\\.",
       "id": "",
       "value": "if (mapper.currentWalk) mapper.failWalk(\"Percorso fallito.\")",
-      "regex": false,
+      "regex": true,
       "is_script": true,
       "class": "mapper",
       "enabled": true,
@@ -837,7 +830,7 @@
     {
       "pattern": "^Dhethor, il questor, e' qui in attesa di volontari",
       "id": "",
-      "value": "if (this.questComplete) {\n\tthis.questComplete = false\n\tsend(\"quest complete\")\n}",
+      "value": "if (this.questComplete) {\n\tthis.questComplete = false\n  \tthis.searchRooms = null;\n\tsend(\"quest complete\")\n}",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -872,10 +865,13 @@
       "is_script": false,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": [
+        "look"
+      ]
     },
     {
-      "pattern": "^(.+) ha perso il senso della realta'.",
+      "pattern": "^(.+) ha perso il senso della realta'\\.",
       "id": "",
       "value": "send(\"emote dice $c5115\" + $1.split(\" \")[0] + \" ha perso la connessione!$c0007\")",
       "regex": true,

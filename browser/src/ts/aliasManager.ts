@@ -3,7 +3,7 @@ import { EventHook } from "./event";
 import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
 import { ProfileManager } from "./profileManager";
-import { ConfigIf } from "./util";
+import { ConfigIf, escapeRegExp } from "./util";
 import { UserConfig } from "./userConfig";
 
 interface RegexMatchCapability {
@@ -116,7 +116,7 @@ export class AliasManager {
         for (const a of this.allAliases) {
             let rex:RegExp;
             if (!a.regex) {
-                rex =  RegExp("^" + a.pattern + "(?:\\s+(.*))?$","i");
+                rex =  RegExp("^" + escapeRegExp(a.pattern) + "(?:\\s+(.*))?$","i");
             } else {
                 rex = RegExp(a.pattern.charAt(0) == "^" ? a.pattern : ("^" + a.pattern), "i");
             }

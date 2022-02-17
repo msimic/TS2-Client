@@ -175,7 +175,7 @@ export class Client {
         this.windowManager.triggerChanged();
 
         this.connectWin = new ConnectWin(this.socket);
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.jsScript);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.jsScript, this.outputWin);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
@@ -250,6 +250,9 @@ export class Client {
         };
 
         this.socket.EvtTelnetConnect.handle((val: [string, number]) => {
+            if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
+                new Audio("./sounds/connect.ogg").play()
+            }
             this.jsScript.load();
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
             this.layoutManager.profileConnected();
@@ -267,6 +270,9 @@ export class Client {
         });
 
         this.socket.EvtTelnetDisconnect.handle(() => {
+            if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
+                new Audio("./sounds/disconnect.ogg").play()
+            }
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: false});
             this.save();
             this.windowManager.profileDisconnected();
@@ -609,8 +615,9 @@ export namespace Mudslinger {
         setDefault(cfg, "wrap-lines", true);
         setDefault(cfg, "utf8Enabled", false);
         setDefault(cfg, "mxpEnabled", true);
-        setDefault(cfg, "enable-aliases", true);
-        setDefault(cfg, "enable-triggers", true);
+        setDefault(cfg, "aliasesEnabled", true);
+        setDefault(cfg, "triggersEnabled", true);
+        setDefault(cfg, "soundsEnabled", true);
         setDefault(cfg, "font-size", "small");
         setDefault(cfg, "font", "consolas");
         setDefault(cfg, "colorsEnabled", true);

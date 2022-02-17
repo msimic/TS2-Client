@@ -48,6 +48,7 @@
           <li data-option-name="use-profile"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/profiles.png' />Personaggi</li>
           <li type="separator"></li>
           <li id="menuBar-conn-disconn" data-option-name="connect"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti</li>
+          <li id="menuBar-conn-log" data-option-name="log"><label for="menuBar-chkLog"><input id="menuBar-chkLog" type="checkbox">Registrazione (Log)</label></li>
         </ul>
       </li>
       <li id="impostazioni" class="configMenuItem" data-option-name="config">Impostazioni
@@ -84,20 +85,21 @@
                 </ul>
               </li>
               <li type="separator"></li>
-              <li data-option-name="wrap-lines"><label for="menuBar-chkWrapLines"><input id="menuBar-chkWrapLines" type="checkbox" checked>Capolinea</label></li>
               <li data-option-name="enable-utf8"><label for="menuBar-chkEnableUtf8"><input id="menuBar-chkEnableUtf8" type="checkbox" checked>UTF-8</label></li>
             </ul>
           </li>
           
-          <li data-option-name="enable-mxp" title="Il protocollo MXP permette al server di mandare variabili ed altro al client (preferibile abilitato)"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
-          
+          <li data-option-name="wrap-lines"><label for="menuBar-chkWrapLines"><input id="menuBar-chkWrapLines" type="checkbox" checked>Capolinea</label></li>
+              
           <li type="separator"></li>
           <li data-option-name="enable-triggers"><label for="menuBar-chkEnableTrig"><input id="menuBar-chkEnableTrig" type="checkbox" checked>Triggers</label></li>
           <li data-option-name="enable-aliases"><label for="menuBar-chkEnableAlias"><input id="menuBar-chkEnableAlias" type="checkbox" checked>Aliases</label></li>
+          <li data-option-name="enable-sounds"><label for="menuBar-chkEnableSound"><input id="menuBar-chkEnableSound" type="checkbox" checked>Suoni</label></li>
           <li type="separator"></li>
           
           <li>Avanzate
             <ul>
+              <li data-option-name="enable-mxp" title="Il protocollo MXP permette al server di mandare variabili ed altro al client (preferibile abilitato)"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
               <li data-option-name="log-time"><label><input type="checkbox">Marca tempo nell'output</label></li>
               <li data-option-name="debug-scripts"><label><input type="checkbox">Informazioni scripting (debug)</label></li>
               <li type="separator"></li>

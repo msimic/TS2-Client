@@ -110,7 +110,7 @@ export class MapperWindow {
             <div class="toprow">
                 <div id="mapperMenubar" class="menuBar">
                     <ul class='custom'>
-                        <li id="dati" class='custom' data-option-name="load">Dati
+                        <li id="dati" class='custom' data-option-type="mapper" data-option-name="load">Dati
                             <ul  class='custom'>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
@@ -173,6 +173,7 @@ export class MapperWindow {
         const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
 
         $("#mapperMenubar").on('itemclick', (event: any) => {
+            document.getSelection().removeAllRanges();
             if ($((<any>event).args).find(".jqx-icon-arrow-left").length || $((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).target).closest(".jqx-menu-popup").length==0)
                 return;
             this.closeMenues(mnu);

@@ -22,6 +22,16 @@ export class OutWinBase {
     private lineCount: number = 0;
     private maxLines: number = 500;
     private mouseWasDown = false;
+    private _log: boolean;
+    public get log(): boolean {
+        return this._log;
+    }
+    public set log(value: boolean) {
+        if (!this._log && value) {
+            localStorage.setItem("log", "")
+        }
+        this._log = value;
+    }
 
     private onMouseUp = () => {
         if (this.mouseWasDown) {
@@ -311,6 +321,9 @@ export class OutWinBase {
         }*/
         if (toRoot) {
             this.$target.append(o); //$(o).insertBefore(this.$target);
+            if(this.log) {
+                this.lineText = (this.$target).text()+"\n"
+            }
             if (this.$target == this.$rootElem) {
                 this.lineCount += 1;
                 /*const childCnt = this.$rootElem.children().length;
@@ -349,6 +362,7 @@ export class OutWinBase {
             console.log("Lines out of sync! " + childCnt + ":" + this.lineCount);
         }*/
 
+        this.logLine();
         this.lineText = "";
 
         //this.lineCount += 1;
@@ -370,6 +384,7 @@ export class OutWinBase {
             }
         }
     }
+    protected logLine():void {};
 
     private writeBuffer() {
         /*if (this.appendBuffer && this.appendBuffer != "<span></span>") {

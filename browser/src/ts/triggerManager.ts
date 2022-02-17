@@ -4,7 +4,7 @@ import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import { ProfileManager } from "./profileManager";
 import { Mudslinger } from "./client";
-import { ConfigIf, stripHtml } from "./util";
+import { ConfigIf, escapeRegExp, escapeRegexReplacement, stripHtml } from "./util";
 
 /*export interface ConfigIf {
     set(key: string, val: TrigAlItem[]): void;
@@ -110,7 +110,11 @@ export class TriggerManager {
         for (const t of this.allTriggers) {
             let pattern = t.pattern;
             if (!t.regex) {
-                pattern = pattern.replace(/\$|\%(\d+)/g, function(m, d) {
+                pattern = escapeRegExp(pattern)
+                if (pattern.indexOf("\\^")==0) {
+                    pattern = ("^" + pattern.substring(2))
+                }
+                pattern = pattern.replace(/(\\\$|\%)(\d+)/g, function(m, d) {
                     return "(.+)";
                 });
             }
@@ -439,6 +443,9 @@ export class TriggerManager {
       }
 
     public subBuffer(sWhat: string, sWith: string) {
+        sWhat = escapeRegExp(sWhat)
+        sWith = escapeRegexReplacement(sWith)
+
         let buffer = this.buffer;
         let text = this.line.split("\n")[0];
         let intag = false;
