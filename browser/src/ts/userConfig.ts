@@ -120,7 +120,12 @@ export class UserConfig {
     }
 
     public exportToFile() {
-        let json = JSON.stringify(this.cfgVals, null, 2);
+        let jso = JSON.parse(JSON.stringify(this.cfgVals));
+        const ver = AppInfo.Version.split(".")
+        jso.requiresClientMajor = parseInt(ver[0]);
+        jso.requiresClientMinor = parseInt(ver[1]);
+        jso.requiresClientRevision = parseInt(ver[2]);
+        let json = JSON.stringify(jso, null, 2);
         let blob = new Blob([json], {type: "octet/stream"});
         let url = window.URL.createObjectURL(blob);
 
