@@ -561,6 +561,7 @@ function makeCbLocalConfigSave(): (val: string) => string {
 }
 
 export async function setupWorkers() {
+    if ((<any>window).ipcRenderer) return Promise.resolve(null);
 
     if ('serviceWorker' in navigator) {
         return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {

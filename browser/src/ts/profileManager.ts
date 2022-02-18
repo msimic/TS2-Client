@@ -109,10 +109,12 @@ export class ProfileManager {
     }
 
     public setTitle() {
+        const inWeb = !!!(<any>window).ipcRenderer;
+        const title = inWeb ? AppInfo.AppTitle : AppInfo.AppTitle.replace("Web ","");
         if (this._current) {
-            document.title = `${this.appInfo.AppTitle} - ${this._current}`;
+            document.title = `${title} - ${this._current}`;
         } else {
-            document.title = `${this.appInfo.AppTitle} - Server Live`;
+            document.title = `${title} - Server Live`;
         }
     }
 

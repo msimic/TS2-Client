@@ -4,6 +4,8 @@ export class AboutWin {
     private $win: JQuery;
 
     constructor() {
+        const inWeb = !!!(<any>window).ipcRenderer;
+        const title = inWeb ? AppInfo.AppTitle : AppInfo.AppTitle.replace("Web ","");
         let win = document.createElement("div");
         win.style.display = "none";
         win.className = "winAbout";
@@ -14,7 +16,7 @@ export class AboutWin {
         <div>INFORMAZIONI</div>
         <!--content-->
         <div>
-            <h1>${AppInfo.AppTitle}</h1>
+            <h1>${title}</h1>
             <br>
             <a href="${AppInfo.RepoUrl}" target="_blank">${AppInfo.RepoUrl}</a>
             <br>

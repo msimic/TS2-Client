@@ -28,7 +28,7 @@
     $(document).ready(function() {
       Mudslinger.init();
     });
-
+    console.log(typeof require)
     if (typeof require !== 'undefined') {
       const {ipcRenderer} = require('electron');
       console.log("IPC_RENDERER: "+!!ipcRenderer)

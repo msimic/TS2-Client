@@ -3,7 +3,7 @@
 const path = require("path");
 
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, session, protocol } = require("electron");
 
 // Check if Electron is running in development 
 const isDev = require("electron-is-dev");
@@ -17,11 +17,65 @@ if (isDev){
   });
 }
 
+const appPath = process.env.PORTABLE_EXECUTABLE_DIR || app.getPath("exe") || app.getAppPath();
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'local', privileges: { bypassCSP: true } },
+  { scheme: 'home', privileges: { bypassCSP: true } }
+])
+
+function interceptLocal() {
+  console.log("registering local protocol")
+  protocol.registerFileProtocol('local', (request, callback) => {
+    let url = request.url.substring(8)
+    url = path.normalize(`${appPath}/${url}`)
+    console.log("local url: " + url)
+    mainWindow.setTitle("Load local: " + url)
+    callback({ path: url })
+  })
+  protocol.interceptFileProtocol('local', function (request, callback) {
+    let url = request.url.substring(8)
+    url = path.normalize(`${appPath}/${url}`)
+    console.log("intercept local url: " + url)
+    mainWindow.setTitle("Load local: " + url)
+    callback({ path:  url });   /* 'file:///' */
+  });
+  protocol.registerFileProtocol('home', (request, callback) => {
+    let url = request.url.substring(7)
+    url = path.normalize(`${app.getPath("home")}/${url}`)
+    console.log("local url: " + url)
+    callback({ path: url })
+  })
+  protocol.interceptFileProtocol('home', function (request, callback) {
+    let url = request.url.substring(7)
+    url = path.normalize(`${app.getPath("home")}/${url}`)
+    console.log("intercept local url: " + url)
+    callback({ path:  url });   /* 'file:///' */
+  });
+}
 
 function createWindow() {
+  /*session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    console.log("request " + details.url);
+    if (details.url.indexOf("/!/") == -1) {
+      return callback({
+          requestHeaders: details.requestHeaders,
+          url: details.url,
+      })
+    }
+
+    details.url = details.url.substring(details.url.indexOf("/!/")+3);
+    details.url  = "file:///" + path.join(app.getAppPath(), details.url);
+    console.log("translated to  " + details.url);
+    return callback({
+        requestHeaders: details.requestHeaders,
+        url: details.url,
+    })
+   })*/
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
                     width: 1366,
@@ -32,6 +86,10 @@ function createWindow() {
                     show:false,
                     webPreferences: {
                       nodeIntegration: true,
+                      contextIsolation: false,
+                      enableRemoteModule: true, 
+                      backgroundThrottling: false,
+                      webSecurity: false ,
                       devTools: true
                     }
                    });
@@ -93,6 +151,7 @@ mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
+    app.exit()
   });
   mainWindow.on('close', function(e) { 
     e.preventDefault();
@@ -105,7 +164,10 @@ mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on("ready", createWindow);
+app.on("ready", () => {
+  createWindow();
+  interceptLocal();
+});
 
 // Quit when all windows are closed.
 app.on("window-all-closed", function() {

@@ -6,7 +6,7 @@ module.exports = {
   entry: './build/browser/src/ts/client.js',
   output: {
     path: path.resolve(__dirname, "static/public"),
-    filename: 'mudslinger-[contentHash].js'
+    filename: 'mudslinger-[contenthash].js'
   },
   plugins: [
     new CleanWebpackPlugin({
@@ -15,9 +15,14 @@ module.exports = {
       cleanOnceBeforeBuildPatterns: ['*.hot-update.json', '*.js', '!jquery*'],
     }),
     new 
-    CopyPlugin([
-      "src/cacheServiceWorker.js"
-      ]),
+    CopyPlugin({
+      patterns: [
+        {
+          // If absolute path is a `glob` we replace backslashes with forward slashes, because only forward slashes can be used in the `glob`
+          from: "src/cacheServiceWorker.js",
+        },
+      ],
+    }),
     new HtmlWebpackPlugin({
       template: "./src/html/template.html",
       filename: path.resolve(__dirname, "static/public", "index.html")
