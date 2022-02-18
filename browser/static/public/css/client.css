@@ -15,10 +15,6 @@ a:link, a:visited {
     text-decoration: none;
 }
 
-.CodeMirror {
-    border: 1px solid black;
-}
-
 @font-face {
     font-family: 'Bitstream-Vera-Sans-Mono';
       src:  url('Bitstream-Vera-Sans-Mono.ttf.woff') format('woff'),
@@ -28,6 +24,11 @@ a:link, a:visited {
       font-weight: normal;
       font-style: normal;
   }
+
+.CodeMirror {
+    border: 1px solid black;
+    font-family: Consolas, Bitstream-Vera-Sans-Mono, monospace;
+}
   
 .fill-width {
     width: 100%;
