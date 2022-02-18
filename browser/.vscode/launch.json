@@ -8,9 +8,10 @@
             "preLaunchTask": "webpack: dev server",
             "url": "http://localhost:8080?host=auto",
             "runtimeArgs": [/*"--incognito"*/],
-            "webRoot": "${workspaceFolder}",
+            "webRoot": "${workspaceFolder}/static/public",
             "sourceMaps": true,
             "trace": true,
+            "userDataDir": true,
             "skipFiles": [  
                 "${workspaceRoot}/node_modules/**/*.js",
             ]

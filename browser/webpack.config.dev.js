@@ -19,7 +19,7 @@ module.exports = {
       verbose: true,
       cleanOnceBeforeBuildPatterns: ['*.hot-update.json', '*.js', '!jquery*'],
     }),
-    CopyPlugin({
+    new CopyPlugin({
       patterns: [
         {
           // If absolute path is a `glob` we replace backslashes with forward slashes, because only forward slashes can be used in the `glob`
@@ -46,18 +46,21 @@ module.exports = {
     ]
   },
   devServer: {
-    contentBase: path.resolve(__dirname, "static/public/"),
-    inline: true,
-    writeToDisk: true,
-    watchContentBase: true,
     host: 'localhost',
+    hot: true,
+    open:false,
     /*https: true,
     host: 'mars.local',
     key: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.key"),
     cert: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.crt"),*/
     port: 8080,
-    watchOptions: {
-      poll: 500
-    }
+    static: {
+      directory: path.resolve(__dirname, "static/public/"),
+      serveIndex: true,
+      watch: true,
+    },
+    devMiddleware: {
+      writeToDisk: true,
+    },
   },
 };
