@@ -16,6 +16,7 @@ import { downloadString, isTrue } from "./util";
 import { LayoutManager } from "./layoutManager";
 import { EvtScriptEmitPrint, JsScript } from "./jsScript";
 import { OutputWin } from "./outputWin";
+import { Button, Messagebox } from "./messagebox";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -337,8 +338,11 @@ export class MenuBar {
             this.layout.importFromFile();
         };
 
-        this.clickFuncs["update-triggers"] = () => {
-            this.profileWin.ImportBaseTriggers();
+        this.clickFuncs["update-triggers"] = async () => {
+            if ((await Messagebox.Question("Sei sicuro di voler aggiornare i script preimpostati?")).button == Button.Ok) {
+                localStorage.setItem("old_UserConfig", localStorage.getItem("userConfig"))
+                this.profileWin.ImportBaseTriggers();
+            }
         }
 
         this.clickFuncs["mapper"] = () => {

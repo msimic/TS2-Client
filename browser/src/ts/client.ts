@@ -398,14 +398,14 @@ export class Client {
         EvtScriptEmitPrint.handle((data:{owner:string, message:string, window?:string, raw?:any}) => {
             setTimeout(()=>{
             if (data.window) {
-                this.outputManager.sendToWindow(data.window, data.message, data.message, true);
+                this.outputManager.sendToWindow(data.window, data.message||"", data.message, true);
             } else {
                 if (!data.raw) {
                     const msg = "<span style=\"color:orange\">"
-                    + raw(data.message)
+                    + raw(data.message||"")
                     + "<br>"
                     + "</span>"
-                    this.outputWin.handleScriptSendCommand(data.owner, data.message);
+                    this.outputWin.handleScriptSendCommand(data.owner, data.message||"");
                     const f = () => {
                         this.outputManager.handlePreformatted(msg);
                         this.outputWin.scrollBottom(false);
@@ -415,7 +415,7 @@ export class Client {
                     //}, 0);
                     
                 } else {
-                    this.outputWin.append(data.raw, true)
+                    this.outputWin.append(data.raw||"", true)
                 }
             }},0)
         });

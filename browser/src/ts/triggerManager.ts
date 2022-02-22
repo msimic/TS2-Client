@@ -108,6 +108,7 @@ export class TriggerManager {
         //console.log("precompile triggers")
         this.precompiledRegex.clear()
         for (const t of this.allTriggers) {
+            t.script = null;
             let pattern = t.pattern;
             if (!t.regex) {
                 pattern = escapeRegExp(pattern)
@@ -148,6 +149,7 @@ export class TriggerManager {
     public saveTriggers() {
         if (this.saving) return;
         try {
+            this.triggers.forEach(a => a.script = null);
             this.config.set("triggers", this.triggers);
             this.mergeTriggers();
             if (!this.baseConfig) {

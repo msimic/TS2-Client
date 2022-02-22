@@ -1,5 +1,6 @@
 {
   "version":5,
+  "versionMessage":"Implementato autokill e altre correzioni a trigger",
   "requiresClientMajor": 1,
   "requiresClientMinor": 1,
   "requiresClientRevision": 0,
@@ -22,7 +23,22 @@
     "black",
     "low"
   ],
-  "variables": [],
+  "variables": [
+    ["autoKillMobs",
+      {
+      "Name": "autoKillMobs",
+      "Class": "",
+      "Value": "guardia|armiere|statua golem|giardiniere|carceriere|brok capo carceriere|baltar capo cuoco|cuoco|grosso orso|strano giardiniere|falstaff incubo cavallo|pericoloso zombie|scheletro|taglialegna|grosso albero|cacciatore|commerciante assonnato guerriero|guardiaforestale|guardia forestale|orco scuro ladro|sailtril cuoco|guardiaforestale elfica|viandante viaggiatore|orso|elfo scuro addormentato guerriero|golem fulmini|welb monaco|serpente strisciante|fentig oscuro ranger|plint paladino|troll addormentato|angelo cacciatore|elementale fuoco grosso evocazione|panaj mastro druido|gnollo guerriero|salice piangente|efeliv druido elfo|seriev lizardman|fresius cacciatore|nikolaiv sacerdote|Desser titano guardiano|gigante colline|sinister titano guardiano|guardia geldor|spirito narhaeld|spirito midra|spirito alhart|spirito nithus|spirito erohar|spirito anisha|spirito runha|bandito banda|spirito nohel|essere non-morto|spirito bandito|spirito argha|spirito armidas|spirito eramos|spirito nathael|spirito narthas|spirito orothos|guardia villaggio cancello|guardia villaggio strade|abitante donna|abitante villaggio|forestiero viaggiatore|stalliere uomo|Igor sfregiato uomo|contadino uomo|vignaiolo|Baglio mugnaio|contadino donna|grappa cane capovillaggio|Garlos Manodiferro capovillaggio Toewin|vecchio portiere|guardia grigia|statua azzurra|anfitrione|blizzy|pontiere|comandante compagnia|albero marrone scuro|gigante tempeste|bart nano esploratore|monaco impazzito pericoloso|guardia scelta|eruvio magazziniere|kurt cuoco avamposto|Vertor capitanoavamposto|elfo scuro|poirot mercante|guardiaboschi|dron mercante|Eldrik taglialegna|ranger midia|custode magazziniere magazzino|faelin dei discendente|wegendel licantropo|keltor ranger elfo|albero antico morente|gigante nuvole generico|ertat elfo chierico|kevlar fabbro errante|angelo maggiore|angelo minore|Daff goodangel|enorme ciclope|golem roccia rossa|presenza malvagia|wight|drago bronzo|titano gigantesco|golem argento|matteo bardo"
+      }
+    ],
+    ["dangerMobs",
+      {
+      "Name": "dangerMobs",
+      "Class": "",
+      "Value": "karoz barbaro errante|veterani"
+      }
+    ]
+  ],
   "script_events": [
     [
       "VariableChanged",
@@ -123,6 +139,14 @@
           "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)",
           "class": "",
           "enabled": true
+        },
+        {
+          "type": "VariableChanged",
+          "condition": "Mobs,TSLag",
+          "id": "",
+          "value": "delay(\"mobchanged\", 20, ()=>{\n  if (this.Mobs && this.TSLag != \"+\") {\n      send(\"autokillcheck\")\n  }\n});",
+          "class": "autokill",
+          "enabled": true
         }
       ]
     ],
@@ -133,7 +157,7 @@
           "type": "ConnectionState",
           "condition": "telnet",
           "id": "",
-          "value": "send(\"generaFunzioni\")",
+          "value": "this.Mobs = \"\";\nsend(\"generaFunzioni\")",
           "class": "",
           "enabled": true
         }
@@ -142,10 +166,10 @@
   ],
   "triggers": [
     {
-      "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto.",
+      "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto\\.|^Riconnessione in corso\\.",
       "id": "inizializzazione",
-      "value": "initialize",
-      "regex": false,
+      "value": "preinit\ninitialize",
+      "regex": true,
       "is_script": false,
       "class": "",
       "enabled": true,
@@ -194,7 +218,7 @@
     {
       "pattern": "^(\\([^)']+\\) )?(OT:)?\\[?([^\\]]+)?\\]?(?:Tu)? ?((?:ti )?[cC]hied[ei](?: a [^,]+)?,?|url[ai]|dic[ei] agli Eroi|(?:ti )?sussurr[ia](?: a [^,]+)?,?|dic[ei](?: a [^,]+,)?|dic[ei] al gruppo|(?:ti )?mand[ai] il pensiero(?: a [^,]+)?,|(?:ti )?mand[ai] il messaggio(?: a [^,]+)?,|ti dice) '(.*)'$",
       "id": "capSocial",
-      "value": "function isMob(str) {\n  let mob = false;\n  if (str.toLowerCase().indexOf(\"strillone\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"dhethor\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"guardia\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"matteo\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"elminster\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"uno\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"una\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"biff\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\",\")!=-1) mob = true;\n  if (str.toLowerCase().startsWith(\"il\")) mob = true;\n  if (str.toLowerCase().startsWith(\"la\")) mob = true;\n  if (str.toLowerCase().startsWith(\"un\")) mob = true;\n  if (str.toLowerCase().startsWith(\"una\")) mob = true;\n  if (str.toLowerCase().startsWith(\"uno\")) mob = true;\n  return mob;\n}\nlet time=new Date().getHours()+\":\"+new Date().getMinutes();\nlet gtPg = (match[3]||\"Tu\").split(\"]\")[0];\ngtPg = gtPg || \"Tu\";\nif (!isMob((match[3]||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1 &&\n   match[0].indexOf(\"al gruppo\")==-1) {\n  //cap(\"Social\");\n  /*for (let i = 0; i < 6; i++) {\n    print(i + \":\" + match[i]);\n  }*/\n  let tipo = \"\";\n  gtPg = color(gtPg.split(\" \")[0], \"lightgray\");\n  let textColor = \"yellow\"\n  if (match[2] && match[2]==\"OT:\") {\n    tipo=\"OT\"\n    textColor = \"yellowgreen\"\n  } else if (!match[3] && match[4].startsWith(\"Chiedi a \")) {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n    gtPg = \"Tu a \" + match[4].trim().replace(\"Chiedi a \",\"\").split(/[^a-z]/i)[0]\n    gtPg = color(gtPg, \"lightgray\");\n  } else if (match[1] && match[1].trim().startsWith(\"(\") && match[1].trim().endsWith(\")\")) {\n    tipo=\"Guild\"\n    textColor=\"#4eb2f9\"\n  } else if (match[4] && match[4].trim()==\"urli\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"dici agli Eroi\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"dici\" && match[3] && (match[3].trim()==\"Tu\" || match[3].trim()==\"Con i segni\")) {\n     if (match[3].trim().endsWith(\"i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n       gtPg = color(\"Tu\", \"lightgray\");\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"dice\" && match[3] && !match[3].trim().endsWith(\"ti\")) {\n    if (match[3].trim().endsWith(\"con i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"ti chiede\") {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n  } else if (match[4] && match[4].trim()==\"dice agli Eroi\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"urla\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"ti manda il pensiero,\") {\n    tipo=\"Tele\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim()==\"ti manda il messaggio,\") {\n    tipo=\"Mess\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti dice\")) {\n    tipo=\"Tell\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"dici a \")) {\n    tipo=\"Tell\"\n    let tmp = match[4].trim().replace(\"dici a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il messaggio a \")) {\n    tipo=\"Mess\"\n    let tmp = match[4].trim().replace(\"mandi il messaggio a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il pensiero a \")) {\n    tipo=\"Tele\"\n    let tmp = match[4].trim().replace(\"mandi il pensiero a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"sussurri a \")) {\n    tipo=\"Suss\"\n    let tmp = match[4].trim().replace(\"sussurri a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti sussurra,\")) {\n    tipo=\"Suss\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  }\n  if (match[5]==\"ping\") {\n    print(\"Ti sta cercando \" + gtPg + \"!\")\n    switch (tipo) {\n      case 'Tele':\n      case 'Mess':\n      case 'Tell':\n        playAudio(\"./sounds/disconnect.ogg\")\n        break;\n    }\n  }\n  tipo=color(tipo, \"lightgray\")\n  let detto = color(match[5], textColor);\n  if (this.afk) {\n    time=color(\"@\" +time,\"gray\");\n  } else {\n    time=\"\";\n  }\n  print(`[${tipo}]${time}:${gtPg}> ${detto}`,\"Social\")\n}\nif (!isMob((gtPg||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1) {\n  if (match[0].indexOf(\"al gruppo\")!=-1) {\n    gtPg = color(gtPg.split(\" \")[0]+\":\", \"lightgray\");\n    let detto = color(\" \"+match[5], \"#6060FF\");\n    print(`${gtPg}`,\"Group Tell\")\n  \tprint(`${detto}`,\"Group Tell\")\n  }\n}",
+      "value": "function isMob(str) {\n  let mob = false;\n  if (str.toLowerCase().indexOf(\"strillone\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"dhethor\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"guardia\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"matteo\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"elminster\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"uno\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"una\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\"biff\")!=-1) mob = true;\n  if (str.toLowerCase().indexOf(\",\")!=-1) mob = true;\n  if (str.toLowerCase().startsWith(\"il\")) mob = true;\n  if (str.toLowerCase().startsWith(\"la\")) mob = true;\n  if (str.toLowerCase().startsWith(\"un\")) mob = true;\n  if (str.toLowerCase().startsWith(\"una\")) mob = true;\n  if (str.toLowerCase().startsWith(\"uno\")) mob = true;\n  return mob;\n}\nlet time=new Date().getHours()+\":\"+new Date().getMinutes();\nlet gtPg = (match[3]||\"Tu\").split(\"]\")[0];\ngtPg = gtPg || \"Tu\";\nif (!isMob((match[3]||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1 &&\n   match[0].indexOf(\"al gruppo\")==-1) {\n  //cap(\"Social\");\n  /*for (let i = 0; i < 6; i++) {\n    print(i + \":\" + match[i]);\n  }*/\n  let tipo = \"\";\n  gtPg = color(gtPg.split(\" \")[0], \"lightgray\");\n  let textColor = \"yellow\"\n  if (match[2] && match[2]==\"OT:\") {\n    tipo=\"OT\"\n    textColor = \"yellowgreen\"\n  } else if (!match[3] && match[4].startsWith(\"Chiedi a \")) {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n    gtPg = \"Tu a \" + match[4].trim().replace(\"Chiedi a \",\"\").split(/[^a-z]/i)[0]\n    gtPg = color(gtPg, \"lightgray\");\n  } else if (match[1] && match[1].trim().startsWith(\"(\") && match[1].trim().endsWith(\")\")) {\n    tipo=\"Guild\"\n    textColor=\"#4eb2f9\"\n  } else if (match[4] && match[4].trim()==\"urli\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"dici agli Eroi\" && match[3] && match[3].trim()==\"Tu\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"dici\" && match[3] && (match[3].trim()==\"Tu\" || match[3].trim()==\"Con i segni\")) {\n     if (match[3].trim().endsWith(\"i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n       gtPg = color(\"Tu\", \"lightgray\");\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"dice\" && match[3] && !match[3].trim().endsWith(\"ti\")) {\n    if (match[3].trim().endsWith(\"con i segni\")) {\n      \ttipo=\"Sign\"\n    \ttextColor=\"yellowgreen\"\n    } else {\n    \ttipo=\"Gos\"\n    \ttextColor=\"yellow\"\n    }\n  } else if (match[4] && match[4].trim()==\"ti chiede\") {\n    tipo=\"Ask\"\n    textColor=\"cyan\"\n  } else if (match[4] && match[4].trim()==\"dice agli Eroi\") {\n    tipo=\"Hero\"\n    textColor=\"yellow\"\n  } else if (match[4] && match[4].trim()==\"urla\") {\n    tipo=\"Shout\"\n    textColor=\"red\"\n  } else if (match[4] && match[4].trim()==\"ti manda il pensiero,\") {\n    tipo=\"Tele\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim()==\"ti manda il messaggio,\") {\n    tipo=\"Mess\"\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti dice\")) {\n    tipo=\"Tell\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"dici a \")) {\n    tipo=\"Tell\"\n    let tmp = match[4].trim().replace(\"dici a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il messaggio a \")) {\n    tipo=\"Mess\"\n    let tmp = match[4].trim().replace(\"mandi il messaggio a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"mandi il pensiero a \")) {\n    tipo=\"Tele\"\n    let tmp = match[4].trim().replace(\"mandi il pensiero a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"sussurri a \")) {\n    tipo=\"Suss\"\n    let tmp = match[4].trim().replace(\"sussurri a \",\"\").split(/[^a-z]/i)[0]\n    gtPg=color(\"Tu a \"+tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  } else if (match[4] && match[4].trim().startsWith(\"ti sussurra,\")) {\n    tipo=\"Suss\"\n    let tmp = match[3].trim().split(/[^a-z]/i)[0]\n    gtPg=color(tmp, \"lightgray\");\n    textColor=\"#8b00dd\"\n  }\n  if (match[5]==\"ping\" && gtPg.indexOf(\"Tu \")==-1) {\n    print(\"Ti sta cercando \" + gtPg + \"!\")\n    switch (tipo) {\n      case 'Tele':\n      case 'Mess':\n      case 'Tell':\n        playAudio(\"./sounds/disconnect.ogg\")\n        break;\n    }\n  }\n  tipo=color(tipo, \"lightgray\")\n  let detto = color(match[5], textColor);\n  if (this.afk) {\n    time=color(\"@\" +time,\"gray\");\n  } else {\n    time=\"\";\n  }\n  print(`[${tipo}]${time}:${gtPg}> ${detto}`,\"Social\")\n}\nif (!isMob((gtPg||\"\")) &&\n  match[5].indexOf(\"(trigger)\")==-1) {\n  if (match[0].indexOf(\"al gruppo\")!=-1) {\n    gtPg = color(gtPg.split(\" \")[0]+\":\", \"lightgray\");\n    let detto = color(\" \"+match[5], \"#6060FF\");\n    print(`${gtPg}`,\"Group Tell\")\n  \tprint(`${detto}`,\"Group Tell\")\n  }\n}",
       "regex": true,
       "is_script": true,
       "class": "",
@@ -238,16 +262,6 @@
       "regex": true,
       "is_script": true,
       "class": "",
-      "enabled": true,
-      "is_prompt": false
-    },
-    {
-      "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
-      "id": "lootGold",
-      "value": "toggleClass(\"autoloot\",false);\n\n/*if (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n\tsend(\"get all.monete corpo\");\n\tsend(\"get all.monete ossa\");\n}*/\nif (this.onetimeLook) {\n  send(\"look\")\n}\nthis.onetimeLook = false;\n  \nsetTimeout(()=> {\n    toggleClass(\"autoloot\",this.autoloot);\n},500);\n",
-      "regex": true,
-      "is_script": true,
-      "class": "autoloot",
       "enabled": true,
       "is_prompt": false
     },
@@ -417,7 +431,7 @@
     {
       "pattern": "^Intravedi (.+) nel corpo di",
       "id": "lootRandomPop",
-      "value": "print(color(\"&lt;&lt; -- INTRAVEDO LOOT !!! -- &gt;&gt;\",\"black\",\"yellow\",true, true, true));  \nif (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n  let loot = \"\";\n  if (match[1].toLowerCase().indexOf(\"cristallo\")!=-1) loot = \"cristallo\";\n  if (match[1].toLowerCase().indexOf(\"gemma\")!=-1) loot = \"gemma\";\n  if (match[1].toLowerCase().indexOf(\"sangue\")!=-1) loot = \"goccia\";\n  if (match[1].toLowerCase().indexOf(\"ramo\")!=-1) loot = \"ramo\";\n  if (loot.length) {\n    send(`get ${loot} corpo`);\n    send(`get ${loot} ossa`);\n  }\n}",
+      "value": "print(color(\"&lt;&lt; -- INTRAVEDO LOOT !!! -- &gt;&gt;\",\"black\",\"yellow\",true, true, true));  \n/*if (this.pgInGruppo().length < 2 || this.isCapogruppo(this.TSPersonaggio)) {\n  let loot = \"\";\n  if (match[1].toLowerCase().indexOf(\"cristallo\")!=-1) loot = \"cristallo\";\n  if (match[1].toLowerCase().indexOf(\"gemma\")!=-1) loot = \"gemma\";\n  if (match[1].toLowerCase().indexOf(\"sangue\")!=-1) loot = \"goccia\";\n  if (match[1].toLowerCase().indexOf(\"ramo\")!=-1) loot = \"ramo\";\n  if (loot.length) {\n    send(`get ${loot} corpo`);\n    send(`get ${loot} ossa`);\n  }\n}*/",
       "regex": true,
       "is_script": true,
       "class": "autoloot|random",
@@ -490,7 +504,7 @@
     {
       "pattern": "^(Chi\\?|Pugnalare chi\\?|Nessuno con quel nome qui)",
       "id": "",
-      "value": "if (this.onetimeLook) {\n  send(\"look\");\n}\nthis.onetimeLook = false;",
+      "value": "if (this.autokill)\n  send(\"look\");",
       "regex": true,
       "is_script": true,
       "class": "",
@@ -600,10 +614,10 @@
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
       "id": "",
-      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.preventAntispalm = false;\nif (this.armaPrimaria && this.autoarmi && (this.zoneDaNonRimettereArma||0).toString()!=\"0\") {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
+      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.Mobs = \"\";\nthis.returnRoom = null;\nthis.stabTarget = null;\nthis.preventAntispalm = false;\nif (this.autokill) {\n\tdelay(\"aklook\", 1000, () => send(\"look\"));\n}\nif (this.armaPrimaria && this.autoarmi && (this.zoneDaNonRimettereArma||0).toString()!=\"0\") {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
       "regex": true,
       "is_script": true,
-      "class": "autoarmi",
+      "class": "kill",
       "enabled": true,
       "is_prompt": false
     },
@@ -793,7 +807,7 @@
     {
       "pattern": "^Ahi ahi, non puoi andare da quella parte|^.+ non si apre\\.|^Hai fallito a forzare la serratura\\.",
       "id": "",
-      "value": "if (mapper.currentWalk) mapper.failWalk(\"Percorso fallito.\")",
+      "value": "mapper.virtualCurrent = null;\nif (mapper.manualSteps&&mapper.manualSteps.length) {\n\tmapper.manualSteps = []\n}\nif (mapper.currentWalk) mapper.failWalk(\"Percorso fallito.\")",
       "regex": true,
       "is_script": true,
       "class": "mapper",
@@ -882,13 +896,23 @@
       "class": "util",
       "enabled": true,
       "is_prompt": false
+    },
+    {
+      "pattern": "^Vedi chiaramente (.+)!",
+      "id": "",
+      "value": "delay(\"aklook\", 500, () => send(\"look\"));",
+      "regex": true,
+      "is_script": true,
+      "class": "autokill",
+      "enabled": true,
+      "is_prompt": false
     }
   ],
   "aliases": [
     {
       "pattern": "initialize",
       "id": "",
-      "value": "this.scriptVersion = 3\n\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nif (this.Immortal) {\n  send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n} else {\n  send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n}\nif (this.setupdone!=this.scriptVersion) {\n  setTimeout(()=>{\n  \tprint(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n  }, 2000);\n}\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null; //this.ultimoScudo;\nlet ultimaArma = null; //this.ultimaArma;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nthis.TSRoom = null",
+      "value": "this.scriptVersion = 4\n\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nif (this.Immortal) {\n  send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n} else {\n  send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n}\nif (this.setupdone!=this.scriptVersion) {\n  setTimeout(()=>{\n  \tprint(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n  }, 2000);\n}\nif (this.autoloot) {\n send(\"fischia\")\n}\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null; //this.ultimoScudo;\nlet ultimaArma = null; //this.ultimaArma;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nthis.TSRoom = null",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1084,7 +1108,7 @@
     {
       "pattern": "setup",
       "id": "",
-      "value": "const resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                 this.casttype||\"C\",\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.mustMemorize = resClassi[4]\nthis.casttype = resClassi[2].toUpperCase()\nthis.spellOffensivo = resClassi[3]\ntoggleClass(\"mage\",false)\ntoggleClass(\"cleric\",false)\ntoggleClass(\"druid\",false)\ntoggleClass(\"psionic\",false)\nthis.mustMind = false;\nif (this.casttype.indexOf(\"C\")!=-1) {\n   toggleClass(\"cleric\",true)\n  this.healtype=\"C\"\n}\nif (this.casttype.indexOf(\"D\")!=-1) {\n   toggleClass(\"druid\",true)\n  this.healtype=\"D\"\n}\nif (this.casttype.indexOf(\"M\")!=-1) {\n   toggleClass(\"mage\",true)\n}\nif (this.casttype.indexOf(\"P\")!=-1) {\n   toggleClass(\"psionic\",true)\n  this.mustMind = true;\n}\ntoggleClass(\"sorcerer\",this.mustMemorize)\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.borsa = resUtil[0]\nthis.throwObject = resUtil[1]\nthis.holdItem = resUtil[2]\nthis.oggettoTrueSight = resUtil[3]\nthis.armaDigCut = resUtil[4]\n\nlet colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\nconst resPersonal = (await Messagebox.ShowMultiInput(\"Personale\",\n                 [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                 [this.pgTitle ? this.pgTitle : \".\",\n                  colori || \"$c0009\",\n                 triggerEnabled(\"gagprompt\")])).results;\n\nthis.pgTitle = resPersonal[0]\nthis.colori = resPersonal[1].split(\",\")\nif (!!resPersonal[2]) {\n  toggleTrigger(\"gagprompt\",true);\n  send(\"compact enable\")\n} else {\n  toggleTrigger(\"gagprompt\",false);\n  send(\"compact disable\")\n}\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}",
+      "value": "const resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                 this.casttype||\"C\",\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.mustMemorize = resClassi[4]\nthis.casttype = resClassi[2].toUpperCase()\nthis.spellOffensivo = resClassi[3]\ntoggleClass(\"mage\",false)\ntoggleClass(\"cleric\",false)\ntoggleClass(\"druid\",false)\ntoggleClass(\"psionic\",false)\nthis.mustMind = false;\nif (this.casttype.indexOf(\"C\")!=-1) {\n   toggleClass(\"cleric\",true)\n  this.healtype=\"C\"\n}\nif (this.casttype.indexOf(\"D\")!=-1) {\n   toggleClass(\"druid\",true)\n  this.healtype=\"D\"\n}\nif (this.casttype.indexOf(\"M\")!=-1) {\n   toggleClass(\"mage\",true)\n}\nif (this.casttype.indexOf(\"P\")!=-1) {\n   toggleClass(\"psionic\",true)\n  this.mustMind = true;\n}\ntoggleClass(\"sorcerer\",this.mustMemorize)\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nlet colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\nconst resPersonal = (await Messagebox.ShowMultiInput(\"Personale\",\n                 [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                 [this.pgTitle ? this.pgTitle : \".\",\n                  colori || \"$c0009\",\n                 triggerEnabled(\"gagprompt\")])).results;\n\nthis.pgTitle = resPersonal[0]\nthis.colori = resPersonal[1].split(\",\")\nif (!!resPersonal[2]) {\n  toggleTrigger(\"gagprompt\",true);\n  send(\"compact enable\")\n} else {\n  toggleTrigger(\"gagprompt\",false);\n  send(\"compact disable\")\n}\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1164,7 +1188,7 @@
     {
       "pattern": "ia",
       "id": "",
-      "value": "if (!this.scudoAcid || this.ultimoScudo==this.scudoAcid) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoAcid) send(`get ${this.scudoAcid} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoAcid}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = true;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ACID\";\nthis.ultimoScudo = this.scudoAcid;",
+      "value": "if (!this.scudoAcid || this.ultimoScudo==this.scudoAcid) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoAcid) send(`get ${this.scudoAcid} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n      send(`rem `+(this.usaLuce?\"12\":\"11\"))\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoAcid}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = true;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ACID\";\nthis.ultimoScudo = this.scudoAcid;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1174,7 +1198,7 @@
     {
       "pattern": "ic",
       "id": "",
-      "value": "if (!this.scudoCold || this.ultimoScudo==this.scudoCold) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoCold) send(`get ${this.scudoCold} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n  send(`rem 11`)\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoCold}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = true;\nthis.usiImmuFire = false;\nthis.Immu = \"COLD\";\nthis.ultimoScudo = this.scudoCold;",
+      "value": "if (!this.scudoCold || this.ultimoScudo==this.scudoCold) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoCold) send(`get ${this.scudoCold} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n      send(`rem `+(this.usaLuce?\"12\":\"11\"))\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoCold}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoEle) send(`put ${this.scudoEle} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = true;\nthis.usiImmuFire = false;\nthis.Immu = \"COLD\";\nthis.ultimoScudo = this.scudoCold;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1184,7 +1208,7 @@
     {
       "pattern": "ie",
       "id": "",
-      "value": "if (!this.scudoEle || this.ultimoScudo==this.scudoEle) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoEle) send(`get ${this.scudoEle} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n    send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoEle}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = true;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ELE\";\nthis.ultimoScudo = this.scudoEle;",
+      "value": "if (!this.scudoEle || this.ultimoScudo==this.scudoEle) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoEle) send(`get ${this.scudoEle} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n        send(`rem `+(this.usaLuce?\"12\":\"11\"))\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoFire) send(`rem ${this.scudoFire}`);\n}\nsend(`wear ${this.scudoEle}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = true;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = false;\nthis.Immu = \"ELE\";\nthis.ultimoScudo = this.scudoEle;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1395,7 +1419,7 @@
       "pattern": "^bloom",
       "id": "",
       "value": "cast 'bloom'",
-      "regex": false,
+      "regex": true,
       "is_script": false,
       "class": "druid",
       "enabled": true,
@@ -1404,7 +1428,7 @@
     {
       "pattern": "generaFunzioni",
       "id": "",
-      "value": "this.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  const cambiaArma = (@ultimaArma!=@armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${@ultimaArma}`)\n    send(`gb ${@armaDigCut}`)\n    send(`~wield ${@armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${@armaDigCut}`)\n    send(`~wield ${@ultimaArma}`)\n    send(`pb ${@armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/un'|l'|il |un |una |uno |la |the /gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}",
+      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  const cambiaArma = (@ultimaArma!=@armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${@ultimaArma}`)\n    send(`gb ${@armaDigCut}`)\n    send(`~wield ${@armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${@armaDigCut}`)\n    send(`~wield ${@ultimaArma}`)\n    send(`pb ${@armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}",
       "regex": false,
       "is_script": true,
       "class": "config",
@@ -1484,7 +1508,7 @@
     {
       "pattern": "status",
       "id": "",
-      "value": "let status = \"\";\nstatus+=`AASS:${this.autoassist?\"ON\":\"OFF\"} `;\nstatus+=`ABASH:${this.autobash?\"ON\":\"OFF\"} `;\nstatus+=`ACL:${classEnabled(\"autocleric\")?this.aclMinimum+\"%\":\"OFF\"} `;\nstatus+=`ASANC:${classEnabled(\"autosanc\")?\"(\" + this.listaAutosanc.join(\",\") + \")\":\"OFF\"} `;\nthis.diciStatus(status);",
+      "value": "let status = \"\";\nstatus+=`AASS:${this.autoassist?\"ON\":\"OFF\"} `;\nif (this.canBash) status+=`ABASH:${this.autobash?\"ON\":\"OFF\"} `;\nif (this.canStab) status+=`ASTAB:${this.autostab?\"ON\":\"OFF\"} `;\nif (this.spellOffensivo) status+=`ACAST:${this.autocast?\"ON\":\"OFF\"} `;\nstatus+=`ACL:${classEnabled(\"autocleric\")?this.aclMinimum+\"%\":\"OFF\"} `;\nstatus+=`ASANC:${classEnabled(\"autosanc\")?\"(\" + this.listaAutosanc.join(\",\") + \")\":\"OFF\"} `;\nif (this.healtype) status+=`SELFSANC:${this.selfsanc?\"ON\":\"OFF\"} `;\nif (this.spellOffensivo||this.healtype) status+=`SELFSHIELD:${this.selfshield?\"ON\":\"OFF\"} `;\nif (this.autokill) status+=`AKILL:(Krall,Stabh,Daemion,Grigie,Toewin,Geldor) `;\nthis.parlaStato = true;\nthis.diciStatus(status);\nthis.parlaStato = false;",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1874,7 +1898,7 @@
     {
       "pattern": "if",
       "id": "",
-      "value": "if (!this.scudoFire || this.ultimoScudo==this.scudoFire) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoFire) send(`get ${this.scudoFire} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n    send(`rem 11`)\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n}\nsend(`wear ${this.scudoFire}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = true;\nthis.Immu = \"FIRE\";\nthis.ultimoScudo = this.scudoFire;",
+      "value": "if (!this.scudoFire || this.ultimoScudo==this.scudoFire) return;\n//send(`rem ${this.borsa}`);\nif (this.scudoFire) send(`get ${this.scudoFire} ${this.borsa}`);\nif (this.ultimoScudo) {\n  send(`rem ${this.ultimoScudo}`);\n} else {\n    send(`rem `+(this.usaLuce?\"12\":\"11\"))\n  if (this.scudoCold) send(`rem ${this.scudoCold}`);\n  if (this.scudoAcid) send(`rem ${this.scudoAcid}`);\n  if (this.scudoEle) send(`rem ${this.scudoEle}`);\n}\nsend(`wear ${this.scudoFire}`);\nif (this.ultimoScudo) {\n  send(`put ${this.ultimoScudo} ${this.borsa}`);\n} else {\n  if (this.scudoCold) send(`put ${this.scudoCold} ${this.borsa}`);\n  if (this.scudoAcid) send(`put ${this.scudoAcid} ${this.borsa}`);\n  if (this.scudoFire) send(`put ${this.scudoFire} ${this.borsa}`);\n  send(`wear all`)\n}\n//send(`wear ${this.borsa}`);\nthis.usiImmuEle = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuFire = true;\nthis.Immu = \"FIRE\";\nthis.ultimoScudo = this.scudoFire;",
       "regex": false,
       "is_script": true,
       "class": "scudi",
@@ -1892,9 +1916,9 @@
       "is_prompt": false
     },
     {
-      "pattern": "^wie(ld)? (.+)$",
+      "pattern": "^wi(e|el|eld)? (.+)$|^imp(u|ug|ugn|ugna)? (.+)$",
       "id": "",
-      "value": "send(\"~wield \" + match[2]);\nthis.ultimaArma = match[2]",
+      "value": "const arma = match[2] || match[4];\nsend(\"~wield \" + arma);\nthis.ultimaArma = arma",
       "regex": true,
       "is_script": true,
       "class": "armi",
@@ -2194,7 +2218,7 @@
     {
       "pattern": "nonAfkProc",
       "id": "",
-      "value": "send(\"sancaAutosanc\")",
+      "value": "send(\"sancaAutosanc\")\nif (this.TSSpells.toLowerCase().indexOf(\"f\")==-1 && this.selfshield) {\n    send(\"fs\");\n}\nif (this.TSSpells.toLowerCase().indexOf(\"s\")==-1 && this.healtype==\"C\" && this.selfsanc) {\n  send(\"sanc\");\n} else if (this.TSSpells.toLowerCase().indexOf(\"n\")==-1 && this.healtype==\"D\" && this.selfsanc) {\n  if (this.TSSettore != \"Chiuso\" && this.TSSpells.toLowerCase().indexOf(\"s\")==-1) send(\"sanc\");\n}",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -2204,7 +2228,7 @@
     {
       "pattern": "sancaAutosanc",
       "id": "",
-      "value": "let daSancare = [];\nlet nonSancati = [];\nlet sancati = 0;\nconst grp=JSON.parse(this.Gruppo)\nfor (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (!grp[nome].sanc && (this.listaAutosanc||[]).indexOf(nome)>-1) {\n      daSancare.push(nome)\n    } else if (!grp[nome].sanc) {\n     nonSancati.push(nome)\n    } else if (grp[nome].sanc) {\n      sancati++;\n    }\n  }\nif (daSancare.length) for (let nome of daSancare) {\n  send(\"sanc \" + nome)\n}\n\nif (this.afk && this.grandezzaGruppo>4 && sancati && nonSancati.length && sancati > 3) {\n  send(\"gt Alcuni in gruppo non sono sancati: \" + nonSancati.join(\",\"))\n}\n",
+      "value": "let daSancare = [];\nlet nonSancati = [];\nlet sancati = 0;\nconst grp=JSON.parse(this.Gruppo||{})\nfor (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (!grp[nome].sanc && (this.listaAutosanc||[]).indexOf(nome)>-1) {\n      daSancare.push(nome)\n    } else if (!grp[nome].sanc) {\n     nonSancati.push(nome)\n    } else if (grp[nome].sanc) {\n      sancati++;\n    }\n  }\nif (daSancare.length) for (let nome of daSancare) {\n  send(\"sanc \" + nome)\n}\n\nif (this.afk && this.grandezzaGruppo>4 && sancati && nonSancati.length && sancati > 3) {\n  send(\"gt Alcuni in gruppo non sono sancati: \" + nonSancati.join(\",\"))\n}\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -2334,7 +2358,7 @@
     {
       "pattern": "restab",
       "id": "",
-      "value": "if (this.mobKey==\"*\") {\n\tprint(\"Restab solo in combat\")\n  return;\n}\nthis.returnRoom = mapper.roomId\nif (this.TSPosizione == \"Seduto\") {\n\tsend(\"stand\")\n}\nthis.stabTarget = this.mobKey\nsend(\"flee\")",
+      "value": "if (this.mobKey==\"*\") {\n\tprint(\"Restab solo in combat\")\n  return;\n}\nthis.returnRoom = mapper.roomId\n\nif (this.TSPosizione != \"In piedi\") {\n\tsend(\"stand\")\n}\nthis.stabTarget = this.mobKey\nsend(\"flee\")",
       "regex": false,
       "is_script": true,
       "class": "thief",
@@ -2348,6 +2372,56 @@
       "regex": false,
       "is_script": false,
       "class": "thief",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "autokill",
+      "id": "",
+      "value": "if (match && match[1] != undefined && match[1]!=\"\") {\n  if (match[1] == \"mobs\") {\n    if (this.setupAutoKillList) {\n      this.setupAutoKillList()\n      return;\n    }\n  } else if ([\"on\",\"off\",\"true\",\"false\"].indexOf(match[1])>-1) {\n\t// se passato parametro esso comanda (e.g. autobash false)\n\tthis.autokill = (match[1] == \"true\" || match[1] == \"on\");\n  }\n } else {\n\tthis.autokill = !this.autokill;\n}\n\ntoggleClass(\"autokill\", this.autokill);\nlet str = (\"AutoKill: \"+ (this.autokill ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);",
+      "regex": false,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "ak",
+      "id": "",
+      "value": "autokill $1",
+      "regex": false,
+      "is_script": false,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "autokillcheck",
+      "id": "",
+      "value": "delay(\"autokill\", 1000, () => {\n  if (!classEnabled(\"autokill\")) return;\n  let t = null;\n  if (!this.inCombat() && this.getAutoKillTarget && (t = this.getAutoKillTarget())) {\n\tprint(\"Autokill\");\n    this.Mobs = \"\";\n    send(\"attack \"+ t);\n  }\n});",
+      "regex": false,
+      "is_script": true,
+      "class": "autokill",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "look",
+      "id": "",
+      "value": "this.Mobs = \"\"\nsend(\"~look\")",
+      "regex": false,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false
+    },
+    {
+      "pattern": "salta",
+      "id": "",
+      "value": "if (this.searchRooms) {\n\tvar rooms = this.searchRooms()\n    if (!rooms || !rooms.length) return;\n  \n    let removeIndex = !($1) ? 0 : rooms.findIndex(r => r.id == Number($1))\n    if (removeIndex>-1) {\n      print(\"Salto: \" + rooms[removeIndex].id + \" - \" + rooms[removeIndex].name)\n      rooms.splice(removeIndex, 1)\n      if (rooms.length) {\n         this.searchRooms = () => rooms;\n      } else {\n      \t this.searchRooms = null;\n      }\n    }\n}\n",
+      "regex": false,
+      "is_script": true,
+      "class": "mapper",
       "enabled": true,
       "is_prompt": false
     }

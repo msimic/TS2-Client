@@ -294,11 +294,12 @@ export class ProfilesWindow {
                     p.layout = null;
                     p.windows = [];
                 }
-                if (p.useLayout)
-                    await this.setProfileLayout(p.useLayout, p);
-                else if (p.layout && p.layout.items && p.layout.items.length) {
+                
+                if (p.layout && p.layout.items && p.layout.items.length) {
                     await this.setProfileLayout(false, p);
-                }
+                } else if (p.useLayout)
+                    await this.setProfileLayout(p.useLayout, p);
+
                 if (oldPass != p.pass) {
                     p.pass = Mudslinger.encrypt(p.pass);
                 }

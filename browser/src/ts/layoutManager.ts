@@ -283,6 +283,7 @@ export class LayoutManager {
             if (c.checkbox) {
                 for (const v of c.checkbox.split(",")) {
                     let variables = this.parseVariables(v);
+                    variables = variables.map(v => this.getVariableName(v));
                     for (const variable of variables) {
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
                         this.variableStyleChangedMap.get(variable).push(c);                                                    
@@ -292,7 +293,7 @@ export class LayoutManager {
             }
 
             if (c.gauge) {
-                for (const v of c.gauge.split(",")) {
+                for (const v of c.gauge.split(",").map(v => this.getVariableName(v))) {
                     if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
                     this.variableStyleChangedMap.get(v).push(c);                        
                 }
@@ -302,6 +303,7 @@ export class LayoutManager {
             if (c.visible) {
                 for (const v of c.visible.split(",")) {
                     let variables = this.parseVariables(v);
+                    variables = variables.map(v => this.getVariableName(v));
                     for (const variable of variables) {
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
                         this.variableStyleChangedMap.get(variable).push(c);                                                    
@@ -332,7 +334,9 @@ export class LayoutManager {
           code = str.charCodeAt(i);
           if (!(code > 47 && code < 58) && // numeric (0-9)
               !(code > 64 && code < 91) && // upper alpha (A-Z)
-              !(code > 96 && code < 123)) { // lower alpha (a-z)
+              !(code > 96 && code < 123) &&
+              !(code == 91 || code == 93) &&
+              !(code == 46)) { // lower alpha (a-z)
             return false;
           }
         }
@@ -422,6 +426,22 @@ export class LayoutManager {
         });
     }
 
+    getSubExpression(sthis:any, varExpression:string):any {
+        const parts = varExpression.split(/\.|\[/g);
+        let val = sthis[parts[0]];
+        if (val == undefined) return val;
+        if (parts.length>1) {
+            const p2 = parts[1].replace(/\.|\[|\]\"/g, "")
+            val = val[p2];
+        }
+        return val;
+    }
+
+    getVariableName(varExpression:string):any {
+        const parts = varExpression.split(/\.|\[/g);
+        return parts[0];
+    }
+
     checkExpression(c:Control, expression:string, func:(ui:JQuery, result:boolean)=>void) {
         if (!c || !expression) return;
         let index = this.layout.items.indexOf(c);
@@ -433,7 +453,7 @@ export class LayoutManager {
             let vr = this.parseVariables(v);
             let expr = v;
             vr.forEach(vrb => {
-                let value = sthis[vrb];
+                let value = this.getSubExpression(sthis,vrb);
                 if (typeof value == "string") {
                     value = "\""+value+"\"";
                 }
@@ -730,10 +750,12 @@ export class LayoutManager {
                 if (isNumeric(compare)) {
                     compare = Number(compare);
                 }
-                let val = sthis[variable]==undefined?'?':sthis[variable];
+                const sub = this.getSubExpression(sthis, variable);
+                let val = sub==undefined?'?':sub;
                 if (parseVariable) {
-                    if (!this.variableChangedMap.has(variable)) this.variableChangedMap.set(variable, []);
-                    this.variableChangedMap.get(variable).push(ctrl);
+                    const realName = this.getVariableName(variable);
+                    if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
+                    this.variableChangedMap.get(realName).push(ctrl);
                 }
                 if (params.length>2) {
                     if (compare) {

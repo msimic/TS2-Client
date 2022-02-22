@@ -40,6 +40,32 @@ declare interface ScriptThis {
     [prop:string]:any;
 }
 
+function isEqual(obj1:any, obj2:any) {
+    if (obj1 == undefined && obj2 == undefined) return true;
+    if (obj1 == undefined && obj2 != undefined) return false;
+    if (obj1 != undefined && obj2 == undefined) return false;
+    if (obj1 == obj2) return true;
+
+    let props1 = Object.getOwnPropertyNames(obj1);
+    let props2 = Object.getOwnPropertyNames(obj2);
+    if (props1.length != props2.length) {
+      return false;
+    }
+    for (let i = 0; i < props1.length; i++) {
+      let prop = props1[i];
+      let bothAreObjects = typeof(obj1[prop]) === 'object' && typeof(obj2[prop]) === 'object';
+      if ((!bothAreObjects && (obj1[prop] !== obj2[prop]))
+      || (bothAreObjects && !isEqual(obj1[prop], obj2[prop]))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+function clone(o:any):any {
+    return ((<any>window).structuredClone)(o);
+}
+
 let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void) {
 
     var self = <any>this;
@@ -59,15 +85,17 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
                 oldKeys.delete(propName)
 
                 var propValue = self[propName];
-                if (typeof (propValue) != 'function') {
+                if (typeof (propValue) != 'function' && propName != "_oldValues") {
 
 
                     var oldValue = self._oldValues ? self._oldValues[propName] : undefined;
 
-                    if (propValue != oldValue || (oldValue == undefined && propValue != undefined)) {
+                    if (((typeof(oldValue) == 'object' || typeof(propValue) == 'object') && !isEqual(oldValue, propValue))
+                         || (!(typeof(oldValue) == 'object' || typeof(propValue) == 'object') && 
+                             (propValue != oldValue || (oldValue == undefined && propValue != undefined)))) {
 
                         onWatch({ obj: self, propName: propName, oldValue: oldValue, newValue: propValue });
-                        self._oldValues[propName] = propValue;
+                        self._oldValues[propName] = (typeof(propValue) == 'object') ? clone(propValue) : propValue;
 
                     }
 
@@ -356,7 +384,7 @@ export class JsScript {
         for (const ev of this.baseEvents) {
             if (ev[1]) this.baseEventList = this.baseEventList.concat(ev[1]);
         }
-        this.baseVariables = new Map<string, Variable>(this.config.getDef("variables", []));
+        this.baseVariables = new Map<string, Variable>(this.baseConfig.getDef("variables", []));
         for (const v of this.baseVariables) {
             if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
         }
@@ -371,6 +399,9 @@ export class JsScript {
         }
         if (this.variables) for (const v of this.variables) {
             delete this.scriptThis[v[0]];
+        }
+        if (this.baseVariables) for (const v of this.baseVariables) {
+            if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
         }
         this.variables = new Map<string, Variable>(this.config.getDef("variables", []));
         for (const v of this.variables) {
@@ -390,7 +421,9 @@ export class JsScript {
                     let variable = this.variables.get(key) || { Name: key, Class: "", Value: null };
                     variable.Value = element;
                     variable.Name = variable.Name || key;
-                    this.variables.set(key, variable);
+                    if (this.baseVariables.get(variable.Name)?.Value != variable.Value) {
+                        this.variables.set(key, variable);
+                    }
                 }
             }
         }
@@ -462,13 +495,13 @@ function makeScript(owner:string, text: string, argsSig: string,
     const link = function(text: string, func:Function, hover?:string) {
         let rnd = Math.floor(Math.random()*10000)
         let line = `<span><a id="customLink${rnd}" class="underline clickable" title="${hover?hover:""}">${text}</a></span>`
-        print(line)
         setTimeout(() => {
-            const link = $("#customLink"+rnd)
-            link.click(()=>{
+            const lnk = $("#customLink"+rnd)
+            lnk.click(()=>{
                 func();
             })
-        }, 0)
+        }, 150)
+        return line;
     };
     const playAudio = function(url: string) {
         if (scriptManager.profileManager.activeConfig.getDef("soundsEnabled", true)==false) return; 
@@ -551,7 +584,7 @@ function makeScript(owner:string, text: string, argsSig: string,
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
     const print = function(message: string, window?:string) {
-        EvtScriptEmitPrint.fire({owner: own, message: message.toString(), window: window});
+        EvtScriptEmitPrint.fire({owner: own, message: (message||"<null>").toString(), window: window});
     };
     const cls = function(window?:string) {
         EvtScriptEmitCls.fire({owner: own, window: window});

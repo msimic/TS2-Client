@@ -87,6 +87,7 @@ export class AliasManager {
     public saveAliases() {
         if (this.saving) return;
         try {
+            this.aliases.forEach(a => a.script = null);
             this.config.set("aliases", this.aliases);
             this.mergeAliases();
             if (!this.baseConfig) {
@@ -114,6 +115,7 @@ export class AliasManager {
         //console.log("precompile triggers")
         this.precompiledRegex.clear()
         for (const a of this.allAliases) {
+            a.script = null;
             let rex:RegExp;
             if (!a.regex) {
                 rex =  RegExp("^" + escapeRegExp(a.pattern) + "(?:\\s+(.*))?$","i");
