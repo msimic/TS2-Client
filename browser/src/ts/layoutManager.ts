@@ -431,7 +431,7 @@ export class LayoutManager {
         let val = sthis[parts[0]];
         if (val == undefined) return val;
         if (parts.length>1) {
-            const p2 = parts[1].replace(/\.|\[|\]\"/g, "")
+            const p2 = parts[1].replace(/\.|\[|\]|\"|\'/g, "")
             val = val[p2];
         }
         return val;
