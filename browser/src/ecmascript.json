@@ -739,6 +739,14 @@
       "!type": "fn(name: string, desc?: string) -> Room[]",
       "!doc": "Cerca e ritorna le room per nome e opzionalmente descrizione e NON visualizza a schermo."
     },
+    "getRoomById": {
+      "!type": "fn(id: number) -> Room",
+      "!doc": "Cerca e ritorna la room quel quel ID."
+    },
+    "getRoomByVnum": {
+      "!type": "fn(vnum: number) -> Room",
+      "!doc": "Cerca e ritorna la room quel quel numero virtuale."
+    },
     "walkToId": {
       "!type": "fn(id: number) -> void",
       "!doc": "Vai all'ID di una locazione (crea percorso e lo segue)."
@@ -1969,6 +1977,48 @@
       "!url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve"
     },
     "prototype": "Promise.prototype"
+  },
+  "MessageboxResult": {
+    "!doc": "Il risultato di un dialog/formulario/domanda.",
+    "button": {
+      "!doc": "Il numero del bottone premuto.",
+      "!type": "number"
+    },
+    "result": {
+      "!doc": "Il risultato per domande o input singoli.",
+      "!type": "string"
+    },
+    "results": {
+      "!doc": "I risultati per input multipli.",
+      "!type": "[string]"
+    }
+  },
+  "Messagebox": {
+    "!doc": "Formulario per messaggi e domande.",
+    "Show": {
+      "!type": "fn(title: string, text: string, labelstyle?: string) -> +Promise[:t=MessageboxResult]",
+      "!doc": "Messagebox semplice con titolo e messaggio. Usare con (await Messagebox.Show(...)))"
+    },
+    "Question": {
+      "!type": "fn(text: string) -> +Promise[:t=MessageboxResult]",
+      "!doc": "Una domanda e viene ritornata la risposta. Usare con (await Messagebox.Question(...)))"
+    },
+    "ShowFull": {
+      "!type": "fn(title: string, text: string, okButton?: string, cancelButton?: string, callback?: fn(val:string), width?: number, height?: number) -> +Promise[MessageboxResult]",
+      "!doc": "Una domanda e viene ritornata la risposta. Usare con (await Messagebox.ShowFull(...)))"
+    },
+    "ShowInput": {
+      "!type": "fn(title: string, text: string, defaultText?: string, multiline?: bool) -> +Promise[MessageboxResult]",
+      "!doc": "Una domanda e viene ritornata la risposta, uare multiline per testi lunghi. Usare con (await Messagebox.ShowInput(...)))"
+    },
+    "ShowInputWithButtons": {
+      "!type": "fn(title: string, text: string, defaultText?: string, okButton?: string, cancelButton?: string) -> +Promise[MessageboxResult]",
+      "!doc": "Una domanda e viene ritornata la risposta con bottoni specificabili. Usare con (await Messagebox.ShowInputWithButtons(...)))"
+    },
+    "ShowMultiInput": {
+      "!type": "fn(title: string, labels: [string], defaultValues?: [?]) -> +Promise[MessageboxResult]",
+      "!doc": "Piu' domande in un pannello, ritorna in .results l'array. Usare con (await Messagebox.ShowMultiInput(...)))"
+    }
   },
   "Proxy": {
     "!type": "fn(target: ?, handler: Proxy_handler)",

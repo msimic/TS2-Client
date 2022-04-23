@@ -1,3 +1,4 @@
+import hotkeys from "hotkeys-js";
 import { Button, messagebox, Messagebox } from "./messagebox";
 import * as Util from "./util";
 import { circleNavigate } from "./util";
@@ -14,6 +15,7 @@ export interface TrigAlItem {
     is_script: boolean;
     script?: any;
     is_prompt: boolean;
+    shortcut?:string;
 }
 
 export interface copyData {
@@ -28,6 +30,8 @@ export abstract class TrigAlEditBase {
     protected $id: JQuery;
     protected $className: JQuery;
     protected $enabledCheckbox: JQuery;
+    protected $macroCheckbox: JQuery;
+    protected $macroLabel: JQuery;
     protected $isPromptCheckbox: JQuery;
     protected $regexCheckbox: JQuery;
     protected $scriptCheckbox: JQuery;
@@ -49,6 +53,7 @@ export abstract class TrigAlEditBase {
     protected abstract saveItem(ind: number, item:TrigAlItem): void;
     protected abstract deleteItem(ind: number): void;
     protected abstract copyToOther(ind: number): void;
+    protected abstract supportsMacro(): boolean;
 
     protected abstract defaultPattern: string;
     protected abstract defaultValue: string;
@@ -101,6 +106,10 @@ export abstract class TrigAlEditBase {
                             <label>Classe: <input type="text" class="winEdit-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe disablitata sara' inattivo (usare toggleClass(id, stato)"></label>
                         </div>
                         <div class="pane-options">
+                            <label class="macroContainer">
+                                Macro <span class="lblAliasShortcut"></span>
+                                <input type="checkbox" title="Configura macro per tastiera (solo alias non regex)" class="winEdit-chkMacro" disabled />
+                            </label>
                             <label>
                                 Abilitato
                                 <input type="checkbox" title="Se disabilitato non scatta" class="winEdit-chkEnabled" disabled />
@@ -134,7 +143,9 @@ export abstract class TrigAlEditBase {
             </div>
         </div>
         `;
-
+        if (!this.supportsMacro()) {
+            $(myDiv.getElementsByClassName("macroContainer")[0]).hide();
+        }
         this.$mainSplit = $(myDiv.getElementsByClassName("winEdit-mainSplit")[0]);
         this.$newButton = $(myDiv.getElementsByClassName("winEdit-btnNew")[0]);
         this.$copyButton = $(myDiv.getElementsByClassName("winEdit-btnCopy")[0]);
@@ -144,6 +155,8 @@ export abstract class TrigAlEditBase {
         this.$id = $(myDiv.getElementsByClassName("winEdit-id")[0]);
         this.$className = $(myDiv.getElementsByClassName("winEdit-className")[0]);
         this.$enabledCheckbox = $(myDiv.getElementsByClassName("winEdit-chkEnabled")[0]);
+        this.$macroCheckbox = $(myDiv.getElementsByClassName("winEdit-chkMacro")[0]);
+        this.$macroLabel = $(myDiv.getElementsByClassName("lblAliasShortcut")[0]);
         this.$regexCheckbox = $(myDiv.getElementsByClassName("winEdit-chkRegex")[0]);
         this.$isPromptCheckbox = $(myDiv.getElementsByClassName("winEdit-chkIsPrompt")[0]);
         this.$scriptCheckbox = $(myDiv.getElementsByClassName("winEdit-chkScript")[0]);
@@ -210,6 +223,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
         this.$scriptCheckbox.change(this.handleScriptCheckboxChange.bind(this));
+        this.$macroCheckbox.change(this.handleMacroCheckboxChange.bind(this));
         circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
     }
@@ -263,6 +277,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
         modified = modified || (item.is_prompt != undefined && this.$isPromptCheckbox.prop("checked") != item.is_prompt)
         modified = modified || (item.enabled != undefined && this.$enabledCheckbox.prop("checked") != item.enabled);
+        modified = modified || (item.shortcut != undefined && this.$macroLabel.text() != item.shortcut);
         modified = modified || (item.regex != undefined && this.$regexCheckbox.prop("checked") != item.regex);
         modified = modified || (item.is_script != undefined && this.$scriptCheckbox.prop("checked") != item.is_script);
         return modified;
@@ -288,6 +303,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$id.prop("disabled", state);
         this.$className.prop("disabled", state);
         this.$enabledCheckbox.prop("disabled", state);
+        this.$macroCheckbox.prop("disabled", state);
         this.$isPromptCheckbox.prop("disabled", state);
         this.$regexCheckbox.prop("disabled", state);
         this.$scriptCheckbox.prop("disabled", state);
@@ -310,6 +326,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$className.val("");
         this.codeMirror.setValue("");
         this.$enabledCheckbox.prop("checked", false);
+        this.$macroCheckbox.prop("checked", false);
+        this.$macroLabel.text("");
         this.$regexCheckbox.prop("checked", false);
         this.$scriptCheckbox.prop("checked", false);
         this.showTextInput();
@@ -329,6 +347,14 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         let ind = this.$listBox.data("selectedIndex");
         let is_script = this.$scriptCheckbox.is(":checked");
 
+        if (this.$macroCheckbox.is(":checked") && !this.$macroLabel.text()) {
+            this.$macroCheckbox.prop("checked", false);
+        }
+
+        if (this.$regexCheckbox.is(":checked") && this.$macroCheckbox.is(":checked")) {
+            Messagebox.Show("Errore", "Un alias regex non puo' essere usato come una macro.");
+            return;
+        }
         let trg:TrigAlItem = {
             pattern: this.$pattern.val(),
             id: this.$id.val(),
@@ -337,7 +363,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             is_script: is_script,
             class: this.$className.val(),
             enabled: this.$enabledCheckbox.is(":checked"),
-            is_prompt: this.$isPromptCheckbox.is(":checked")
+            is_prompt: this.$isPromptCheckbox.is(":checked"),
+            shortcut: this.$macroLabel.text()
         };
 
         this.saveItem(
@@ -415,6 +442,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
         this.$isPromptCheckbox.prop("checked", item.is_prompt ? true : false)
         this.$enabledCheckbox.prop("checked", item.enabled ? true : false);
+        this.$macroCheckbox.prop("checked", item.shortcut && item.shortcut.length ? true : false);
+        this.$macroLabel.text(item.shortcut||'');
         this.$regexCheckbox.prop("checked", item.regex ? true : false);
         this.$scriptCheckbox.prop("checked", item.is_script ? true : false);
         this.$pattern.focus()
@@ -426,6 +455,75 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             this.showScriptInput();
         } else {
             this.showTextInput();
+        }
+    }
+
+    private handleMacroCheckboxChange() {
+        let checked = this.$macroCheckbox.prop("checked");
+        if (checked) {
+            this.readShortcut();
+        } else {
+            this.$macroLabel.text("");
+        }
+    }
+
+    async readShortcut() {
+        function pkeys(keys:any[], key:any) {
+            if (keys.indexOf(key) === -1) keys.push(key);
+            return keys;
+        }
+        function pkeysStr(keysStr:any[], key:any) {
+            if (keysStr.indexOf(key) === -1) keysStr.push(key);
+            return keysStr;
+        }
+        hotkeys.deleteScope("macroInput");
+        const keys:number[] = [];
+        const keyStr:string[] = [];
+        /*hotkeys.filter = function(event) {
+            var target:any = event.target || event.srcElement;
+            var tagName = target.tagName;
+            return !(target.isContentEditable || tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA') || target.id == "cmdInput";
+          };*/
+          hotkeys.filter = function(event) { return true;};
+          hotkeys('*', { keyup: true, scope: "macroInput"}, (evn) => {
+              keys.splice(0, keys.length);
+              keyStr.splice(0, keyStr.length);
+          });
+        hotkeys('*', "macroInput", (evn) => {
+            evn.preventDefault();
+            if (hotkeys.shift) {
+                pkeys(keys, 16);
+                pkeysStr(keyStr, 'shift');
+            }
+            let special = false;
+            if (hotkeys.ctrl || hotkeys.control) {
+                pkeys(keys, 17);
+                pkeysStr(keyStr, 'ctrl');
+                special = true;
+            }
+            if (hotkeys.alt) {
+                pkeys(keys, 18);
+                pkeysStr(keyStr, 'alt');
+                special = true;
+            }
+            if (hotkeys.command) {
+                pkeys(keys, 91);
+                pkeysStr(keyStr, 'command');
+                special = true;
+            }
+            if (evn.charCode) keyStr.push(String.fromCharCode(evn.charCode));
+            if (keys.indexOf(evn.keyCode) === -1) keys.push(evn.keyCode);
+            $("#message0").text(keyStr.join("+"));
+        });
+        hotkeys.setScope("macroInput");
+        const res = await Messagebox.Show("Configurazione Macro", "Premi i tasti per attivare questo alias.");
+        hotkeys.deleteScope("macroInput");
+        hotkeys.setScope("macro");
+        if (res.button == Button.Ok && keyStr && keyStr.length) {
+            this.$macroLabel.text(keyStr.join("+"))
+        } else {
+            this.$macroLabel.text("");
+            this.$macroCheckbox.prop("checked", false);
         }
     }
 

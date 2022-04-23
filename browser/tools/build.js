@@ -190,6 +190,9 @@ function copyToPublic() {
     fs.copyFileSync('static/public/index.html', 'dist/public/index.html');
     console.log(`copying file index.html`);
 
+    fs.copyFileSync('static/public/LICENSE.txt', 'dist/public/LICENSE.txt');
+    console.log(`copying file LICENSE.txt`);
+
     fs.copyFileSync('src/cacheServiceWorker.js', 'dist/public/cacheServiceWorker.js');
     console.log(`copying file cacheServiceWorker.js`);
 

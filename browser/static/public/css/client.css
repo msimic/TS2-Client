@@ -1384,6 +1384,17 @@ ul.select {
     vertical-align: middle;
 }
 
+/*
+NO TITLE WINDOW
+#content-wrapper .jqx-window-header, #content-wrapper .jqx-widget-header {
+    display:none !important;padding:0px;  margin:0px; height:0; overflow: hidden;
+}*/
+
+ /*#content-wrapper .jqx-window-content , #content-wrapper .jqx-widget-content 
+ {
+     padding:0px;  margin:0px; overflow: hidden; 
+ }*/
+
 #content-wrapper .win-Mapper #zoom {
     color: lightgray;
 }

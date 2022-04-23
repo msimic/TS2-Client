@@ -190,7 +190,7 @@ export class TriggerManager {
                 this.passSent = true;
                 setTimeout(()=>{ this.passSent = false;}, 1000);
                 const pass = Mudslinger.decrypt(prof.pass);
-                this.EvtEmitTriggerCmds.fire({orig: 'autologin', cmds: [pass, 'i', 'i']});
+                this.EvtEmitTriggerCmds.fire({orig: 'autologin', cmds: [pass]});
             }
         }
     }

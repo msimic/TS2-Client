@@ -5,6 +5,7 @@ import { EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
 import { ProfileManager } from "./profileManager";
 import { ConfigIf, escapeRegExp } from "./util";
 import { UserConfig } from "./userConfig";
+import hotkeys from 'hotkeys-js';
 
 interface RegexMatchCapability {
     regex:string;
@@ -111,8 +112,16 @@ export class AliasManager {
         return false;
     }
 
+    public setupMacro(alias:TrigAlItem) {
+        hotkeys(alias.shortcut, 'macro',  function(event, handler){
+            event.preventDefault() 
+            alias.script && alias.script({}, alias.pattern);
+          });
+    }
+
     public precompileAliases() {
-        //console.log("precompile triggers")
+        hotkeys.deleteScope('macro');
+
         this.precompiledRegex.clear()
         for (const a of this.allAliases) {
             a.script = null;
@@ -123,6 +132,7 @@ export class AliasManager {
                 rex = RegExp(a.pattern.charAt(0) == "^" ? a.pattern : ("^" + a.pattern), "i");
             }
             this.precompiledRegex.set(a, rex);
+            a.shortcut && this.setupMacro(a);
         }
     }
 

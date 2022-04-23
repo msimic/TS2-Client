@@ -2,6 +2,7 @@ var path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
   entry: './build/browser/src/ts/client.js',
   output: {
@@ -27,5 +28,20 @@ module.exports = {
       template: "./src/html/template.html",
       filename: path.resolve(__dirname, "static/public", "index.html")
   })],
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        extractComments: {
+          condition: /^\**!|@preserve|@license|@cc_on/i,
+          filename: (fileData) => {
+            // The "fileData" argument contains object with "filename", "basename", "query" and "hash"
+            return `LICENSE.txt`;
+          },
+          banner: false,
+        },
+      }),
+    ],
+  },
   mode: 'production'
 };

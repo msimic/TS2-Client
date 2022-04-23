@@ -292,7 +292,7 @@ declare let CodeMirror: any;
 
 export function addIntellisense(editor:any) {
     $.ajax("./modules/ecmascript.json").done(function(code:any) {
-        let server = new CodeMirror.TernServer({defs: [code]});
+        let server = new CodeMirror.TernServer({ecmaVersion: 10, allowAwaitOutsideFunction: true, defs: [code]});
         editor.setOption("extraKeys", {
             "Ctrl-Space": function(cm:any) { /*server.complete(cm);*/ cm.showHint({hint: server.getHint, completeSingle:false}); },
             "Ctrl-I": function(cm:any) { server.showType(cm); },

@@ -1,9 +1,9 @@
 {
-  "version":5,
-  "versionMessage":"Implementato autokill e altre correzioni a trigger",
+  "version": 8,
+  "versionMessage":"Certe rifiniture per immortali.",
   "requiresClientMajor": 1,
   "requiresClientMinor": 1,
-  "requiresClientRevision": 0,
+  "requiresClientRevision": 1,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,
@@ -129,14 +129,13 @@
           "id": "",
           "value": "\n\tprint(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
           "class": "debug",
-          "enabled": true,
-          "script": null
+          "enabled": true
         },
         {
           "type": "VariableChanged",
           "condition": "TSRoom",
           "id": "",
-          "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)",
+          "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)\ndelay(\"aspettomapper\", 1, () => {\n  if (mapper.current) {\n      send(\"onroomenter \" + mapper.current.id)\n  }\n})",
           "class": "",
           "enabled": true
         },
@@ -168,22 +167,24 @@
     {
       "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto\\.|^Riconnessione in corso\\.",
       "id": "inizializzazione",
-      "value": "preinit\ninitialize",
+      "value": "if (line.indexOf(\"Riconnessione\")!=-1) {\n  send(\"i\")\n  send(\"i\")\n}\nsend(\"initialize\")\ndelay(\"postinitialize\", 1000, () => this.postInit ? this.postInit() : false)",
       "regex": true,
-      "is_script": false,
-      "class": "",
-      "enabled": true,
-      "is_prompt": false
-    },
-    {
-      "pattern": "^Ogni modifica e novita' per immortali",
-      "id": "",
-      "value": "this.Immortal = true",
-      "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
+    },
+    {
+      "pattern": "^Per avere una breve spiegazione dei comandi per Dei",
+      "id": "",
+      "value": "this.ImmortalTrigger = true;\nif (this.Immortal != true) {\n  this.Immortal = true\n  toggleClass(\"login\",false)\n  toggleClass(\"immortal\",true)\n  this.initDone = false\n  send(\"initialize\")\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "login",
+      "enabled": true,
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Connessione a \"Tempora Sanguinis",
@@ -193,7 +194,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Sei a sedere! Non puoi farlo!|^Non sarebbe meglio che ti alzassi prima?",
@@ -203,7 +205,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Ti alzi\\.|^Sei gia' in piedi\\.",
@@ -213,7 +216,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(\\([^)']+\\) )?(OT:)?\\[?([^\\]]+)?\\]?(?:Tu)? ?((?:ti )?[cC]hied[ei](?: a [^,]+)?,?|url[ai]|dic[ei] agli Eroi|(?:ti )?sussurr[ia](?: a [^,]+)?,?|dic[ei](?: a [^,]+,)?|dic[ei] al gruppo|(?:ti )?mand[ai] il pensiero(?: a [^,]+)?,|(?:ti )?mand[ai] il messaggio(?: a [^,]+)?,|ti dice) '(.*)'$",
@@ -223,7 +227,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^([\\w\\- ]+) inizia a seguirti",
@@ -233,7 +238,8 @@
       "is_script": true,
       "class": "autogroup",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(Hai fame.|Hai sete.)",
@@ -243,7 +249,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Prendi parte ad un magnifico banchetto preparato da",
@@ -253,7 +260,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(La campana benedetta della chiesa di Midia marca un'altra ora.|Un altro granello di sabbia scivola nella clessidra di Martinus.|La clessidra astrale viene capovolta nuovamente.|Ti accorgi che un'altra ora e' passata.|Un'altra pagina dell'eterna storia dell'Impero Celeste e' stata scritta.)",
@@ -263,7 +271,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Ti perdi nei tuoi pensieri",
@@ -273,7 +282,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^C'erano (\\d+) monete\\.",
@@ -283,7 +293,8 @@
       "is_script": true,
       "class": "autosplit",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.*) (si immerge nello stagno\\.|entra in un Portale Luminoso, e scompare!)",
@@ -293,7 +304,8 @@
       "is_script": true,
       "class": "autofollow",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.*) ti ordina '(.*)'",
@@ -303,7 +315,8 @@
       "is_script": true,
       "class": "autoorder",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Smetti di seguire",
@@ -313,7 +326,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Sei entrat(o|a) a far parte del gruppo di",
@@ -323,7 +337,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Sei in una zona silenziosa, non puoi emettere suoni!",
@@ -333,7 +348,8 @@
       "is_script": true,
       "class": "autocleric",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^\\[(.+)\\] dice al gruppo '(\\w+)\\:(.+)'",
@@ -343,7 +359,8 @@
       "is_script": true,
       "class": "order",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^L'aura rossa intorno al tuo corpo svanisce",
@@ -353,7 +370,8 @@
       "is_script": true,
       "class": "selfshield",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(La Luce Divina smette di illuminarti|La Natura smette di proteggerti)",
@@ -363,7 +381,8 @@
       "is_script": true,
       "class": "selfsanc",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(?:La Luce Divina smette di illuminare (?<nome>[^.]+)|L'aura di protezione attorno a (?<nome2>[^.]+) si dissolve|La Natura smette di proteggere (?<nome3>[^.]+))",
@@ -373,7 +392,8 @@
       "is_script": true,
       "class": "autosanc",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Il tuo gruppo e' stato rimosso",
@@ -384,9 +404,7 @@
       "class": "",
       "enabled": true,
       "is_prompt": false,
-      "script": [
-        "soloSettings"
-      ]
+      "script": null
     },
     {
       "pattern": "^Il tuo allineamento e'\\: \\w+ \\(([^\\)]+)\\)",
@@ -396,7 +414,8 @@
       "is_script": true,
       "class": "gtalign",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Spiacente, non c'e' spazio per entrare li'",
@@ -406,7 +425,8 @@
       "is_script": false,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.+) (va|vola) verso",
@@ -416,7 +436,8 @@
       "is_script": true,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Segui (.+)\\.",
@@ -426,7 +447,8 @@
       "is_script": true,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Intravedi (.+) nel corpo di",
@@ -436,7 +458,8 @@
       "is_script": true,
       "class": "autoloot|random",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Spiacente, quella locazione e' privata",
@@ -446,7 +469,8 @@
       "is_script": true,
       "class": "indietro",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Ma se non sei alla tastiera, dove vuoi andare?",
@@ -457,9 +481,7 @@
       "class": "",
       "enabled": true,
       "is_prompt": false,
-      "script": [
-        "~afk"
-      ]
+      "script": null
     },
     {
       "pattern": "^(Con una rapida mossa della sua arma, (.+) colpisce con decisione il tuo braccio|(.+)  esegue un rapido calcio, che va a colpire la tua mano con estrema precisione!)!",
@@ -469,7 +491,8 @@
       "is_script": true,
       "class": "combat",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^!?H:.*\\>",
@@ -479,7 +502,8 @@
       "is_script": true,
       "class": "",
       "enabled": false,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^La Luce Divina che ti illumina inizia ad attenuarsi.",
@@ -489,7 +513,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^L'aura rossa intorno al tuo corpo inizia a sbiadire.",
@@ -499,7 +524,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(Chi\\?|Pugnalare chi\\?|Nessuno con quel nome qui)",
@@ -509,7 +535,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(Ricevi|La tua parte di esperienza e' di) (\\d+) punti",
@@ -519,7 +546,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Ricevi (\\d+) [Ss]igilli (?:del |dell' ?|della )?(\\w+)",
@@ -529,7 +557,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Hai smesso di combattere\\.$",
@@ -539,7 +568,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Il freddo che (.+) emette ti congela!",
@@ -549,7 +579,8 @@
       "is_script": true,
       "class": "antispalm",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.+) ti colpisce con la sua palla di fuoco! - OUCH",
@@ -559,7 +590,8 @@
       "is_script": true,
       "class": "antispalm",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Urli di dolore quando vieni colpit[oa] dall'elettricita' di",
@@ -569,7 +601,8 @@
       "is_script": true,
       "class": "antispalm",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Non riesci ad evitare l'attacco acido di",
@@ -579,7 +612,8 @@
       "is_script": true,
       "class": "antispalm",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Fallisci il tuo tentativo di salvataggio",
@@ -589,7 +623,8 @@
       "is_script": true,
       "class": "autorescue",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Manchi (.+)\\.",
@@ -599,7 +634,8 @@
       "is_script": true,
       "class": "autoarmi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^!?H:.*\\>",
@@ -609,7 +645,8 @@
       "is_script": true,
       "class": "autoarmi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
@@ -619,7 +656,8 @@
       "is_script": true,
       "class": "kill",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Impugni (.+)\\.",
@@ -629,7 +667,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(Un'ENORME creatura esce fuori dal pozzo e spalanca le sue|Vhal il maledetto e' qui, in piedi)",
@@ -639,7 +678,8 @@
       "is_script": true,
       "class": "draghi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(L'enorme Leviathan e' qui, custode di antichi segreti|Un enorme drago bianco anziano si sta riposando qui|Un gigantesco wyrm bianco si sta riposando qui|L'Immensa Armeria)",
@@ -649,7 +689,8 @@
       "is_script": true,
       "class": "draghi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.+) improvvisamente se ne va, correndo piu' veloce che puo'!",
@@ -659,7 +700,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^\\[( 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|21|22)\\] .+\\((ottimo|molto buono|buono|a pezzi|discreto)\\)$",
@@ -669,7 +711,8 @@
       "is_script": true,
       "class": "fixxa",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.+) evita con agilita' l'attacco.$",
@@ -679,7 +722,8 @@
       "is_script": true,
       "class": "autoarmi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^In questo tick stai memorizzando (\\d+) incantesimi, di un totale di (\\d+)",
@@ -689,7 +733,8 @@
       "is_script": true,
       "class": "memorize",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Puoi memorizzare un incantesimo (\\d+) volte, per un totale di (\\d+) incantesimi",
@@ -699,7 +744,8 @@
       "is_script": true,
       "class": "memorize",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Pronunci le parole, '([^']+)'\\.$",
@@ -709,7 +755,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^\\[(.+)\\] (.+)  \\(Imparato\\) x(\\d+)",
@@ -719,17 +766,19 @@
       "is_script": true,
       "class": "memorize",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
-      "pattern": "^([^']+) e' stato ucciso da (.+) a (.+)\\.$",
+      "pattern": "^(.+) e' stato ucciso da (.+) a (.+)\\.$",
       "id": "",
       "value": "cap(\"Social\");",
       "regex": true,
       "is_script": true,
       "class": "social",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.*) ti cade dalle mani$",
@@ -739,7 +788,8 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^E ti casca anche (.*)!$",
@@ -749,7 +799,8 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Apri il tuo libro e inizi a leggere e meditare",
@@ -759,7 +810,8 @@
       "is_script": true,
       "class": "automemorize",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Devi usare 'recall' per questo incantesimo",
@@ -769,7 +821,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(Doni parte della tua energia magica|(.+) esegue un complesso rituale ed invoca l'aiuto del dio)",
@@ -779,7 +832,8 @@
       "is_script": true,
       "class": "autosanc",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(.+) esegue un complesso rituale ed invoca l'aiuto del dio Nalith\\. La stanza si riempie di luce",
@@ -789,7 +843,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Ti allontani dalla tastiera",
@@ -800,9 +855,7 @@
       "class": "",
       "enabled": true,
       "is_prompt": false,
-      "script": [
-        "~afk"
-      ]
+      "script": null
     },
     {
       "pattern": "^Ahi ahi, non puoi andare da quella parte|^.+ non si apre\\.|^Hai fallito a forzare la serratura\\.",
@@ -812,7 +865,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Fuggi a tutta velocita'\\.|^Con abilita' ti ritiri dalla battaglia\\.",
@@ -822,7 +876,8 @@
       "is_script": true,
       "class": "stab",
       "enabled": true,
-      "is_prompt": true
+      "is_prompt": true,
+      "script": null
     },
     {
       "pattern": "^\\[Dhethor il questor\\] dice 'Cerca nei paraggi di (.*?)\\.",
@@ -832,7 +887,8 @@
       "is_script": true,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Una (verga) carica di potere levita ad un palmo da terra\\.|^Una (spada) dalla lama formata da fiamme bianche giace qui\\.|^Una (mappa) arrotolata giace qui nella polvere\\.|^Una (bilancia) in equilibrio precario e' posata qui\\.|^Un'(ascia) con incisioni di draghi sulla lama e' piantata in terra\\.|^Un (ramo) d'alloro e' piantato a terra qui\\.|^un (medaglione) sacro ai cinque Dei creatori del mondo giace qui\\.|^Un (elmo) fatto di puro cristallo e' posato qui\\.|^Un (corno) da caccia in argento e' posato qui\\.|^Questa (pietra) e' tutto cio' che rimane della citta' di Lamwothor\\.|^Due (fedi) in oro sono qui posate su un cuscino\\.|^Un'antica moneta d'oro ti attira, ma hai un cattivo presentimento\\.",
@@ -842,7 +898,8 @@
       "is_script": true,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Dhethor, il questor, e' qui in attesa di volontari",
@@ -852,7 +909,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^\\[Dhethor il questor\\] dice 'e chiedono a te, (.+?), di recuperare",
@@ -862,7 +920,8 @@
       "is_script": true,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^\\[Dhethor il questor\\] dice 'Vai a riposarti un po'",
@@ -872,7 +931,8 @@
       "is_script": false,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Senti una leggera vibrazione e il mondo intorno a te cambia",
@@ -883,19 +943,18 @@
       "class": "mapper",
       "enabled": true,
       "is_prompt": false,
-      "script": [
-        "look"
-      ]
+      "script": null
     },
     {
       "pattern": "^(.+) ha perso il senso della realta'\\.",
       "id": "",
-      "value": "send(\"emote dice $c5115\" + $1.split(\" \")[0] + \" ha perso la connessione!$c0007\")",
+      "value": "if (!this.Immortal) send(\"emote dice $c5115\" + $1.split(\" \")[0] + \" ha perso la connessione!$c0007\")",
       "regex": true,
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^Vedi chiaramente (.+)!",
@@ -905,19 +964,43 @@
       "is_script": true,
       "class": "autokill",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
+    },
+    {
+      "pattern": "^   TUTTI GLI IMMORTALI CHE RESTRINGANO",
+      "id": "",
+      "value": "send(\"i\")",
+      "regex": true,
+      "is_script": true,
+      "class": "login",
+      "enabled": true,
+      "is_prompt": false,
+      "script": null
     }
   ],
   "aliases": [
     {
-      "pattern": "initialize",
+      "pattern": "onRoomEnter",
       "id": "",
-      "value": "this.scriptVersion = 4\n\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nif (this.Immortal) {\n  send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n} else {\n  send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n}\nif (this.setupdone!=this.scriptVersion) {\n  setTimeout(()=>{\n  \tprint(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n  }, 2000);\n}\nif (this.autoloot) {\n send(\"fischia\")\n}\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null; //this.ultimoScudo;\nlet ultimaArma = null; //this.ultimaArma;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nthis.TSRoom = null",
+      "value": "const id = parseInt($1)\nconst destinazione = this.destinazione\n\nif (destinazione && destinazione.id == id) {\n  // cancello la variabile in modo che non scatti di nuovo\n  delete this.destinazione\n}\n\nif (destinazione && id == 55 /* reception */ ) {\n\t\n}",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
+    },
+    {
+      "pattern": "initialize",
+      "id": "",
+      "value": "if (this.initDone) {\n\treturn;\n}\nconst wasImmortal = this.Immortal;\nthis.scriptVersion = 6\nthis.initDone = true;\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null;\nlet ultimaArma = null;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nvar room = this.TSRoom\n  \nthis.postInit = () => {\n  this.TSRoom = null;\n  setTimeout(() => {\n    if (mapper && this.TSRoom) \n      mapper.setRoomByVnum(this.TSRoom);\n    \n  \tsetTimeout(() => {\n      const current = (mapper?mapper.current:null);\n      this.TSRoom = ((current && current != room) ? current : room) || null;\n    });\n  });\n  \n  if (this.ImmortalTrigger) {\n  \tthis.Immortal = true;\n  } else {\n  \tthis.Immortal = false;\n  }\n  setTimeout(() => {\n    if (this.Immortal) {\n      send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    } else {\n      send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    }\n  }, 1000);\n  if (wasImmortal != this.Immortal) {\n    (this.Immortal ? print(\"Modalita' per Immortali del Client: ATTIVATA\") : print(\"Modalita' per Immortali del Client: DISABILITATA\"));\n  }\n  if (this.setupdone!=this.scriptVersion) {\n    setTimeout(()=>{\n      print(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n    }, 2000);\n  }\n  send(\"autoloot \" + ((!this.autoloot || this.Immortal) ? \"off\" : \"on\"))\n  if (this.is_touch_device() && this.usesTouch) {\n    print(color(\"Sembra che tu abbia il touchscreen. Per abilitare i controlli scrivi 'touch'.\", \"white\"))\n  }\n};\n\n",
+      "regex": false,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "stop",
@@ -926,7 +1009,8 @@
       "regex": false,
       "is_script": true,
       "class": "fight",
-      "enabled": true
+      "enabled": true,
+      "script": null
     },
     {
       "pattern": "^autoassist ?(.*)?",
@@ -936,7 +1020,8 @@
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autobash ?(.*)?",
@@ -946,7 +1031,8 @@
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "bash",
@@ -956,7 +1042,8 @@
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "aa",
@@ -965,7 +1052,8 @@
       "regex": false,
       "is_script": false,
       "class": "fight",
-      "enabled": true
+      "enabled": true,
+      "script": null
     },
     {
       "pattern": "ab",
@@ -974,7 +1062,8 @@
       "regex": false,
       "is_script": false,
       "class": "fight",
-      "enabled": true
+      "enabled": true,
+      "script": null
     },
     {
       "pattern": "^autocleric ?(?:(\\d+))?",
@@ -984,7 +1073,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "heal ?(?:(\\w+))?",
@@ -994,7 +1084,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "h",
@@ -1004,7 +1095,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "acl",
@@ -1014,7 +1106,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "debug",
@@ -1023,7 +1116,8 @@
       "regex": true,
       "is_script": true,
       "class": "",
-      "enabled": true
+      "enabled": true,
+      "script": null
     },
     {
       "pattern": "variables",
@@ -1033,17 +1127,19 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "preinit",
       "id": "",
-      "value": "function is_touch_device4() {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n}\nthis.Immortal = false;\nthis.roundtime = 4000;\nif (is_touch_device4()) {\n  /*this.ClickControls=true;*/\n}\ntoggleClass(\"fixxa\", false);\ntoggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\ntoggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\ntoggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\ntoggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\ntoggleClass(\"sorcerer\", !!this.mustMemorize);\ntoggleClass(\"fight\", true);\ntoggleClass(\"autocleric\", !!this.autocleric>0);\ntoggleClass(\"autoassist\", !!this.autoassist);\ntoggleClass(\"autobash\", !!this.autobash);\ntoggleClass(\"autorescue\", !!this.autorescue);\ntoggleClass(\"autoarmi\", !!this.autoarmi);\ntoggleClass(\"antispalm\", !!this.antispalm);\ntoggleClass(\"debug\", false);\ntoggleClass(\"autogroup\", !!this.autogroup);\ntoggleClass(\"autoloot\", !!this.autoloot);\ntoggleClass(\"memorize\", false);\ntoggleClass(\"automemorize\", this.automemo);\ntoggleClass(\"selfsanc\", !!this.healtype);\ntoggleClass(\"selfshield\", !!this.selfshield);\ntoggleClass(\"gtalign\", false);\ntoggleClass(\"afk\", !!this.afk);\nvar room = this.TSRoom\nthis.TSRoom = null;\nsetTimeout(()=>this.TSRoom=room, 100)\n",
+      "value": "this.is_touch_device = () => {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n};\n\nthis.ImmortalTrigger = false;\nthis.roundtime = 4000;\nthis.initDone = false;\ndelete this.postInit;\n\ndelay(\"preinit\", 1, () => {\n  toggleClass(\"fixxa\", false);\n  toggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\n  toggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\n  toggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\n  toggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\n  toggleClass(\"sorcerer\", !!this.mustMemorize);\n  toggleClass(\"fight\", !!!this.Immortal);\n  toggleClass(\"util\", true);\n  toggleClass(\"autocleric\", !!this.autocleric>0 && !!!this.Immortal);\n  toggleClass(\"autoassist\", !!this.autoassist && !!!this.Immortal);\n  toggleClass(\"autobash\", !!this.autobash && !!!this.Immortal);\n  toggleClass(\"autorescue\", !!this.autorescue && !!!this.Immortal);\n  toggleClass(\"autoarmi\", !!this.autoarmi && !!!this.Immortal);\n  toggleClass(\"antispalm\", !!this.antispalm && !!!this.Immortal);\n  toggleClass(\"debug\", false);\n  toggleClass(\"autogroup\", !!this.autogroup && !!!this.Immortal);\n  toggleClass(\"autoloot\", !!this.autoloot && !!!this.Immortal);\n  toggleClass(\"autologin\", false);\n  toggleClass(\"login\", true);\n  toggleClass(\"memorize\", false);\n  toggleClass(\"automemorize\", this.automemo && !!!this.Immortal);\n  toggleClass(\"selfsanc\", !!this.selfsanc && !!!this.Immortal);\n  toggleClass(\"selfshield\", !!this.selfshield && !!!this.Immortal);\n  toggleClass(\"gtalign\", false);\n  toggleClass(\"afk\", !!this.afk);\n\n});\n",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "cura",
@@ -1053,7 +1149,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "stand",
@@ -1063,7 +1160,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "flee",
@@ -1073,7 +1171,8 @@
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "checkAssist",
@@ -1083,7 +1182,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ass",
@@ -1093,7 +1193,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autogroup ?(.*)?",
@@ -1103,17 +1204,19 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "setup",
       "id": "",
-      "value": "const resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                 this.casttype||\"C\",\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.mustMemorize = resClassi[4]\nthis.casttype = resClassi[2].toUpperCase()\nthis.spellOffensivo = resClassi[3]\ntoggleClass(\"mage\",false)\ntoggleClass(\"cleric\",false)\ntoggleClass(\"druid\",false)\ntoggleClass(\"psionic\",false)\nthis.mustMind = false;\nif (this.casttype.indexOf(\"C\")!=-1) {\n   toggleClass(\"cleric\",true)\n  this.healtype=\"C\"\n}\nif (this.casttype.indexOf(\"D\")!=-1) {\n   toggleClass(\"druid\",true)\n  this.healtype=\"D\"\n}\nif (this.casttype.indexOf(\"M\")!=-1) {\n   toggleClass(\"mage\",true)\n}\nif (this.casttype.indexOf(\"P\")!=-1) {\n   toggleClass(\"psionic\",true)\n  this.mustMind = true;\n}\ntoggleClass(\"sorcerer\",this.mustMemorize)\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nlet colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\nconst resPersonal = (await Messagebox.ShowMultiInput(\"Personale\",\n                 [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                 [this.pgTitle ? this.pgTitle : \".\",\n                  colori || \"$c0009\",\n                 triggerEnabled(\"gagprompt\")])).results;\n\nthis.pgTitle = resPersonal[0]\nthis.colori = resPersonal[1].split(\",\")\nif (!!resPersonal[2]) {\n  toggleTrigger(\"gagprompt\",true);\n  send(\"compact enable\")\n} else {\n  toggleTrigger(\"gagprompt\",false);\n  send(\"compact disable\")\n}\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}",
+      "value": "const setClasses = async (v) => {\n  toggleClass(\"mage\",v && this.casttype.indexOf(\"M\")!=-1)\n  toggleClass(\"cleric\",v && this.casttype.indexOf(\"C\")!=-1)\n  toggleClass(\"druid\",v && this.casttype.indexOf(\"D\")!=-1)\n  toggleClass(\"psionic\",v && this.casttype.indexOf(\"P\")!=-1)\n  toggleClass(\"sorcerer\",this.mustMemorize)\n  this.mustMind = this.casttype.indexOf(\"P\")!=-1;\n  this.healtype = this.casttype.indexOf(\"C\")!=-1 ? \"C\" : this.casttype.indexOf(\"D\")!=-1 ? \"D\" : \"\";\n};\n\nconst resetSettings = () => {\n  setClasses(false);\n  delete this.autocleric;\n  delete this.mustMind\n  delete this.healtype\n  delete this.mustMind\n  delete this.mustMemorize;\n  delete this.spellOffensivo;\n  delete this.armaBlunt\n  delete this.armaSlash\n  delete this.armaPierce\n  delete this.numeroAttacchi\n  delete this.ordineArmi\n  delete this.armaPrimaria\n  delete this.armaExtra\n  delete this.zoneDaNonRimettereArma\n  delete this.scudoCold\n  delete this.scudoAcid\n  delete this.scudoEle\n  delete this.scudoFire\n  delete this.usaLuce\n  delete this.borsa\n  delete this.throwObject\n  delete this.holdItem\n  delete this.oggettoTrueSight\n  delete this.armaDigCut\n  delete this.pgTitle\n  delete this.colori\n  delete this.setupdone;\n  delete this.ImmortalTrigger\n  delete this.Immortal\n}; \n\nif ($1==\"reset\") {\n  print(\"Cancello la configurazione pg / setup.\")\n  resetSettings()\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  return\n}\n\nconst askColori = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                   [this.pgTitle ? this.pgTitle : \".\",\n                    colori || \"$c0009\",\n                   triggerEnabled(\"gagprompt\")])).results;\n\n  this.pgTitle = results[0]\n  this.colori = results[1].split(\",\")\n  const wantsCompact = toggleTrigger(\"gagprompt\",!!results[2])||triggerEnabled(\"gagprompt\")\n  \n  send(`compact ${ wantsCompact ? \"enable\" : \"disable\"}`)\n  return results\n};\n\nconst answer = (await Messagebox.Question(\n  \"Presuppongo che sei un personaggio Mortale?\\nRispondi No solamente se stai creando il profilo per un Immortale o Dio.\\n\\nPremi 'Si' per proseguire con il setup.\"\n)).result;\n\nconst correct = (condition) => {\n  return (true === (this.Immortal = this.ImmortalTrigger = !!condition));\n};\n\nif ((this.Immortal = correct(answer != \"Si\"))) {\n  const col = this.colori\n  const title = this.pgTitle\n  resetSettings()\n  this.colori = col\n  this.pgTitle = title\n  this.casttype = \"CDMP\"\n  this.healtype=\"C\"\n  this.spellOffensivo = 'disint';\n  this.zoneDaNonRimettereArma = 0\n  this.usaLuce = false\n  this.borsa = (await Messagebox.ShowInput(\"La tua borsa\",\"Che keyword usi per la tua borsa?\", this.borsa || \"borsa-ed\"+this.TSPersonaggio)).result\n  await setClasses(true);\n  this.mustMind = this.mustMemorize = false;\n  await askColori();\n  this.setupdone = this.scriptVersion;\n  this.Immortal = true;\n  this.autocleric = false;\n  this.ImmortalTrigger = true;\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  \n  return;\n}\n\nthis.ImmortalTrigger = false;\nthis.Immortal = false;\n\nconst resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                 this.casttype||\"C\",\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.mustMemorize = resClassi[4]\nthis.casttype = resClassi[2].toUpperCase()\nthis.spellOffensivo = resClassi[3]\n\nawait setClasses(true);\n\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nawait askColori();\n\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}\nthis.initDone = false;\nsend(\"initialize\");\ndelay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "tickProc",
@@ -1123,17 +1226,19 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autoloot ?(.*)?",
       "id": "autoloot",
-      "value": "this.autoloot = !this.autoloot;\n\nif (match && match[1] != undefined) {\n\tthis.autoloot = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autoloot\", this.autoloot);\nlet str = (\"Autoloot: \"+ (this.autoloot ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);\nif (this.autoloot) {\n\tsend(\"fischia\")\n} else {\n  send(\"addio famiglio\"+this.TSPersonaggio)\n}",
+      "value": "const oldVal = this.autoloot;\n\nthis.autoloot = !this.autoloot;\n\nif (match && match[1] != undefined) {\n\tthis.autoloot = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autoloot\", this.autoloot);\nlet str = (\"Autoloot: \"+ (this.autoloot ? \"ABILITATO\" : \"DISABILITATO\"));\nif (oldVal != this.autoloot) {\n  this.diciStatus(str);\n  if (!this.Immortal) {\n    if (this.autoloot) {\n        send(\"fischia\")\n    } else {\n      send(\"addio famiglio\"+this.TSPersonaggio)\n    }\n  }\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "es",
@@ -1143,7 +1248,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ep",
@@ -1153,7 +1259,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "astral",
@@ -1163,7 +1270,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^fs( forced)?$",
@@ -1173,7 +1281,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^dispe?l?(.+)?",
@@ -1183,7 +1292,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ia",
@@ -1193,7 +1303,8 @@
       "is_script": true,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ic",
@@ -1203,7 +1314,8 @@
       "is_script": true,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ie",
@@ -1213,7 +1325,8 @@
       "is_script": true,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "k",
@@ -1223,27 +1336,30 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autofollow ?(.*)?",
       "id": "autofollow",
-      "value": "this.autofollow = !this.autofollow;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.autofollow = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autofollow\", this.autofollow);\nlet str = (\"Autofollow: \"+ (this.autofollow ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autofollow;\n\nthis.autofollow = !this.autofollow;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.autofollow = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autofollow\", this.autofollow);\nif (oldVal != this.autofollow) {\n  let str = (\"Autofollow: \"+ (this.autofollow ? \"ABILITATO\" : \"DISABILITATO\"));\n  this.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autoorder ?(.*)?",
       "id": "autoorder",
-      "value": "this.autoorder = !this.autoorder;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.autoorder = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autoorder\", this.autoorder);\nlet str = (\"Autoorder: \"+ (this.autoorder ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autoorder;\n\nthis.autoorder = !this.autoorder;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.autoorder = (match[1] == \"true\" || match[1] == \"on\");\n}\n\nif (this.Immortal) this.autoorder = false;\n\ntoggleClass(\"autoorder\", this.autoorder);\nif (oldVal != this.autoorder) {\n  let str = (\"Autoorder: \"+ (this.autoorder ? \"ABILITATO\" : \"DISABILITATO\"));\n  this.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "tick",
@@ -1253,37 +1369,41 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^afk( [^ ]+)?$",
       "id": "",
-      "value": "this.afk = !this.afk;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.afk = (match[1].trim() == \"true\" || match[1].trim() == \"on\");\n}\nif (this.afkProcTimout) clearTimeout(this.afkProcTimout);\ntoggleClass(\"afk\", this.afk);\nif (this.afk) {\n  if (this.pgTitle) send(\"title \" + this.pgTitle + \" $c0008[AFK]$c0007\")\n} else {\n  if (this.pgTitle) send(\"title \" + this.pgTitle)\n}\nlet str = \"AFK: \"+ (this.afk ? \"ABILITATO\" : \"DISABILITATO\");\nthis.diciStatus(str);",
+      "value": "const oldVal = this.afk;\nthis.afk = !this.afk;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autoassist false)\n\tthis.afk = (match[1].trim() == \"true\" || match[1].trim() == \"on\");\n}\nif (this.afkProcTimout) clearTimeout(this.afkProcTimout);\ntoggleClass(\"afk\", this.afk);\n\nif (oldVal != this.afk) {\n  if (this.afk) {\n    if (this.pgTitle) send(\"title \" + this.pgTitle + \" $c0008[AFK]$c0007\")\n  } else {\n    if (this.pgTitle) send(\"title \" + this.pgTitle)\n  }\n  let str = \"AFK: \"+ (this.afk ? \"ABILITATO\" : \"DISABILITATO\");\n  this.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "soloSettings",
       "id": "",
-      "value": "delay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype) {\n    if (!this.afk) {\n      send(\"autocleric 30\");\n    } else {\n      if (this.healtype) send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\");\n  return;\n} else \ndelay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype) {\n    if (!this.afk) {\n      send(\"autocleric 30\");\n    } else {\n      if (this.healtype) send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "groupSettings",
       "id": "",
-      "value": "delay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab) {\n    send(\"autostab \" + ((this.afk && (this.canStab))?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.healtype) send(\"autocleric \" + (this.afk?\"70\":\"0\"));\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\")\n  return;\n} else\ndelay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab) {\n    send(\"autostab \" + ((this.afk && (this.canStab))?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.healtype) send(\"autocleric \" + (this.afk?\"70\":\"0\"));\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "printGruppo",
@@ -1293,7 +1413,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^bark (.*)|^bark$",
@@ -1303,7 +1424,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^anim (.*)|^anim",
@@ -1313,7 +1435,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^do (.+)$|^do$",
@@ -1323,7 +1446,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^sanc( .+)$|^sanc$",
@@ -1333,7 +1457,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^chain( .+)$|^chain$",
@@ -1343,7 +1468,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "fire",
@@ -1353,7 +1479,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "blunt",
@@ -1363,7 +1490,8 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "pierce",
@@ -1373,7 +1501,8 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "slash",
@@ -1383,7 +1512,8 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "pb (.*)",
@@ -1393,7 +1523,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "gb (.*)",
@@ -1403,7 +1534,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^hum (.+)|^hum",
@@ -1413,7 +1545,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^bloom",
@@ -1423,17 +1556,19 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "generaFunzioni",
       "id": "",
-      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  const cambiaArma = (@ultimaArma!=@armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${@ultimaArma}`)\n    send(`gb ${@armaDigCut}`)\n    send(`~wield ${@armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${@armaDigCut}`)\n    send(`~wield ${@ultimaArma}`)\n    send(`pb ${@armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}",
+      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  const cambiaArma = (@ultimaArma!=@armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${@ultimaArma}`)\n    send(`gb ${@armaDigCut}`)\n    send(`~wield ${@armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${@armaDigCut}`)\n    send(`~wield ${@ultimaArma}`)\n    send(`pb ${@armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}\n\nconst tfunc = () => {\n  window.removeEventListener(\"touchstart\", tfunc);\n  const prev = this.usesTouch;\n  this.usesTouch = true;\n  if (this.usesTouch && !prev) {\n    print(\"Touchscreen rilevato\");\n  }\n};\nwindow.addEventListener('touchstart', tfunc);",
       "regex": false,
       "is_script": true,
       "class": "config",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^selfshield(.*)",
@@ -1443,7 +1578,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^selfsanc(.*)",
@@ -1453,7 +1589,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "immuacid",
@@ -1463,7 +1600,8 @@
       "is_script": false,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "immucold",
@@ -1473,7 +1611,8 @@
       "is_script": false,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "immuele",
@@ -1483,7 +1622,8 @@
       "is_script": false,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(gui|guild|gt|ot|sh|t \\w+|tell \\w+|hg|herog|shout|suss \\w+|gos|goss|gossip|grida|say|send \\w+|telep \\w+|mess \\w+) (.*)$",
@@ -1493,7 +1633,8 @@
       "is_script": true,
       "class": "comunicazione",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "gtTrigger",
@@ -1503,7 +1644,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "status",
@@ -1513,7 +1655,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "autosanc",
@@ -1523,7 +1666,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^asanc ?(.+)?$",
@@ -1533,17 +1677,19 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "afkProc",
       "id": "",
-      "value": "if (!this.inCombat()) {\n  if (this.TSSpells.toLowerCase().indexOf(\"o\")==-1 && this.healtype==\"D\") {\n    if (classEnabled(\"druid\")) send(\"do\");\n  }\n  if (this.TSSpells.toLowerCase().indexOf(\"f\")==-1 && this.selfshield) {\n    send(\"fs\");\n  }\n  if (this.TSSpells.toLowerCase().indexOf(\"s\")==-1 && this.healtype==\"C\" && this.selfsanc) {\n    send(\"sanc\");\n  } else if (this.TSSpells.toLowerCase().indexOf(\"n\")==-1 && this.healtype==\"D\" && this.selfsanc) {\n    if (this.TSSettore != \"Chiuso\" && this.TSSpells.toLowerCase().indexOf(\"s\")==-1) send(\"sanc\");\n  }\n  \n  if (this.afk && this.TSSpells.toLowerCase().indexOf(\"g\")==-1 && this.healtype==\"D\") {\n    if (this.TSSettore != \"Chiuso\" && classEnabled(\"druid\")) send(\"hum\");\n  }\n}\nsend(\"sancaAutosanc\")",
+      "value": "if (this.Immortal) return;\nif (!this.inCombat()) {\n  if (this.TSSpells.toLowerCase().indexOf(\"o\")==-1 && this.healtype==\"D\") {\n    if (classEnabled(\"druid\")) send(\"do\");\n  }\n  if (this.TSSpells.toLowerCase().indexOf(\"f\")==-1 && this.selfshield) {\n    send(\"fs\");\n  }\n  if (this.TSSpells.toLowerCase().indexOf(\"s\")==-1 && this.healtype==\"C\" && this.selfsanc) {\n    send(\"sanc\");\n  } else if (this.TSSpells.toLowerCase().indexOf(\"n\")==-1 && this.healtype==\"D\" && this.selfsanc) {\n    if (this.TSSettore != \"Chiuso\" && this.TSSpells.toLowerCase().indexOf(\"s\")==-1) send(\"sanc\");\n  }\n  \n  if (this.afk && this.TSSpells.toLowerCase().indexOf(\"g\")==-1 && this.healtype==\"D\") {\n    if (this.TSSettore != \"Chiuso\" && classEnabled(\"druid\")) send(\"hum\");\n  }\n}\nsend(\"sancaAutosanc\")",
       "regex": false,
       "is_script": true,
       "class": "afk",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "align",
@@ -1553,7 +1699,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^sayStatus (.+)$",
@@ -1563,7 +1710,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "manca",
@@ -1573,7 +1721,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "grow",
@@ -1583,7 +1732,8 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "fog",
@@ -1593,7 +1743,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^rescue( .*)?$",
@@ -1603,7 +1754,8 @@
       "is_script": true,
       "class": "combat",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "r",
@@ -1613,7 +1765,8 @@
       "is_script": false,
       "class": "combat",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "pola (.+)",
@@ -1623,7 +1776,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "immuice",
@@ -1633,7 +1787,8 @@
       "is_script": false,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^portal( .+)$",
@@ -1643,7 +1798,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^gfly$",
@@ -1653,7 +1809,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^fly( .+)$|^fly$",
@@ -1663,7 +1820,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^ts( .+)$|^ts$",
@@ -1673,7 +1831,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^flo( .+)$|^flo$",
@@ -1683,7 +1842,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^heat( .+)$|^heat$",
@@ -1693,7 +1853,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^shuri( .+)$|^shuri$",
@@ -1703,7 +1864,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^(rece|casa)$",
@@ -1713,7 +1875,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^tran (.*)$",
@@ -1723,7 +1886,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "updateCombatStatus",
@@ -1733,7 +1897,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "sr",
@@ -1743,7 +1908,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "attack ?(.+)?",
@@ -1753,7 +1919,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^rp (.+)",
@@ -1763,7 +1930,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "extra",
@@ -1773,47 +1941,52 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autocast ?(?:(.+))?",
       "id": "autocast",
-      "value": "let aca = classEnabled(\"autocast\");\nif (match && match[1] != undefined && match[1]==\"off\") {\n  aca = false;\n} else if (match && match[1] != undefined && match[1]==\"on\") {\n  aca = this.spellOffensivo || \"meteor swarm\"\n}\nelse if (match && match[1] != undefined) {\n\taca = match[1];\n} else if (!match || !match[1]) {\n  aca = !aca;\n}\nthis.autocast = aca != false;\nif (!aca) {\n  this.diciStatus(\"AutoCast OFF\");\n  toggleClass(\"autocast\", false);\n}\nelse {\n  if (aca == true) {\n    aca = this.spellOffensivo || \"meteor swarm\";\n  }\n  this.spellOffensivo = aca;\n  let str = (\"AutoCast ON (\" + this.spellOffensivo + \")\");\n  this.diciStatus(str);\n  toggleClass(\"autocast\", true);\n  this.TSTankCond=\"*\";\n  this.TSTank=\"*\";\n  send(\"checkAssist\");\n}",
+      "value": "const oldVal = this.autocast;\n\nlet aca = classEnabled(\"autocast\");\nif (match && match[1] != undefined && match[1]==\"off\") {\n  aca = false;\n} else if (match && match[1] != undefined && match[1]==\"on\") {\n  aca = this.spellOffensivo || \"meteor swarm\"\n}\nelse if (match && match[1] != undefined) {\n  \toldVal = null;\n\taca = match[1];\n} else if (!match || !match[1]) {\n  aca = !aca;\n}\nthis.autocast = aca != false;\nif (!aca) {\n  if (oldVal != this.autocast) this.diciStatus(\"AutoCast OFF\");\n  toggleClass(\"autocast\", false);\n}\nelse {\n  if (aca == true) {\n    aca = this.spellOffensivo || \"meteor swarm\";\n  }\n  this.spellOffensivo = aca;\n  let str = (\"AutoCast ON (\" + this.spellOffensivo + \")\");\n  toggleClass(\"autocast\", true);\n  if (oldVal != this.autocast) {\n    this.diciStatus(str);\n  \tthis.TSTankCond=\"*\";\n    this.TSTank=\"*\";\n    send(\"checkAssist\");\n  }\n}",
       "regex": true,
       "is_script": true,
-      "class": "",
+      "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autorescue ?(.*)?",
       "id": "autorescue",
-      "value": "this.autorescue = !this.autorescue;\n\nif (match && match[1] != undefined) {\n\tthis.autorescue = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autorescue\", this.autorescue);\nlet str = \"AutoRescue: \"+ (this.autorescue ? \"ABILITATO\" : \"DISABILITATO\");\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autorescue;\nthis.autorescue = !this.autorescue;\n\nif (match && match[1] != undefined) {\n\tthis.autorescue = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autorescue\", this.autorescue);\nif (oldVal != this.autorescue) {\n\tlet str = \"AutoRescue: \"+ (this.autorescue ? \"ABILITATO\" : \"DISABILITATO\");\n\tthis.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
-      "class": "",
+      "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autostop ?(.*)?",
       "id": "autostop",
-      "value": "this.autostop = !this.autostop;\n\nif (match && match[1] != undefined) {\n\tthis.autostop = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autostop\", this.autostop);\nlet str = \"AutoStop: \"+ (this.autostop ? \"ABILITATO\" : \"DISABILITATO\");\nthis.diciStatus(str);\nif (!this.autostop) {\n  this.TSTankCond=\"*\";\n  this.TSTank=\"*\";\n  send(\"checkAssist\");\n}",
+      "value": "const oldVal = this.autostop;\n\nthis.autostop = !this.autostop;\n\nif (match && match[1] != undefined) {\n\tthis.autostop = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autostop\", this.autostop);\nlet str = \"AutoStop: \"+ (this.autostop ? \"ABILITATO\" : \"DISABILITATO\");\nif (oldVal != this.autostab) {\n  this.diciStatus(str);\n}\nif (!this.autostop) {\n  this.TSTankCond=\"*\";\n  this.TSTank=\"*\";\n  send(\"checkAssist\");\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autoarmi ?(.*)?",
       "id": "autoarmi",
-      "value": "this.autoarmi = !this.autoarmi;\n\nif (match && match[1] != undefined) {\n\tthis.autoarmi = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autoarmi\", this.autoarmi);\nlet str = \"AutoArmi: \"+ (this.autoarmi ? \"ABILITATO\" : \"DISABILITATO\");\nthis.cambiArma = 0;\nthis.missARound = 0;\nthis.impugnatoArma=true;\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autoarmi;\n\nthis.autoarmi = !this.autoarmi;\n\nif (match && match[1] != undefined) {\n\tthis.autoarmi = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autoarmi\", this.autoarmi);\nlet str = \"AutoArmi: \"+ (this.autoarmi ? \"ABILITATO\" : \"DISABILITATO\");\nthis.cambiArma = 0;\nthis.missARound = 0;\nthis.impugnatoArma=true;\nif (oldVal != this.autoarmi) {\n\tthis.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^antispalm ?(.*)?",
@@ -1823,7 +1996,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^casta ?(.+)?$",
@@ -1833,7 +2007,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "stoporfleeorlook",
@@ -1843,7 +2018,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "terra",
@@ -1853,7 +2029,8 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "aria",
@@ -1863,7 +2040,8 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "acqua",
@@ -1873,7 +2051,8 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "fuoco",
@@ -1883,7 +2062,8 @@
       "is_script": false,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "calcoloPerHour",
@@ -1893,7 +2073,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "if",
@@ -1903,7 +2084,8 @@
       "is_script": true,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "immufire",
@@ -1913,7 +2095,8 @@
       "is_script": false,
       "class": "scudi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^wi(e|el|eld)? (.+)$|^imp(u|ug|ugn|ugna)? (.+)$",
@@ -1923,27 +2106,30 @@
       "is_script": true,
       "class": "armi",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autostab ?(.*)?",
       "id": "autostab",
-      "value": "this.autostab = !this.autostab;\n\nif (match && match[1] != undefined) {\n\tthis.autostab = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autostab\", this.autostab);\nlet str = \"Autostab: \"+ (this.autostab ? \"ABILITATO\" : \"DISABILITATO\");\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autostab;\n\nthis.autostab = !this.autostab;\n\nif (match && match[1] != undefined) {\n\tthis.autostab = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autostab\", this.autostab);\nif (oldVal != this.autostab) {\n\tlet str = \"Autostab: \"+ (this.autostab ? \"ABILITATO\" : \"DISABILITATO\");\n\tthis.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^autofury ?(.*)?",
       "id": "autofury",
-      "value": "this.autofury = !this.autofury;\n\nif (match && match[1] != undefined) {\n\tthis.autofury = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autofury\", this.autofury);\nlet str = \"AutoFury: \"+ (this.autofury ? \"ABILITATO\" : \"DISABILITATO\");\nthis.diciStatus(str);",
+      "value": "const oldVal = this.autofury;\n\nthis.autofury = !this.autofury;\n\nif (match && match[1] != undefined) {\n\tthis.autofury = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autofury\", this.autofury);\nif (oldVal != this.autofury) {\n  let str = \"AutoFury: \"+ (this.autofury ? \"ABILITATO\" : \"DISABILITATO\");\n  this.diciStatus(str);\n}",
       "regex": true,
       "is_script": true,
       "class": "fight",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ac",
@@ -1953,7 +2139,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "af",
@@ -1963,7 +2150,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "as",
@@ -1973,7 +2161,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "of",
@@ -1983,7 +2172,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^sil[ea] (.+)",
@@ -1993,7 +2183,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "fire",
@@ -2003,7 +2194,8 @@
       "is_script": false,
       "class": "mage",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^enta (.+)$|^enta$",
@@ -2013,7 +2205,8 @@
       "is_script": true,
       "class": "druid",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^snare (.+)$|^snare$",
@@ -2023,7 +2216,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "generaGold",
@@ -2033,7 +2227,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ar",
@@ -2043,7 +2238,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "touch",
@@ -2053,7 +2249,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ordinaborsa",
@@ -2063,7 +2260,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^fixxa ?(.+)?$",
@@ -2073,7 +2271,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^oggettiRovinati ?(.+)?$",
@@ -2083,7 +2282,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^memo? ?(\\d+)? ?( '?([^']+)'?)?$",
@@ -2093,7 +2293,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^libro ?(assegna|aggiorna|cancella)?$",
@@ -2103,7 +2304,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "mining",
@@ -2113,7 +2315,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "fishing",
@@ -2123,7 +2326,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^esca (.+)$",
@@ -2133,7 +2337,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "memma",
@@ -2143,7 +2348,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "automemma",
@@ -2153,7 +2359,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "finememorize",
@@ -2163,7 +2370,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^automem ?(.*)?",
@@ -2173,7 +2381,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^cast '(.+)' ?(.+)?$",
@@ -2183,7 +2392,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^forge?t? '?([^']+)'?$",
@@ -2193,7 +2403,8 @@
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^wat(c|ch)?$",
@@ -2203,7 +2414,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "po",
@@ -2213,27 +2425,30 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "nonAfkProc",
       "id": "",
-      "value": "send(\"sancaAutosanc\")\nif (this.TSSpells.toLowerCase().indexOf(\"f\")==-1 && this.selfshield) {\n    send(\"fs\");\n}\nif (this.TSSpells.toLowerCase().indexOf(\"s\")==-1 && this.healtype==\"C\" && this.selfsanc) {\n  send(\"sanc\");\n} else if (this.TSSpells.toLowerCase().indexOf(\"n\")==-1 && this.healtype==\"D\" && this.selfsanc) {\n  if (this.TSSettore != \"Chiuso\" && this.TSSpells.toLowerCase().indexOf(\"s\")==-1) send(\"sanc\");\n}",
+      "value": "if (this.Immortal) return;\nsend(\"sancaAutosanc\")\nif (this.TSSpells.toLowerCase().indexOf(\"f\")==-1 && this.selfshield) {\n    send(\"fs\");\n}\nif (this.TSSpells.toLowerCase().indexOf(\"s\")==-1 && this.healtype==\"C\" && this.selfsanc) {\n  send(\"sanc\");\n} else if (this.TSSpells.toLowerCase().indexOf(\"n\")==-1 && this.healtype==\"D\" && this.selfsanc) {\n  if (this.TSSettore != \"Chiuso\" && this.TSSpells.toLowerCase().indexOf(\"s\")==-1) send(\"sanc\");\n}",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "sancaAutosanc",
       "id": "",
-      "value": "let daSancare = [];\nlet nonSancati = [];\nlet sancati = 0;\nconst grp=JSON.parse(this.Gruppo||{})\nfor (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (!grp[nome].sanc && (this.listaAutosanc||[]).indexOf(nome)>-1) {\n      daSancare.push(nome)\n    } else if (!grp[nome].sanc) {\n     nonSancati.push(nome)\n    } else if (grp[nome].sanc) {\n      sancati++;\n    }\n  }\nif (daSancare.length) for (let nome of daSancare) {\n  send(\"sanc \" + nome)\n}\n\nif (this.afk && this.grandezzaGruppo>4 && sancati && nonSancati.length && sancati > 3) {\n  send(\"gt Alcuni in gruppo non sono sancati: \" + nonSancati.join(\",\"))\n}\n",
+      "value": "if (this.Immortal) return;\nlet daSancare = [];\nlet nonSancati = [];\nlet sancati = 0;\nconst grp=JSON.parse(this.Gruppo||{})\nfor (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (!grp[nome].sanc && (this.listaAutosanc||[]).indexOf(nome)>-1) {\n      daSancare.push(nome)\n    } else if (!grp[nome].sanc) {\n     nonSancati.push(nome)\n    } else if (grp[nome].sanc) {\n      sancati++;\n    }\n  }\nif (daSancare.length) for (let nome of daSancare) {\n  send(\"sanc \" + nome)\n}\n\nif (this.afk && this.grandezzaGruppo>4 && sancati && nonSancati.length && sancati > 3) {\n  send(\"gt Alcuni in gruppo non sono sancati: \" + nonSancati.join(\",\"))\n}\n",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "vai",
@@ -2243,7 +2458,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "teleport",
@@ -2253,7 +2469,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "dig",
@@ -2263,7 +2480,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "cut",
@@ -2273,7 +2491,8 @@
       "is_script": true,
       "class": "util",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "room",
@@ -2283,7 +2502,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "cerca",
@@ -2293,7 +2513,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "roomedit",
@@ -2303,7 +2524,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "porte",
@@ -2313,7 +2535,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "qr",
@@ -2323,7 +2546,8 @@
       "is_script": false,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "qc",
@@ -2333,7 +2557,8 @@
       "is_script": false,
       "class": "questor",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ricercaPrecedente",
@@ -2343,7 +2568,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "onroomenter",
@@ -2353,7 +2579,8 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "restab",
@@ -2363,7 +2590,8 @@
       "is_script": true,
       "class": "thief",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "rs",
@@ -2373,7 +2601,8 @@
       "is_script": false,
       "class": "thief",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "autokill",
@@ -2383,7 +2612,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ak",
@@ -2393,7 +2623,8 @@
       "is_script": false,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "autokillcheck",
@@ -2403,7 +2634,8 @@
       "is_script": true,
       "class": "autokill",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "look",
@@ -2413,7 +2645,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "salta",
@@ -2423,7 +2656,30 @@
       "is_script": true,
       "class": "mapper",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
+    },
+    {
+      "pattern": "alloff",
+      "id": "",
+      "value": "const oldFight = classEnabled(\"fight\")\nconst oldSorc = classEnabled(\"sorcerer\")\n\nsend(\"autosanc off\");\nsend(\"automem off\");\n\ntoggleClass(\"fight\", true)\ntoggleClass(\"sorcerer\", true)\n\nsend(\"autoassist off\");\nsend(\"autobash off\");\nsend(\"autorescue off\");\nsend(\"autostab off\");\nsend(\"autofury off\");\nsend(\"autocast off\");\n\ntoggleClass(\"fight\", oldFight)\ntoggleClass(\"sorcerer\", oldSorc)\n\nsend(\"autoloot off\");\n\nsend(\"autostop off\");\nsend(\"autocleric off\");\ntoggleClass(\"indietro\", false)",
+      "regex": true,
+      "is_script": true,
+      "class": "util",
+      "enabled": true,
+      "is_prompt": false,
+      "script": null
+    },
+    {
+      "pattern": "restring",
+      "id": "",
+      "value": "if (!$1) {\n  print(\"Dai la key dell'oggetto come parametro\");\n  return;\n}\nconst objKey = $1;\n\nconst results = (await Messagebox.ShowMultiInput(\"Restring\",\n                                                 [\"Nuova key\",\"Short desc\", \"Long desc\"],\n                                                 [\"\",\n                                                  \"\",\n                                                  \"\"])).results;\nif (!results) return;\nif (results.every(v => !!v)) {\n  send(`ostring ${objKey} ${results[0]}|${results[1]}|${results[2]}`, true)\n}\n",
+      "regex": false,
+      "is_script": true,
+      "class": "immortal",
+      "enabled": true,
+      "is_prompt": false,
+      "script": null
     }
   ],
   "classes": [
@@ -2473,6 +2729,13 @@
       "autobash",
       {
         "name": "autobash",
+        "enabled": true
+      }
+    ],
+    [
+      "autologin",
+      {
+        "name": "autologin",
         "enabled": true
       }
     ],

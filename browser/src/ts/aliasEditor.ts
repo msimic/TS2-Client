@@ -12,6 +12,10 @@ export class AliasEditor extends TrigAlEditBase {
         this.$isPromptCheckbox.parent().hide();
     }
 
+    protected supportsMacro():boolean {
+        return true;
+    }
+
     protected copyToOther(ind: number): void {
         const item = this.getItem(ind)
         EvtCopyAliasToBase.fire({item: item, source: this.title, isBase: this.isBase})

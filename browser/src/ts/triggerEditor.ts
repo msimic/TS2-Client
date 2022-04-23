@@ -13,6 +13,10 @@ export class TriggerEditor extends TrigAlEditBase {
         })
     }
 
+    protected supportsMacro():boolean {
+        return false;
+    }
+
     protected copyToOther(ind: number): void {
         const item = this.getItem(ind)
         EvtCopyTriggerToBase.fire({item: item, source: this.title, isBase: this.isBase})
