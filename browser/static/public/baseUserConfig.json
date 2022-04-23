@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "versionMessage":"Certe rifiniture per immortali.",
   "requiresClientMajor": 1,
   "requiresClientMinor": 1,
@@ -167,34 +167,37 @@
     {
       "pattern": "^Tempora Sanguinis e l'Impero Celeste ti danno il benvenuto\\.|^Riconnessione in corso\\.",
       "id": "inizializzazione",
-      "value": "if (line.indexOf(\"Riconnessione\")!=-1) {\n  send(\"i\")\n  send(\"i\")\n}\nsend(\"initialize\")\ndelay(\"postinitialize\", 1000, () => this.postInit ? this.postInit() : false)",
+      "value": "if (line.indexOf(\"Riconnessione\")>-1) {\n  send(\"initialize\")\n}\ndelay(\"postinitialize\", 1000, () => this.postInit ? this.postInit() : false)\ntoggleClass(\"login\", false)",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
-      "pattern": "^Per avere una breve spiegazione dei comandi per Dei",
+      "pattern": "^   TUTTI GLI IMMORTALI|^Per avere una breve spiegazione dei comandi per Dei",
       "id": "",
-      "value": "this.ImmortalTrigger = true;\nif (this.Immortal != true) {\n  this.Immortal = true\n  toggleClass(\"login\",false)\n  toggleClass(\"immortal\",true)\n  this.initDone = false\n  send(\"initialize\")\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n}",
+      "value": "this.ImmortalTrigger = true;\nif (this.Immortal != true) {\n  this.Immortal = true\n  toggleClass(\"immortal\",true)\n  if (line.indexOf(\"Per avere\")>-1) {\n  \tthis.initDone = false\n    send(\"initialize\")\n    delay(\"postinitialize\", 1000, () => this.postInit ? this.postInit() : false)\n  }\n}",
       "regex": true,
       "is_script": true,
-      "class": "login",
+      "class": "util",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
       "pattern": "^Connessione a \"Tempora Sanguinis",
       "id": "",
-      "value": "preinit",
+      "value": "send(\"preinit\")",
       "regex": false,
-      "is_script": false,
+      "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -968,14 +971,27 @@
       "script": null
     },
     {
-      "pattern": "^   TUTTI GLI IMMORTALI CHE RESTRINGANO",
+      "pattern": "^Premi \\<Invio\\>\\:",
       "id": "",
-      "value": "send(\"i\")",
+      "value": "send(\" \", true)",
+      "regex": true,
+      "is_script": true,
+      "class": "login",
+      "enabled": true,
+      "is_prompt": true,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^    Fai la tua scelta\\:",
+      "id": "",
+      "value": "send(\"i\")\nsend(\"initialize\")\ntoggleClass(\"login\", false)",
       "regex": true,
       "is_script": true,
       "class": "login",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     }
   ],
@@ -1133,12 +1149,13 @@
     {
       "pattern": "preinit",
       "id": "",
-      "value": "this.is_touch_device = () => {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n};\n\nthis.ImmortalTrigger = false;\nthis.roundtime = 4000;\nthis.initDone = false;\ndelete this.postInit;\n\ndelay(\"preinit\", 1, () => {\n  toggleClass(\"fixxa\", false);\n  toggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\n  toggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\n  toggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\n  toggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\n  toggleClass(\"sorcerer\", !!this.mustMemorize);\n  toggleClass(\"fight\", !!!this.Immortal);\n  toggleClass(\"util\", true);\n  toggleClass(\"autocleric\", !!this.autocleric>0 && !!!this.Immortal);\n  toggleClass(\"autoassist\", !!this.autoassist && !!!this.Immortal);\n  toggleClass(\"autobash\", !!this.autobash && !!!this.Immortal);\n  toggleClass(\"autorescue\", !!this.autorescue && !!!this.Immortal);\n  toggleClass(\"autoarmi\", !!this.autoarmi && !!!this.Immortal);\n  toggleClass(\"antispalm\", !!this.antispalm && !!!this.Immortal);\n  toggleClass(\"debug\", false);\n  toggleClass(\"autogroup\", !!this.autogroup && !!!this.Immortal);\n  toggleClass(\"autoloot\", !!this.autoloot && !!!this.Immortal);\n  toggleClass(\"autologin\", false);\n  toggleClass(\"login\", true);\n  toggleClass(\"memorize\", false);\n  toggleClass(\"automemorize\", this.automemo && !!!this.Immortal);\n  toggleClass(\"selfsanc\", !!this.selfsanc && !!!this.Immortal);\n  toggleClass(\"selfshield\", !!this.selfshield && !!!this.Immortal);\n  toggleClass(\"gtalign\", false);\n  toggleClass(\"afk\", !!this.afk);\n\n});\n",
+      "value": "this.is_touch_device = () => {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n};\n\nthis.ImmortalTrigger = false;\nthis.roundtime = 4000;\nthis.initDone = false;\ndelete this.postInit;\ntoggleClass(\"autologin\", true);\ntoggleClass(\"login\", true);\n\ndelay(\"preinit\", 1, () => {\n  toggleClass(\"fixxa\", false);\n  toggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\n  toggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\n  toggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\n  toggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\n  toggleClass(\"sorcerer\", !!this.mustMemorize);\n  toggleClass(\"fight\", !!!this.Immortal);\n  toggleClass(\"util\", true);\n  toggleClass(\"autocleric\", !!this.autocleric>0 && !!!this.Immortal);\n  toggleClass(\"autoassist\", !!this.autoassist && !!!this.Immortal);\n  toggleClass(\"autobash\", !!this.autobash && !!!this.Immortal);\n  toggleClass(\"autorescue\", !!this.autorescue && !!!this.Immortal);\n  toggleClass(\"autoarmi\", !!this.autoarmi && !!!this.Immortal);\n  toggleClass(\"antispalm\", !!this.antispalm && !!!this.Immortal);\n  toggleClass(\"debug\", false);\n  toggleClass(\"autogroup\", !!this.autogroup && !!!this.Immortal);\n  toggleClass(\"autoloot\", !!this.autoloot && !!!this.Immortal);\n  toggleClass(\"autologin\", false);\n  toggleClass(\"login\", true);\n  toggleClass(\"memorize\", false);\n  toggleClass(\"automemorize\", this.automemo && !!!this.Immortal);\n  toggleClass(\"selfsanc\", !!this.selfsanc && !!!this.Immortal);\n  toggleClass(\"selfshield\", !!this.selfshield && !!!this.Immortal);\n  toggleClass(\"gtalign\", false);\n  toggleClass(\"afk\", !!this.afk);\n\n});\n",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
