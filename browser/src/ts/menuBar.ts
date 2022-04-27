@@ -168,10 +168,29 @@ export class MenuBar {
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
+        function toggleFullscreen() {
+            let elem = document.documentElement;
+          
+            if (!document.fullscreenElement) {
+              elem.requestFullscreen();
+            } else {
+              document.exitFullscreen();
+            }
+          }
 
+        $("#menuBar").append("<div class='rightMenu'><span class='electron' id='electronMenu'><button id='electronZoomOut'>-</button><span id='electronZoom'></span><button id='electronZoomIn'>+</button></span><span id='currentTime'></span><span id='fullscreenButton' title='Schermo intero'>&#x26F6;</span></div>");
         var currentTimeSpan = $("#currentTime");
-        $("#menuBar").append("<div class='rightMenu'><span class='electron' id='electronMenu'><button id='electronZoomOut'>-</button><span id='electronZoom'></span><button id='electronZoomIn'>+</button></span><span id='currentTime'></span></div>");
-        
+        var fsButton = $("#fullscreenButton");
+        if (!document.documentElement.requestFullscreen) {
+            fsButton.remove()
+        } else {
+            fsButton.on("click", (ev) => {
+                toggleFullscreen();
+            })
+        }
+
+
+
         if (userAgent.indexOf(' electron/') > -1) {
             console.log("In electron")
 

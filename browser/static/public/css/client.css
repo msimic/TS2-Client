@@ -15,6 +15,24 @@ a:link, a:visited {
     text-decoration: none;
 }
 
+#currentTime {
+    font-size: 12px;
+    margin: 2px;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#fullscreenButton {
+    font-size: 16px;
+    cursor: pointer;
+    width: 16px;
+    margin: 2px;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 @font-face {
     font-family: 'Bitstream-Vera-Sans-Mono';
       src:  url('Bitstream-Vera-Sans-Mono.ttf.woff') format('woff'),
