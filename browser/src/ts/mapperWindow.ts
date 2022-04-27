@@ -169,6 +169,12 @@ export class MapperWindow {
 
         
         this.$win = $(win);
+        var userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.indexOf(' electron/') > -1) {
+            $(".electron", this.$win).css({"display": "inline-block"}).show();
+        } else {
+            $(".electron", this.$win).remove();
+        }
 
         const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
 

@@ -703,6 +703,10 @@ export namespace Mudslinger {
 
     export async function initEncryption(browserHash:string) {
         const prevHash = localStorage.getItem("browserHash");
+        if (prevHash==null) {
+            localStorage.setItem("browserHash", browserHash);
+            return;
+        }
         if (prevHash!=null && prevHash != browserHash) {
             Acknowledge("hashChanged", `La configurazione del PC o del browser e' cambiata.
             Le password che erano state salvate per i profili sono state invalidate e dovrai rimetterle.
