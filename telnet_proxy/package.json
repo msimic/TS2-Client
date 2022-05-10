@@ -1,8 +1,8 @@
 {
   "name": "mudslinger-telnet-proxy",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "scripts": {
-    "start": "node dist/telnet_proxy/src/app.js",
+    "start": "set DEBUG=* && node dist/telnet_proxy/src/app.js -c ./dist/telnet_proxy/bundle/config.json",
     "build": "tsc -p tsconfig.json",
     "postinstall": "node tools/postinstall.js",
     "webpack": "webpack --mode production",
@@ -14,11 +14,13 @@
     "@types/socket.io": "^1.4.42",
     "@types/yargs": "^13.0.12",
     "axios": "^0.21.1",
+    "bufferutil": "^4.0.6",
     "express": "^4.17.1",
     "fs-extra": "^2.0.0",
-    "socket.io": "^2.4.1",
+    "socket.io": "^4.5.0",
     "socket.io-client": "^4.1.2",
     "typescript": "^3.9.10",
+    "utf-8-validate": "^5.0.9",
     "yargs": "^13.3.2"
   },
   "devDependencies": {

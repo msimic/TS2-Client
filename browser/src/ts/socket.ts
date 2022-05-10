@@ -1,6 +1,6 @@
 import { EventHook } from "./event";
 
-import * as io from "socket.io-client";
+import { io, Socket as ioSocket } from "socket.io-client";
 import { Mxp } from "./mxp";
 import { OutputManager } from "./outputManager";
 import { IoEvent } from "../../../common/src/ts/ioevent";
@@ -21,7 +21,7 @@ export class Socket {
     public EvtWsDisconnect = new EventHook<void>();
     public EvtSetClientIp = new EventHook<string>();
 
-    private ioConn: SocketIOClient.Socket;
+    private ioConn: ioSocket;
     private ioEvt: IoEvent;
     private telnetClient: TelnetClient;
     private clientIp: string;
@@ -74,7 +74,7 @@ export class Socket {
             (port) +
             "/telnet";
         console.log("Connecting to telnet proxy server at", ioUrl);
-        this.ioConn = io.connect(ioUrl);
+        this.ioConn = io(ioUrl);
 
         this.ioConn.on("connect", () => {
             this.EvtWsConnect.fire({sid: this.ioConn.id});

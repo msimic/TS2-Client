@@ -561,7 +561,7 @@ function makeCbLocalConfigSave(): (val: string) => string {
 }
 
 export async function setupWorkers() {
-    if ((<any>window).ipcRenderer) return Promise.resolve(null);
+    if ((<any>window).ipcRenderer || window.location.host.indexOf("localhost")!=-1) return Promise.resolve(null);
 
     if ('serviceWorker' in navigator) {
         return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
@@ -705,6 +705,8 @@ export namespace Mudslinger {
         const prevHash = localStorage.getItem("browserHash");
         if (prevHash==null) {
             localStorage.setItem("browserHash", browserHash);
+            return;
+        } else {
             return;
         }
         if (prevHash!=null && prevHash != browserHash) {

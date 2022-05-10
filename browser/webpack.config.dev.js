@@ -8,7 +8,7 @@ module.exports = {
   entry: './src/ts/client',
   output: {
     path: path.resolve(__dirname, "static/public"),
-    filename: 'mudslinger-[hash].js',
+    filename: 'mudslinger-[contenthash].js',
     // Bundle absolute resource paths in the source-map,
     // so VSCode can match the source file.
     devtoolModuleFilenameTemplate: '[absolute-resource-path]',

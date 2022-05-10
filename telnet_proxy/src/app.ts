@@ -18,6 +18,12 @@ const argv = yargs
         requiresArg: true,
         config: true
     })
+    .option('mudLibPath', {
+        alias: 'l',
+        description: 'Pass in the absolute path to the mud lib folder',
+        type: 'string',
+        requiresArg: true
+    })
     .option('serverHost', {
         alias: 'h',
         description: 'Pass in a server Host',
@@ -101,9 +107,8 @@ const argv = yargs
         choices: [0, 1, 2]
     })
     .help()
-    .alias('help', 'h')
     .default('verbosity', 1)
-    .epilog('Copyright Mudslinger 2020')
+    .epilog('Copyright Tempora Sanguinis 2022')
     .strict()
     .argv;
 
@@ -125,7 +130,7 @@ let serverConfigImported = require("../../../configServer.js");
 let serverConfig : typeof serverConfigImported;
 
 if (localConfig) try {
-    const configPath = path.join( __dirname, localConfig);
+    const configPath = path.isAbsolute(localConfig) || localConfig.startsWith(".")? localConfig : path.join( __dirname, localConfig);
     DEBUG("Loading local configuration from: " + configPath);
     if (fs.existsSync(configPath)) {
         serverConfig = JSON.parse(fs.readFileSync(configPath).toString());
@@ -156,6 +161,7 @@ serverConfig.fixedTelnetPort = argv.fixedTelnetPort || serverConfig.fixedTelnetP
 serverConfig.privateKey = argv.privateKey || serverConfig.privateKey;
 serverConfig.certificate = argv.certificate || serverConfig.certificate;
 serverConfig.certAuthority = argv.certAuthority || serverConfig.certAuthority;
+serverConfig.mudLibPath = argv.mudLibPath || serverConfig.mudLibPath;
 
 const isHttps = (serverConfig.privateKey && serverConfig.certificate);
 
@@ -173,7 +179,7 @@ interface connInfo {
 };
 
 let openConns: {[k: number]: connInfo} = {};
-let io: SocketIO.Server;
+let io: socketio.Server;
 let actualServer : any;
 
 if (!isHttps) {
@@ -191,7 +197,7 @@ if (!isHttps) {
         hscert = serverConfig.certificate ? fs.readFileSync(serverConfig.certificate) : null;
         ca = serverConfig.certAuthority ? fs.readFileSync(serverConfig.certAuthority) : null;
     } catch {
-        console.log("Could not read certificate files");
+        WARN("Could not read certificate files");
         process.exit(1);
     }
 
@@ -206,23 +212,33 @@ if (!isHttps) {
     try {
         actualServer = https.createServer(credentials,app);
     } catch (error) {
-        console.log("Could not start https server: " + error);
+        WARN("Could not start https server: " + error);
         process.exit(1);
     }
 }
 
-io = socketio(actualServer, {
+io = new socketio.Server(actualServer, {
     // socket.io erroneusly uses fs.readyFileSync on require.resolve in runtime therefore
     // when webpacked serving client would fail, and we cannot serve it in this case
     // no problems for running in normal mode without webpacking the whole bundle
-    serveClient: (typeof require.resolve("socket.io-client") === "string")
+    serveClient: (typeof require.resolve("socket.io-client") === "string"),
+    pingTimeout: 120000,
+    allowEIO3: true,
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: [],
+        credentials: true
+      }
 });
 
-let telnetNs: SocketIO.Namespace = io.of("/telnet");
-telnetNs.on("connection", (client: SocketIO.Socket) => {
+let telnetNs = io.of("/telnet");
+telnetNs.on("connection", (client: socketio.Socket) => {
+    
     let telnet: net.Socket;
     let ioEvt = new IoEvent(client);
     let remoteAddr = client.request.headers['x-real-ip'] || client.request.connection.remoteAddress;
+    let ipAddr = remoteAddr ? (typeof remoteAddr == 'string' ? <string>remoteAddr : (<string[]>remoteAddr)[0]) : "";
 
     let writeQueue: any[] = [];
     let canWrite: boolean =  true;
@@ -281,7 +297,7 @@ telnetNs.on("connection", (client: SocketIO.Socket) => {
         openConns[telnetId] = {
             telnetId: telnetId,
             uuid: null,
-            userIp: remoteAddr,
+            userIp: ipAddr,
             host: host,
             port: port,
             startTime: null
@@ -363,7 +379,7 @@ telnetNs.on("connection", (client: SocketIO.Socket) => {
         writeData(data);
     });
 
-    ioEvt.srvSetClientIp.fire(remoteAddr);
+    ioEvt.srvSetClientIp.fire(ipAddr);
 });
 
 actualServer.on("error", (err: Error) => {
@@ -388,9 +404,9 @@ if (serverConfig.apiBaseUrl) {
             password: ':none'
         }
     });
-    console.log("Using API at: " + serverConfig.apiBaseUrl);
+    INFO("Using API at: " + serverConfig.apiBaseUrl);
 } else {
-    console.log("NOT Using API");
+    INFO("NOT Using API to store user data - web client must use localstorage to save");
 }
 
 // Admin CLI
@@ -470,7 +486,7 @@ if (serverConfig.adminHost !== "localhost") {
     throw "Auth for Admin CLI is not implemented. Must use localhost.";
 }
 
-adminServer.listen(serverConfig.adminPort, serverConfig.adminHost, () => {
+if (serverConfig.adminHost && serverConfig.adminPort) adminServer.listen(serverConfig.adminPort, serverConfig.adminHost, () => {
     INFO("Admin CLI server is running on " + serverConfig.adminHost + ":" + serverConfig.adminPort);
 });
 
@@ -489,10 +505,84 @@ adminApp.get('/conns', (req, res) => {
     res.send(conns);
 });
 
-if (serverConfig.adminWebHost !== "localhost") {
-    throw "Auth for Admin Web API is not implemented. Must use localhost.";
+function ValidateEmail(mail:string) 
+{
+ if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail))
+  {
+    return (true)
+  }
+    return (false)
 }
 
-adminApp.listen(serverConfig.adminWebPort, serverConfig.adminWebHost, () => {
+function ValidateToken(token:string) 
+{
+ if (/^\d{8}$/.test(token))
+  {
+    return (true)
+  }
+    return (false)
+}
+
+function ValidateChar(char:string) 
+{
+ if (/^[a-zA-Z]{3,20}$/.test(char))
+  {
+    return (true)
+  }
+    return (false)
+}
+
+function requestExists(user:string, token:string) {
+    return fs.existsSync(path.join(serverConfig.mudLibPath, "players", user.toLowerCase() + ".mail." + token));
+}
+
+function approveUser(user:string, token:string) {
+    var p1 = path.join(serverConfig.mudLibPath, "players", user.toLowerCase() + ".mail." + token)
+    var p2 = path.join(serverConfig.mudLibPath, "players", user.toLowerCase() + ".mail.ok")
+    
+    fs.renameSync(p1, p2);
+}
+
+adminApp.get('/approve', (req, res) => {
+    let status = "Errore di convalidazione Email";
+    let message = "Richiesta di convalidazione Email non valida, inesistente oppure scaduta.<br/>Puoi richiederla al menu iniziale del gioco modificando l'email."
+    if (!ValidateEmail(<string>req.query.email)) {
+        // tolgo per non mandare informazioni extra
+        //message = "Email non valida!"
+    }
+    if (!ValidateToken(<string>req.query.approveToken)) {
+        // tolgo per non mandare informazioni extra
+        //message = "Token non valido!"
+    }
+    if (!ValidateChar(<string>req.query.character)) {
+        // tolgo per non mandare informazioni extra
+        //message = "Nome personaggio non valido!"
+    }
+    if (requestExists(<string>req.query.character, <string>req.query.approveToken)) {
+        approveUser(<string>req.query.character, <string>req.query.approveToken)
+        status = "ok"
+        //message = "Email approvata!"
+    }
+    if (status != "ok") {
+        res.status(404).send(`
+        <html><head><title>Convalidazione Email su Tempora Sanguinis</title></head><body style="background-color:orangered;color:black;text-align: center;">
+            <h3 style="color:black;">${status}</h3>
+            <p>${message}</p>
+            <p>Premi il seguente link per ritornare <a href="https://www.temporasanguinis.it/client/">a giocare</a>.</p>
+        </body></html>
+        `)
+    } else {
+        res.send(`
+        <html><head><title>Convalidazione Email su Tempora Sanguinis</title></head><body style="background-color:black;color:red;text-align: center;">
+            <h3 style="color:red;">Salve ${req.query.character},</h3>
+            <p>La tua email e' stata convalidata e potrai ora usufruire di funzionalita' aggiuntive dentro al gioco.</p>
+            <p>Per informazioni aggiuntive digita 'help account' mentre sei in gioco.</p>
+            <p>Per giocare puoi usare il <a style="color:white;" href="https://www.temporasanguinis.it/client/">client web di Tempora Sanguinis</a>.</p>
+        </body></html>
+        `)
+    };
+});
+
+if(serverConfig.adminWebHost && serverConfig.adminWebPort) adminApp.listen(serverConfig.adminWebPort, serverConfig.adminWebHost, () => {
     INFO("Admin API server is running on " + serverConfig.adminWebHost + ":" + serverConfig.adminWebPort);
 });
