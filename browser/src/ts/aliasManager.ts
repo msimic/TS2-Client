@@ -104,10 +104,10 @@ export class AliasManager {
         }
     }
 
-    public contains(pattern:string, maxIndex:number) {
+    public contains(pattern:string, clas:string, maxIndex:number) {
         for (let index = 0; index < Math.min(maxIndex, this.allAliases.length); index++) {
             const element = this.allAliases[index];
-            if (element.pattern == pattern) return true;
+            if (element.pattern == pattern && element.class == clas) return true;
         }
         return false;
     }
@@ -149,7 +149,7 @@ export class AliasManager {
         this.allAliases = aliases;
         for (let index = 0; index < this.allAliases.length; index++) {
             const element = this.allAliases[index];
-            if (element && index>0 && this.contains(element.pattern, index)) {
+            if (element && index>0 && this.contains(element.pattern, element.class, index)) {
                 this.allAliases.splice(index, 1);
                 index--;
                 continue;

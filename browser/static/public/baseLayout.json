@@ -259,7 +259,7 @@
 			"type": 0,
 			"style": "",
 			"css": "flex:1;white-space:pre;margin:2px;",
-			"content": "AutoStab%color(black)%var(autostab,%color(white) ON,%color(black) OFF)",
+			"content": "Auto%var(canPlay,Slam,Stab)%color(black)%var(autostab,%color(white) ON,%color(black) OFF)",
 			"commands": "autostab",
 			"checkbox": "autostab",
 			"is_script": false
@@ -270,10 +270,10 @@
 			"type": 0,
 			"style": "",
 			"css": "flex:1;white-space:pre;margin:2px;",
-			"content": "AutoFury%color(black)%var(autofury,%color(white) ON,%color(black) OFF)",
-			"commands": "autofury",
-			"checkbox": "autofury",
-			"is_script": false
+			"content": "%var(autofuryButton)%color(black)%var(autofuryEnabled(),%color(white) ON,%color(black) OFF)",
+			"commands": "this.autofuryToggle()",
+			"checkbox": "autofuryEnabled()",
+			"is_script": true
 		},
 		{
 			"paneId": "column-left-top",

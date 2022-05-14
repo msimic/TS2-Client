@@ -335,6 +335,7 @@ export class LayoutManager {
           if (!(code > 47 && code < 58) && // numeric (0-9)
               !(code > 64 && code < 91) && // upper alpha (A-Z)
               !(code > 96 && code < 123) &&
+              !(code == 40 || code == 41) &&
               !(code == 91 || code == 93) &&
               !(code == 46)) { // lower alpha (a-z)
             return false;
@@ -447,20 +448,29 @@ export class LayoutManager {
         let index = this.layout.items.indexOf(c);
         let ui = this.controls.get(index);
         let sthis = this.scripting.getScriptThis();
-        const vars = expression.split(",");
+        const tmpExp = expression.split(",");
+        const vars = tmpExp.map(v => v.replace("()", ""));
+        const isFunctionCall = tmpExp.map(v => v.endsWith("()"));
+
         let allTrue = true;
+        let i = 0;
         for (const v of vars) {
-            let vr = this.parseVariables(v);
-            let expr = v;
-            vr.forEach(vrb => {
-                let value = this.getSubExpression(sthis,vrb);
-                if (typeof value == "string") {
-                    value = "\""+value+"\"";
-                }
-                expr = expr.replace(vrb, value)
-            });
-            allTrue = allTrue && eval(expr);
+            if (isFunctionCall[i]) {
+                allTrue = allTrue && sthis[v] && sthis[v]();
+            } else {
+                let vr = this.parseVariables(v);
+                let expr = v;
+                vr.forEach(vrb => {
+                    let value = this.getSubExpression(sthis,vrb);
+                    if (typeof value == "string") {
+                        value = "\""+value+"\"";
+                    }
+                    expr = expr.replace(vrb, value)
+                });
+                allTrue = allTrue && eval(expr);
+            }
             if (!allTrue) break;
+            i++;
         }
         func(ui, allTrue);
     }
@@ -750,8 +760,10 @@ export class LayoutManager {
                 if (isNumeric(compare)) {
                     compare = Number(compare);
                 }
-                const sub = this.getSubExpression(sthis, variable);
-                let val = sub==undefined?'?':sub;
+                const isFunctionCall = variable.endsWith("()")
+                const fCall = variable.replace("()","")
+                const sub = isFunctionCall ? undefined : this.getSubExpression(sthis, variable);
+                let val = isFunctionCall && sthis[fCall] ? sthis[fCall]() : sub==undefined?'?':sub;
                 if (parseVariable) {
                     const realName = this.getVariableName(variable);
                     if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);

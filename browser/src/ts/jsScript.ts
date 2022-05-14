@@ -208,7 +208,29 @@ export class JsScript {
     private baseEvents: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
     public variableChanged = new EventHook<string>();
     public eventChanged = new EventHook<ScriptEvent>();
-    
+    private linkedEvents: Map<string, string[]> = new Map<string, string[]>();
+    public linkEvent = (ev:string, lev:string) => {
+        let evl = this.linkedEvents.get(ev)
+        if (!evl) {
+            this.linkedEvents.set(ev, []);
+        }
+        evl = this.linkedEvents.get(ev)
+        if (evl.indexOf(lev)>-1) return;
+        evl.push(lev);
+    }
+
+    public unlinkEvent = (ev:string, lev:string) => {
+        let evl = this.linkedEvents.get(ev)
+        if (!evl) {
+            return;
+        }
+        evl = this.linkedEvents.get(ev)
+        const levindex = evl.indexOf(lev);
+        if (levindex>-1) {
+            evl.splice(levindex, 1);
+        }
+    }
+
     private self = this;
     constructor(private config: ConfigIf,private baseConfig: ConfigIf, public profileManager: ProfileManager, private mapper:Mapper) {
         this.loadBase();
@@ -223,6 +245,15 @@ export class JsScript {
             //console.debug(e.propName + ": " + e.newValue);
             //this.aliasManager.checkAlias("on"+e.propName + " " + e.oldValue);
             EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: e.propName, value: e});
+            let evl = this.linkedEvents.get(e.propName)
+
+            if (evl) {
+                for (const le of evl) {
+                    e.propName = le;
+                    EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: le, value: e});
+                }
+            }
+        
         });
         EvtScriptEvent.handle((e) => {
             this.eventFired(e)
