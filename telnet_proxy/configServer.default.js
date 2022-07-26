@@ -11,7 +11,7 @@ config.adminHost = "localhost";
 config.adminPort = 8001;
 
 config.adminWebHost = "localhost";
-config.adminWebPort = 9001;
+config.adminWebPort = 8898;
 
 config.apiBaseUrl = "http://somehost:9001";
 config.apiKey = "somekey";

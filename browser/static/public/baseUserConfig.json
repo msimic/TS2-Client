@@ -1,9 +1,9 @@
 {
-  "version": 14,
-  "versionMessage":"Bardo aggiunto",
+  "version": 15,
+  "versionMessage":"Correzioni e aggiunta di qualche trigger, aggiunto onroomenter che abilita o disabilita classe per il numero zone dove si entra",
   "requiresClientMajor": 1,
   "requiresClientMinor": 2,
-  "requiresClientRevision": 2,
+  "requiresClientRevision": 3,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,
@@ -237,7 +237,7 @@
       "script": null
     },
     {
-      "pattern": "^([\\w\\- ]+) inizia a seguirti",
+      "pattern": "^([\\w\\- \\']+) inizia a seguirti",
       "id": "",
       "value": "  let pg = this.cleanupName(match[1]);\n  send(\"group \"+ pg)\n",
       "regex": true,
@@ -245,6 +245,7 @@
       "class": "autogroup",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -304,14 +305,15 @@
       "script": null
     },
     {
-      "pattern": "^(.*) (si immerge nello stagno\\.|entra in un Portale Luminoso, e scompare!)",
+      "pattern": "^(.*) (si immerge nello stagno\\.|entra in un Portale Luminoso, e scompare!|chiude gli occhi e sparisce all'istante)",
       "id": "stagno_portale",
-      "value": "if (this.Gruppo && this.Gruppo.length && this.autofollow) {\n  if (this.isCapogruppo(match[1].split(\" \")[0])) {\n    if (match[2].indexOf(\"stagno\")!=-1) {\n      send(\"es\");\n    } else {\n      send(\"ep\");\n    }\n  }\n}",
+      "value": "if (this.Gruppo && this.Gruppo.length && this.autofollow) {\n  if (this.isCapogruppo(match[1].split(\" \")[0])) {\n    if (match[2].indexOf(\"stagno\")!=-1) {\n      send(\"es\");\n    } else if (match[2].indexOf(\"sparisce\")!=-1) {\n      if (this.healtype.indexOf(\"C\")>-1 || this.canPlay)\n        send(\"+word\");\n      else\n        send(\"rec rito\");\n    } else {\n      send(\"ep\");\n    }\n  }\n}",
       "regex": true,
       "is_script": true,
       "class": "autofollow",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -343,17 +345,6 @@
       "regex": true,
       "is_script": true,
       "class": "",
-      "enabled": true,
-      "is_prompt": false,
-      "script": null
-    },
-    {
-      "pattern": "^Sei in una zona silenziosa, non puoi emettere suoni!",
-      "id": "",
-      "value": "this.pauseAutocleric = true;",
-      "regex": false,
-      "is_script": true,
-      "class": "autocleric",
       "enabled": true,
       "is_prompt": false,
       "script": null
@@ -431,8 +422,9 @@
       "regex": false,
       "is_script": false,
       "class": "indietro",
-      "enabled": true,
+      "enabled": false,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -469,14 +461,15 @@
       "script": null
     },
     {
-      "pattern": "^Spiacente, quella locazione e' privata",
+      "pattern": "^(Spiacente, quella locazione e' privata|Spiacente, non c'e' spazio per entrare li)",
       "id": "",
-      "value": "if (this.grandezzaGruppo > 1) {\n  send(\"gtTrigger Non c'e' spazio per seguire!\");\n}",
+      "value": "if (this.grandezzaGruppo > 1) {\n  delay(\"privata\", 1000, () => send(\"gtTrigger Non c'e' spazio per seguire!\"));\n}",
       "regex": true,
       "is_script": true,
       "class": "indietro",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -491,7 +484,7 @@
       "script": null
     },
     {
-      "pattern": "^(Con una rapida mossa della sua arma, (.+) colpisce con decisione il tuo braccio|(.+)  esegue un rapido calcio, che va a colpire la tua mano con estrema precisione!)!",
+      "pattern": "^(Con una rapida mossa della sua arma, (.+) colpisce con decisione il tuo braccio|(.+) esegue un rapido calcio, che va a colpire la tua mano con estrema precisione)",
       "id": "",
       "value": "send(\"wie \" + this.ultimaArma);",
       "regex": true,
@@ -499,6 +492,7 @@
       "class": "combat",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -659,12 +653,13 @@
     {
       "pattern": "^(.*) e' morto|a! R\\.I\\.P\\.",
       "id": "",
-      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.Mobs = \"\";\nthis.returnRoom = null;\nthis.stabTarget = null;\nthis.preventAntispalm = false;\nif (this.autokill) {\n\tdelay(\"aklook\", 1000, () => send(\"look\"));\n}\nif (this.armaPrimaria && this.autoarmi && (this.zoneDaNonRimettereArma||0).toString()!=\"0\") {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
+      "value": "this.cambiArma = 0;\nthis.impugnatoArma=true;\nthis.Mobs = \"\";\nthis.returnRoom = null;\nthis.stabTarget = null;\nthis.preventAntispalm = false;\nthis.disableCheckAssist=false;\nthis.preventAutoassist=false;\nif (this.autokill) {\n\tdelay(\"aklook\", 1000, () => send(\"look\"));\n}\nif (this.armaPrimaria && this.autoarmi && (this.zoneDaNonRimettereArma||0).toString()!=\"0\") {\n  delay(\"rimettiArma\",1000,()=>{\n    if (this.inCombat()) return;\n    let nozone = (this.zoneDaNonRimettereArma||\"\").split(\",\")\n    for (let z of nozone) {\n      if (Math.floor(Number(this.TSRoom)/100)==Math.floor(Number(z)/100)) {\n        return;\n      }\n    }\n    if (this.ultimaArma != this.armaBlunt && this.armaPrimaria==\"blunt\") {\n      send(\"blunt\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"slash\") {\n      send(\"slash\")\n    }\n    else if (this.ultimaArma != this.armaSlash && this.armaPrimaria==\"pierce\") {\n      send(\"pierce\")\n    }\n  });\n}",
       "regex": true,
       "is_script": true,
       "class": "kill",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -956,12 +951,13 @@
     {
       "pattern": "^(.+) ha perso il senso della realta'\\.",
       "id": "",
-      "value": "if (!this.Immortal) send(\"emote dice $c5115\" + $1.split(\" \")[0] + \" ha perso la connessione!$c0007\")",
+      "value": "if (!this.Immortal) send(\"emote dice: $c5115\" + $1.split(\" \")[0] + \"$c0015 ha perso la connessione!$c0007\")",
       "regex": true,
       "is_script": true,
       "class": "util",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -1050,7 +1046,7 @@
     {
       "pattern": "^(Cerchi di ispirarti, ma fallisci!|Ispirazione a ..%)",
       "id": "",
-      "value": "delay(\"autoinspire\", 6000, () => {\n\tif (!this.renting) send(\"inspire\")\n})",
+      "value": "const doInspire = () => {\n  delay(\"autoinspire\", 6000, () => {\n      if (this.TSLag==\"+\") {\n      \tdoInspire();\n      } else {\n      \tif (!this.renting) send(\"inspire\")\n      }\n  });\n};\ndoInspire();",
       "regex": true,
       "is_script": true,
       "class": "autoinspire",
@@ -1130,13 +1126,49 @@
       "is_prompt": false,
       "shortcut": "",
       "script": null
+    },
+    {
+      "pattern": "^(Non hai abbastanza energia magica|Sei in una zona silenziosa, non puoi emettere suoni)",
+      "id": "",
+      "value": "if (classEnabled(\"autocleric\")) {\n  this.pauseAutocleric = true\n  print(\"Sei senza mana o in silence... pauso autocleric per 20 secondi.\")\n  delay(\"reset_acl\", 20000, () => {\n    this.pauseAutocleric = false\n    const lag = this.TSLag;\n    this.TSLag = \"\";\n    delay(\"reset_acl2\", 100, ()=>{ this.TSLag = lag; });\n  })\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^(.+) (con destrezza si ritira dalla battaglia|e' preso dal panico, e cerca di fuggire)",
+      "id": "",
+      "value": "if (this.isCapogruppo(match[1])) {\nthis.preventCheckRimastoIndietro=true;\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "indietro",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^Prendi un sacco",
+      "id": "",
+      "value": "send(\"get palanchino sacco;drop sacco\");",
+      "regex": true,
+      "is_script": true,
+      "class": "zone:108",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
     }
   ],
   "aliases": [
     {
       "pattern": "initialize",
       "id": "",
-      "value": "if (this.initDone) {\n\treturn;\n}\nconst wasImmortal = this.Immortal;\nthis.scriptVersion = 8\nthis.initDone = true;\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null;\nlet ultimaArma = null;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\ntoggleClass(\"thief\", this.canStab);\n\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nvar room = this.TSRoom\n  \nthis.postInit = () => {\n  this.TSRoom = null;\n  setTimeout(() => {\n    if (mapper && this.TSRoom) \n      mapper.setRoomByVnum(this.TSRoom);\n    \n  \tsetTimeout(() => {\n      const current = (mapper?mapper.current:null);\n      this.TSRoom = ((current && current != room) ? current : room) || null;\n    });\n  });\n  \n  if (this.ImmortalTrigger) {\n  \tthis.Immortal = true;\n  } else {\n  \tthis.Immortal = false;\n  }\n  setTimeout(() => {\n    if (this.Immortal) {\n      send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    } else {\n      send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    }\n  }, 1000);\n  if (wasImmortal != this.Immortal) {\n    (this.Immortal ? print(\"Modalita' per Immortali del Client: ATTIVATA\") : print(\"Modalita' per Immortali del Client: DISABILITATA\"));\n  }\n  if (this.setupdone!=this.scriptVersion) {\n    setTimeout(()=>{\n      print(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n    }, 2000);\n  }\n  send(\"autoloot \" + ((!this.autoloot || this.Immortal) ? \"off\" : \"on\"))\n  if (this.is_touch_device() && this.usesTouch) {\n    print(color(\"Sembra che tu abbia il touchscreen. Per abilitare i controlli scrivi 'touch'.\", \"white\"))\n  }\n};\n\n",
+      "value": "if (this.initDone) {\n\treturn;\n}\nconst wasImmortal = this.Immortal;\nthis.scriptVersion = 8\nthis.initDone = true;\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null;\nlet ultimaArma = null;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\ntoggleClass(\"thief\", this.canStab);\n\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nvar room = this.TSRoom\n  \nthis.postInit = () => {\n  toggleClass(\"autoinspire\", this.autoinspire);\n  this.TSRoom = null;\n  setTimeout(() => {\n    if (mapper && this.TSRoom) \n      mapper.setRoomByVnum(this.TSRoom);\n    \n  \tsetTimeout(() => {\n      const current = (mapper?mapper.current:null);\n      this.TSRoom = ((current && current != room) ? current : room) || null;\n    });\n  });\n  \n  if (this.ImmortalTrigger) {\n  \tthis.Immortal = true;\n  } else {\n  \tthis.Immortal = false;\n  }\n  setTimeout(() => {\n    if (this.Immortal) {\n      send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    } else {\n      send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    }\n  }, 1000);\n  if (wasImmortal != this.Immortal) {\n    (this.Immortal ? print(\"Modalita' per Immortali del Client: ATTIVATA\") : print(\"Modalita' per Immortali del Client: DISABILITATA\"));\n  }\n  if (this.setupdone!=this.scriptVersion) {\n    setTimeout(()=>{\n      print(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n    }, 2000);\n  }\n  send(\"autoloot \" + ((!this.autoloot || this.Immortal) ? \"off\" : \"on\"))\n  if (this.is_touch_device() && this.usesTouch) {\n    print(color(\"Sembra che tu abbia il touchscreen. Per abilitare i controlli scrivi 'touch'.\", \"white\"))\n  }\n};\n\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1180,12 +1212,13 @@
     {
       "pattern": "bash",
       "id": "",
-      "value": "if (this.bashTimeout) {\n  clearTimeout(this.bashTimeout);\n  delete this.bashTimeout;\n}\n\n// tilde = non parsarlo come alias ma manda diretto al mud\nif (this.TSPosizione == \"In piedi\") {\n  send(\"~\"+input);\n} else {\n  send(\"stand;~\"+input);\n}\nlet rebashTime = this.roundtime || 4000;\nrebashTime *= 2;\n\nif (classEnabled(\"autocleric\")) {\n  rebashTime *= 1.5;\n}\n\nif (this.autobash && rebashTime>0) {\n  this.bashTimeout = setTimeout(() => {\n    // se ancora in combat ribasha di alias\n    if (this.TSTank != \"*\" && this.TSTankCond != \"*\" && this.autobash) {\n      send(\"bash\");\n    }\n  }, rebashTime);\n}\n",
+      "value": "tales gigante $1",
       "regex": false,
-      "is_script": true,
-      "class": "fight",
+      "is_script": false,
+      "class": "bard",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -1289,7 +1322,7 @@
     {
       "pattern": "cura",
       "id": "",
-      "value": "if (!this.healtype && !this.canPlay) return;\nif (!this.pauseAutocleric && this.TSLag == \"-\") {\n  const grp = JSON.parse(this.Gruppo);\n  let mincura = this.aclMinimum || 70;\n  var minhp = 100;\n  var minpg = \"\";\n  for (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (grp[nome].hp < mincura && grp[nome].hp<minhp) {\n      minhp = grp[nome].hp;\n      minpg = nome;\n    }\n  }\n\n  if (minpg) {\n    this.pgdacurare = minpg;\n    print(\"Curo: \" + minpg + \" (\" + minhp + \"% < \" + mincura + \"%)\");\n    send(\"heal \" + minpg);\n    this.pauseAutocleric = true;\n    delay(\"reset_acl\", 2000, ()=>{\n      this.pauseAutocleric = false;\n      const lag = this.TSLag;\n      if (lag == \"-\") {\n      \tthis.TSLag = \"\";\n      \tdelay(\"reset_acl2\", 100, ()=>{ this.TSLag = lag; });\n      }\n    });\n  }\n}",
+      "value": "if (!this.healtype && !this.canPlay) return;\nif (!this.pauseAutocleric && this.TSLag == \"-\") {\n  const grp = JSON.parse(this.Gruppo);\n  let mincura = this.aclMinimum || 70;\n  var minhp = 100;\n  var minpg = \"\";\n  var minMov = 100;\n  var minMovPg = \"\";\n  for (let nome in grp) {\n    if (nome == \"tank\" || nome == \"mob\") continue;\n    // non in room o non curabile\n    if (grp[nome].hide || !grp[nome].inroom || grp[nome].pkill) {\n      continue;\n    }\n    if (grp[nome].hp < mincura && grp[nome].hp<minhp) {\n      minhp = grp[nome].hp;\n      minpg = nome;\n    }\n    if (grp[nome].mv < 25 && grp[nome].mv<minMov) {\n      minMov = grp[nome].mv;\n      minMovPg = nome;\n    }\n  }\n\n  if (minpg) {\n    this.pgdacurare = minpg;\n    print(\"Curo: \" + minpg + \" (\" + minhp + \"% < \" + mincura + \"%)\");\n    send(\"heal \" + minpg);\n    this.pauseAutocleric = true;\n    delay(\"reset_acl\", 2000, ()=>{\n      this.pauseAutocleric = false;\n      const lag = this.TSLag;\n      if (lag == \"-\") {\n      \tthis.TSLag = \"\";\n      \tdelay(\"reset_acl2\", 100, ()=>{ this.TSLag = lag; });\n      }\n    });\n  }\n  if (minMovPg) {\n    print(\"Refresh: \" + minMovPg + \" (\" + minMov + \"% < \" + 25 + \"%)\");\n    send(\"refresh \" + minMovPg);\n    this.pauseAutocleric = true;\n    delay(\"reset_acl\", 2000, ()=>{\n      this.pauseAutocleric = false;\n      const lag = this.TSLag;\n      if (lag == \"-\") {\n      \tthis.TSLag = \"\";\n      \tdelay(\"reset_acl2\", 100, ()=>{ this.TSLag = lag; });\n      }\n    });\n  }\n}",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1323,7 +1356,7 @@
     {
       "pattern": "checkAssist",
       "id": "",
-      "value": "if (this.disableCheckAssist == true || this.preventAutoassist == true) return;\nthis.disableCheckAssist = true;\nsetTimeout(()=>{this.disableCheckAssist=false}, 200);\n\nconst newTank = this.TSTank;\nconst tankState = this.TSTankCond;\nif (newTank==this.TSPersonaggio) return;\n\nlet cleanCastingTimeout = () => {\n  if (this.castTimeout) clearTimeout(this.castTimeout);\n  this.castTimeout = 0;\n}\nif (this.autostop && tankState != \"*\" && !this.preventAutoStop && !this.isTank()) {\n  this.preventAutoStop = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"~stop\");\n  this.TSTank=\"\";\n  setTimeout(() => {this.preventAutoStop = false}, 8200)\n}\nlet rescuato = false;\nif (this.autorescue && newTank != \"*\" && newTank!=this.TSPersonaggio && !this.preventAutoRescue) {\n  this.preventAutoRescue = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"rescue \" + newTank);\n  rescuato = true;\n  setTimeout(() => {this.preventAutoRescue = false}, 4000)\n}\nif (newTank != \"*\" && tankState == \"*\") {\n  if ((!this.autostop||this.autostab) && classEnabled(\"autoassist\")) {\n    this.preventAutoassist = true\n    setTimeout(() => {\n      this.TSMob=\"\"\n      this.preventAutoassist = false\n    }, 4000)\n    if (this.autostab) {\n      send(`${this.canPlay?\"slam\":\"backstab\"} ${this.TSMob.split(\" \")[0]}`)\n      if (!this.canPlay && this.afk && !this.autobash) {\n        send(\"~stop\")\n      }\n    } else if (this.autofury) {\n      send(`fury ${this.TSMob.split(\" \")[0]}`)\n    } else {\n      if (!rescuato) send(\"assist \" + this.cleanupName(newTank));\n    }\n    if (this.canBash && this.autobash) {\n      setTimeout(()=>send(\"bash\"),500);\n    }\n  }\n  if (this.autocast && this.TSMob!=\"*\" && this.spellOffensivo) {\n    cleanCastingTimeout();\n    const comando = this.mustMemorize ? \"recall\" : \"cast\";\n    let casta = () => {\n      if (this.TSMob==\"*\" || !this.autocast) {\n        cleanCastingTimeout();\n        return;\n      }\n      if (this.TSLag==\"-\") {\n      \tsend(`${comando} '${this.spellOffensivo}' ${this.TSMob.split(\" \")[0]}`)\n      }\n      let lag = Math.floor(this.roundtime*1.5);\n      if (this.autocleric) lag += 3000;\n      this.castTimeout = setTimeout(() => {casta()}, lag)\n    }\n    this.castTimeout = setTimeout(() => {casta()}, 0)\n  }\n} else if (newTank == \"*\") {\n  cleanCastingTimeout();\n}\n",
+      "value": "if (this.disableCheckAssist == true || this.preventAutoassist == true) \n{\n  //this.preventAutoassist = false\n  if (this.autobash) {\n    setTimeout(() => {send(\"checkAssist\")}, (this.autocleric ? 2000 : 0 + 2000))\n  }\n  return;\n}\nthis.disableCheckAssist = true;\nsetTimeout(()=>{this.disableCheckAssist=false}, 200);\n\nconst newTank = this.TSTank;\nconst tankState = this.TSTankCond;\nif (newTank==this.TSPersonaggio) return;\n\nlet cleanCastingTimeout = () => {\n  if (this.castTimeout) clearTimeout(this.castTimeout);\n  this.castTimeout = 0;\n}\nif (this.autostop && tankState && tankState != \"*\" && !this.preventAutoStop && !this.isTank()) {\n  this.preventAutoStop = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"~stop\");\n  this.TSTank=\"*\";\n  setTimeout(() => {this.preventAutoStop = false}, 8200)\n}\nlet rescuato = false;\nif (this.autorescue && newTank != \"*\" && newTank!=this.TSPersonaggio && !this.preventAutoRescue) {\n  this.preventAutoRescue = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"rescue \" + newTank);\n  rescuato = true;\n  setTimeout(() => {this.preventAutoRescue = false}, 4000)\n}\nif (newTank != \"*\" && tankState == \"*\") {\n  if ((classEnabled(\"autoassist\")||(this.autostab))) {\n    this.preventAutoassist = true\n    setTimeout(() => {\n      this.TSTankCond=\"\"\n      this.preventAutoassist = false\n    }, 3000)\n    if (this.autostab) {\n      send(`${this.canPlay?\"slam\":\"backstab\"} ${this.TSMob.split(\" \")[0]}`)\n      if (!this.canPlay && this.afk && !this.autobash) {\n        send(\"~stop\")\n      }\n    }\n    if (!classEnabled(\"autoassist\")) {\n    \treturn;\n    }\n    if (this.autofury) {\n      send(`fury ${this.TSMob.split(\" \")[0]}`)\n    } else {\n      if (!rescuato) send(\"assist \" + this.cleanupName(newTank));\n    }\n    if (this.canBash && this.autobash) {\n      setTimeout(()=>{if (this.inCombat()) send(\"bash\")},500);\n    }\n  }\n  if (this.autocast && this.TSMob!=\"*\" && this.spellOffensivo) {\n    cleanCastingTimeout();\n    const comando = this.mustMemorize ? \"recall\" : \"cast\";\n    let casta = () => {\n      if (this.TSMob==\"*\" || !this.autocast) {\n        cleanCastingTimeout();\n        return;\n      }\n      if (this.TSLag==\"-\") {\n      \tsend(`${comando} '${this.spellOffensivo}' ${this.TSMob.split(\" \")[0]}`)\n      }\n      let lag = Math.floor(this.roundtime*1.5);\n      if (this.autocleric) lag += 3000;\n      this.castTimeout = setTimeout(() => {casta()}, lag)\n    }\n    this.castTimeout = setTimeout(() => {casta()}, 0)\n  }\n} else if (newTank != \"*\" && tankState != \"*\") {\n  if (this.autobash && this.TSLag != \"+\" && this.inCombat()) {\n    if (this.TSPosizione != \"In piedi\") send(\"stand\");\n    send(\"bash\");\n    setTimeout(() => {send(\"checkAssist\")}, (this.autocleric ? 2000 : 0 + 2000))\n  }\n} else if (newTank == \"*\") {\n  cleanCastingTimeout();\n}\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1357,7 +1390,7 @@
     {
       "pattern": "setup",
       "id": "",
-      "value": "const setClasses = async (v) => {\n  toggleClass(\"mage\",v && this.casttype.indexOf(\"M\")!=-1)\n  toggleClass(\"cleric\",v && this.casttype.indexOf(\"C\")!=-1)\n  toggleClass(\"druid\",v && this.casttype.indexOf(\"D\")!=-1)\n  toggleClass(\"psionic\",v && this.casttype.indexOf(\"P\")!=-1)\n  toggleClass(\"sorcerer\",this.mustMemorize)\n  toggleClass(\"bard\",this.canPlay)\n  this.mustMind = this.casttype.indexOf(\"P\")!=-1;\n  this.healtype = this.casttype.indexOf(\"C\")!=-1 ? \"C\" : this.casttype.indexOf(\"D\")!=-1 ? \"D\" : \"\";\n};\n\nconst resetSettings = () => {\n  setClasses(false);\n  delete this.strumentoPercussione;\n  delete this.strumentoCorde;\n  delete this.strumentoFiato;\n  delete this.autocleric;\n  delete this.mustMind\n  delete this.canPlay\n  delete this.healtype\n  delete this.mustMind\n  delete this.mustMemorize;\n  delete this.spellOffensivo;\n  delete this.armaBlunt\n  delete this.armaSlash\n  delete this.armaPierce\n  delete this.numeroAttacchi\n  delete this.ordineArmi\n  delete this.armaPrimaria\n  delete this.armaExtra\n  delete this.zoneDaNonRimettereArma\n  delete this.scudoCold\n  delete this.scudoAcid\n  delete this.scudoEle\n  delete this.scudoFire\n  delete this.usaLuce\n  delete this.borsa\n  delete this.throwObject\n  delete this.holdItem\n  delete this.oggettoTrueSight\n  delete this.armaDigCut\n  delete this.pgTitle\n  delete this.colori\n  delete this.setupdone;\n  delete this.ImmortalTrigger\n  delete this.Immortal\n}; \n\nif ($1==\"reset\") {\n  print(\"Cancello la configurazione pg / setup.\")\n  resetSettings()\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  return\n}\n\nconst askColori = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                   [this.pgTitle ? this.pgTitle : \".\",\n                    colori || \"$c0009\",\n                   triggerEnabled(\"gagprompt\")])).results;\n\n  this.pgTitle = results[0]\n  this.colori = results[1].split(\",\")\n  const wantsCompact = toggleTrigger(\"gagprompt\",!!results[2])||triggerEnabled(\"gagprompt\")\n  \n  send(`compact ${ wantsCompact ? \"enable\" : \"disable\"}`)\n  return results\n};\n\nconst answer = (await Messagebox.Question(\n  \"Presuppongo che sei un personaggio Mortale?\\nRispondi No solamente se stai creando il profilo per un Immortale o Dio.\\n\\nPremi 'Si' per proseguire con il setup.\"\n)).result;\n\nconst correct = (condition) => {\n  return (true === (this.Immortal = this.ImmortalTrigger = !!condition));\n};\n\nif ((this.Immortal = correct(answer != \"Si\"))) {\n  const col = this.colori\n  const title = this.pgTitle\n  resetSettings()\n  this.colori = col\n  this.pgTitle = title\n  this.casttype = \"CDMP\"\n  this.healtype=\"C\"\n  this.spellOffensivo = 'disint';\n  this.zoneDaNonRimettereArma = 0\n  this.usaLuce = false\n  this.borsa = (await Messagebox.ShowInput(\"La tua borsa\",\"Che keyword usi per la tua borsa?\", this.borsa || \"borsa-ed\"+this.TSPersonaggio)).result\n  await setClasses(true);\n  this.mustMind = this.mustMemorize = false;\n  await askColori();\n  this.setupdone = this.scriptVersion;\n  this.Immortal = true;\n  this.autocleric = false;\n  this.ImmortalTrigger = true;\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  \n  return;\n}\n\nthis.ImmortalTrigger = false;\nthis.Immortal = false;\n\nconst resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\",\"Puoi Suonare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                  !!this.canPlay,\n                 this.casttype,\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.canPlay = resClassi[2]\nthis.casttype = resClassi[3].toUpperCase()\nthis.spellOffensivo = resClassi[4]\nthis.mustMemorize = resClassi[5]\n\nawait setClasses(true);\n\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nif (this.canPlay) {\n  const domandaStrumenti = (await Messagebox.ShowMultiInput(\"Configurazione Strumenti\",\n                   [\"Strumento a percussione\",\"Strumento a corde\", \"Strumento a fiato\"],\n                   [this.strumentoPercussione ? this.strumentoPercussione : \"tamburo-ed\"+this.TSPersonaggio,\n                   this.strumentoCorde ? this.strumentoCorde : \"arpa-ed\"+this.TSPersonaggio,\n                   this.strumentoFiato ? this.strumentoFiato : \"flauto-ed\"+this.TSPersonaggio,])).results\n\n  this.strumentoPercussione = domandaStrumenti[0]\n  this.strumentoCorde =  domandaStrumenti[1]\n  this.strumentoFiato =  domandaStrumenti[2]\n}\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nawait askColori();\n\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}\nthis.initDone = false;\nsend(\"initialize\");\ndelay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n",
+      "value": "const setClasses = async (v) => {\n  toggleClass(\"mage\",v && this.casttype.indexOf(\"M\")!=-1)\n  toggleClass(\"cleric\",v && this.casttype.indexOf(\"C\")!=-1)\n  toggleClass(\"druid\",v && this.casttype.indexOf(\"D\")!=-1)\n  toggleClass(\"psionic\",v && this.casttype.indexOf(\"P\")!=-1)\n  toggleClass(\"sorcerer\",v && this.mustMemorize)\n  toggleClass(\"bard\",v && this.canPlay)\n  this.mustMind = this.casttype.indexOf(\"P\")!=-1;\n  this.healtype = this.casttype.indexOf(\"C\")!=-1 ? \"C\" : this.casttype.indexOf(\"D\")!=-1 ? \"D\" : \"\";\n};\n\nconst resetSettings = () => {\n  setClasses(false);\n  delete this.strumentoPercussione;\n  delete this.strumentoCorde;\n  delete this.strumentoFiato;\n  delete this.strumentoSlam;\n  delete this.autocleric;\n  delete this.mustMind\n  delete this.canPlay\n  delete this.healtype\n  delete this.mustMind\n  delete this.mustMemorize;\n  delete this.spellOffensivo;\n  delete this.armaBlunt\n  delete this.armaSlash\n  delete this.armaPierce\n  delete this.numeroAttacchi\n  delete this.ordineArmi\n  delete this.armaPrimaria\n  delete this.armaExtra\n  delete this.zoneDaNonRimettereArma\n  delete this.scudoCold\n  delete this.scudoAcid\n  delete this.scudoEle\n  delete this.scudoFire\n  delete this.usaLuce\n  delete this.borsa\n  delete this.throwObject\n  delete this.holdItem\n  delete this.oggettoTrueSight\n  delete this.armaDigCut\n  delete this.pgTitle\n  delete this.colori\n  delete this.setupdone;\n  delete this.ImmortalTrigger\n  delete this.Immortal\n}; \n\nif ($1==\"reset\") {\n  print(\"Cancello la configurazione pg / setup.\")\n  resetSettings()\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  return\n}\n\nconst askColori = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                   [this.pgTitle ? this.pgTitle : \".\",\n                    colori || \"$c0009\",\n                   triggerEnabled(\"gagprompt\")])).results;\n\n  this.pgTitle = results[0]\n  this.colori = results[1].split(\",\")\n  const wantsCompact = toggleTrigger(\"gagprompt\",!!results[2])||triggerEnabled(\"gagprompt\")\n  \n  send(`compact ${ wantsCompact ? \"enable\" : \"disable\"}`)\n  return results\n};\n\nconst answer = (await Messagebox.Question(\n  \"Presuppongo che sei un personaggio Mortale?\\nRispondi No solamente se stai creando il profilo per un Immortale o Dio.\\n\\nPremi 'Si' per proseguire con il setup.\"\n)).result;\n\nconst correct = (condition) => {\n  return (true === (this.Immortal = this.ImmortalTrigger = !!condition));\n};\n\nif ((this.Immortal = correct(answer != \"Si\"))) {\n  const col = this.colori\n  const title = this.pgTitle\n  resetSettings()\n  this.colori = col\n  this.pgTitle = title\n  this.casttype = \"CDMP\"\n  this.healtype=\"C\"\n  this.spellOffensivo = 'disint';\n  this.zoneDaNonRimettereArma = 0\n  this.usaLuce = false\n  this.borsa = (await Messagebox.ShowInput(\"La tua borsa\",\"Che keyword usi per la tua borsa?\", this.borsa || \"borsa-ed\"+this.TSPersonaggio)).result\n  await setClasses(true);\n  this.mustMind = this.mustMemorize = false;\n  await askColori();\n  this.setupdone = this.scriptVersion;\n  this.Immortal = true;\n  this.autocleric = false;\n  this.ImmortalTrigger = true;\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  \n  return;\n}\n\nthis.ImmortalTrigger = false;\nthis.Immortal = false;\n\nconst resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\",\"Puoi Suonare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                  !!this.canPlay,\n                 this.casttype,\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.canPlay = resClassi[2]\nthis.casttype = resClassi[3].toUpperCase()\nthis.spellOffensivo = resClassi[4]\nthis.mustMemorize = resClassi[5]\n\nawait setClasses(true);\n\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nif (this.canPlay) {\n  const domandaStrumenti = (await Messagebox.ShowMultiInput(\"Configurazione Strumenti\",\n                   [\"Strumento a percussione\",\"Strumento a corde\", \"Strumento a fiato\",\"Slammi con sturmento percussione?\"],\n                   [this.strumentoPercussione ? this.strumentoPercussione : \"tamburo-ed\"+this.TSPersonaggio,\n                   this.strumentoCorde ? this.strumentoCorde : \"arpa-ed\"+this.TSPersonaggio,\n                   this.strumentoFiato ? this.strumentoFiato : \"flauto-ed\"+this.TSPersonaggio,\n                   this.strumentoSlam ? this.strumentoSlam == this.strumentoPercussione : true])).results\n\n  this.strumentoPercussione = domandaStrumenti[0]\n  this.strumentoCorde =  domandaStrumenti[1]\n  this.strumentoFiato =  domandaStrumenti[2]\n  this.strumentoSlam =  domandaStrumenti[3] ? this.strumentoPercussione : this.strumentoCorde\n}\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nawait askColori();\n\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}\nthis.initDone = false;\nsend(\"initialize\");\ndelay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1537,23 +1570,25 @@
     {
       "pattern": "soloSettings",
       "id": "",
-      "value": "if (this.Immortal) {\n  send(\"alloff\");\n  return;\n} else \ndelay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype) {\n    if (!this.afk) {\n      send(\"autocleric 30\");\n    } else {\n      if (this.healtype) send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\");\n  return;\n} else \ndelay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  if (this.canPlay) send(\"autosong off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype || this.canPlay) {\n    if (!this.afk) {\n      send(\"autocleric 30\");\n    } else {\n      if (this.healtype) send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
       "pattern": "groupSettings",
       "id": "",
-      "value": "if (this.Immortal) {\n  send(\"alloff\")\n  return;\n} else\ndelay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab) {\n    send(\"autostab \" + ((this.afk && (this.canStab))?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.healtype) send(\"autocleric \" + (this.afk?\"70\":\"0\"));\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\")\n  return;\n} else\ndelay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab || (this.canPlay && this.holdItem != this.strumentoFiato)) {\n    send(\"autostab \" + ((this.afk)?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canPlay) {\n  \tif (this.afk) {\n      send(\"autosong on\");\n      send(\"war\");\n    }\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.healtype || this.canPlay) send(\"autocleric \" + (this.afk?\"70\":\"30\"));\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    if (!this.canPlay)\n      send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  \telse send(\"autocast off\");\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -1564,7 +1599,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^bark (.*)|^bark$",
@@ -1713,7 +1749,7 @@
     {
       "pattern": "generaFunzioni",
       "id": "",
-      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nconst evList = {}\nthis.roomEnterEvents = () => evList; \n\nthis.onRoomEnter = (r,f) => {\n  this.roomEnterEvents()[r] = f\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  const cambiaArma = (@ultimaArma!=@armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${@ultimaArma}`)\n    send(`gb ${@armaDigCut}`)\n    send(`~wield ${@armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${@armaDigCut}`)\n    send(`~wield ${@ultimaArma}`)\n    send(`pb ${@armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}\n\nconst tfunc = () => {\n  window.removeEventListener(\"touchstart\", tfunc);\n  const prev = this.usesTouch;\n  this.usesTouch = true;\n  if (this.usesTouch && !prev) {\n    print(\"Touchscreen rilevato\");\n  }\n};\nwindow.addEventListener('touchstart', tfunc);",
+      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nconst evList = {}\nthis.roomEnterEvents = () => evList; \n\nthis.onRoomEnter = (r,f) => {\n  this.roomEnterEvents()[r] = f\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  if (!this.ultimaArma) {\n    if (!this.armaPrimaria || (this.usiLuce && this.holdItem)) {\n    \tthis.ultimaArma = this.holdItem;\n    } else {\n  \t\tsend(this.armaPrimaria)\n    }\n  }\n  const cambiaArma = (this.ultimaArma!=this.armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${this.ultimaArma}`)\n    send(`gb ${this.armaDigCut}`)\n    send(`~wield ${this.armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${this.armaDigCut}`)\n    send(`~${this.ultimaArma == this.holdItem ? \"hold\" : \"wield\"} ${this.ultimaArma}`)\n    send(`pb ${this.armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}\n\nconst tfunc = () => {\n  window.removeEventListener(\"touchstart\", tfunc);\n  const prev = this.usesTouch;\n  this.usesTouch = true;\n  if (this.usesTouch && !prev) {\n    print(\"Touchscreen rilevato\");\n  }\n};\nwindow.addEventListener('touchstart', tfunc);",
       "regex": false,
       "is_script": true,
       "class": "config",
@@ -1890,12 +1926,13 @@
     {
       "pattern": "fog",
       "id": "",
-      "value": "cast 'faerie fo'",
+      "value": "cast 'reveal'",
       "regex": false,
       "is_script": false,
-      "class": "",
+      "class": "bard",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2023,12 +2060,13 @@
     {
       "pattern": "^(rece|casa)$",
       "id": "",
-      "value": "if (this.healtype == \"D\") {\n  if (this.TSSettore==\"Chiuso\") {\n    send(\"bloom\")\n  }\n  send(\"tran vertus\");\n  send(\".13eneu\")\n} else if (this.healtype==\"C\") {\n  send(\"cast 'word'\")\n} else {\n  send(\"gb scrigno-ritorno\")\n  send(\"get ritorno scrigno-ritorno\")\n  send(\"pb scrigno-ritorno\")\n  send(\"rec rito\")\n}",
+      "value": "if (this.healtype == \"D\") {\n  if (this.TSSettore==\"Chiuso\") {\n    send(\"bloom\")\n  }\n  send(\"tran vertus\");\n  send(\".13eneu\")\n} else if (this.healtype==\"C\" || this.canPlay) {\n  send(\"cast 'word'\")\n} else {\n  send(\"gb scrigno-ritorno\")\n  send(\"get ritorno scrigno-ritorno\")\n  send(\"pb scrigno-ritorno\")\n  send(\"rec rito\")\n}",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2056,12 +2094,13 @@
     {
       "pattern": "attack ?(.+)?",
       "id": "",
-      "value": "let victim = match[1] || (this.Mobs ? this.Mobs.split(\"|\")[0] : \"\");\nvictim = victim.replace(/ /g, \"-\")\nif (this.canStab) {\n  send(\"backstab \" + victim);\n}\nelse if (this.canBash) {\n  send(\"bash \" + victim);\n} else {\n  if (this.spellOffensivo) {\n    send(\"casta \" + victim);\n  } else {\n\tsend(\"hit \" + victim);\n  }\n}\nthis.onetimeLook = true;",
+      "value": "let victim = match[1] || (this.Mobs ? this.Mobs.split(\"|\")[0] : \"\");\nvictim = victim.replace(/ /g, \"-\")\nif (this.canStab) {\n  send(\"backstab \" + victim);\n}\nelse if (this.canPlay) {\n  send(\"slam \" + victim);\n}\nelse if (this.canBash) {\n  send(\"bash \" + victim);\n} else {\n  if (this.spellOffensivo) {\n    send(\"casta \" + victim);\n  } else {\n\tsend(\"hit \" + victim);\n  }\n}\nthis.onetimeLook = true;",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2089,12 +2128,13 @@
     {
       "pattern": "^autocast ?(?:(.+))?",
       "id": "autocast",
-      "value": "const oldVal = this.autocast;\n\nlet aca = classEnabled(\"autocast\");\nif (match && match[1] != undefined && match[1]==\"off\") {\n  aca = false;\n} else if (match && match[1] != undefined && match[1]==\"on\") {\n  aca = this.spellOffensivo || \"meteor swarm\"\n}\nelse if (match && match[1] != undefined) {\n  \toldVal = null;\n\taca = match[1];\n} else if (!match || !match[1]) {\n  aca = !aca;\n}\nthis.autocast = aca != false;\nif (!aca) {\n  if (oldVal != this.autocast) this.diciStatus(\"AutoCast OFF\");\n  toggleClass(\"autocast\", false);\n}\nelse {\n  if (aca == true) {\n    aca = this.spellOffensivo || \"meteor swarm\";\n  }\n  this.spellOffensivo = aca;\n  let str = (\"AutoCast ON (\" + this.spellOffensivo + \")\");\n  toggleClass(\"autocast\", true);\n  if (oldVal != this.autocast) {\n    this.diciStatus(str);\n  \tthis.TSTankCond=\"*\";\n    this.TSTank=\"*\";\n    send(\"checkAssist\");\n  }\n}",
+      "value": "let oldVal = this.autocast;\n\nlet aca = classEnabled(\"autocast\");\nif (match && match[1] != undefined && match[1]==\"off\") {\n  aca = false;\n} else if (match && match[1] != undefined && match[1]==\"on\") {\n  aca = this.spellOffensivo || \"meteor swarm\"\n}\nelse if (match && match[1] != undefined) {\n  \toldVal = null;\n\taca = match[1];\n} else if (!match || !match[1]) {\n  aca = !aca;\n}\nthis.autocast = aca != false;\nif (!aca) {\n  if (oldVal != this.autocast) this.diciStatus(\"AutoCast OFF\");\n  toggleClass(\"autocast\", false);\n}\nelse {\n  if (aca == true) {\n    aca = this.spellOffensivo || \"meteor swarm\";\n  }\n  this.spellOffensivo = aca;\n  let str = (\"AutoCast ON (\" + this.spellOffensivo + \")\");\n  toggleClass(\"autocast\", true);\n  if (oldVal != this.autocast) {\n    this.diciStatus(str);\n  \tthis.TSTankCond=\"*\";\n    this.TSTank=\"*\";\n    send(\"checkAssist\");\n  }\n}",
       "regex": true,
       "is_script": true,
       "class": "fight",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2720,7 +2760,7 @@
     {
       "pattern": "onroomenter",
       "id": "",
-      "value": "const room = mapper.current\n\nconst id = parseInt($1)\n\nif (!id) return;\n\nif (typeof this.roomEnterEvents != 'function') {\n\tsend(\"generafunzioni\")\n}\n\nconst destinazione = this.destinazione\n\nif (destinazione && destinazione.id == id) {\n  // cancello la variabile in modo che non scatti di nuovo\n  delete this.destinazione\n}\n      \nif (this.roomEnterEvents && this.roomEnterEvents() && this.roomEnterEvents()[id]) {\n  this.roomEnterEvents()[id]();\n  delete this.roomEnterEvents()[id]\n}\n\n//if (room) print(room.id + \"/\" + room.vnum)\nif (room && this.searchRooms && this.walkingToId == room.id) {\n\tvar rooms = this.searchRooms()\n    let removeIndex = rooms.findIndex(r => r.id == room.id)\n    if (removeIndex>-1) {\n      rooms.splice(removeIndex, 1)\n      if (rooms.length) {\n         this.searchRooms = () => rooms;\n      } else {\n      \t this.searchRooms = null;\n      }\n    }\n}\n\n\nif (room && this.returnRoom) {\n  let backId = this.returnRoom;\n  this.returnRoom = null;\n  \n  const exdirs =    ['n','e','s','w','u','d'];\n  //const exdirsRev = ['s','w','n','e','d','u'];\n  \n  for (let i=0; i<exdirs.length;i++) {\n    let dir = exdirs[i]\n  \tif (room.exits[dir] && room.exits[dir].to_room == backId) {\n   \t  send(exdirs[i])\n      if (this.stabTarget) {\n        send(\"backstab \"+ this.stabTarget)\n      \tthis.stabTarget = null;\n      }\n      return;\n    }\n  }\n}\n",
+      "value": "const room = mapper.current\n\nif (room && this.prev_room != room) {\n  \n  const prev_zone = (this.prev_room || room).zone_id\n  const current_zone = room.zone_id\n  \n  if (prev_zone != current_zone) {\n  \ttoggleClass(\"zone:\"+prev_zone, false)\n    toggleClass(\"zone:\"+current_zone, true)\n  }\n  \n  this.prev_room = room\n}\n\nconst id = parseInt($1)\n\nif (!id) return;\n\nif (typeof this.roomEnterEvents != 'function') {\n\tsend(\"generafunzioni\")\n}\n\nconst destinazione = this.destinazione\n\nif (destinazione && destinazione.id == id) {\n  // cancello la variabile in modo che non scatti di nuovo\n  delete this.destinazione\n}\n      \nif (this.roomEnterEvents && this.roomEnterEvents() && this.roomEnterEvents()[id]) {\n  this.roomEnterEvents()[id]();\n  delete this.roomEnterEvents()[id]\n}\n\n//if (room) print(room.id + \"/\" + room.vnum)\nif (room && this.searchRooms && this.walkingToId == room.id) {\n\tvar rooms = this.searchRooms()\n    let removeIndex = rooms.findIndex(r => r.id == room.id)\n    if (removeIndex>-1) {\n      rooms.splice(removeIndex, 1)\n      if (rooms.length) {\n         this.searchRooms = () => rooms;\n      } else {\n      \t this.searchRooms = null;\n      }\n    }\n}\n\n\nif (room && this.returnRoom) {\n  let backId = this.returnRoom;\n  this.returnRoom = null;\n  \n  const exdirs =    ['n','e','s','w','u','d'];\n  //const exdirsRev = ['s','w','n','e','d','u'];\n  \n  for (let i=0; i<exdirs.length;i++) {\n    let dir = exdirs[i]\n  \tif (room.exits[dir] && room.exits[dir].to_room == backId) {\n   \t  send(exdirs[i])\n      if (this.stabTarget) {\n        send(\"backstab \"+ this.stabTarget)\n      \tthis.stabTarget = null;\n      }\n      return;\n    }\n  }\n}\n",
       "regex": false,
       "is_script": true,
       "class": "mapper",
@@ -2830,10 +2870,10 @@
       "script": null
     },
     {
-      "pattern": "tesoro",
+      "pattern": "tesor(o|i)",
       "id": "",
-      "value": "const tesori = [\n  { room: 11151, key: \"Corno Tozzo\", comandi: \"get tesoro\" },\n  { room: 8844, key: \"Aryhann\", comandi: \"get scrign\" },\n  { room: 5528, key: \"Dasen Omir\", comandi: \"get monet forziere\" },\n  { room: 42674, key: \"Vena Argento\", comandi: \"get all\" },\n  { room: 25519, key: \"Drago Fire\", comandi: \"get all\" },\n  { room: 15095, key: \"Toewin\", comandi: \"get monete\" },\n  { room: 3141, key: \"Midia Sud\", comandi: \"get all.monet\" },\n  { room: 152, key: \"Tempio Midia\", comandi: \"get all\" },\n];\n\nif (!this.onRoomEnter) {\n\tsend(\"generafunzioni\");\n}\n\nconst getTesoro = (t) => {\n  this.onRoomEnter(t.room, () => { send(t.comandi) })\n  send(\"vai \"+ t.room)\n}\n\nfor (var t of tesori) {\n\tif (t.key.toLowerCase() == $1.toLowerCase()) {\n\t\tgetTesoro(t)\n      return\n    }\n}\n\nprint(\"Che tesoro vuoi prendere?\\n\")\n\nfor (let t of tesori) {\n  print(\"  \" + color(link(t.key, () => getTesoro(t), \"vai \" + t.room), \"yellow\"))\n}\n\nprint(\"\");",
-      "regex": false,
+      "value": "const tesori = [\n  { room: 11151, key: \"Corno Tozzo\", comandi: \"get tesoro\" },\n  { room: 8844, key: \"Aryhann\", comandi: \"get scrign\" },\n  { room: 4242, key: \"Dasen Omir\", comandi: \"get monet forziere\" },\n  { room: 5970, key: \"Vena Argento\", comandi: \"get all\" },\n  { room: 268, key: \"Drago Fire\", comandi: \"get all\" },\n  { room: 10192, key: \"Toewin\", comandi: \"get monete\" },\n  { room: 12261, key: \"Midia Sud\", comandi: \"get all.monet\" },\n  { room: 11416, key: \"Tempio Midia\", comandi: \"get all\" },\n];\n\nif (!this.onRoomEnter) {\n\tsend(\"generafunzioni\");\n}\n\nconst getTesoro = (t) => {\n  this.onRoomEnter(t.room, () => { send(t.comandi) })\n  send(\"vai \"+ t.room)\n}\n\nfor (var t of tesori) {\n\tif (t.key.toLowerCase() == $1.toLowerCase()) {\n\t\tgetTesoro(t)\n      return\n    }\n}\n\nprint(\"Che tesoro vuoi prendere?\\n\")\n\nfor (let t of tesori) {\n  print(\"  \" + color(link(t.key, () => getTesoro(t), \"vai \" + t.room), \"yellow\"))\n}\n\nprint(\"\\nCe ne sono molti altri in giro per l'Impero Celeste.\\nForse dovresti cercarli per diventare piu' ricco di Stellos.\\n\");",
+      "regex": true,
       "is_script": true,
       "class": "util",
       "enabled": true,
@@ -2844,7 +2884,7 @@
     {
       "pattern": "^(portal|tran|transport) ?(.*)$",
       "id": "",
-      "value": "const spell = match[1] == \"portal\" ? \"portal-v-p\" : \"tran-v-p\";\nconst parametro = (match[2] || null)\nconst comandi = {\n    1: () => send(\"cast \" + spell + \" Vertus\"),\n\t2: () => send(\"cast \" + spell + \" Schill\"),\n\t3: () => send(\"cast \" + spell + \" Reddie\"),\n\t4: () => send(\"cast \" + spell + \" Ghimm\"),\n\t5: () => send(\"cast \" + spell + \" Ciuffofoglio\"),\n\t6: () => send(\"cast \" + spell + \" Mythris\"),\n\t7: () => send(\"cast \" + spell + \" Odliw\"),\n\t8: () => send(\"cast \" + spell + \" Arion\"),\t\n\t9: () => send(\"cast \" + spell + \" Lorina\"),\n\t10: () => send(\"cast \" + spell + \" Andrew\"),\n\t11: () => send(\"cast \" + spell + \" Errimir\"),\n\t12: () => send(\"cast \" + spell + \" Hansi\"),\n\t13: () => send(\"cast \" + spell + \" Limoni\"),\n\t14: () => send(\"cast \" + spell + \" Eloise\"),\n\t15: () => send(\"cast \" + spell + \" Bambo\"),\n\t16: () => send(\"cast \" + spell + \" Radix\"),\n\t17: () => send(\"cast \" + spell + \" Melluyn\"),\n\t18: () => send(\"cast \" + spell + \" Sagi\"),\n\t19: () => send(\"cast \" + spell + \" Udiek\"),\n\t20: () => send(\"cast \" + spell + \" Wit\"),\t\n\t21: () => send(\"cast \" + spell + \" Lis\"),\n\t22: () => send(\"cast \" + spell + \" Brian\"),\n\t23: () => send(\"cast \" + spell + \" Verdorato\"),\n\t24: () => send(\"cast \" + spell + \" Kum\"),\n\t25: () => send(\"cast \" + spell + \" Lawandino\"),\n\t26: () => send(\"cast \" + spell + \" Sequoia\"),\t\n}\n\nif (parametro) { \n  \n  const comando = parseInt(parametro)\n  print(\"AAA\" + comando)\n  if (comando > 0 && comandi[comando]) {\n    // abbiamo il numero come parametro, esegui comando associato\n    comandi[comando]()\n  } else if (comando > 0 && !comandi[comando]) {\n    print(\"Non esiste quel numero di albero!\")\n  } else {\n    send(\"cast \" + spell + \" \" + parametro)\n  }\n  return // non ci serve la lista sotto se diamo parametro\n}\n\nprint(color(\"Portal/Transport via alberi druidici\", \"green\"))\nprint(\"Usa portal numero, oppure portal albero o click sul link.\\n\")\n\nprint(color(\"  1. Foresta di Haon D'Or: \", \"yellow\") + color(link(\"Vertus\", () => comandi[1]()),\"green\") )\nprint(color(\"  2. Foresta di Krall: \", \"yellow\") + color(link(\"Schill\", () => comandi[2]()),\"green\") )\nprint(color(\"  3. Foresta di Rhowyn: \", \"yellow\") + color(link(\"Reddie\", () => comandi[3]()),\"green\") )\nprint(color(\"  4. Foresta di Mirkwood: \", \"yellow\") + color(link(\"Ghimm\", () => comandi[4]()),\"green\") )\nprint(color(\"  5. Foresta di Isengard: \", \"yellow\") + color(link(\"Ciuffofoglio\", () => comandi[5]()),\"green\") )\nprint(color(\"  6. Foresta di Avalon: \", \"yellow\") + color(link(\"Mythris\", () => comandi[6]()),\"green\") )\nprint(color(\"  7. Foresta di Uhmea: \", \"yellow\") + color(link(\"Odliw\", () => comandi[7]()),\"green\") )\nprint(color(\"  8. Foresta di Darkenwood: \", \"yellow\") + color(link(\"Arion\", () => comandi[8]()),\"green\") )\nprint(color(\"  9. Bosco dei Druidi: \", \"yellow\") + color(link(\"Lorina\", () => comandi[9]()),\"green\") )\nprint(color(\" 10. Scacchiera: \", \"yellow\") + color(link(\"Andrew\", () => comandi[10]()),\"green\") )\nprint(color(\" 11. Montagne Orientali: \", \"yellow\") + color(link(\"Errimir\", () => comandi[11]()),\"green\") )\nprint(color(\" 12. Ninja: \", \"yellow\") + color(link(\"Hansi\", () => comandi[12]()),\"green\") )\nprint(color(\" 13. Camelot: \", \"yellow\") + color(link(\"Limoni\", () => comandi[13]()),\"green\") )\nprint(color(\" 14. Roo (mondo capovolto): \", \"yellow\") + color(link(\"Eloise\", () => comandi[14]()),\"green\") )\nprint(color(\" 15. Oasi nel Deserto: \", \"yellow\") + color(link(\"Bambo\", () => comandi[15]()),\"green\") )\nprint(color(\" 16. Castello di Tricksty: \", \"yellow\") + color(link(\"Radix\", () => comandi[16]()),\"green\") )\nprint(color(\" 17. Gallarcity: \", \"yellow\") + color(link(\"Melluyn\", () => comandi[17]()),\"green\") )\nprint(color(\" 18. Mordilnia: \", \"yellow\") + color(link(\"Sagi\", () => comandi[18]()),\"green\") )\nprint(color(\" 19. Skexie: \", \"yellow\") + color(link(\"Udiek\", () => comandi[19]()),\"green\") )\nprint(color(\" 20. Comp: \", \"yellow\") + color(link(\"Wit\", () => comandi[20]()),\"green\") )\nprint(color(\" 21. Albero di Lis: \", \"yellow\") + color(link(\"Lis\", () => comandi[21]()),\"green\") )\nprint(color(\" 22. Valle dei Maghi: \", \"yellow\") + color(link(\"Brian\", () => comandi[22]()),\"green\") )\nprint(color(\" 23. Skyrim: \", \"yellow\") + color(link(\"Verdorato\", () => comandi[23]()),\"green\") )\nprint(color(\" 24. Gilda degli Eroi: \", \"yellow\") + color(link(\"Kum\", () => comandi[24]()),\"green\") )\nprint(color(\" 25. Gilda Dark: \", \"yellow\") + color(link(\"Lawandino\", () => comandi[25]()),\"green\") )\nprint(color(\" 26. Nevi Eterne: \", \"yellow\") + color(link(\"Sequoia\", () => comandi[26]()),\"green\") )\n\nprint(\"\\n\")",
+      "value": "const spell = match[1] == \"portal\" ? \"portal-v-p\" : \"tran-v-p\";\nconst parametro = (match[2] || null)\nconst comandi = {\n    1: () => send(\"cast \" + spell + \" Vertus\"),\n\t2: () => send(\"cast \" + spell + \" Schill\"),\n\t3: () => send(\"cast \" + spell + \" Reddie\"),\n\t4: () => send(\"cast \" + spell + \" Ghimm\"),\n\t5: () => send(\"cast \" + spell + \" Ciuffofoglio\"),\n\t6: () => send(\"cast \" + spell + \" Mythris\"),\n\t7: () => send(\"cast \" + spell + \" Odliw\"),\n\t8: () => send(\"cast \" + spell + \" Arion\"),\t\n\t9: () => send(\"cast \" + spell + \" Lorina\"),\n\t10: () => send(\"cast \" + spell + \" Andrew\"),\n\t11: () => send(\"cast \" + spell + \" Errimir\"),\n\t12: () => send(\"cast \" + spell + \" Hansi\"),\n\t13: () => send(\"cast \" + spell + \" Limoni\"),\n\t14: () => send(\"cast \" + spell + \" Eloise\"),\n\t15: () => send(\"cast \" + spell + \" Bambo\"),\n\t16: () => send(\"cast \" + spell + \" Radix\"),\n\t17: () => send(\"cast \" + spell + \" Melluyn\"),\n\t18: () => send(\"cast \" + spell + \" Sagi\"),\n\t19: () => send(\"cast \" + spell + \" Udiek\"),\n\t20: () => send(\"cast \" + spell + \" Wit\"),\t\n\t21: () => send(\"cast \" + spell + \" Lis\"),\n\t22: () => send(\"cast \" + spell + \" Brian\"),\n\t23: () => send(\"cast \" + spell + \" Verdorato\"),\n\t24: () => send(\"cast \" + spell + \" Kum\"),\n\t25: () => send(\"cast \" + spell + \" Lawandino\"),\n\t26: () => send(\"cast \" + spell + \" Sequoia\"),\t\n}\n\nif (parametro) { \n  \n  const comando = parseInt(parametro)\n  if (comando > 0 && comandi[comando]) {\n    // abbiamo il numero come parametro, esegui comando associato\n    comandi[comando]()\n  } else if (comando > 0 && !comandi[comando]) {\n    print(\"Non esiste quel numero di albero!\")\n  } else {\n    send(\"cast \" + spell + \" \" + parametro)\n  }\n  return // non ci serve la lista sotto se diamo parametro\n}\n\nprint(color(\"Portal/Transport via alberi druidici\", \"green\"))\nprint(\"Usa portal numero, oppure portal albero o click sul link.\\n\")\n\nprint(color(\"  1. Foresta di Haon D'Or: \", \"yellow\") + color(link(\"Vertus\", () => comandi[1]()),\"green\") )\nprint(color(\"  2. Foresta di Krall: \", \"yellow\") + color(link(\"Schill\", () => comandi[2]()),\"green\") )\nprint(color(\"  3. Foresta di Rhowyn: \", \"yellow\") + color(link(\"Reddie\", () => comandi[3]()),\"green\") )\nprint(color(\"  4. Foresta di Mirkwood: \", \"yellow\") + color(link(\"Ghimm\", () => comandi[4]()),\"green\") )\nprint(color(\"  5. Foresta di Isengard: \", \"yellow\") + color(link(\"Ciuffofoglio\", () => comandi[5]()),\"green\") )\nprint(color(\"  6. Foresta di Avalon: \", \"yellow\") + color(link(\"Mythris\", () => comandi[6]()),\"green\") )\nprint(color(\"  7. Foresta di Uhmea: \", \"yellow\") + color(link(\"Odliw\", () => comandi[7]()),\"green\") )\nprint(color(\"  8. Foresta di Darkenwood: \", \"yellow\") + color(link(\"Arion\", () => comandi[8]()),\"green\") )\nprint(color(\"  9. Bosco dei Druidi: \", \"yellow\") + color(link(\"Lorina\", () => comandi[9]()),\"green\") )\nprint(color(\" 10. Scacchiera: \", \"yellow\") + color(link(\"Andrew\", () => comandi[10]()),\"green\") )\nprint(color(\" 11. Montagne Orientali: \", \"yellow\") + color(link(\"Errimir\", () => comandi[11]()),\"green\") )\nprint(color(\" 12. Ninja: \", \"yellow\") + color(link(\"Hansi\", () => comandi[12]()),\"green\") )\nprint(color(\" 13. Camelot: \", \"yellow\") + color(link(\"Limoni\", () => comandi[13]()),\"green\") )\nprint(color(\" 14. Roo (mondo capovolto): \", \"yellow\") + color(link(\"Eloise\", () => comandi[14]()),\"green\") )\nprint(color(\" 15. Oasi nel Deserto: \", \"yellow\") + color(link(\"Bambo\", () => comandi[15]()),\"green\") )\nprint(color(\" 16. Castello di Tricksty: \", \"yellow\") + color(link(\"Radix\", () => comandi[16]()),\"green\") )\nprint(color(\" 17. Gallarcity: \", \"yellow\") + color(link(\"Melluyn\", () => comandi[17]()),\"green\") )\nprint(color(\" 18. Mordilnia: \", \"yellow\") + color(link(\"Sagi\", () => comandi[18]()),\"green\") )\nprint(color(\" 19. Skexie: \", \"yellow\") + color(link(\"Udiek\", () => comandi[19]()),\"green\") )\nprint(color(\" 20. Comp: \", \"yellow\") + color(link(\"Wit\", () => comandi[20]()),\"green\") )\nprint(color(\" 21. Albero di Lis: \", \"yellow\") + color(link(\"Lis\", () => comandi[21]()),\"green\") )\nprint(color(\" 22. Valle dei Maghi: \", \"yellow\") + color(link(\"Brian\", () => comandi[22]()),\"green\") )\nprint(color(\" 23. Skyrim: \", \"yellow\") + color(link(\"Verdorato\", () => comandi[23]()),\"green\") )\nprint(color(\" 24. Gilda degli Eroi: \", \"yellow\") + color(link(\"Kum\", () => comandi[24]()),\"green\") )\nprint(color(\" 25. Gilda Dark: \", \"yellow\") + color(link(\"Lawandino\", () => comandi[25]()),\"green\") )\nprint(color(\" 26. Nevi Eterne: \", \"yellow\") + color(link(\"Sequoia\", () => comandi[26]()),\"green\") )\n\nprint(\"\\n\")",
       "regex": true,
       "is_script": true,
       "class": "druid",
@@ -2856,7 +2896,7 @@
     {
       "pattern": "portal ?(.+)",
       "id": "",
-      "value": "if (!match[1]) {\n  print(\"Si ma su di chi??\");\n}\nsend(\"portal ${match[1]}`)",
+      "value": "if (!match[1]) {\n  print(\"Si ma su di chi??\");\n} else {\n\tsend(\"~portal ${match[1]}`);\n}",
       "regex": true,
       "is_script": true,
       "class": "psionic",
@@ -2916,7 +2956,7 @@
     {
       "pattern": "focus",
       "id": "",
-      "value": "delay(\"focus\", 2000, () => {\n  send(\"remove \" + this.borsa)\n  send(\"cast spirit-focus \" + this.borsa)\n  send(\"wear \" + this.borsa)\n});",
+      "value": "delay(\"focus\", 2000, () => {\n  send(\"remove ed\" + this.TSPersonaggio)\n  send(\"cast spirit-focus ed\" + this.TSPersonaggio)\n  send(\"wear ed\" + this.TSPersonaggio)\n});",
       "regex": false,
       "is_script": true,
       "class": "bard",
@@ -2944,6 +2984,138 @@
       "regex": true,
       "is_script": true,
       "class": "cleric",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "sessione",
+      "id": "",
+      "value": "send(`gt Divini in sessione: ${parseInt(this._stat_pqsess)}`)\nsend(`gt XP in sessione: ${parseInt(this._stat_xpsess)}M`)",
+      "regex": false,
+      "is_script": true,
+      "class": "util",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "refresh",
+      "id": "",
+      "value": "if (this.healtype || this.canPlay) {\n\tsend(\"cast 'seco' \" + $1);\n} else {\n  send(\"gtTrigger \" + $1 + \" ha Mov basso.\")\n}",
+      "regex": false,
+      "is_script": true,
+      "class": "util",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "poison",
+      "id": "",
+      "value": "rem @ultimaArma\nrem @holdItem\ncast 'poison' @ultimaArma\ncast 'poison' @holdItem\nwield @ultimaArma\nhold @holdItem\n",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "war",
+      "id": "",
+      "value": "play song of war",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "life",
+      "id": "",
+      "value": "play song of life",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "nat",
+      "id": "",
+      "value": "play song of nature",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "dumb",
+      "id": "",
+      "value": "play song of dumb",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "peace",
+      "id": "",
+      "value": "play song of peace",
+      "regex": false,
+      "is_script": false,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "slam",
+      "id": "",
+      "value": "if (this.holdItem != this.strumentoSlam && this.strumentoSlam) {\n\tsend(\n`rem ${this.holdItem}\ngb ${this.strumentoSlam}\npb ${this.holdItem}\nhold ${this.strumentoSlam}`)\n  if (this.autosong) {\n    if (this.strumentoSlam == this.strumentoPercussione) {\n    \tthis.ultimaSong = \"song of w\"\n    } else {\n      this.ultimaSong = \"song of d\"\n    }\n  }\n}\nsend(\"~slam \" + $1)",
+      "regex": false,
+      "is_script": true,
+      "class": "bard",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "fog",
+      "id": "",
+      "value": "send(\"+faerie-fog\")",
+      "regex": false,
+      "is_script": true,
+      "class": "mage",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "fog",
+      "id": "",
+      "value": "send(\"+faerie-fog\")",
+      "regex": false,
+      "is_script": true,
+      "class": "druid",
       "enabled": true,
       "is_prompt": false,
       "shortcut": "",

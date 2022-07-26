@@ -1,4 +1,5 @@
 import { EventHook } from "./event";
+import { to_screen_coordinate } from "./isometric";
 import { ExitDir, ExitType, Mapper, Room, RoomExit, LabelPos, RoomType, ExitDir2LabelPos, ReverseExitDir } from "./mapper";
 interface MouseData {
     x: number;
@@ -1372,8 +1373,7 @@ export class MapperDrawing {
     }
 
     public DrawRoom(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, scale?:number) {
-        const x = rect.x
-        const y = rect.y
+        const {x, y} = {x: rect.x, y: rect.y}; //to_screen_coordinate(rect.x, rect.y);
 
         const key = this.roomHash(room);
 

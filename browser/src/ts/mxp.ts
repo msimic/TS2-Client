@@ -139,7 +139,7 @@ export class Mxp {
             let match = re.exec(tag);
             if (match) {
                 this.EvtEmitCmd.fire({
-                    value: "\x1b[1z<VERSION CLIENT=Mudslinger MXP=0.01>", // using closing line tag makes it print twice...
+                    value: "\x1b[1z<VERSION CLIENT=TS2 Client MXP=0.01>", // using closing line tag makes it print twice...
                     noPrint: true});
                     //console.debug("MXP Version");
                 return true;
@@ -149,11 +149,17 @@ export class Mxp {
 
         this.tagHandlers.push((tag) => {
             /* hande image tags */
-            let re = /^<image ?(FName=["|']?([^ '"]+)["|']?)? ?url="([^">]*)">/i;
+            let re = /^<im(age|g) ?(FName=["|']?([^ '"]+)["|']?)? ?url="([^">]*)"? ?(W=\"?(\d+)\"?)? ?(H=\"?(\d+)\"?)? ?(ALIGN=\"?([^\"\>]+)\"?)?>/i;
             let match = re.exec(tag);
             if (match) {
                 /* push and pop is dirty way to do this, clean it up later */
-                let elem = $("<img style=\"max-width:90%;max-height:70%;\" src=\"" + match[3] + match[2] + "\">");
+                const mw = (match[6] || "90") + (match[6] ? "px" : "%")
+                const mh = (match[8] || "70") + (match[8] ? "px" : "%")
+                const va = match[10] || "unset"
+                const url = match[4] && match[3] ? match[4] + match[3] : match[4]
+
+                //let elem = $("<img style=\"width:"+mw+";height:"+mh+";float:"+va+";\" src=\"" + url + "\">");
+                let elem = $(`<div style="width:${mw};height:${mh};float:${va};background-size:cover;background-position:center center;clear:both;margin:10px;background-repeat:no-repeat;background-image:url('${url}');"></div>`)
                 this.outputManager.pushMxpElem(elem);
                 this.outputManager.popMxpElem();
                 //console.debug("MXP Image: ", match[2] + match[1]);
@@ -222,25 +228,31 @@ export class Mxp {
         });
         this.tagHandlers.push((tag) => {
             let re = /^<([bius])>/i;
+            
+            const checkClosing = (re:RegExp) => {
+                match = re.exec(tag);
+                if (match) {
+                    if (this.openTags[this.openTags.length - 1] !== match[1]) {
+                        console.log("Got closing " + match[1] + " tag with no opening tag.");
+                    } else {
+                        this.openTags.pop();
+                        this.outputManager.popMxpElem();
+                    }
+                    return true;
+                }
+                return false;
+            }
+
             let match = re.exec(tag);
             if (match) {
                 this.openTags.push(match[1]);
                 let elem = $(tag);
                 this.outputManager.pushMxpElem(elem);
+                checkClosing(/<\/([bius])>$/i)
                 return true;
             }
 
-            re = /^<\/([bius])>/i;
-            match = re.exec(tag);
-            if (match) {
-                if (this.openTags[this.openTags.length - 1] !== match[1]) {
-                    console.log("Got closing " + match[1] + " tag with no opening tag.");
-                } else {
-                    this.openTags.pop();
-                    this.outputManager.popMxpElem();
-                }
-                return true;
-            }
+            checkClosing(/^<\/([bius])>/i);
 
             return false;
         });
