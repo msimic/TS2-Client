@@ -1,5 +1,5 @@
 {
-  "version": 15,
+  "version": 16,
   "versionMessage":"Correzioni e aggiunta di qualche trigger, aggiunto onroomenter che abilita o disabilita classe per il numero zone dove si entra",
   "requiresClientMajor": 1,
   "requiresClientMinor": 2,
