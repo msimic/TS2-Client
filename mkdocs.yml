@@ -1,12 +1,12 @@
-site_name: Mudslinger Docs
+site_name: TSClient Docs
 markdown_extensions:
     - codehilite
 theme: readthedocs
-# site_url: https://mudslinger.net
-repo_url: https://github.com/odoth/mudslinger
+# site_url: https://temporasanguinis.it/client
+repo_url: https://github.com/temporasanguinis/TS2-Client
 site_dir: browser/static/docs
 
 nav:
-    - 'Mudslinger Home': '/'
+    - 'TSClient Home': '/'
     - 'Docs Home': 'README.md'
     - 'Scripting API': 'scripting.md'
