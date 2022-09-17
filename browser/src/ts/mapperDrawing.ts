@@ -60,6 +60,12 @@ RoomTypeImages.set(5, preloadImage("images/roomtype/underground.png"))
 RoomTypeImages.set(6, preloadImage("images/roomtype/street.png"))
 RoomTypeImages.set(7, preloadImage("images/roomtype/town-square.png"))
 RoomTypeImages.set(8, preloadImage("images/roomtype/death.png"))
+RoomTypeImages.set(9, preloadImage("images/roomtype/air.png"))
+RoomTypeImages.set(10, preloadImage("images/roomtype/path.png")) //
+RoomTypeImages.set(11, preloadImage("images/roomtype/hills.png"))
+RoomTypeImages.set(12, preloadImage("images/roomtype/city.png"))
+RoomTypeImages.set(13, preloadImage("images/roomtype/shop.png")) //
+RoomTypeImages.set(14, preloadImage("images/roomtype/underwater.png"))
 
 CanvasRenderingContext2D.prototype.fillRoundedRect = function (this:CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
     this.beginPath();
