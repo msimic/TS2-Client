@@ -655,6 +655,9 @@ export class Mapper {
         }
         this.loadDb(this.db)
         this.setSelected(this.idToRoom.get(roomData.id))
+
+        this.roomChanged.fire({ id: 0, vnum: 0, room: null})
+        this.roomChanged.fire({ id: roomData.id, vnum: roomData.vnum, room: roomData})
     }
 
     public getRoomName(room: Room): string {
