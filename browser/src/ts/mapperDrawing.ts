@@ -1063,7 +1063,7 @@ export class MapperDrawing {
          
         ctx.save()
         ctx.beginPath();
-        ctx.strokeStyle = diagonal ? ctx.strokeStyle : "rgba(222,222,222,0.5)"
+        //ctx.strokeStyle = diagonal ? ctx.strokeStyle : "rgba(222,222,222,0.5)"
 
         ctx.moveTo(newX, newY)
         for (const st of steps) {
@@ -1532,7 +1532,10 @@ export class MapperDrawing {
     }
     
     isIndoor(room:Room) {
-        return room.type == undefined || room.type == RoomType.Inside
+        return room.type == undefined ||
+         room.type == RoomType.Inside ||
+         room.type == RoomType.Underground ||
+         room.type == RoomType.Underwater;
     }
 
     getFillColor(room:Room) {
@@ -1603,8 +1606,12 @@ export class MapperDrawing {
             tx.beginPath();
             tx.fillStyle = '#ACADAC';
             if (room.exits.n && room.exits.n.to_room != room.id) {
+                tx.moveTo(((15 * scale)|0), ((0 * scale)|0));
+                tx.lineTo(((15 * scale)|0), ((8 * scale)|0));
                 tx.moveTo(((16 * scale)|0), ((0 * scale)|0));
                 tx.lineTo(((16 * scale)|0), ((8 * scale)|0));
+                tx.moveTo(((17 * scale)|0), ((0 * scale)|0));
+                tx.lineTo(((17 * scale)|0), ((8 * scale)|0));
             }
             else if (fillWalls)
                 tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);
@@ -1649,22 +1656,34 @@ export class MapperDrawing {
             }
 
             if (room.exits.e && room.exits.e.to_room != room.id) {
+                tx.moveTo((24 * scale)|0, (15 * scale)|0);
+                tx.lineTo((32 * scale)|0, (15 * scale)|0);
                 tx.moveTo((24 * scale)|0, (16 * scale)|0);
                 tx.lineTo((32 * scale)|0, (16 * scale)|0);
+                tx.moveTo((24 * scale)|0, (17 * scale)|0);
+                tx.lineTo((32 * scale)|0, (17 * scale)|0);
             }
             else if (fillWalls)
                 tx.fillRect(28 * scale, 9 * scale, 4 * scale, 14 * scale);
 
             if (room.exits.w && room.exits.w.to_room != room.id) {
+                tx.moveTo((0 * scale)|0, (15 * scale)|0);
+                tx.lineTo((8 * scale)|0, (15 * scale)|0);
                 tx.moveTo((0 * scale)|0, (16 * scale)|0);
                 tx.lineTo((8 * scale)|0, (16 * scale)|0);
+                tx.moveTo((0 * scale)|0, (17 * scale)|0);
+                tx.lineTo((8 * scale)|0, (17 * scale)|0);
             }
             else if (fillWalls)
                 tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
 
             if (room.exits.s && room.exits.s.to_room != room.id) {
+                tx.moveTo(((15 * scale)|0), ((24 * scale)|0));
+                tx.lineTo(((15 * scale)|0), ((32 * scale)|0));
                 tx.moveTo(((16 * scale)|0), ((24 * scale)|0));
                 tx.lineTo(((16 * scale)|0), ((32 * scale)|0));
+                tx.moveTo(((17 * scale)|0), ((24 * scale)|0));
+                tx.lineTo(((17 * scale)|0), ((32 * scale)|0));
             }
             else if (fillWalls)
                 tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);

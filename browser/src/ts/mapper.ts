@@ -98,7 +98,19 @@ export type RoomExits = {
 export enum RoomType {
     Inside,
     Forest,
-    Outside
+    Field,
+    Water,
+    Mountain,
+    Underground,
+    Street,
+    Crossroad,
+    DT,
+    Air,
+    Path,
+    Hills,
+    City,
+    Mercant,
+    Underwater
 }
 
 export interface Room {
