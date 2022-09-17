@@ -135,6 +135,7 @@ export class MapperWindow {
                                     </ul>
                                 </li>
                                 <li  class='custom' data-option-type="mapper" data-option-name="info">Informazioni</li>
+                                <li  class='custom' data-option-type="mapper" data-option-name="legend">Leggenda</li>
                             </ul>
                         </li>
                     </ul>
@@ -433,6 +434,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                     break;
                 case "removefavorite":
                     if (this.drawing.contextRoom) this.removeFavorite((this.drawing.contextRoom))
+                    break;
+                case "legend":
+                    this.drawing.showLegend=!!!this.drawing.showLegend;
                     break;
                 default:
                     break;

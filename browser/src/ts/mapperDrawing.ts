@@ -52,6 +52,7 @@ export interface LabelData {
 }
 
 export const RoomTypeImages = new Map<number, HTMLImageElement>();
+RoomTypeImages.set(0, preloadImage("images/roomtype/inside.png"))
 RoomTypeImages.set(1, preloadImage("images/roomtype/forest.png"))
 RoomTypeImages.set(2, preloadImage("images/roomtype/field.png"))
 RoomTypeImages.set(3, preloadImage("images/roomtype/water.png"))
@@ -66,6 +67,23 @@ RoomTypeImages.set(11, preloadImage("images/roomtype/hills.png"))
 RoomTypeImages.set(12, preloadImage("images/roomtype/city.png"))
 RoomTypeImages.set(13, preloadImage("images/roomtype/shop.png")) //
 RoomTypeImages.set(14, preloadImage("images/roomtype/underwater.png"))
+
+export const RoomTypeNames = new Map<number, string>();
+RoomTypeNames.set(0, ("All'interno"))
+RoomTypeNames.set(1, ("Foresta"))
+RoomTypeNames.set(2, ("Campo o radura"))
+RoomTypeNames.set(3, ("Fiume o mare"))
+RoomTypeNames.set(4, ("Montagna"))
+RoomTypeNames.set(5, ("Sottoterra"))
+RoomTypeNames.set(6, ("Strada"))
+RoomTypeNames.set(7, ("Piazza"))
+RoomTypeNames.set(8, ("Trappola mortale"))
+RoomTypeNames.set(9, ("In aria"))
+RoomTypeNames.set(10, ("Sentiero")) //
+RoomTypeNames.set(11, ("Colline"))
+RoomTypeNames.set(12, ("Citta'"))
+RoomTypeNames.set(13, ("Commerciante")) //
+RoomTypeNames.set(14, ("Sott'acqua"))
 
 CanvasRenderingContext2D.prototype.fillRoundedRect = function (this:CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
     this.beginPath();
@@ -150,6 +168,12 @@ export class MapperDrawing {
     forcePaint:boolean;
     private _fillWalls: boolean = true;
     private _showLegend = false;
+    public get showLegend() {
+        return this._showLegend;
+    }
+    public set showLegend(value) {
+        this._showLegend = value;
+    }
     private ready = true;
     private _scale: number = 1.5;
     public get scale(): number {
@@ -228,6 +252,7 @@ export class MapperDrawing {
     }
 
     pointClicked():Room {
+        this._showLegend = false; 
         const x = this.Mouse.x;
         const y = this.Mouse.y;
         const room = this.findActiveRoomByCoords(x, y);
@@ -720,7 +745,7 @@ export class MapperDrawing {
             this.drawLabel(context, l.pos, l.room, l.rx, l.ry, l.text, l.color, l.scale);
         }
 
-        this.DrawLegend(context, 1, -4, 0);
+        this.DrawLegend(context, 1, 1, 0);
         //this.translate(context, -0.5, this._scale);
         if (this.hover) {
             this.drawHoverInfo(context);
@@ -733,6 +758,7 @@ export class MapperDrawing {
     }
 
     private drawHoverInfo(context: CanvasRenderingContext2D) {
+        if (this._showLegend) return;
         context.save();
         context.font = `bold ${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         const text1 = this.hover.name;
@@ -1018,14 +1044,64 @@ export class MapperDrawing {
 
     drawLink(ctx:CanvasRenderingContext2D, start:Rect, steps:Point[], exitData: ExitDataPos, color:string, offsX:number, offsY:number) {
         if (!exitData) return;
+        let newY = .5+((start.y + exitData.y + offsY)|0)
+        let newX = .5+((start.x + exitData.x + offsX)|0)
+        let diagonal = false;
+        if (steps.length) {
+            const nextY = .5+(steps[0].y|0)+ offsY;
+            const nextX = .5+(steps[0].x|0)+ offsX;
+            
+            if (nextX == newX && nextY == newY ||
+                (Math.abs(nextX-newX)+Math.abs(nextY-newY)) < 4) {
+                // ends on same point
+                return;
+            }
+
+            diagonal = Math.abs(nextX-newX)>3 && Math.abs(nextY-newY) > 3;
+        }
+
+         
         ctx.save()
         ctx.beginPath();
-        ctx.strokeStyle = color
-        ctx.moveTo(.5+((start.x + exitData.x + offsX)|0), .5+((start.y + exitData.y + offsY)|0))
+        ctx.strokeStyle = diagonal ? ctx.strokeStyle : "rgba(222,222,222,0.5)"
+
+        ctx.moveTo(newX, newY)
         for (const st of steps) {
             ctx.lineTo(.5+(st.x|0), .5+(st.y|0))            
         }
-        //ctx.closePath()
+        ctx.stroke()
+
+        if (diagonal) {
+            ctx.restore();
+            return;
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = color
+
+        let offsetX = 0;
+        let offsetY = 0;
+        if (steps[0]) {
+            if (.5+(steps[0].y|0) == newY) {
+                offsetX = 2
+            }
+            if (.5+(steps[0].x|0) == newX) {
+                offsetY = 2
+            }
+        }
+        ctx.moveTo(newX-2+offsetX, newY-2+offsetY)
+        for (const st of steps) {
+            ctx.lineTo(.5+(st.x|0)-2+offsetX, .5+(st.y|0)-2+offsetY)            
+        }
+        ctx.stroke()
+        ctx.beginPath();
+        ctx.strokeStyle = color
+        offsetX = -offsetX;
+        offsetY = -offsetY;
+
+        ctx.moveTo(newX+2+offsetX, newY+2+offsetY)
+        for (const st of steps) {
+            ctx.lineTo(.5+(st.x|0)+2+offsetX, .5+(st.y|0)+2+offsetY)            
+        }
         ctx.stroke()
         ctx.restore()
     }
@@ -1239,99 +1315,35 @@ export class MapperDrawing {
     public DrawLegend(ctx:CanvasRenderingContext2D, x:number, y:number, nc:number) {
         if (!this._showLegend) return;
         ctx.strokeStyle = 'black';
+        const rows = 6;
+        const colWidth = 230;
+        let h = rows * 70 + 35
+        const w = Math.ceil(RoomTypeNames.size / rows);
+
         if (!nc) {
             ctx.fillStyle = '#eae4d6';
             //ctx.clearRect(x + 30, y + 35, 130, 145);
-            ctx.fillRect(x + 30, y + 35, 130, 175);
+
+            ctx.fillRoundedRect(x + 50, y + 5, 115, 30, 5);
+            ctx.strokeRoundedRect(x + 50, y + 5, 115, 30, 5)
+
+            ctx.fillRoundedRect(x + 30, y + 35, colWidth*w, h, 5);
+            ctx.strokeRoundedRect(x + 30, y + 35, colWidth*w, h, 5)
+
+            ctx.font = 'bold 14pt Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText("Leggenda:", x + 60, y + 27);
         }
-        ctx.fillStyle = 'black';
-        ctx.strokeRect(x + 30, y + 35, 130, 175);
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillText('Dock', x + 50, y + 50);
-        ctx.fillStyle = 'chocolate';
-        ctx.beginPath();
-        ctx.arc(x + 40, y + 45, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.fillStyle = 'black';
-        ctx.fillText('Pier', x + 50, y + 65);
-        ctx.fillStyle = 'gray';
-        ctx.beginPath();
-        ctx.arc(x + 40, y + 60, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.fillStyle = 'black';
-        ctx.fillText('Water Source', x + 50, y + 80);
-        ctx.fillStyle = 'aqua';
-        ctx.beginPath();
-        ctx.arc(x + 40, y + 75, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.fillStyle = 'black';
-        ctx.fillText('Bank', x + 50, y + 95);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'goldenrod';
-        ctx.beginPath();
-        ctx.fillText('$', x + 38, y + 95);
-        ctx.closePath();
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Shop', x + 50, y + 110);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'purple';
-        ctx.beginPath();
-        ctx.fillText('\u23CF', x + 38, y + 110);
-        ctx.closePath();
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Hospital', x + 50, y + 125);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'blue';
-        ctx.beginPath();
-        ctx.fillText('\u2665', x + 38, y + 125);
-        ctx.closePath();
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Bar & Restaurant', x + 50, y + 140);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'green';
-        ctx.beginPath();
-        ctx.fillText('\u2617', x + 38, y + 140);
-        ctx.closePath();
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Bar', x + 50, y + 155);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'green';
-        ctx.beginPath();
-        ctx.fillText('\u266A', x + 38, y + 155);
-        ctx.closePath();
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Restaurant', x + 50, y + 170);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'green';
-        ctx.beginPath();
-        ctx.fillText('\u2616', x + 38, y + 170);
-        ctx.closePath();
 
-        ctx.font = 'italic bold 14pt Georgia';
         ctx.fillStyle = 'black';
-        ctx.fillText('Train', x + 50, y + 185);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'red';
-        ctx.beginPath();
-        ctx.fillText('\u260D', x + 38, y + 185);
-        ctx.closePath();
+        ctx.font = 'bold 12pt Arial';
 
-        ctx.font = 'italic bold 14pt Georgia';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Stable', x + 50, y + 200);
-        ctx.font = '14pt Arial';
-        ctx.fillStyle = 'rgb(153, 102, 0)';
-        ctx.beginPath();
-        ctx.fillText('\u2658', x + 38, y + 200);
-        ctx.closePath();
+        for (let index = 0; index < RoomTypeNames.size; index++) {
+            const xoffset = Math.floor(index / rows) * colWidth;
+            const roomTypeName = RoomTypeNames.get(index);
+            ctx.drawImage(RoomTypeImages.get(index), x + 50 + xoffset, y + 50 + index%rows * 70)
+            ctx.fillText(roomTypeName, x + 120 + xoffset, y + 90 + index%rows * 70);
+        }
 
     }
 
@@ -1548,9 +1560,9 @@ export class MapperDrawing {
             
             tx.strokeStyle = 'black';
             tx.lineWidth = (0.6 * scale)|0;
-            if (!this.isIndoor(room)) {
+            if (true || !this.isIndoor(room)) {
                 let img:HTMLImageElement = null;
-                img = RoomTypeImages.get(room.type)
+                img = RoomTypeImages.get(room.type || 0)
                 fillWalls = false
                 tx.save()
                 if (img) {
@@ -1651,8 +1663,8 @@ export class MapperDrawing {
                 tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
 
             if (room.exits.s && room.exits.s.to_room != room.id) {
-                tx.moveTo((16 * scale)|0, (24 * scale)|0);
-                tx.lineTo((16 * scale)|0, (32 * scale)|0);
+                tx.moveTo(((16 * scale)|0), ((24 * scale)|0));
+                tx.lineTo(((16 * scale)|0), ((32 * scale)|0));
             }
             else if (fillWalls)
                 tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);
