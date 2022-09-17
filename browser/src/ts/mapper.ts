@@ -110,7 +110,8 @@ export enum RoomType {
     Hills,
     City,
     Mercant,
-    Underwater
+    Underwater,
+    Desert
 }
 
 export interface Room {

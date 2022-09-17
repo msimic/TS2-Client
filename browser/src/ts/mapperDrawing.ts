@@ -67,6 +67,7 @@ RoomTypeImages.set(11, preloadImage("images/roomtype/hills.png"))
 RoomTypeImages.set(12, preloadImage("images/roomtype/city.png"))
 RoomTypeImages.set(13, preloadImage("images/roomtype/shop.png")) //
 RoomTypeImages.set(14, preloadImage("images/roomtype/underwater.png"))
+RoomTypeImages.set(15, preloadImage("images/roomtype/desert.png"))
 
 export const RoomTypeNames = new Map<number, string>();
 RoomTypeNames.set(0, ("All'interno"))
@@ -84,6 +85,7 @@ RoomTypeNames.set(11, ("Colline"))
 RoomTypeNames.set(12, ("Citta'"))
 RoomTypeNames.set(13, ("Commerciante")) //
 RoomTypeNames.set(14, ("Sott'acqua"))
+RoomTypeNames.set(15, ("Deserto"))
 
 CanvasRenderingContext2D.prototype.fillRoundedRect = function (this:CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
     this.beginPath();
@@ -1063,7 +1065,7 @@ export class MapperDrawing {
          
         ctx.save()
         ctx.beginPath();
-        //ctx.strokeStyle = diagonal ? ctx.strokeStyle : "rgba(222,222,222,0.5)"
+        ctx.strokeStyle = color; //"black"; //diagonal ? ctx.strokeStyle : "rgba(222,222,222,0.5)"
 
         ctx.moveTo(newX, newY)
         for (const st of steps) {
