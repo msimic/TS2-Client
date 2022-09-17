@@ -1304,12 +1304,16 @@ export class MapperDrawing {
         p3.x += cx;
         p3.y += cy;
 
+        const minX = Math.min(Math.min(p1.x, p2.x), p3.x)
+        const minY = Math.min(Math.min(p1.y, p2.y), p3.y)
+        
         ctx.moveTo((p1.x)|0, (p1.y)|0);
         ctx.lineTo((p2.x)|0, (p2.y)|0);
         ctx.lineTo((p3.x)|0, (p3.y)|0);
         ctx.closePath();
         ctx.fillStyle = color
         ctx.fill();
+        
     }
     
     public DrawLegend(ctx:CanvasRenderingContext2D, x:number, y:number, nc:number) {
@@ -1732,6 +1736,13 @@ export class MapperDrawing {
             tx.strokeStyle = 'black';
             if (room.exits.u) {
                 tx.beginPath();
+                const ofs = tx.fillStyle
+                tx.fillStyle = "#CCCCCC"
+                tx.fillRoundedRect(0, 4* scale, 8*scale, 8*scale, 3*scale)
+                tx.closePath();
+                tx.fillStyle = ofs;
+
+                tx.beginPath();
                 tx.moveTo((1 * scale)|0, (9 * scale)|0);
                 tx.lineTo((7 * scale)|0, (9 * scale)|0);
                 tx.lineTo((4 * scale)|0, (6 * scale)|0);
@@ -1740,6 +1751,13 @@ export class MapperDrawing {
             }
             if (room.exits.d) {
                 tx.beginPath();
+                const ofs = tx.fillStyle
+                tx.fillStyle = "#CCCCCC"
+                tx.fillRoundedRect(0, 20* scale, 8*scale, 8*scale, 3*scale)
+                tx.closePath();
+                tx.fillStyle = ofs;
+
+                tx.beginPath();
                 tx.moveTo((1 * scale)|0, (23 * scale)|0);
                 tx.lineTo((7 * scale)|0, (23 * scale)|0);
                 tx.lineTo((4 * scale)|0, (26 * scale)|0);
@@ -1747,6 +1765,13 @@ export class MapperDrawing {
                 tx.fill();
             }
             if (room.exits.other && !(room.exits.other.name||"").toLowerCase().match("teleport")) {
+                tx.beginPath();
+                const ofs = tx.fillStyle
+                tx.fillStyle = "#CCCCCC"
+                tx.fillRoundedRect(24* scale, 5* scale, 7*scale, 7*scale, 3*scale)
+                tx.closePath();
+                tx.fillStyle = ofs;
+
                 tx.beginPath();
                 tx.moveTo((26 * scale)|0, (6  * scale)|0);
                 tx.lineTo((29 * scale)|0, (9  * scale)|0);
