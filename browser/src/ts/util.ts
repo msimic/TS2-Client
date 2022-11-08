@@ -1,6 +1,6 @@
 import { AppInfo } from "./appInfo";
 import { EventHook } from "./event";
-import { messagebox } from "./messagebox";
+import { Button, Messagebox, messagebox } from "./messagebox";
 import { TrigAlItem } from "./trigAlEditBase";
 
 export function replaceLtGt(text: string): string {
@@ -114,7 +114,7 @@ export function throttle(fn:Function, threshhold:number, scope?:any):Function {
         } catch (err) {
             return
         }*/
-        deferTimer = setTimeout(function () {
+        deferTimer = <number><unknown>setTimeout(function () {
           last = now;
           fn.apply(context, args);
         }, threshhold);
@@ -407,6 +407,16 @@ export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement
             ev.preventDefault()
             ev.stopPropagation()
             if ((<any>win).jqxWindow("isOpen")) $(last).focus()
+        }
+    });
+}
+
+export function AskReload() {
+    Messagebox.ShowWithButtons("Configurazione aggiornata",
+        "I trigger e alias sono stati importati.\nSarebbe consigliabile riavviare il client, vuoi farlo?",
+        "Si", "No").then(v => {
+        if (v.button == Button.Ok) {
+            window.location.reload()
         }
     });
 }

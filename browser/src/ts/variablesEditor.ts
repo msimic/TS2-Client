@@ -24,7 +24,7 @@ export class VariablesEditor {
 
     /* these need to be overridden */
     protected getList(): Array<string> {
-        this.list = this.script.getVariables().map(v=>v.Name);
+        this.list = this.script.getVariables().map(v=>v.name);
         return this.list;
     }
 
@@ -33,8 +33,8 @@ export class VariablesEditor {
     }
 
     protected saveItem(variable: Variable): void {
-        if (this.prevName != variable.Name) {
-            const v = this.script.getVariables().find(v => v.Name == this.prevName);
+        if (this.prevName != variable.name) {
+            const v = this.script.getVariables().find(v => v.name == this.prevName);
             if (v) this.script.delVariable(v);
         }
         this.script.setVariable(variable);
@@ -214,14 +214,14 @@ export class VariablesEditor {
         }
 
         if (ind == -1) {
-            v = {Name: null, Value: null, Class:""};
+            v = {name: null, value: null, class:""};
         } else {
             v = this.getItem(ind);
         }
 
-        v.Name = this.$name.val();
-        v.Value = (this.$value.val() == "true" || this.$value.val() == "false") ? isTrue(this.$value.val()) : (isNumeric(this.$value.val()) ? Number(this.$value.val()) : this.$value.val());
-        v.Class = this.$className.val();
+        v.name = this.$name.val();
+        v.value = (this.$value.val() == "true" || this.$value.val() == "false") ? isTrue(this.$value.val()) : (isNumeric(this.$value.val()) ? Number(this.$value.val()) : this.$value.val());
+        v.class = this.$className.val();
         this.saveItem(v);
 
         this.selectNone();
@@ -257,7 +257,7 @@ export class VariablesEditor {
     private handleListBoxChange() {
         let ind = this.$listBox.data("selectedIndex");
         let item = this.getItem(ind);
-        this.prevName = item.Name;
+        this.prevName = item.name;
 
         if (!item) {
             this.clearEditor();
@@ -265,9 +265,9 @@ export class VariablesEditor {
             return;
         }
         this.setEditorDisabled(false);
-        this.$name.val(item.Name);
-        this.$value.val(item.Value);
-        this.$className.val(item.Class);
+        this.$name.val(item.name);
+        this.$value.val(item.value);
+        this.$className.val(item.class);
     }
 
     public show() {

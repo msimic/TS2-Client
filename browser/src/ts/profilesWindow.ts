@@ -2,7 +2,7 @@ import { Profile, ProfileManager } from "./profileManager";
 import { Button, ButtonOK, Messagebox, messagebox } from "./messagebox";
 import { ProfileWindow } from "./profileWindow";
 import { Client } from "./client";
-import { Acknowledge, circleNavigate } from "./util";
+import { Acknowledge, AskReload, circleNavigate } from "./util";
 import { Mudslinger } from "./client";
 import { EventHook } from "./event";
 import { LayoutManager } from "./layoutManager";
@@ -259,13 +259,7 @@ export class ProfilesWindow {
                 owner: baseConfig,
                 data: baseConfig.cfgVals
             })
-            Messagebox.ShowWithButtons("Configurazione aggiornata",
-             "I trigger e alias sono stati importati.\nSarebbe consigliabile riavviare il client, vuoi farlo?",
-             "Si", "No").then(v => {
-                if (v.button == Button.Ok) {
-                    window.location.reload()
-                }
-            });
+            AskReload()
         });
     }
     private async handleEditButtonClick() {

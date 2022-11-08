@@ -166,8 +166,6 @@ export class UserConfig {
         document.body.removeChild(inp);
     }
 
-
-
     public ImportText(text: any):boolean {
         let vals = typeof text == "string" ? JSON.parse(text) : text;
         let denyReason = "";

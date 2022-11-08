@@ -28,8 +28,8 @@ export class EventsEditor {
     protected $dummy: JQuery;
 
     /* these need to be overridden */
-    protected getList(): Array<string> {
-        this.list = this.script.getEvents().map(v=> v.id || (v.type + " (" + v.condition + ")"));
+    protected getList(evList:ScriptEvent[]): Array<string> {
+        this.list = evList.map(v=> v.id || (v.type + " (" + v.condition + ")"));
         return this.list;
     }
 
@@ -38,16 +38,34 @@ export class EventsEditor {
     }
 
     protected saveItem(ev: ScriptEvent): void {
-        if (this.prev) {
-            this.script.delEvent(this.prev);
+        
+        if (this.isBase) {
+            if (this.prev) {
+                this.script.delBaseEvent(this.prev);
+            }
+            this.script.addBaseEvent(ev);
+            this.script.saveBase();
+        }    
+        else {
+            if (this.prev) {
+                this.script.delEvent(this.prev);
+            }
+            this.script.addEvent(ev);
+            this.script.save();
         }
-        this.script.addEvent(ev);
-        this.script.save();
         this.prev = ev;
     }
     protected deleteItem(ev: ScriptEvent): void {
-        this.script.delEvent(ev);
-        this.script.save();
+        
+        if (this.isBase) {
+            this.script.delBaseEvent(ev);
+            this.script.saveBase();
+        }    
+        else {
+            this.script.delEvent(ev);
+            this.script.save();
+        }
+
         this.prev = null;
     }
 
@@ -63,8 +81,8 @@ export class EventsEditor {
         })
     }
 
-    constructor(private script:JsScript) {
-        const title: string = "Eventi";
+    constructor(private script:JsScript, private isBase:boolean) {
+        const title: string = isBase ? "Eventi preimpostati" : "Eventi";
         script.eventChanged.handle(e => {
             this.refresh();
         })
@@ -308,8 +326,13 @@ export class EventsEditor {
     }
 
     private updateListBox() {
-        this.list = this.getList();
-        this.values = this.script.getEvents();
+        
+        if (this.isBase) {
+            this.values = this.script.getBaseEvents();
+        } else {
+            this.values = this.script.getEvents();
+        }
+        this.list = this.getList(this.values);
         let html = "";
         for (let i = 0; i < this.list.length; i++) {
             html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";

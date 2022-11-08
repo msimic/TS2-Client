@@ -1,3 +1,4 @@
+import del from "del";
 import { isNumeric } from "jquery";
 import { AliasManager } from "./aliasManager";
 import { ClassManager } from "./classManager";
@@ -148,9 +149,9 @@ export function colorize(sText: string, sColor:string, sBackground:string, bold:
 };
 
 export interface Variable {
-    Name: string;
-    Class: string;
-    Value: any;
+    name: string;
+    class: string;
+    value: any;
 }
 /*
 export interface ConfigIf {
@@ -346,12 +347,33 @@ export class JsScript {
         return this.eventList.find(e => e.id == id) || this.baseEventList.find(e => e.id == id);
     }
 
+    getBaseEvents(Class?:string):ScriptEvent[] {
+        let ret:ScriptEvent[] = [];
+        for (const ev of this.baseEvents) {
+            ret = ret.concat(ev[1]||[]);
+        }
+        return ret.filter(ev => ev.class == Class || !Class);
+    }
+
+    getBaseEvent(id:string):ScriptEvent {
+        return this.baseEventList.find(e => e.id == id);
+    }
+
     addEvent(ev:ScriptEvent) {
         this.eventList.push(ev);
         if (!this.events.has(ev.type)) {
             this.events.set(ev.type, []);
         }
         this.events.get(ev.type).push(ev);
+        this.eventChanged.fire(ev)
+    }
+
+    addBaseEvent(ev:ScriptEvent) {
+        this.baseEventList.push(ev);
+        if (!this.baseEvents.has(ev.type)) {
+            this.baseEvents.set(ev.type, []);
+        }
+        this.baseEvents.get(ev.type).push(ev);
         this.eventChanged.fire(ev)
     }
 
@@ -373,27 +395,45 @@ export class JsScript {
         this.eventChanged.fire(ev)
     }
 
+    delBaseEvent(ev:ScriptEvent) {
+        let ind = this.baseEventList.indexOf(ev);
+        if (ind != -1) {
+            this.baseEventList.splice(ind, 1);
+        }
+        for (const kvp of this.baseEvents) {
+            ind = kvp[1].indexOf(ev);
+            if (ind != -1) {
+                kvp[1].splice(ind, 1);
+            }
+        }
+        
+        if (this.baseEventList.length == 0) {
+            this.baseEvents.clear();
+        }
+        this.eventChanged.fire(ev)
+    }
+
     getVariableValue(name:string):any {
         const vari = this.variables.get(name)
-        return vari ? vari.Value : null;
+        return vari ? vari.value : null;
     }
 
     getVariables(Class?:string):Variable[] {
         this.save();
-        return [...this.variables.values()].filter(v => v.Class == Class || !Class);
+        return [...this.variables.values()].filter(v => v.class == Class || !Class);
     }
 
     setVariable(variable:Variable) {
-        if (isNumeric(variable.Value)) {
-            variable.Value = Number(variable.Value);
+        if (isNumeric(variable.value)) {
+            variable.value = Number(variable.value);
         }
-        this.variables.set(variable.Name, variable);
-        this.scriptThis[variable.Name] = variable.Value;
+        this.variables.set(variable.name, variable);
+        this.scriptThis[variable.name] = variable.value;
     }
 
     delVariable(variable:Variable) {
-        this.variables.delete(variable.Name);
-        delete this.scriptThis[variable.Name];
+        this.variables.delete(variable.name);
+        delete this.scriptThis[variable.name];
     }
 
     setVariables(variables:Variable[]) {
@@ -417,7 +457,7 @@ export class JsScript {
         }
         this.baseVariables = new Map<string, Variable>(this.baseConfig.getDef("variables", []));
         for (const v of this.baseVariables) {
-            if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
+            if (v[0] && v[1].value) this.scriptThis[v[0]] = v[1].value;
         }
     }
 
@@ -432,11 +472,23 @@ export class JsScript {
             delete this.scriptThis[v[0]];
         }
         if (this.baseVariables) for (const v of this.baseVariables) {
-            if (v[0] && v[1].Value) this.scriptThis[v[0]] = v[1].Value;
+            if (v[0] && v[1].value) this.scriptThis[v[0]] = v[1].value;
         }
-        this.variables = new Map<string, Variable>(this.config.getDef("variables", []));
+        const savedVars = this.config.getDef("variables", []);
+        for (const v of savedVars) {
+            // backward compat
+            if (v && v[0] && v[1] && !v[1].name && (<any>v[1]).Name) {
+                v[1].name = (<any>v[1]).Name
+                v[1].value = (<any>v[1]).Value
+                v[1].class = (<any>v[1]).Class
+                delete (<any>v[1]).Name
+                delete (<any>v[1]).Value
+                delete (<any>v[1]).Class         
+            }
+        }
+        this.variables = new Map<string, Variable>(savedVars);
         for (const v of this.variables) {
-            if (v[0] && v[1].Value != undefined && v[1].Value != null) this.scriptThis[v[0]] = v[1].Value;
+            if (v[0] && v[1].value != undefined && v[1].value != null) this.scriptThis[v[0]] = v[1].value;
         }
     }
 
@@ -449,27 +501,36 @@ export class JsScript {
             if (Object.prototype.hasOwnProperty.call(this.scriptThis, key)) {
                 const element = this.scriptThis[key];
                 if (typeof element != "function" && key != "_oldValues") {
-                    let variable = this.variables.get(key) || { Name: key, Class: "", Value: null };
-                    variable.Value = element;
-                    variable.Name = variable.Name || key;
-                    if (this.baseVariables.get(variable.Name)?.Value != variable.Value) {
+                    let variable = this.variables.get(key) || { name: key, class: "", value: null };
+                    variable.value = element;
+                    variable.name = variable.name || key;
+                    if (this.baseVariables.get(variable.name)?.value != variable.value) {
                         this.variables.set(key, variable);
                     }
                 }
             }
         }
         for (const k of this.variables.keys()) {
-            if (this.variables.get(k).Value == undefined || k == "_oldValues") {
+            if (this.variables.get(k).value == undefined || k == "_oldValues") {
                 this.variables.delete(k);
             }
         }
         this.saveVariablesAndEventsToConfig(this.events, this.variables);
     }
 
+    saveBase() {
+        this.saveVariablesAndEventsToConfig(this.baseEvents, this.baseVariables);
+    }
+
     private saveVariablesAndEventsToConfig:any;
     private saveVariablesAndEventsToConfigInternal(ev:any, vars:any) {
         this.config.set("script_events", [...ev]);
         this.config.set("variables", [...vars]);
+    }
+
+    private saveBaseVariablesAndEventsToConfig(ev:any, vars:any) {
+        this.baseConfig.set("script_events", [...ev]);
+        this.baseConfig.set("variables", [...vars]);
     }
 
     public getScriptThis() { return this.scriptThis; }
@@ -479,9 +540,9 @@ export class JsScript {
             let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper, this);
             if (!scr) { return null; }
             return (...args: any[]) => {
-                    let ret = scr(...args);
-                    return ret;
-            };
+                const ret = scr(...args);
+                return ret;
+            }
         } catch (err2) {
             EvtScriptEmitEvalError.fire(err2);
         }
@@ -503,7 +564,24 @@ export class JsScript {
         this.outputManager = manager;
     }
 }
-function makeScript(owner:string, text: string, argsSig: string,
+function CreateFunction(name:string, args:any[], body:string, scope:any, values:any[]) {
+    if (typeof args == "string")
+        values = scope, scope = body, body = args, args = [];
+
+    if (name) name = name.replace(/\s/g, "_")
+    if (!Array.isArray(scope) || !Array.isArray(values)) {
+        if (typeof scope == "object") {
+            var keys = Object.keys(scope);
+            values = keys.map(function(p) { return scope[p]; });
+            scope = keys;
+        } else {
+            values = [];
+            scope = [];
+        }
+    }
+    return Function(scope, "function "+(name?name:"")+"("+args.join(", ")+") {\n"+body+"\n}\nreturn "+name+";").apply(scope, values);
+};
+function makeScript(owner:string, userScript: string, argSignature: string,
     classManager: ClassManager,
     aliasManager: AliasManager,
     triggerManager: TriggerManager,
@@ -511,15 +589,38 @@ function makeScript(owner:string, text: string, argsSig: string,
     map:Mapper,
     scriptManager:JsScript) {
 
-    let _scriptFunc_: any;
     let own = owner;
 
     /* Scripting API section */
     const mapper = map;
     const color = colorize;
-    const variable = function(vr: string) {
-        return scriptManager.getVariableValue(vr)
+    const variable = function(vr: string, val?:string, cls?:string):any {
+
+        let v = scriptManager.getVariables(cls).filter(v => v.name == vr)[0];
+        if (!(val === undefined)) {
+            if (!v) {
+                v = {
+                    class: cls,
+                    name: vr,
+                    value: val
+                };
+                scriptManager.setVariable(v)
+            } else {
+                if (!(cls === undefined)) v.class = cls;
+                v.value = val;
+            }
+        }
+        return v.value;
     };
+    
+    const setvar = function(vr: string, val?:string, cls?:string):any {
+        return variable(vr, val, cls);
+    };
+
+    const getvar = function(vr: string):any {
+        return variable(vr);
+    };
+
     const sub = function(sWhat: string, sWith:string) {
         if (triggerManager) triggerManager.subBuffer(sWhat.split("\n")[0], sWith);
     };
@@ -566,7 +667,7 @@ function makeScript(owner:string, text: string, argsSig: string,
         window.timeouts[id] = setTimeout(() => {
             func();
             delete window.timeouts[id];
-        }, time);
+        }, time);   
     };
     const repeat = function(id: string, time:number, func:Function) {
         if (!window.repeats) {
@@ -670,25 +771,67 @@ function makeScript(owner:string, text: string, argsSig: string,
 
     /* end Scripting API section */
     const _errEmit = EvtScriptEmitError;
-    try {
+    
 
-        let code = `
-                (async () => {
-                    try {
-                        ${text}
-                    } catch (err) {
-                        _errEmit.fire({owner:owner, err: err, stack: err.stack});
-                    }
-                })()
-        `;
-        const scrTxt = "_scriptFunc_ = function(" + argsSig + ") {\n" + code + "\n}";
-        eval(scrTxt);
+    const api = {
+        getAlias: getAlias,
+        getTrigger: getTrigger,
+        print: print,
+        send: send,
+        _errEmit: _errEmit,
+        owner: owner,
+        aliasEnabled: aliasEnabled,
+        getEvent: getEvent,
+        eventEnabled: eventEnabled,
+        triggerEnabled: triggerEnabled,
+        classEnabled: classEnabled,
+        toggleAlias: toggleAlias,
+        toggleClass: toggleClass,
+        toggleEvent: toggleEvent,
+        toggleTrigger: toggleTrigger,
+        cls: cls,
+        createWindow: createWindow,
+        getWindow: getWindow,
+        deleteWindow: deleteWindow,
+        cap: cap,
+        gag: gag,
+        delay: delay,
+        repeat: repeat,
+        highlight: highlight,
+        color: color,
+        stopAudio: stopAudio,
+        playAudio: playAudio,
+        link: link,
+        sub: sub,
+        variable: variable,
+        getvar: getvar,
+        setvar: setvar,
+        mapper: mapper,
+        classManager: classManager,
+        aliasManager: aliasManager,
+        triggerManager: triggerManager,
+        outputManager: outputManager,
+        map:map,
+        scriptManager:scriptManager
     }
-    catch (err) {
-        EvtScriptEmitEvalError.fire(err);
+
+    const scriptSource = `
+        const { ${Object.keys(api).join(', ')} } = api;
+        with (this) {
+            return async (${argSignature}) => {
+                "use strict";
+                try {
+                    ${userScript}
+                } catch (err) {
+                    _errEmit.fire({owner:owner,err:err,stack:err.stack}) // script execution error
+                }
+            };
+        }
+    `;
+    try {
+        return new Function('api', scriptSource).call(this, api);
+    } catch (err) {
+        EvtScriptEmitEvalError.fire(err); // script "compilation" exception
         return null;
     }
-
-    const ret = _scriptFunc_.bind(this);
-    return ret;
 }

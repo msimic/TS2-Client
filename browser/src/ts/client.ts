@@ -81,6 +81,7 @@ export class Client {
     variableEditor: VariablesEditor;
     classEditor: ClassEditor;
     eventsEditor: EventsEditor;
+    baseEventsEditor: EventsEditor;
     socketConnected: boolean;
     layoutManager: LayoutManager;
     public get connected():boolean {
@@ -152,7 +153,7 @@ export class Client {
 
         this.classEditor = new ClassEditor(this.classManager);
         this.aliasEditor = new AliasEditor(this.aliasManager, false);
-        this.eventsEditor = new EventsEditor(this.jsScript);
+        this.eventsEditor = new EventsEditor(this.jsScript, false);
         this.triggerEditor = new TriggerEditor(this.triggerManager, false);
 
         this.baseAliasManager = new AliasManager(
@@ -175,7 +176,8 @@ export class Client {
         this.windowManager.triggerChanged();
 
         this.connectWin = new ConnectWin(this.socket);
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.jsScript, this.outputWin);
+        this.baseEventsEditor = new EventsEditor(this.jsScript, true);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.jsScript, this.outputWin, this.baseConfig);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 

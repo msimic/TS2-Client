@@ -28,6 +28,7 @@ export class AliasEditor extends TrigAlEditBase {
             + "Puo' essere 1 o piu' comandi, includendo i parametri (e.g. $1).\n\n"
             + "Per gli alias non-regex, usa $1 nel valore per rappresentare l'argomento intero dato al commando.\n"
             + "Esempio: Alias pattern 's', alias valore 'say $1', "
+            + "Usa il @ per espandere variabili, es.: get spada @borsa\n"
             + "poi fai 's asadf dfdfa' e 'say asadf dfdfa' verra mandato.\n\n"
             + "Per alias regex, usa $numero per rappresentare i match del tuo regex.\n"
             + "Esempio: Alias pattern 's (\\w+)', alias valore 'say $1', "

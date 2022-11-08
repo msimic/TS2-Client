@@ -12,11 +12,14 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { downloadString, isTrue } from "./util";
+import { AskReload, denyClientVersion, downloadJsonToFile, downloadString, importFromFile, isTrue } from "./util";
 import { LayoutManager } from "./layoutManager";
-import { EvtScriptEmitPrint, JsScript } from "./jsScript";
+import { EvtScriptEmitPrint, JsScript, ScriptEvent, Variable } from "./jsScript";
 import { OutputWin } from "./outputWin";
 import { Button, Messagebox } from "./messagebox";
+import { Class } from "./classManager";
+import { TrigAlItem } from "./trigAlEditBase";
+import { AppInfo } from "./appInfo";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -163,8 +166,10 @@ export class MenuBar {
         private variableEditor:VariablesEditor,
         private classEditor: ClassEditor,
         private eventEditor: EventsEditor,
+        private baseEventEditor: EventsEditor,
         private jsScript: JsScript,
-        private outWin:OutputWin
+        private outWin:OutputWin,
+        private baseConfig: UserConfig
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -501,6 +506,207 @@ export class MenuBar {
 
         this.clickFuncs["base_triggers"] = (val) => {
             this.baseTriggerEditor.show();
+        };
+
+        this.clickFuncs["base_events"] = (val) => {
+            this.baseEventEditor.show();
+        };
+
+        function hasDuplicates(array:any[]) {
+            return (new Set(array)).size !== array.length;
+        }
+
+        var exportClassFunc = async (config:UserConfig) => {
+            const response = await Messagebox.ShowMultiInput("Esporta scripts", ["Nome o regex della classe (richiesto)","Descrizione (opzionale)","Nome file (opzionale)"], ["", "", ""])
+        
+            if (response.button != Button.Ok || !response.results[0]) return;
+
+            const cfg = JSON.parse(config.saveConfig())
+
+
+            const cls = [...(new Map<string,Class>(cfg.classes))].filter((tr) => !!tr[0].match(new RegExp("^" + response.result + "$", "i"))).map(v => v[1]);
+            
+            if (!cls || !cls[0]) {
+                Messagebox.Show("Errore", "Classi insesistenti con questo filtro, anche se forse hai i trigger con quella classe.\nCreala manualmente oppure disabilita o abilita quella classe almeno una volta.");
+                return;
+            }
+
+            const flt = (tr:any):boolean => {
+                const ret = !!cls.find(v => v.name == tr.class);
+                return ret;
+            }
+
+            const trgs: TrigAlItem[] = cfg.triggers ? (cfg.triggers).filter(flt) : [];
+            const als: TrigAlItem[] = cfg.aliases ? (cfg.aliases).filter(flt) : [];
+            const evs: ScriptEvent[] = cfg.script_events ? [...[...(new Map<string,ScriptEvent[]>(cfg.script_events))].map(v => v[1])].flat().filter(flt) : [];
+            const vars: Variable[] = cfg.variables ? [...[...(new Map<string,Variable>(cfg.variables))].map(v => v[1])].filter(flt) : [];
+
+            if (!(trgs.length + als.length + evs.length + vars.length)) {
+                Messagebox.Show("Errore", "La classe non contiene trigger, alias, variabili o eventi (e' vuota).");
+                return;
+            }
+
+            {
+                if (hasDuplicates(trgs.map(t => t.pattern + t.id))) {
+                    Messagebox.Show("Errore", "Trigger non univoci (pattern + id).");
+                    return;
+                }
+                if (hasDuplicates(als.map(t => t.pattern + t.id))) {
+                    Messagebox.Show("Errore", "Alias non univoci (pattern + id).");
+                    return;
+                }
+                if (hasDuplicates(evs.map(t => t.type + t.condition + t.id))) {
+                    Messagebox.Show("Errore", "Eventi non univoci (type + condition + id).");
+                    return;
+                }
+            }
+
+            const ver = AppInfo.Version.split(".")
+            const dt = new Date();
+            const exportObj = {
+                aliases: als,
+                triggers: trgs,
+                events: evs,
+                classes: cls,
+                variables: vars,
+                requiresClientMajor: parseInt(ver[0]),
+                requiresClientMinor: parseInt(ver[1]),
+                requiresClientRevision: parseInt(ver[2]),
+                description: response.results[1],
+                datetime: dt.toDateString() + " " + dt.getHours() + ":" + dt.getMinutes() 
+            }
+
+            downloadJsonToFile(exportObj, response.results[2] || "export_scripts.json")
+        }
+
+        var importScriptsFunc = async (config:UserConfig) => {
+            importFromFile(async (data) => {
+                let importObj = <any>null;
+                try {
+                importObj = JSON.parse(data)
+                } catch {
+                    Messagebox.Show("Errore", "File script non valido")
+                    return;
+                }
+
+                let denyReason = "";
+                if ((denyReason = denyClientVersion(importObj))) {
+                    Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.`)
+                    return;
+                }
+
+                if (!importObj.aliases ||
+                    !importObj.triggers ||
+                    !importObj.classes ||
+                    !importObj.variables ||
+                    !importObj.events) {
+                    Messagebox.Show("Errore", "File script non valido")
+                    return;
+                }
+
+                if (importObj.aliases.length +
+                    importObj.triggers.length +
+                    importObj.classes.length +
+                    importObj.variables.length +
+                    importObj.events.length == 0) {
+                    Messagebox.Show("Errore", "Il file non contiene scripts (e' vuoto)")
+                    return;
+                }
+
+                const str = `${config.name?"["+config.name+"]\n":"[preimpostati]\n"}Verranno importati scripts${importObj.description ? " '" + importObj.description + "'": ""}:
+
+Alias: ${importObj.aliases.length}
+Triggers: ${importObj.triggers.length}
+Classi: ${importObj.classes.length}
+Variabili: ${importObj.variables.length}
+Eventi: ${importObj.events.length}
+
+${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuoi procedere?`
+                if ((await Messagebox.Question(str)).button == Button.Ok) {
+                    const trgs:TrigAlItem[] = config.get("triggers") || [];
+                    const als:TrigAlItem[] = config.get("aliases") || [];
+                    const evs = [...(config.get("script_events") || [])];
+                    const vars = [...(config.get("variables") || [])];
+                    const cls = [...(config.get("classes") || [])];
+                    const trgsI:TrigAlItem[] = importObj.triggers
+                    const alsI:TrigAlItem[] = importObj.aliases
+                    const varsI:[] = importObj.variables
+                    const clsI:[] = importObj.classes
+                    const evsI:[] = importObj.events
+                    
+                    const trgMap = new Map<string, TrigAlItem>()
+                    trgs.forEach((el) => {
+                        trgMap.set(el.pattern, el)
+                    });
+                    trgsI.forEach((el) => {
+                        trgMap.set(el.pattern, el)
+                    });
+                    const newTr = [...trgMap.values()]
+
+                    const alsMap = new Map<string, TrigAlItem>()
+                    als.forEach((el) => {
+                        alsMap.set(el.pattern, el)
+                    });
+                    alsI.forEach((el) => {
+                        alsMap.set(el.pattern, el)
+                    });
+                    const newAls = [...alsMap.values()]
+
+                    const varMapNew = new Map<string, Variable>(vars)
+                    varsI.forEach((el:Variable) => {
+                        varMapNew.set(el.name, el)
+                    });
+                    const newVars = [...varMapNew]
+
+                    const clsMapNew = new Map<string, Variable>(cls)
+                    clsI.forEach((el:Variable) => {
+                        clsMapNew.set(el.name, el)
+                    });
+                    const newCls = [...clsMapNew]
+
+                    const evMapNew = new Map<string, ScriptEvent[]>(evs)
+                    evsI.forEach((el:ScriptEvent) => {
+                        let etype = evMapNew.get(el.type) as ScriptEvent[]
+                        if (!etype) {
+                            etype = []
+                            evMapNew.set(el.type, etype)
+                        }
+                        const insertIndex = etype.findIndex((v) => v.type + v.condition + v.id + v.class == el.type + el.condition + el.id + el.class)
+                        if (insertIndex > -1) {
+                            etype[insertIndex] = el
+                        } else {
+                            etype.push(el)
+                        }
+                    });
+                    const newEvs = [...evMapNew]
+                    
+                    config.set("triggers", newTr, true);
+                    config.set("aliases", newAls, true);
+                    config.set("script_events", newEvs, true);
+                    config.set("variables", newVars, true);
+                    config.set("classes", newCls, true);
+
+                    config.saveConfig()
+                    
+                    AskReload()
+                }
+            })
+        }
+
+        this.clickFuncs["exportclass"] = async (val) => {
+            exportClassFunc(this.config);
+        };
+
+        this.clickFuncs["importscript"] = (val) => {
+            importScriptsFunc(this.config)
+        };
+
+        this.clickFuncs["base_exportclass"] = async (val) => {
+            exportClassFunc(this.baseConfig);
+        };
+
+        this.clickFuncs["base_importscript"] = (val) => {
+            importScriptsFunc(this.baseConfig)
         };
 
         this.clickFuncs["colorsEnabled"] = (val) => {
