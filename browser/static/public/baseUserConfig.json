@@ -1,8 +1,8 @@
 {
-  "version": 16,
-  "versionMessage":"Correzioni e aggiunta di qualche trigger, aggiunto onroomenter che abilita o disabilita classe per il numero zone dove si entra",
+  "version": 17,
+  "versionMessage": "Aggiunto autokick per monk e corretto vari errori in assist e restab",
   "requiresClientMajor": 1,
-  "requiresClientMinor": 2,
+  "requiresClientMinor": 3,
   "requiresClientRevision": 3,
   "text-color": "green-on-black",
   "wrap-lines": true,
@@ -38,6 +38,774 @@
         "Name": "dangerMobs",
         "Class": "",
         "Value": "karoz barbaro errante|veterani"
+      }
+    ],
+    [
+      "Mobs",
+      {
+        "Name": "Mobs",
+        "Class": "",
+        "Value": ""
+      }
+    ],
+    [
+      "autofuryButton",
+      {
+        "Name": "autofuryButton",
+        "Class": "",
+        "Value": "AutoFury"
+      }
+    ],
+    [
+      "renting",
+      {
+        "Name": "renting",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "ImmortalTrigger",
+      {
+        "Name": "ImmortalTrigger",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "roundtime",
+      {
+        "Name": "roundtime",
+        "Class": "",
+        "Value": 4000
+      }
+    ],
+    [
+      "initDone",
+      {
+        "Name": "initDone",
+        "Class": "",
+        "Value": true
+      }
+    ],
+    [
+      "autokill",
+      {
+        "Name": "autokill",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "scriptVersion",
+      {
+        "Name": "scriptVersion",
+        "Class": "",
+        "Value": 8
+      }
+    ],
+    [
+      "disableCheckAssist",
+      {
+        "Name": "disableCheckAssist",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "preventAutoStop",
+      {
+        "Name": "preventAutoStop",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "preventAutoRescue",
+      {
+        "Name": "preventAutoRescue",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "_stat_pqsess",
+      {
+        "Name": "_stat_pqsess",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_pqh",
+      {
+        "Name": "_stat_pqh",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_pq5m",
+      {
+        "Name": "_stat_pq5m",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_pq15m",
+      {
+        "Name": "_stat_pq15m",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_pq1h",
+      {
+        "Name": "_stat_pq1h",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_xpsess",
+      {
+        "Name": "_stat_xpsess",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_xph",
+      {
+        "Name": "_stat_xph",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_xp5m",
+      {
+        "Name": "_stat_xp5m",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_xp15m",
+      {
+        "Name": "_stat_xp15m",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "_stat_xp1h",
+      {
+        "Name": "_stat_xp1h",
+        "Class": "",
+        "Value": 0
+      }
+    ],
+    [
+      "usiBlunt",
+      {
+        "Name": "usiBlunt",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiSlash",
+      {
+        "Name": "usiSlash",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiPierce",
+      {
+        "Name": "usiPierce",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiImmuAcid",
+      {
+        "Name": "usiImmuAcid",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiImmuCold",
+      {
+        "Name": "usiImmuCold",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiImmuEle",
+      {
+        "Name": "usiImmuEle",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiImmuFire",
+      {
+        "Name": "usiImmuFire",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "usiExtra",
+      {
+        "Name": "usiExtra",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "RoomName",
+      {
+        "Name": "RoomName",
+        "Class": "",
+        "Value": "La Reception"
+      }
+    ],
+    [
+      "TSRoom",
+      {
+        "Name": "TSRoom",
+        "Class": "",
+        "Value": "3008"
+      }
+    ],
+    [
+      "RoomDesc",
+      {
+        "Name": "RoomDesc",
+        "Class": "",
+        "Value": "Ti trovi alla reception della locanda. Delle scale portano verso\n\rl'ingresso, mentre ad est si trova l'ufficio dello scriba per scrivere,\n\rspedire e smistare le lettere. C'e' un piccolo cartello appeso al muro.\n\rGuardandoti intorno vedi molta pulizia e tanto ordine, nonostante\n\rdurante il giorno attraversino questa stanza centinaia di eroi.\n\r"
+      }
+    ],
+    [
+      "Exits",
+      {
+        "Name": "Exits",
+        "Class": "",
+        "Value": "east|down"
+      }
+    ],
+    [
+      "RoomExit",
+      {
+        "Name": "RoomExit",
+        "Class": "",
+        "Value": "Basso"
+      }
+    ],
+    [
+      "TSHp",
+      {
+        "Name": "TSHp",
+        "Class": "",
+        "Value": "18"
+      }
+    ],
+    [
+      "TSMana",
+      {
+        "Name": "TSMana",
+        "Class": "",
+        "Value": "124"
+      }
+    ],
+    [
+      "TSMov",
+      {
+        "Name": "TSMov",
+        "Class": "",
+        "Value": "118"
+      }
+    ],
+    [
+      "TSXptoLevel",
+      {
+        "Name": "TSXptoLevel",
+        "Class": "",
+        "Value": "2189"
+      }
+    ],
+    [
+      "pauseAutocleric",
+      {
+        "Name": "pauseAutocleric",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "preventAntispalm",
+      {
+        "Name": "preventAntispalm",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "prev_room",
+      {
+        "Name": "prev_room",
+        "Class": "",
+        "Value": {
+          "id": 55,
+          "name": "La Reception",
+          "description": "Ti trovi alla reception della locanda. Delle scale portano verso\r\nl'ingresso, mentre ad est si trova l'ufficio dello scriba per scrivere,\r\nspedire e smistare le lettere. C'e' un piccolo cartello appeso al muro.\r\nGuardandoti intorno vedi molta pulizia e tanto ordine, nonostante\r\ndurante il giorno attraversino questa stanza centinaia di eroi.\r\n",
+          "x": 0,
+          "y": -720,
+          "z": 1,
+          "cost": 1,
+          "zone_id": 1,
+          "shortName": "Rece",
+          "labelDir": 11,
+          "userData": "PEACEFUL|NOPORTAL|NOSUMMON ",
+          "vnum": 3008,
+          "color": "rgb(255,255,0)",
+          "exits": {
+            "d": {
+              "to_room": 52,
+              "to_dir": "u",
+              "name": "",
+              "param": "",
+              "label": "",
+              "type": 0
+            },
+            "e": {
+              "to_room": 56,
+              "to_dir": "w",
+              "name": "",
+              "param": "",
+              "label": "",
+              "type": 0
+            }
+          }
+        }
+      }
+    ],
+    [
+      "Immortal",
+      {
+        "Name": "Immortal",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "autoloot",
+      {
+        "Name": "autoloot",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "parlaStato",
+      {
+        "Name": "parlaStato",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "Gruppo",
+      {
+        "Name": "Gruppo",
+        "Class": "",
+        "Value": "{\"tank\":\"*\",\"mob\":\"*\",\"Guile\":{\"hp\":100,\"mn\":100,\"mv\":100,\"inroom\":1}}"
+      }
+    ],
+    [
+      "TSPosizione",
+      {
+        "Name": "TSPosizione",
+        "Class": "",
+        "Value": "In piedi"
+      }
+    ],
+    [
+      "TSSettore",
+      {
+        "Name": "TSSettore",
+        "Class": "",
+        "Value": "Chiuso"
+      }
+    ],
+    [
+      "TSMaxHp",
+      {
+        "Name": "TSMaxHp",
+        "Class": "",
+        "Value": "18"
+      }
+    ],
+    [
+      "TSMaxMana",
+      {
+        "Name": "TSMaxMana",
+        "Class": "",
+        "Value": "124"
+      }
+    ],
+    [
+      "TSMaxMov",
+      {
+        "Name": "TSMaxMov",
+        "Class": "",
+        "Value": "118"
+      }
+    ],
+    [
+      "TSGold",
+      {
+        "Name": "TSGold",
+        "Class": "",
+        "Value": "1500"
+      }
+    ],
+    [
+      "TSTank",
+      {
+        "Name": "TSTank",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "TSTankCond",
+      {
+        "Name": "TSTankCond",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "TSMob",
+      {
+        "Name": "TSMob",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "TSMobCond",
+      {
+        "Name": "TSMobCond",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "TSLag",
+      {
+        "Name": "TSLag",
+        "Class": "",
+        "Value": "-"
+      }
+    ],
+    [
+      "TSXp",
+      {
+        "Name": "TSXp",
+        "Class": "",
+        "Value": "1811"
+      }
+    ],
+    [
+      "TSBlink",
+      {
+        "Name": "TSBlink",
+        "Class": "",
+        "Value": "-1"
+      }
+    ],
+    [
+      "TSBank",
+      {
+        "Name": "TSBank",
+        "Class": "",
+        "Value": "0"
+      }
+    ],
+    [
+      "TSAlign",
+      {
+        "Name": "TSAlign",
+        "Class": "",
+        "Value": "Angelico"
+      }
+    ],
+    [
+      "TSPersonaggio",
+      {
+        "Name": "TSPersonaggio",
+        "Class": "",
+        "Value": "Guile"
+      }
+    ],
+    [
+      "TSSpells",
+      {
+        "Name": "TSSpells",
+        "Class": "",
+        "Value": "T"
+      }
+    ],
+    [
+      "grandezzaGruppo",
+      {
+        "Name": "grandezzaGruppo",
+        "Class": "",
+        "Value": 1
+      }
+    ],
+    [
+      "TSGoldK",
+      {
+        "Name": "TSGoldK",
+        "Class": "",
+        "Value": "1.5K"
+      }
+    ],
+    [
+      "TSBankK",
+      {
+        "Name": "TSBankK",
+        "Class": "",
+        "Value": "0"
+      }
+    ],
+    [
+      "tankMax",
+      {
+        "Name": "tankMax",
+        "Class": "",
+        "Value": 100
+      }
+    ],
+    [
+      "tankPercent",
+      {
+        "Name": "tankPercent",
+        "Class": "",
+        "Value": 100
+      }
+    ],
+    [
+      "tankKey",
+      {
+        "Name": "tankKey",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "mobMax",
+      {
+        "Name": "mobMax",
+        "Class": "",
+        "Value": 100
+      }
+    ],
+    [
+      "mobPercent",
+      {
+        "Name": "mobPercent",
+        "Class": "",
+        "Value": 100
+      }
+    ],
+    [
+      "mobKey",
+      {
+        "Name": "mobKey",
+        "Class": "",
+        "Value": "*"
+      }
+    ],
+    [
+      "spells",
+      {
+        "Name": "spells",
+        "Class": "",
+        "Value": "T<span class=\"\" style=\"display: inline-block;color:magenta;font-weight:bold;\">B:-1</span>"
+      }
+    ],
+    [
+      "sancato",
+      {
+        "Name": "sancato",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "scadenzaSanc",
+      {
+        "Name": "scadenzaSanc",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "scudato",
+      {
+        "Name": "scudato",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "scadenzaScudo",
+      {
+        "Name": "scadenzaScudo",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "feastFatto",
+      {
+        "Name": "feastFatto",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "afkProcTimout",
+      {
+        "Name": "afkProcTimout",
+        "Class": "",
+        "Value": 129438
+      }
+    ],
+    [
+      "lastTickTime",
+      {
+        "Name": "lastTickTime",
+        "Class": "",
+        "Value": "2022-08-22T17:50:57.860Z"
+      }
+    ],
+    [
+      "TickDuration",
+      {
+        "Name": "TickDuration",
+        "Class": "",
+        "Value": 66
+      }
+    ],
+    [
+      "currentTickLenght",
+      {
+        "Name": "currentTickLenght",
+        "Class": "",
+        "Value": 65
+      }
+    ],
+    [
+      "TickRemaining",
+      {
+        "Name": "TickRemaining",
+        "Class": "",
+        "Value": 22
+      }
+    ],
+    [
+      "tickInterval",
+      {
+        "Name": "tickInterval",
+        "Class": "",
+        "Value": 129439
+      }
+    ],
+    [
+      "Chars",
+      {
+        "Name": "Chars",
+        "Class": "",
+        "Value": "Auriel"
+      }
+    ],
+    [
+      "TSHpRegen",
+      {
+        "Name": "TSHpRegen",
+        "Class": "",
+        "Value": "11"
+      }
+    ],
+    [
+      "TSManaRegen",
+      {
+        "Name": "TSManaRegen",
+        "Class": "",
+        "Value": "30"
+      }
+    ],
+    [
+      "TSMovRegen",
+      {
+        "Name": "TSMovRegen",
+        "Class": "",
+        "Value": "19"
+      }
+    ],
+    [
+      "questorPg",
+      {
+        "Name": "questorPg",
+        "Class": "",
+        "Value": "Guile"
+      }
+    ],
+    [
+      "walkingToId",
+      {
+        "Name": "walkingToId",
+        "Class": "",
+        "Value": "2809"
+      }
+    ],
+    [
+      "questComplete",
+      {
+        "Name": "questComplete",
+        "Class": "",
+        "Value": false
+      }
+    ],
+    [
+      "ticksToLongTick",
+      {
+        "Name": "ticksToLongTick",
+        "Class": "",
+        "Value": 6
+      }
+    ],
+    [
+      "feastTimeout",
+      {
+        "Name": "feastTimeout",
+        "Class": "",
+        "Value": 129436
       }
     ]
   ],
@@ -129,14 +897,6 @@
           "type": "VariableChanged",
           "condition": "TSRoom",
           "id": "",
-          "value": "\n\tprint(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
-          "class": "debug",
-          "enabled": true
-        },
-        {
-          "type": "VariableChanged",
-          "condition": "TSRoom",
-          "id": "",
           "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)\ndelay(\"aspettomapper\", 1, () => {\n  if (mapper.current) {\n      send(\"onroomenter \" + mapper.current.id)\n  }\n})",
           "class": "",
           "enabled": true
@@ -148,6 +908,15 @@
           "value": "delay(\"mobchanged\", 20, ()=>{\n  if (this.Mobs && this.TSLag != \"+\") {\n      send(\"autokillcheck\")\n  }\n});",
           "class": "autokill",
           "enabled": true
+        },
+        {
+          "type": "VariableChanged",
+          "condition": "TSRoom",
+          "id": "",
+          "value": "print(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
+          "class": "debug",
+          "enabled": true,
+          "script": null
         }
       ]
     ],
@@ -540,14 +1309,15 @@
       "script": null
     },
     {
-      "pattern": "^(Ricevi|La tua parte di esperienza e' di) (\\d+) punti",
+      "pattern": "^(Ricevi|Ricevi la parte di esperienza di|La tua parte di esperienza e' di) ([^\\d]+)?(in )?(\\d+) punti",
       "id": "",
-      "value": "let quantita = Number(match[2])\nthis.stat(\"XP\", quantita/1000000)\nif (!this._stat_xpsess) this._stat_xpsess=0;\nthis._stat_xpsess+=quantita/1000000;",
+      "value": "let quantita = Number(match[4])\nthis.stat(\"XP\", quantita/1000000)\nif (isNaN(this._stat_xpsess)) this._stat_xpsess=0;\nthis._stat_xpsess+=quantita/1000000;",
       "regex": true,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -874,23 +1644,25 @@
     {
       "pattern": "^Fuggi a tutta velocita'\\.|^Con abilita' ti ritiri dalla battaglia\\.",
       "id": "",
-      "value": "this.autoassist = false",
-      "regex": false,
+      "value": "if (!this.stabTarget) send(\"autoassist false\");",
+      "regex": true,
       "is_script": true,
-      "class": "stab",
+      "class": "",
       "enabled": true,
-      "is_prompt": true,
+      "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
       "pattern": "^\\[Dhethor il questor\\] dice 'Cerca nei paraggi di (.*?)\\.",
       "id": "",
-      "value": "if (this.questorPg && this.TSPersonaggio &&\n   this.questorPg.toLowerCase() == this.TSPersonaggio.toLowerCase()) {\n  print(\"Room quest: \" + $1)\n  let res = mapper.searchRoomsByNameAndDesc($1)\n  res = res.filter(r => r.name === $1)\n  this.searchRooms = () => res\n  send(\"ricercaPrecedente\")\n}",
+      "value": "if (this.questorPg && this.TSPersonaggio &&\n   this.questorPg.toLowerCase() == this.TSPersonaggio.toLowerCase()) {\n  print(\"Room quest: \" + $1)\n  let res = mapper.searchRoomsByNameAndDesc($1)\n  res = res.filter(r => r.name === $1)\n  this.searchRooms = () => res\n  send(\"ricercaPrecedente\")\n} else {\n  toggleClass(\"questor\", false)\n}",
       "regex": true,
       "is_script": true,
       "class": "questor",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -905,25 +1677,27 @@
       "script": null
     },
     {
-      "pattern": "^Dhethor, il questor, e' qui in attesa di volontari",
+      "pattern": "^(Dhethor, il questor, e' qui in attesa di volontari|Dichiari a Dhethor il questor di aver completato la tua missione)",
       "id": "",
-      "value": "if (this.questComplete) {\n\tthis.questComplete = false\n  \tthis.searchRooms = null;\n\tsend(\"quest complete\")\n}",
-      "regex": false,
-      "is_script": true,
-      "class": "",
-      "enabled": true,
-      "is_prompt": false,
-      "script": null
-    },
-    {
-      "pattern": "^\\[Dhethor il questor\\] dice 'e chiedono a te, (.+?), di recuperare",
-      "id": "",
-      "value": "this.questorPg = $1",
+      "value": "if (this.questComplete) {\n\tthis.questComplete = false\n  \tthis.searchRooms = null;\n\tsend(\"quest complete\")\n}\ntoggleClass(\"questor\", false);",
       "regex": true,
       "is_script": true,
       "class": "questor",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^\\[Dhethor il questor\\] dice 'e chiedono a te, (.+?), di recuperare",
+      "id": "",
+      "value": "this.questorPg = $1\nif (this.questorPg.toLowerCase() == $1.toLowerCase()) {\n\ttoggleClass(\"questor\",true)\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -1128,7 +1902,7 @@
       "script": null
     },
     {
-      "pattern": "^(Non hai abbastanza energia magica|Sei in una zona silenziosa, non puoi emettere suoni)",
+      "pattern": "^(Non hai abbastanza energia magica|Sei in una zona silenziosa, non puoi emettere suoni|La zona assorbe la tua magia)",
       "id": "",
       "value": "if (classEnabled(\"autocleric\")) {\n  this.pauseAutocleric = true\n  print(\"Sei senza mana o in silence... pauso autocleric per 20 secondi.\")\n  delay(\"reset_acl\", 20000, () => {\n    this.pauseAutocleric = false\n    const lag = this.TSLag;\n    this.TSLag = \"\";\n    delay(\"reset_acl2\", 100, ()=>{ this.TSLag = lag; });\n  })\n}",
       "regex": true,
@@ -1162,13 +1936,61 @@
       "is_prompt": false,
       "shortcut": "",
       "script": null
+    },
+    {
+      "pattern": "C'e' troppa gente! Non riesci ad avvicinarti!",
+      "id": "",
+      "value": "this.preventAutoassist = true;\nsetTimeout(() => {\n this.preventAutoassist = false;\n  send(\"checkAssist\")\n}, 3000)",
+      "regex": false,
+      "is_script": true,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^\\*\\*\\* (.+)$",
+      "id": "",
+      "value": "print($1, \"Logs\")\ngag()",
+      "regex": true,
+      "is_script": true,
+      "class": "immortal",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "Un globo di energia appare dal nulla, inizia a mutare forma e si anima magicamente",
+      "id": "",
+      "value": "gt POPPATO NEGOZIANTE",
+      "regex": false,
+      "is_script": false,
+      "class": "",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "Smetti di memorizzare e chiudi il tuo libro degli incantesimi",
+      "id": "",
+      "value": "this.finito_memmare = true;",
+      "regex": false,
+      "is_script": true,
+      "class": "sorcerer",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
     }
   ],
   "aliases": [
     {
       "pattern": "initialize",
       "id": "",
-      "value": "if (this.initDone) {\n\treturn;\n}\nconst wasImmortal = this.Immortal;\nthis.scriptVersion = 8\nthis.initDone = true;\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null;\nlet ultimaArma = null;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\ntoggleClass(\"thief\", this.canStab);\n\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nvar room = this.TSRoom\n  \nthis.postInit = () => {\n  toggleClass(\"autoinspire\", this.autoinspire);\n  this.TSRoom = null;\n  setTimeout(() => {\n    if (mapper && this.TSRoom) \n      mapper.setRoomByVnum(this.TSRoom);\n    \n  \tsetTimeout(() => {\n      const current = (mapper?mapper.current:null);\n      this.TSRoom = ((current && current != room) ? current : room) || null;\n    });\n  });\n  \n  if (this.ImmortalTrigger) {\n  \tthis.Immortal = true;\n  } else {\n  \tthis.Immortal = false;\n  }\n  setTimeout(() => {\n    if (this.Immortal) {\n      send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    } else {\n      send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    }\n  }, 1000);\n  if (wasImmortal != this.Immortal) {\n    (this.Immortal ? print(\"Modalita' per Immortali del Client: ATTIVATA\") : print(\"Modalita' per Immortali del Client: DISABILITATA\"));\n  }\n  if (this.setupdone!=this.scriptVersion) {\n    setTimeout(()=>{\n      print(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n    }, 2000);\n  }\n  send(\"autoloot \" + ((!this.autoloot || this.Immortal) ? \"off\" : \"on\"))\n  if (this.is_touch_device() && this.usesTouch) {\n    print(color(\"Sembra che tu abbia il touchscreen. Per abilitare i controlli scrivi 'touch'.\", \"white\"))\n  }\n};\n\n",
+      "value": "if (this.initDone) {\n\treturn;\n}\nconst wasImmortal = this.Immortal;\nthis.scriptVersion = 8\nthis.initDone = true;\nthis.disableCheckAssist = false;\nthis.preventAutoStop = false;\nthis.preventAutoRescue = false;\nthis.listaDivini = null;\nthis.listaTerra = null;\nthis.listaAcqua = null;\nthis.listaAria = null;\nthis.listaFuoco = null;\nthis.listaXP = null;\nthis._stat_pqsess = 0;\nthis._stat_pqh = 0;\nthis._stat_pq5m = 0;\nthis._stat_pq15m = 0;\nthis._stat_pq1h = 0;\nthis._stat_xpsess = 0;\nthis._stat_xph = 0;\nthis._stat_xp5m = 0;\nthis._stat_xp15m = 0;\nthis._stat_xp1h = 0;\nthis.usiBlunt = false;\nthis.usiSlash = false;\nthis.usiPierce = false;\nthis.usiImmuAcid = false;\nthis.usiImmuCold = false;\nthis.usiImmuEle = false;\nthis.usiImmuFire = false;\nthis.usiExtra = false;\nlet ultimoScudo = null;\nlet ultimaArma = null;\nthis.ultimoScudo = null;\nthis.ultimaArma = null;\ntoggleClass(\"thief\", this.canStab);\n\nif (ultimaArma==this.armaBlunt) {\n  send(\"blunt\");\n}\nelse if (ultimaArma==this.armaSlash) {\n  send(\"slash\");\n}\nelse if (ultimaArma==this.armaPierce) {\n  send(\"pierce\");\n}\nelse if (ultimaArma==this.armaExtra) {\n  send(\"extra\");\n}\n\nif (ultimoScudo==this.scudoCold) {\n  send(\"ic\");\n}\nelse if (ultimoScudo==this.scudoAcid) {\n  send(\"ia\");\n}\nelse if (ultimoScudo==this.scudoEle) {\n  send(\"ie\");\n}\nelse if (ultimoScudo==this.scudoFire) {\n  send(\"if\");\n}\nif (this.mustMemorize) {\n  send(\"mem\");\n}\nvar room = this.TSRoom\n  \nthis.postInit = () => {\n  toggleClass(\"autoinspire\", this.autoinspire);\n  this.TSRoom = null;\n  setTimeout(() => {\n    if (mapper && this.TSRoom) \n      mapper.setRoomByVnum(this.TSRoom);\n    \n  \tsetTimeout(() => {\n      const current = (mapper?mapper.current:null);\n      this.TSRoom = ((current && current != room) ? current : room) || null;\n    });\n  });\n  \n  if (this.ImmortalTrigger) {\n  \tthis.Immortal = true; \n  } else {\n  \tthis.Immortal = false;\n  }\n  setTimeout(() => {\n    toggleClass(\"immortal\",this.Immortal)\n    if (this.Immortal) {\n      send(\"prompt %gr%N!HP:%h/%H %m!%M!%v!%V!Room:%R Inv:<%iI> Stealth:<%iS> Snoop:<%iN>%l!%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    } else {\n      send(\"prompt %gr%p!%N!H:[$c4009%h$c0007/%H] M:[$c4014%m$c0007/%M] V:[$c0002%v$c0007/%V] G:$c0011%g$c0007 [%F%b] T:$c0015%tk$c0007(%c)/M:$c0009%Tk$c0007(%C) %l%x!%X!%b!%g!%G!%a!%c!%C!%A!%S!%tk!%Tk!>\",true)\n    }\n  }, 1000);\n  if (wasImmortal != this.Immortal) {\n    (this.Immortal ? print(\"Modalita' per Immortali del Client: ATTIVATA\") : print(\"Modalita' per Immortali del Client: DISABILITATA\"));\n  }\n  if (this.setupdone!=this.scriptVersion) {\n    setTimeout(()=>{\n      print(color(\"Serve fare il SETUP, scrivi setup e premi Invio!\", \"red\", \"white\", true, true, true));\n    }, 2000);\n  }\n  send(\"autoloot \" + ((!this.autoloot || this.Immortal) ? \"off\" : \"on\"))\n  if (this.is_touch_device() && this.usesTouch) {\n    print(color(\"Sembra che tu abbia il touchscreen. Per abilitare i controlli scrivi 'touch'.\", \"white\"))\n  }\n};\n\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1201,12 +2023,13 @@
     {
       "pattern": "^autobash ?(.*)?",
       "id": "autobash",
-      "value": "this.autobash = !this.autobash;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autobash false)\n\tthis.autobash = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autobash\", this.autobash);\nlet str = (\"AutoBash: \"+ (this.autobash ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);",
+      "value": "this.autobash = !this.autobash;\n\nif (match && match[1] != undefined) {\n\t// se passato parametro esso comanda (e.g. autobash false)\n\tthis.autobash = (match[1] == \"true\" || match[1] == \"on\");\n}\n\ntoggleClass(\"autobash\", this.autobash);\nconst autoWhat = this.canKick && !this.canBash ? \"AutoKick\" : \"AutoBash\";\nlet str = (autoWhat + \": \"+ (this.autobash ? \"ABILITATO\" : \"DISABILITATO\"));\nthis.diciStatus(str);",
       "regex": true,
       "is_script": true,
       "class": "fight",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -1310,7 +2133,7 @@
     {
       "pattern": "preinit",
       "id": "",
-      "value": "this.is_touch_device = () => {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n};\n\nthis.autofuryEnabled = () => {\n\tif (this.canPlay) {\n      return this.autosong;\n    } else {\n      return this.autofury;\n    }\n};\n\nthis.autofuryToggle = () => {\n\tif (this.canPlay) {\n      send(\"autosong\");\n    } else {\n      send(\"autofury\");\n    }\n};\n\nif (this.canPlay) {\n  this.autofuryButton = \"AutoSong\"\n  scriptManager.linkEvent(\"autosong\", \"autofuryEnabled()\")\n} else {\n  this.autofuryButton = \"AutoFury\"\n  scriptManager.unlinkEvent(\"autosong\", \"autofuryEnabled()\")\n}\n\nthis.renting = false\nthis.ImmortalTrigger = false;\nthis.roundtime = 4000;\nthis.initDone = false;\ndelete this.postInit;\ntoggleClass(\"autologin\", true);\ntoggleClass(\"login\", true);\nthis.autokill = false;\n\ndelay(\"preinit\", 1, () => {\n  toggleClass(\"fixxa\", false);\n  toggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\n  toggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\n  toggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\n  toggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\n  toggleClass(\"sorcerer\", !!this.mustMemorize);\n  toggleClass(\"bard\", !!this.canPlay);\n  toggleClass(\"autosong\", false);\n  toggleClass(\"autoinspire\", false);\n  toggleClass(\"fight\", !!!this.Immortal);\n  toggleClass(\"util\", true);\n  toggleClass(\"autocleric\", !!this.autocleric>0 && !!!this.Immortal);\n  toggleClass(\"autoassist\", !!this.autoassist && !!!this.Immortal);\n  toggleClass(\"autobash\", !!this.autobash && !!!this.Immortal);\n  toggleClass(\"autorescue\", !!this.autorescue && !!!this.Immortal);\n  toggleClass(\"autoarmi\", !!this.autoarmi && !!!this.Immortal);\n  toggleClass(\"antispalm\", !!this.antispalm && !!!this.Immortal);\n  toggleClass(\"debug\", false);\n  toggleClass(\"autogroup\", !!this.autogroup && !!!this.Immortal);\n  toggleClass(\"autoloot\", !!this.autoloot && !!!this.Immortal);\n  toggleClass(\"autologin\", false);\n  toggleClass(\"login\", true);\n  toggleClass(\"memorize\", false);\n  toggleClass(\"automemorize\", this.automemo && !!!this.Immortal);\n  toggleClass(\"selfsanc\", !!this.selfsanc && !!!this.Immortal);\n  toggleClass(\"selfshield\", !!this.selfshield && !!!this.Immortal);\n  toggleClass(\"gtalign\", false);\n  toggleClass(\"thief\", false);\n  toggleClass(\"autokill\", false);\n  toggleClass(\"afk\", !!this.afk);\n\n});\n",
+      "value": "this.is_touch_device = () => {\n    if (\"ontouchstart\" in window || window.TouchEvent)\n        return true;\n\n    if (window.DocumentTouch && document instanceof DocumentTouch)\n        return true;\n\n    const prefixes = [\"\", \"-webkit-\", \"-moz-\", \"-o-\", \"-ms-\"];\n    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);\n\n    return window.matchMedia(queries.join(\",\")).matches;\n};\n\nthis.autofuryEnabled = () => {\n\tif (this.canPlay) {\n      return this.autosong;\n    } else {\n      return this.autofury;\n    }\n};\n\nthis.autofuryToggle = () => {\n\tif (this.canPlay) {\n      send(\"autosong\");\n    } else {\n      send(\"autofury\");\n    }\n};\n\nif (this.canPlay) {\n  this.autofuryButton = \"AutoSong\"\n  scriptManager.linkEvent(\"autosong\", \"autofuryEnabled()\")\n} else {\n  this.autofuryButton = \"AutoFury\"\n  scriptManager.unlinkEvent(\"autosong\", \"autofuryEnabled()\")\n}\n\nthis.renting = false\nthis.ImmortalTrigger = false;\nthis.roundtime = 4000;\nthis.initDone = false;\ndelete this.postInit;\ntoggleClass(\"autologin\", true);\ntoggleClass(\"login\", true);\nthis.autokill = false;\nthis.stabTarget = null;\n\ndelay(\"preinit\", 1, () => {\n  toggleClass(\"fixxa\", false);\n  toggleClass(\"questor\", false);\n  toggleClass(\"cleric\", (this.healtype||\"\").indexOf(\"C\")!=-1);\n  toggleClass(\"druid\", (this.healtype||\"\").indexOf(\"D\")!=-1);\n  toggleClass(\"mage\", (this.casttype||\"\").indexOf(\"M\")!=-1);\n  toggleClass(\"psionic\", (this.casttype||\"\").indexOf(\"P\")!=-1);\n  toggleClass(\"sorcerer\", !!this.mustMemorize);\n  toggleClass(\"bard\", !!this.canPlay);\n  toggleClass(\"monk\", !!this.canKick && !!!this.canBash);\n  toggleClass(\"autosong\", false);\n  toggleClass(\"autoinspire\", false);\n  toggleClass(\"fight\", !!!this.Immortal);\n  toggleClass(\"util\", true);\n  toggleClass(\"autocleric\", !!this.autocleric>0 && !!!this.Immortal);\n  toggleClass(\"autoassist\", !!this.autoassist && !!!this.Immortal);\n  toggleClass(\"autobash\", !!this.autobash && !!!this.Immortal);\n  toggleClass(\"autorescue\", !!this.autorescue && !!!this.Immortal);\n  toggleClass(\"autoarmi\", !!this.autoarmi && !!!this.Immortal);\n  toggleClass(\"antispalm\", !!this.antispalm && !!!this.Immortal);\n  toggleClass(\"debug\", false);\n  toggleClass(\"autogroup\", !!this.autogroup && !!!this.Immortal);\n  toggleClass(\"autoloot\", !!this.autoloot && !!!this.Immortal);\n  toggleClass(\"autologin\", false);\n  toggleClass(\"login\", true);\n  toggleClass(\"memorize\", false);\n  toggleClass(\"automemorize\", this.automemo && !!!this.Immortal);\n  toggleClass(\"selfsanc\", !!this.selfsanc && !!!this.Immortal);\n  toggleClass(\"selfshield\", !!this.selfshield && !!!this.Immortal);\n  toggleClass(\"gtalign\", false);\n  toggleClass(\"thief\", false);\n  toggleClass(\"autokill\", false);\n  toggleClass(\"afk\", !!this.afk);\n\n});\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1345,18 +2168,19 @@
     {
       "pattern": "flee",
       "id": "",
-      "value": "if (this.autoassist) send(\"autoassist false\");\nif (this.seduto) {\n  send(\"stand\");\n}\nsend(\"~flee\");",
+      "value": "if (this.seduto) {\n  send(\"stand\");\n}\nsend(\"~flee\");",
       "regex": false,
       "is_script": true,
       "class": "fight",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
       "pattern": "checkAssist",
       "id": "",
-      "value": "if (this.disableCheckAssist == true || this.preventAutoassist == true) \n{\n  //this.preventAutoassist = false\n  if (this.autobash) {\n    setTimeout(() => {send(\"checkAssist\")}, (this.autocleric ? 2000 : 0 + 2000))\n  }\n  return;\n}\nthis.disableCheckAssist = true;\nsetTimeout(()=>{this.disableCheckAssist=false}, 200);\n\nconst newTank = this.TSTank;\nconst tankState = this.TSTankCond;\nif (newTank==this.TSPersonaggio) return;\n\nlet cleanCastingTimeout = () => {\n  if (this.castTimeout) clearTimeout(this.castTimeout);\n  this.castTimeout = 0;\n}\nif (this.autostop && tankState && tankState != \"*\" && !this.preventAutoStop && !this.isTank()) {\n  this.preventAutoStop = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"~stop\");\n  this.TSTank=\"*\";\n  setTimeout(() => {this.preventAutoStop = false}, 8200)\n}\nlet rescuato = false;\nif (this.autorescue && newTank != \"*\" && newTank!=this.TSPersonaggio && !this.preventAutoRescue) {\n  this.preventAutoRescue = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"rescue \" + newTank);\n  rescuato = true;\n  setTimeout(() => {this.preventAutoRescue = false}, 4000)\n}\nif (newTank != \"*\" && tankState == \"*\") {\n  if ((classEnabled(\"autoassist\")||(this.autostab))) {\n    this.preventAutoassist = true\n    setTimeout(() => {\n      this.TSTankCond=\"\"\n      this.preventAutoassist = false\n    }, 3000)\n    if (this.autostab) {\n      send(`${this.canPlay?\"slam\":\"backstab\"} ${this.TSMob.split(\" \")[0]}`)\n      if (!this.canPlay && this.afk && !this.autobash) {\n        send(\"~stop\")\n      }\n    }\n    if (!classEnabled(\"autoassist\")) {\n    \treturn;\n    }\n    if (this.autofury) {\n      send(`fury ${this.TSMob.split(\" \")[0]}`)\n    } else {\n      if (!rescuato) send(\"assist \" + this.cleanupName(newTank));\n    }\n    if (this.canBash && this.autobash) {\n      setTimeout(()=>{if (this.inCombat()) send(\"bash\")},500);\n    }\n  }\n  if (this.autocast && this.TSMob!=\"*\" && this.spellOffensivo) {\n    cleanCastingTimeout();\n    const comando = this.mustMemorize ? \"recall\" : \"cast\";\n    let casta = () => {\n      if (this.TSMob==\"*\" || !this.autocast) {\n        cleanCastingTimeout();\n        return;\n      }\n      if (this.TSLag==\"-\") {\n      \tsend(`${comando} '${this.spellOffensivo}' ${this.TSMob.split(\" \")[0]}`)\n      }\n      let lag = Math.floor(this.roundtime*1.5);\n      if (this.autocleric) lag += 3000;\n      this.castTimeout = setTimeout(() => {casta()}, lag)\n    }\n    this.castTimeout = setTimeout(() => {casta()}, 0)\n  }\n} else if (newTank != \"*\" && tankState != \"*\") {\n  if (this.autobash && this.TSLag != \"+\" && this.inCombat()) {\n    if (this.TSPosizione != \"In piedi\") send(\"stand\");\n    send(\"bash\");\n    setTimeout(() => {send(\"checkAssist\")}, (this.autocleric ? 2000 : 0 + 2000))\n  }\n} else if (newTank == \"*\") {\n  cleanCastingTimeout();\n}\n",
+      "value": "if (this.disableCheckAssist == true || this.preventAutoassist == true) \n{\n  //this.preventAutoassist = false\n  if (this.autobash) {\n    delay(\"checkAssist\", (this.autocleric ? 2000 : 0 + 2000), () => {send(\"checkAssist\")})\n  }\n  return;\n}\nthis.disableCheckAssist = true;\nsetTimeout(()=>{this.disableCheckAssist=false}, 200);\n\nconst newTank = this.TSTank;\nconst tankState = this.TSTankCond;\n\nlet cleanCastingTimeout = () => {\n  if (this.castTimeout) clearTimeout(this.castTimeout);\n  this.castTimeout = 0;\n}\nif (this.autostop && tankState && tankState != \"*\" && !this.preventAutoStop && !this.isTank()) {\n  this.preventAutoStop = true;\n  this.preventAutoassist = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"~stop\");\n  delay(\"autostop1\", 4000, () => {\n    this.preventAutoassist = false\n    send(\"checkAssist\")\n  })\n  delay(\"autostop2\", 8250, () => {\n    this.preventAutoStop = false\n    send(\"checkAssist\")\n  })\n}\nlet rescuato = false;\nif (this.autorescue && newTank != \"*\" && newTank!=this.TSPersonaggio && !this.preventAutoRescue) {\n  this.preventAutoRescue = true;\n  if (this.TSPosizione!=\"In piedi\") {\n    send(\"stand\");\n  }\n  send(\"rescue \" + newTank);\n  rescuato = true;\n  setTimeout(() => {this.preventAutoRescue = false}, 4000)\n}\nif (newTank != \"*\" && tankState == \"*\") {\n  if ((classEnabled(\"autoassist\")||(this.autostab))) {\n    this.preventAutoassist = true\n    setTimeout(() => {\n      this.TSTankCond=\"\"\n      this.preventAutoassist = false\n    }, 3000)\n    if (this.autostab) {\n      if (this.usiPierce != this.canPlay) {\n        send(`${this.canPlay?\"slam\":\"backstab\"} ${this.TSMob.split(\" \")[0]}`)\n        if (!this.canPlay && this.afk && !this.autobash) {\n          send(\"~stop\")\n        }\n        return;\n      }\n    }\n    if (!classEnabled(\"autoassist\")) {\n    \treturn;\n    }\n    if (this.autofury) {\n      send(`fury ${this.TSMob.split(\" \")[0]}`)\n    } else {\n      if (!rescuato && this.cleanupName(newTank).toLowerCase() != this.TSPersonaggio.toLowerCase()) send(\"assist \" + this.cleanupName(newTank));\n    }\n    if ((this.canBash||this.canKick) && this.autobash) {\n      setTimeout(()=>{if (this.inCombat()) send(\"bash\")},500);\n    }\n    if (newTank==this.TSPersonaggio) return;\n  }\n  if (this.autocast && this.TSMob!=\"*\" && this.spellOffensivo) {\n    cleanCastingTimeout();\n    const comando = this.mustMemorize ? \"recall\" : \"cast\";\n    let casta = () => {\n      if (this.TSMob==\"*\" || !this.autocast) {\n        cleanCastingTimeout();\n        return;\n      }\n      if (this.TSLag==\"-\") {\n      \tsend(`${comando} '${this.spellOffensivo}' ${this.TSMob.split(\" \")[0]}`)\n      }\n      let lag = Math.floor(this.roundtime*1.5);\n      if (this.autocleric) lag += 3000;\n      this.castTimeout = setTimeout(() => {casta()}, lag)\n    }\n    this.castTimeout = setTimeout(() => {casta()}, 0)\n  }\n} else if (newTank != \"*\" && tankState != \"*\") {\n  if (this.autobash && this.TSLag != \"+\" && this.inCombat()) {\n    delay(\"checkAssist\", (this.autocleric ? 2000 : 0 + 2000),() => {send(\"checkAssist\")})\n    if (this.TSPosizione != \"In piedi\" && (!this.canBash && this.canKick)) {\n      send(\"springleap\");\n      return;\n    }\n    else if (this.TSPosizione != \"In piedi\" && (this.canBash)) {\n      send(\"stand\");\n    }\n    send(\"bash\");    \n  } else if (this.autobash && this.inCombat()) {\n    delay(\"checkAssist\", (this.autocleric ? 2000 : 0 + 2000),() => {send(\"checkAssist\")})\n  }\n} else if (newTank == \"*\") {\n  cleanCastingTimeout();\n}\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1390,7 +2214,7 @@
     {
       "pattern": "setup",
       "id": "",
-      "value": "const setClasses = async (v) => {\n  toggleClass(\"mage\",v && this.casttype.indexOf(\"M\")!=-1)\n  toggleClass(\"cleric\",v && this.casttype.indexOf(\"C\")!=-1)\n  toggleClass(\"druid\",v && this.casttype.indexOf(\"D\")!=-1)\n  toggleClass(\"psionic\",v && this.casttype.indexOf(\"P\")!=-1)\n  toggleClass(\"sorcerer\",v && this.mustMemorize)\n  toggleClass(\"bard\",v && this.canPlay)\n  this.mustMind = this.casttype.indexOf(\"P\")!=-1;\n  this.healtype = this.casttype.indexOf(\"C\")!=-1 ? \"C\" : this.casttype.indexOf(\"D\")!=-1 ? \"D\" : \"\";\n};\n\nconst resetSettings = () => {\n  setClasses(false);\n  delete this.strumentoPercussione;\n  delete this.strumentoCorde;\n  delete this.strumentoFiato;\n  delete this.strumentoSlam;\n  delete this.autocleric;\n  delete this.mustMind\n  delete this.canPlay\n  delete this.healtype\n  delete this.mustMind\n  delete this.mustMemorize;\n  delete this.spellOffensivo;\n  delete this.armaBlunt\n  delete this.armaSlash\n  delete this.armaPierce\n  delete this.numeroAttacchi\n  delete this.ordineArmi\n  delete this.armaPrimaria\n  delete this.armaExtra\n  delete this.zoneDaNonRimettereArma\n  delete this.scudoCold\n  delete this.scudoAcid\n  delete this.scudoEle\n  delete this.scudoFire\n  delete this.usaLuce\n  delete this.borsa\n  delete this.throwObject\n  delete this.holdItem\n  delete this.oggettoTrueSight\n  delete this.armaDigCut\n  delete this.pgTitle\n  delete this.colori\n  delete this.setupdone;\n  delete this.ImmortalTrigger\n  delete this.Immortal\n}; \n\nif ($1==\"reset\") {\n  print(\"Cancello la configurazione pg / setup.\")\n  resetSettings()\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  return\n}\n\nconst askColori = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                   [this.pgTitle ? this.pgTitle : \".\",\n                    colori || \"$c0009\",\n                   triggerEnabled(\"gagprompt\")])).results;\n\n  this.pgTitle = results[0]\n  this.colori = results[1].split(\",\")\n  const wantsCompact = toggleTrigger(\"gagprompt\",!!results[2])||triggerEnabled(\"gagprompt\")\n  \n  send(`compact ${ wantsCompact ? \"enable\" : \"disable\"}`)\n  return results\n};\n\nconst answer = (await Messagebox.Question(\n  \"Presuppongo che sei un personaggio Mortale?\\nRispondi No solamente se stai creando il profilo per un Immortale o Dio.\\n\\nPremi 'Si' per proseguire con il setup.\"\n)).result;\n\nconst correct = (condition) => {\n  return (true === (this.Immortal = this.ImmortalTrigger = !!condition));\n};\n\nif ((this.Immortal = correct(answer != \"Si\"))) {\n  const col = this.colori\n  const title = this.pgTitle\n  resetSettings()\n  this.colori = col\n  this.pgTitle = title\n  this.casttype = \"CDMP\"\n  this.healtype=\"C\"\n  this.spellOffensivo = 'disint';\n  this.zoneDaNonRimettereArma = 0\n  this.usaLuce = false\n  this.borsa = (await Messagebox.ShowInput(\"La tua borsa\",\"Che keyword usi per la tua borsa?\", this.borsa || \"borsa-ed\"+this.TSPersonaggio)).result\n  await setClasses(true);\n  this.mustMind = this.mustMemorize = false;\n  await askColori();\n  this.setupdone = this.scriptVersion;\n  this.Immortal = true;\n  this.autocleric = false;\n  this.ImmortalTrigger = true;\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  \n  return;\n}\n\nthis.ImmortalTrigger = false;\nthis.Immortal = false;\n\nconst resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\",\"Puoi Suonare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                  !!this.canPlay,\n                 this.casttype,\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.canPlay = resClassi[2]\nthis.casttype = resClassi[3].toUpperCase()\nthis.spellOffensivo = resClassi[4]\nthis.mustMemorize = resClassi[5]\n\nawait setClasses(true);\n\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nif (this.canPlay) {\n  const domandaStrumenti = (await Messagebox.ShowMultiInput(\"Configurazione Strumenti\",\n                   [\"Strumento a percussione\",\"Strumento a corde\", \"Strumento a fiato\",\"Slammi con sturmento percussione?\"],\n                   [this.strumentoPercussione ? this.strumentoPercussione : \"tamburo-ed\"+this.TSPersonaggio,\n                   this.strumentoCorde ? this.strumentoCorde : \"arpa-ed\"+this.TSPersonaggio,\n                   this.strumentoFiato ? this.strumentoFiato : \"flauto-ed\"+this.TSPersonaggio,\n                   this.strumentoSlam ? this.strumentoSlam == this.strumentoPercussione : true])).results\n\n  this.strumentoPercussione = domandaStrumenti[0]\n  this.strumentoCorde =  domandaStrumenti[1]\n  this.strumentoFiato =  domandaStrumenti[2]\n  this.strumentoSlam =  domandaStrumenti[3] ? this.strumentoPercussione : this.strumentoCorde\n}\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nawait askColori();\n\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}\nthis.initDone = false;\nsend(\"initialize\");\ndelay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n",
+      "value": "const setClasses = async (v) => {\n  toggleClass(\"mage\",v && this.casttype.indexOf(\"M\")!=-1)\n  toggleClass(\"cleric\",v && this.casttype.indexOf(\"C\")!=-1)\n  toggleClass(\"druid\",v && this.casttype.indexOf(\"D\")!=-1)\n  toggleClass(\"psionic\",v && this.casttype.indexOf(\"P\")!=-1)\n  toggleClass(\"sorcerer\",v && this.mustMemorize)\n  toggleClass(\"bard\",v && this.canPlay)\n  this.mustMind = this.casttype.indexOf(\"P\")!=-1;\n  this.healtype = this.casttype.indexOf(\"C\")!=-1 ? \"C\" : this.casttype.indexOf(\"D\")!=-1 ? \"D\" : \"\";\n};\n\nconst resetSettings = () => {\n  setClasses(false);\n  delete this.strumentoPercussione;\n  delete this.strumentoCorde;\n  delete this.strumentoFiato;\n  delete this.strumentoSlam;\n  delete this.autocleric;\n  delete this.mustMind\n  delete this.canPlay\n  delete this.healtype\n  delete this.mustMind\n  delete this.mustMemorize;\n  delete this.spellOffensivo;\n  delete this.armaBlunt\n  delete this.armaSlash\n  delete this.armaPierce\n  delete this.numeroAttacchi\n  delete this.ordineArmi\n  delete this.armaPrimaria\n  delete this.armaExtra\n  delete this.zoneDaNonRimettereArma\n  delete this.scudoCold\n  delete this.scudoAcid\n  delete this.scudoEle\n  delete this.scudoFire\n  delete this.usaLuce\n  delete this.borsa\n  delete this.throwObject\n  delete this.holdItem\n  delete this.oggettoTrueSight\n  delete this.armaDigCut\n  delete this.pgTitle\n  delete this.colori\n  delete this.setupdone;\n  delete this.ImmortalTrigger\n  delete this.Immortal\n  delete this.canBash\n  delete this.canKick\n}; \n\nif ($1==\"reset\") {\n  print(\"Cancello la configurazione pg / setup.\")\n  resetSettings()\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  return\n}\n\nconst askColori = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Il tuo title\",\"Colori con i quali parli separati da virgola\", \"Vuoi giocare in modalita' compatta (no prompt)\"],\n                   [this.pgTitle ? this.pgTitle : \".\",\n                    colori || \"$c0009\",\n                   triggerEnabled(\"gagprompt\")])).results;\n\n  this.pgTitle = results[0]\n  this.colori = results[1].split(\",\")\n  const wantsCompact = toggleTrigger(\"gagprompt\",!!results[2])||triggerEnabled(\"gagprompt\")\n  \n  send(`compact ${ wantsCompact ? \"enable\" : \"disable\"}`)\n  return results\n};\n\nconst answer = (await Messagebox.Question(\n  \"Presuppongo che sei un personaggio Mortale?\\nRispondi No solamente se stai creando il profilo per un Immortale o Dio.\\n\\nPremi 'Si' per proseguire con il setup.\"\n)).result;\n\nconst correct = (condition) => {\n  return (true === (this.Immortal = this.ImmortalTrigger = !!condition));\n};\n\nif ((this.Immortal = correct(answer != \"Si\"))) {\n  const col = this.colori\n  const title = this.pgTitle\n  resetSettings()\n  this.colori = col\n  this.pgTitle = title\n  this.casttype = \"CDMP\"\n  this.healtype=\"C\"\n  this.spellOffensivo = 'disint';\n  this.zoneDaNonRimettereArma = 0\n  this.usaLuce = false\n  this.borsa = (await Messagebox.ShowInput(\"La tua borsa\",\"Che keyword usi per la tua borsa?\", this.borsa || \"borsa-ed\"+this.TSPersonaggio)).result\n  await setClasses(true);\n  this.mustMind = this.mustMemorize = false;\n  await askColori();\n  this.setupdone = this.scriptVersion;\n  this.Immortal = true;\n  this.autocleric = false;\n  this.ImmortalTrigger = true;\n  this.initDone = false;\n  send(\"initialize\");\n  delay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n  \n  return;\n}\n\nthis.ImmortalTrigger = false;\nthis.Immortal = false;\n\nconst resClassi = (await Messagebox.ShowMultiInput(\"Configurazione Classi\",\n                 [\"Puoi Bashare?\",\"Puoi Stabbare?\",\"Puoi Suonare?\",\"Puoi Calciare?\", \"[C]l, [D]r, [M]u, [P]s (o comb)\",\"Spell offensivo\",\"Devi memmare?\"],\n                 [!!this.canBash,\n                  !!this.canStab,\n                  !!this.canPlay,\n                  !!this.canKick,\n                 this.casttype,\n                 this.spellOffensivo||\"meteor swarm\",\n                 !!this.mustMemorize])).results\n             \nthis.canBash = resClassi[0];\nthis.canStab = resClassi[1]\nthis.canPlay = resClassi[2]\nthis.canKick = resClassi[3]\nthis.casttype = resClassi[4].toUpperCase()\nthis.spellOffensivo = resClassi[5]\nthis.mustMemorize = resClassi[6]\n\nawait setClasses(true);\n\nconst resArmi = (await Messagebox.ShowMultiInput(\"Configurazione armi\",\n                 [\"Key dell'arma blunt\",\"Key dell'arma slash\", \"Key dell'arma pierce\",\"Key arma extra\",\"Num. attacchi primario\",\"Ordine cambio: 1=BPS, 2=BSP\",\"Arma Primaria (blunt/pierce/slash)\",\"ID zone dove non rimetti arma prim. (0=tutte)\"],\n                 [this.armaBlunt ? this.armaBlunt : \"blunt-ed\"+this.TSPersonaggio,\n                  this.armaSlash ? this.armaSlash : \"slash-ed\"+this.TSPersonaggio,\n                 this.armaPierce ? this.armaPierce : \"pierce-ed\"+this.TSPersonaggio,\n                 this.armaExtra ? this.armaExtra : \"scintilla-ed\"+this.TSPersonaggio,\n                 this.numeroAttacchi ? this.numeroAttacchi : \"4\",\n                 this.ordineArmi ? this.ordineArmi : \"2\",\n                 this.armaPrimaria ? this.armaPrimaria : \"blunt\",\n                 this.zoneDaNonRimettereArma ? this.zoneDaNonRimettereArma : \"\"])).results\n                 \nthis.armaBlunt = resArmi[0];\nthis.armaSlash = resArmi[1];\nthis.armaPierce = resArmi[2];\nthis.numeroAttacchi = resArmi[4];\nthis.ordineArmi = resArmi[5];\nthis.armaPrimaria = resArmi[6];\nthis.armaExtra = resArmi[3];\nthis.zoneDaNonRimettereArma = resArmi[7];\n\nif (this.canPlay) {\n  const domandaStrumenti = (await Messagebox.ShowMultiInput(\"Configurazione Strumenti\",\n                   [\"Strumento a percussione\",\"Strumento a corde\", \"Strumento a fiato\",\"Slammi con sturmento percussione?\"],\n                   [this.strumentoPercussione ? this.strumentoPercussione : \"tamburo-ed\"+this.TSPersonaggio,\n                   this.strumentoCorde ? this.strumentoCorde : \"arpa-ed\"+this.TSPersonaggio,\n                   this.strumentoFiato ? this.strumentoFiato : \"flauto-ed\"+this.TSPersonaggio,\n                   this.strumentoSlam ? this.strumentoSlam == this.strumentoPercussione : true])).results\n\n  this.strumentoPercussione = domandaStrumenti[0]\n  this.strumentoCorde =  domandaStrumenti[1]\n  this.strumentoFiato =  domandaStrumenti[2]\n  this.strumentoSlam =  domandaStrumenti[3] ? this.strumentoPercussione : this.strumentoCorde\n}\n\nconst resScudi = (await Messagebox.ShowMultiInput(\"Configurazione Scudi\",\n                 [\"Keyword Scudo Ghiaccio\",\"Keyword Scudo Acido\", \"Keyword Scudo Elettrico\",\"Keyword Scudo Fuoco\"],\n                 [this.scudoCold ? this.scudoCold : \"scudo-cold-ed\"+this.TSPersonaggio,\n                  this.scudoAcid ? this.scudoAcid : \"scudo-acid-ed\"+this.TSPersonaggio,\n                 this.scudoEle ? this.scudoEle : \"scudo-ele-ed\"+this.TSPersonaggio,\n                 this.scudoFire ? this.scudoFire : \"scudo-fire-ed\"+this.TSPersonaggio])).results\n\nthis.scudoCold = resScudi[0]\nthis.scudoAcid =  resScudi[1]\nthis.scudoEle =  resScudi[2]\nthis.scudoFire =  resScudi[3]\n\nconst resUtil = (await Messagebox.ShowMultiInput(\"Utilitarie\",\n                 [\"Usi una luce come hold?\",\"Keyword della borsa\",\"Keyword dell'oggetto shuriken\", \"Keyword dell'oggetto che tieni in mano\",\"Keyword dell'oggetto ti da' True Sight\",\"Key dell'dell'arma che usi per Dig e Cut\"],\n                 [this.usaLuce ? this.usaLuce : false,\n  \t\t\t\t\tthis.borsa ? this.borsa : \"borsa-ed\"+this.TSPersonaggio,\n                  this.throwObject ? this.throwObject : \"shuriken\",\n                 this.holdItem ? this.holdItem : \"sigillo-ed\"+this.TSPersonaggio,\n                 this.oggettoTrueSight ? this.oggettoTrueSight : \"maschera-ed\"+this.TSPersonaggio,\n                 this.armaDigCut ? this.armaDigCut : \"pugnale-ed\"+this.TSPersonaggio])).results\n\nthis.usaLuce = resUtil[0]\nthis.borsa = resUtil[1]\nthis.throwObject = resUtil[2]\nthis.holdItem = resUtil[3]\nthis.oggettoTrueSight = resUtil[4]\nthis.armaDigCut = resUtil[5]\n\nawait askColori();\n\nthis.setupdone = this.scriptVersion;\nif (this.mustMemorize) {\n  print(\"Per impostare l'Automemorize usa l'alias 'libro'.\")\n}\nthis.initDone = false;\nsend(\"initialize\");\ndelay(\"postinitialize\", 100, () => this.postInit ? this.postInit() : false)\n",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1570,7 +2394,7 @@
     {
       "pattern": "soloSettings",
       "id": "",
-      "value": "if (this.Immortal) {\n  send(\"alloff\");\n  return;\n} else \ndelay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  if (this.canPlay) send(\"autosong off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype || this.canPlay) {\n    if (!this.afk) {\n      send(\"autocleric 30\");\n    } else {\n      if (this.healtype) send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\");\n  return;\n} else \ndelay(\"grouping\",2000,()=>{\n  send(\"autosanc off\");\n  send(\"autoassist off\");\n  send(\"autobash off\");\n  send(\"autorescue off\");\n  send(\"autostab off\");\n  if (this.canPlay) send(\"autosong off\");\n  send(\"autoloot on\");\n  send(\"autocast off\");\n  send(\"autostop off\");\n  if (this.healtype || this.canPlay) {\n    if (this.afk) {\n      send(\"autocleric 70\");\n    }\n  } else {\n    send(\"autocleric 0\");\n  }\n  toggleClass(\"indietro\", false)\n});",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1582,7 +2406,7 @@
     {
       "pattern": "groupSettings",
       "id": "",
-      "value": "if (this.Immortal) {\n  send(\"alloff\")\n  return;\n} else\ndelay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab || (this.canPlay && this.holdItem != this.strumentoFiato)) {\n    send(\"autostab \" + ((this.afk)?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canPlay) {\n  \tif (this.afk) {\n      send(\"autosong on\");\n      send(\"war\");\n    }\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.healtype || this.canPlay) send(\"autocleric \" + (this.afk?\"70\":\"30\"));\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    if (!this.canPlay)\n      send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  \telse send(\"autocast off\");\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
+      "value": "if (this.Immortal) {\n  send(\"alloff\")\n  return;\n} else\ndelay(\"grouping\",2000,()=>{\n  send(\"autoassist \" + ((this.afk && (this.canBash || this.canStab))?\"on\":\"off\"));\n  if (this.canBash) send(\"autobash \" + ((this.afk && (this.canBash))?\"on\":\"off\"));\n  if (this.canStab || (this.canPlay && this.holdItem != this.strumentoFiato)) {\n    send(\"autostab \" + ((this.afk)?\"on\":\"off\"));\n    send(\"autoarmi off\");\n  \tif (this.afk) send(\"autostop on\");\n  }\n  if (this.canPlay) {\n  \tif (this.afk) {\n      send(\"autosong on\");\n      send(\"war\");\n    }\n  }\n  if (this.canBash) send(\"autorescue \" + ((this.afk && (!this.casttype))?\"on\":\"off\"));\n  send(\"autoloot off\");\n  if (this.afk && (this.healtype || this.canPlay)) send(\"autocleric 70\");\n  toggleClass(\"indietro\", true)\n  if (this.afk && !this.canStab && !this.canBash && (this.autocastSpell||this.spellOffensivo)) {\n    if (!this.canPlay)\n      send(\"autocast \" + (this.autocastSpell||this.spellOffensivo));\n  \telse send(\"autocast off\");\n  } else {\n  \tsend(\"autocast off\");\n  }\n});",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -1599,8 +2423,7 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false,
-      "script": null
+      "is_prompt": false
     },
     {
       "pattern": "^bark (.*)|^bark$",
@@ -1749,7 +2572,7 @@
     {
       "pattern": "generaFunzioni",
       "id": "",
-      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nconst evList = {}\nthis.roomEnterEvents = () => evList; \n\nthis.onRoomEnter = (r,f) => {\n  this.roomEnterEvents()[r] = f\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  if (!this.ultimaArma) {\n    if (!this.armaPrimaria || (this.usiLuce && this.holdItem)) {\n    \tthis.ultimaArma = this.holdItem;\n    } else {\n  \t\tsend(this.armaPrimaria)\n    }\n  }\n  const cambiaArma = (this.ultimaArma!=this.armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${this.ultimaArma}`)\n    send(`gb ${this.armaDigCut}`)\n    send(`~wield ${this.armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${this.armaDigCut}`)\n    send(`~${this.ultimaArma == this.holdItem ? \"hold\" : \"wield\"} ${this.ultimaArma}`)\n    send(`pb ${this.armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}\n\nconst tfunc = () => {\n  window.removeEventListener(\"touchstart\", tfunc);\n  const prev = this.usesTouch;\n  this.usesTouch = true;\n  if (this.usesTouch && !prev) {\n    print(\"Touchscreen rilevato\");\n  }\n};\nwindow.addEventListener('touchstart', tfunc);",
+      "value": "this.autoKillMobs = this.autoKillMobs || \"\"\nthis.dangerMobs = this.dangerMobs || \"karoz barbaro errante\"\n\nthis.getAutokillMobs = () => {\nreturn (this.autoKillMobs||\"\").split(\"|\").filter(v => v)\n}\n\nthis.isDangerousMob = m => {\n  return (this.dangerMobs||\"\").split(\"|\").filter(v => v).indexOf(m)>-1\n}\n\nconst evList = {}\nthis.roomEnterEvents = () => evList; \n\nthis.onRoomEnter = (r,f) => {\n  this.roomEnterEvents()[r] = f\n}\n\nthis.getAutoKillTarget = () => {\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  let target = null;\n  for (let m of mobsInRoom) {\n    if (this.isDangerousMob(m)) {\n      print(\"Ci sono mob pericolosi!\");\n      return null;\n    } else if (this.getAutokillMobs().indexOf(m)>-1) {\n      target = m;\n    }\n  }\n  //if (target) print(\"Target: \" + target)\n  return target;\n}\n\nthis.setupAutoKillList = () => {\n  let toKill = this.getAutokillMobs();\n  const mobsInRoom = (this.Mobs||\"\").split(\"|\").filter(v => v)\n  for (let m of mobsInRoom) {\n    const toKillindex = toKill.indexOf(m);\n    if (toKillindex>-1) {\n    \tprint(link(\"Rimuovi \" + m + \" da AutoKill\", () => {\n          toKill.splice(toKillindex, 1)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Rimosso \" + m+ \" da AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    } else {\n        print(link(\"Aggiungi \" + m + \" a AutoKill\", () => {\n          toKill.push(m)\n          toKill = [...new Set(toKill)]; // unique\n          print(\"Aggiungo \" + m + \" a AutoKill\");\n          this.autoKillMobs = toKill.join(\"|\")\n        }))\n    }\n  }\n}\nthis.pgInGruppo = function(x) {\n  if (!this.Gruppo) return [this.TSPersonaggio];\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (x) {\n    let found = (k.find((v) => v.toLowerCase().startsWith(x.toLowerCase())));\n    if (found) return [...found]; else return [];\n  }\n  else \n  {\n    return k;\n  }\n}\nthis.digCut = function(command, key) {\n  if (!this.ultimaArma) {\n    if (!this.armaPrimaria || (this.usiLuce && this.holdItem)) {\n    \tthis.ultimaArma = this.holdItem;\n    } else {\n  \t\tsend(this.armaPrimaria)\n    }\n  }\n  const cambiaArma = (this.ultimaArma!=this.armaDigCut)\n  if (cambiaArma) {\n    send(`rem ${this.ultimaArma}`)\n    send(`gb ${this.armaDigCut}`)\n    send(`~wield ${this.armaDigCut}`)\n  }\n  send(`~${command} ${key}`)\n  if (cambiaArma) {\n    send(`rem ${this.armaDigCut}`)\n    send(`~${this.ultimaArma == this.holdItem ? \"hold\" : \"wield\"} ${this.ultimaArma}`)\n    send(`pb ${this.armaDigCut}`)\n  }\n}\nthis.isCapogruppo = function(x) {\n  if (!this.Gruppo) return false;\n  let gruppo = JSON.parse(this.Gruppo);\n  let k = Object.keys(gruppo).slice(2);\n  if (!x) {\n    x = this.TSPersonaggio;\n  } else {\n    x = x.split(\" \")[0];\n  }\n  if (k && k[0]) {\n    return k[0].toLowerCase().startsWith(x.toLowerCase())\n  }\n  return false;\n}\n\nthis.diciStatus = function (str) {\n  print(str);\n  if (this.pgInGruppo().length > 1 && (this.afk || this.parlaStato)) {\n    send(\"gtTrigger \" + str);\n  }\n  this.parlaStato = false;\n}\nthis.colorizeHp = function(num, str) {\n  if (num > 95) {\n    return color(str, \"lightgray\");\n  } else if (num > 90) {\n    return color(str, \"green\");\n  } else if (num > 70) {\n    return color(str, \"lightgreen\");\n  } else if (num > 40) {\n    return color(str, \"yellow\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"orange\", null, true, true, false);\n  } else {\n    return color(str, \"red\", null, true, true, true);\n  }\n}\n\nthis.colorizeMana = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"blue\");\n  } else if (num > 40) {\n    return color(str, \"lightblue\", null, true, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightblue\", null, true, true, false);\n  } else {\n    return color(str, \"lightblue\", null, true, true, true);\n  }\n}\n\nthis.colorizeMov = function(num, str) {\n  if (num > 90) {\n    return color(str, \"lightgray\");\n  } else if (num > 70) {\n    return color(str, \"gray\");\n  } else if (num > 40) {\n    return color(str, \"gray\", null, false, false, false);\n  } else if (num > 20) {\n    return color(str, \"lightgray\", null, true, false, false);\n  } else {\n    return color(str, \"lightgray\", null, true, false, true);\n  }\n}\nthis.colorizeBool = function(v, str) {\n  if (!v) {\n    return color(str, \"yellow\", null, true, false, true);\n  } else {\n    return color(str, \"white\", null, true, false, false);\n  }\n}\nthis.isTank = (pg) => {\n  if (!pg) pg = this.TSPersonaggio;\n  return this.TSTank.toLowerCase()==pg.split()[0].toLowerCase();\n}\n\nthis.inCombat = () => {\n  return this.TSMobCond!=\"*\";\n}\nthis.coloraComunicazione = (str) => {\n  let words = str.split(\" \");\n  let colori = this.colori ? (typeof this.colori == 'string' ? [this.colori] : this.colori) : [\"$c0009\"];\n  for (let i = 0; i < Math.min(words.length,colori.length); i++) {\n    words[i] = colori[i]+words[i];\n  }\n  return words.join(\" \");  \n}\nthis.titleCase = function(txt) {\n  if (!txt) return \"\";\n  return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();\n}\nthis.cleanupName = (tank) => {\n  // per i monsum / charm\n  return tank.replace(/^(un'|l'|il |lo |un |una |uno |la |the )/gi, \"\")\n    .trim()\n    .split(' ')[0];\n}\nthis.limitaLista = (lista) => {\n  if (!lista) return;\n  if (lista.size) {\n    const surplus = lista.size - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.delete(lista.keys().next)\n    }\n  } else if (lista.length) {\n    const surplus = lista.length - 600;\n    for (let i = 0; i < surplus; i++) {\n      lista.splice(0, 1)\n    }\n  }\n}\nthis.stat = (tipo, quantita) => {\n  if (!this[\"lista\"+tipo] || !this[\"lista\"+tipo].set) {\n    this[\"lista\"+tipo] = new Map();\n  }\n  const lista = this[\"lista\"+tipo];\n  lista.set(new Date(), quantita);\n  this.limitaLista(lista);\n}\n\nconst tfunc = () => {\n  window.removeEventListener(\"touchstart\", tfunc);\n  const prev = this.usesTouch;\n  this.usesTouch = true;\n  if (this.usesTouch && !prev) {\n    print(\"Touchscreen rilevato\");\n  }\n};\nwindow.addEventListener('touchstart', tfunc);",
       "regex": false,
       "is_script": true,
       "class": "config",
@@ -2077,8 +2900,7 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false,
-      "script": null
+      "is_prompt": false
     },
     {
       "pattern": "sr",
@@ -2411,8 +3233,7 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false,
-      "script": null
+      "is_prompt": false
     },
     {
       "pattern": "ar",
@@ -2439,7 +3260,7 @@
     {
       "pattern": "ordinaborsa",
       "id": "",
-      "value": "// gemme\nsend(\"gb all.gemma\")\nsend(\"pb all.gemma-scrigno\")\nsend(\"gb sacca-alchimisti\")\nfor(let i = 0; i < 10; i++) {\n  send(\"put gemma sacca-alchimisti\");\n}\nsend(\"pb sacca-alchimisti\")\n\n// gocce\nsend(\"pb all.goccia\")\nsend(\"gb scrigno-goccia\")\nsend(\"gb all.goccia\")\nfor(let i = 0; i < 6; i++) {\n  send(\"put goccia scrigno-goccia\");\n}\nsend(\"pb scrigno-goccia\")\nsend(\"gb cesto-foglie\")\nsend(\"put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto\")\nsend(\"pb cesto-foglie\")\n\n// cristalli\ndelay(\"ordina\",13000,()=>{\n  send(\"pb all.cristallo\")\n  let cristalli = \"forza|vita|difesa|concentrazione|spirito|salvezza|rigenerazione|precisione|potere|salute\".split(\"|\")\n\n  let ordina = (array) => {\n    if (!array) return;\n    let cris = array[0];\n    if (!cris) {\n      send(\"echo $c4011Ordinamento borsa completato.$c0007\")\n      return;\n    }\n    send(\"gb all.scrigno-cristallo-\"+cris);\n    send(\"gb all.cristallo-\"+cris);\n    for(let i = 0; i < 10; i++) {\n      send(\"put cristallo-\"+cris+\" scrigno-cristallo-\"+cris);\n    }\n    send(\"pb all.scrigno-cristallo-\"+cris);\n    array.splice(0,1)\n    delay(\"ordina\",5000,()=>ordina(array));\n  }\n\n  ordina(cristalli);\n});",
+      "value": "let func = (instash) => {\n  // gemme\n  send(\"gb all.gemma\")\n  send(\"pb all.gemma-scrigno\")\n  send(`${instash?\"unstash\":\"gb\"} sacca-alchimisti`)\n  for(let i = 0; i < 10; i++) {\n    send(\"put gemma sacca-alchimisti\");\n  }\n  send(`${instash?\"stash\":\"pb\"} sacca-alchimisti`)\n\n  // gocce\n  send(\"pb all.goccia\")\n  send(`${instash?\"unstash\":\"gb\"} scrigno-goccia`)\n  send(\"gb all.goccia\")\n  for(let i = 0; i < 6; i++) {\n    send(\"put goccia scrigno-goccia\");\n  }\n  send(`${instash?\"stash\":\"pb\"} scrigno-goccia`)\n  \n  // rami\n  send(\"gb all.ramo\")\n  send(`${instash?\"unstash\":\"gb\"} cesto-foglie`)\n  send(\"put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto;put ramo cesto\")\n  send(`${instash?\"stash\":\"pb\"} cesto-foglie`)\n\n  // cristalli\n  delay(\"ordina\",14000,()=>{\n    send(\"pb all.cristallo\")\n    let cristalli = \"forza|vita|difesa|concentrazione|spirito|salvezza|rigenerazione|precisione|potere|salute|ispirazione\".split(\"|\")\n\n    let ordina = (array) => {\n      if (!array) return;\n      let cris = array[0];\n      if (!cris) {\n        send(\"echo $c4011Ordinamento borsa completato.$c0007\")\n        return;\n      }\n      send(`${instash?\"unstash\":\"gb\"} scrigno-cristallo-`+cris);\n      send(\"gb all.cristallo-\"+cris);\n      for(let i = 0; i < 10; i++) {\n        send(\"put cristallo-\"+cris+\" scrigno-cristallo-\"+cris);\n      }\n      send(`${instash?\"stash\":\"pb\"} scrigno-cristallo-`+cris);\n      array.splice(0,1)\n      delay(\"ordina\",5000,()=>ordina(array));\n    }\n\n    ordina(cristalli);\n  });\n}\nconst res = await Messagebox.ShowWithButtons(\"Ordina gemme, rami e cristalli\", \"Devi avere Scrigni per ogni cristallo, Cesto per rami e Sacca alchimisti.\\nTieni i contenitori in stash? (SI)\\nO in borsa? (NO)\", \"SI\", \"NO\")\nfunc(res.button == 1)",
       "regex": false,
       "is_script": true,
       "class": "util",
@@ -2451,23 +3272,25 @@
     {
       "pattern": "^fixxa ?(.+)?$",
       "id": "",
-      "value": "if (match && match[1]) {\n  send(\"tell \"+match[1]+\" (trigger) Mi preparo a riparare l'eq su di te dopo il lag del True sight...\")\n}\nlet watchLag = 7\nsend(\"wear all\");\nif (this.healtype) {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  send(\"ts\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n} else {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  watchLag = 17\n  send(\"watch\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n}\ndelay(\"remeq\", watchLag*1000, ()=>{\n  toggleClass(\"fixxa\",true)\n  this.oggettiRovinati = [];\n  send(\"eq\");\n  delay(\"remeq\", 2000, ()=>{\n    toggleClass(\"fixxa\",false)\n  \tsend(\"oggettiRovinati \"+(match&&match[1]?match[1]:\"\"));\n  });\n});",
+      "value": "if (match && match[1]) {\n  send(\"tell \"+match[1]+\" (trigger) Ti uso per aggiustarmi l'equipaggiamento :-)\")\n}\nlet watchLag = 0.5 //7\nsend(\"wear all\");\n\nif (false) { // non serve piu\nif (this.healtype) {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  send(\"ts\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n} else {\n  if (this.oggettoTrueSight) {send(\"rem \"+this.oggettoTrueSight)}\n  watchLag = 17\n  send(\"watch\");\n  if (this.oggettoTrueSight) {send(\"wear \"+this.oggettoTrueSight)}\n}\n}\n\ndelay(\"remeq\", watchLag*1000, ()=>{\n  toggleClass(\"fixxa\",true)\n  this.oggettiRovinati = [];\n  send(\"eq\");\n  delay(\"remeq\", 2000, ()=>{\n    toggleClass(\"fixxa\",false)\n  \tsend(\"oggettiRovinati \"+(match&&match[1]?match[1]:\"\"));\n  });\n});",
       "regex": true,
       "is_script": true,
       "class": "util",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
       "pattern": "^oggettiRovinati ?(.+)?$",
       "id": "",
-      "value": "let repairer = (match && match[1] ? match[1] : \"\").trim();\nthis.oggettiRovinati = this.oggettiRovinati.reverse();\n\nfor (let ogg of this.oggettiRovinati) {\n  if (!ogg) continue;\n  send(\"rem \"+ogg);\n  if (!repairer) {\n    send(\"repair ed\"+this.TSPersonaggio);\n  }\n}\n\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Inizio a riparare, ti avverto quando ho finito...\");\n  for (let ogg of this.oggettiRovinati) {\n    if (!ogg) continue;\n    send(\"fix ed\"+this.TSPersonaggio + \" \" + repairer);\n    send(\"wear ed\"+this.TSPersonaggio);\n  }\n}\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Finito grazie\");\n}\n\n",
+      "value": "let repairer = (match && match[1] ? match[1] : \"\").trim();\nthis.oggettiRovinati = this.oggettiRovinati.reverse();\n\nfor (let ogg of this.oggettiRovinati) {\n  if (!ogg) continue;\n  //send(\"rem \"+ogg);\n  if (!repairer) {\n    send(\"fix \"+ogg+ \".ed\" + this.TSPersonaggio);\n  }\n}\n\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Inizio a riparare, ti avverto quando ho finito...\");\n  for (let ogg of this.oggettiRovinati) {\n    if (!ogg) continue;\n    send(\"fix \"+ogg+ \".ed\"+this.TSPersonaggio + \" \" + repairer);\n    //send(\"wear ed\"+this.TSPersonaggio);\n  }\n}\nif (repairer) {\n  send(\"tell \"+repairer+\" (trigger) Finito. Grazie!\");\n}\n\n",
       "regex": true,
       "is_script": true,
       "class": "util",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2550,12 +3373,13 @@
     {
       "pattern": "finememorize",
       "id": "",
-      "value": "if (this.TSPosizione!=\"In piedi\") send(\"stand\")\nif (!this.memorizing) return;\nif (this.spellMemmati) {\n  for\t(let s of Object.keys(this.memorizing)) {\n    if (!this.spellMemmati[s]) this.spellMemmati[s]=0;\n    this.spellMemmati[s] += this.memorizing[s];\n  }\n}\nthis.memorizing=null;",
+      "value": "if (this.TSPosizione!=\"In piedi\" && this.finito_memmare = true) \n{\n  send(\"stand\")\n}\nthis.finito_memmare = false;\nif (!this.memorizing) return;\nif (this.spellMemmati) {\n  for\t(let s of Object.keys(this.memorizing)) {\n    if (!this.spellMemmati[s]) this.spellMemmati[s]=0;\n    this.spellMemmati[s] += this.memorizing[s];\n  }\n}\nthis.memorizing=null;",
       "regex": false,
       "is_script": true,
       "class": "sorcerer",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2730,9 +3554,10 @@
       "value": "quest request",
       "regex": false,
       "is_script": false,
-      "class": "questor",
+      "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2741,9 +3566,10 @@
       "value": "quest complete",
       "regex": false,
       "is_script": false,
-      "class": "questor",
+      "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2828,12 +3654,13 @@
     {
       "pattern": "look",
       "id": "",
-      "value": "this.Mobs = \"\"\nsend(\"~look\")",
+      "value": "this.Mobs = \"\"\nsend(\"~look\" + (($1) ? (\" \" + ($1)) : \"\"))",
       "regex": false,
       "is_script": true,
       "class": "",
       "enabled": true,
       "is_prompt": false,
+      "shortcut": "",
       "script": null
     },
     {
@@ -2884,7 +3711,7 @@
     {
       "pattern": "^(portal|tran|transport) ?(.*)$",
       "id": "",
-      "value": "const spell = match[1] == \"portal\" ? \"portal-v-p\" : \"tran-v-p\";\nconst parametro = (match[2] || null)\nconst comandi = {\n    1: () => send(\"cast \" + spell + \" Vertus\"),\n\t2: () => send(\"cast \" + spell + \" Schill\"),\n\t3: () => send(\"cast \" + spell + \" Reddie\"),\n\t4: () => send(\"cast \" + spell + \" Ghimm\"),\n\t5: () => send(\"cast \" + spell + \" Ciuffofoglio\"),\n\t6: () => send(\"cast \" + spell + \" Mythris\"),\n\t7: () => send(\"cast \" + spell + \" Odliw\"),\n\t8: () => send(\"cast \" + spell + \" Arion\"),\t\n\t9: () => send(\"cast \" + spell + \" Lorina\"),\n\t10: () => send(\"cast \" + spell + \" Andrew\"),\n\t11: () => send(\"cast \" + spell + \" Errimir\"),\n\t12: () => send(\"cast \" + spell + \" Hansi\"),\n\t13: () => send(\"cast \" + spell + \" Limoni\"),\n\t14: () => send(\"cast \" + spell + \" Eloise\"),\n\t15: () => send(\"cast \" + spell + \" Bambo\"),\n\t16: () => send(\"cast \" + spell + \" Radix\"),\n\t17: () => send(\"cast \" + spell + \" Melluyn\"),\n\t18: () => send(\"cast \" + spell + \" Sagi\"),\n\t19: () => send(\"cast \" + spell + \" Udiek\"),\n\t20: () => send(\"cast \" + spell + \" Wit\"),\t\n\t21: () => send(\"cast \" + spell + \" Lis\"),\n\t22: () => send(\"cast \" + spell + \" Brian\"),\n\t23: () => send(\"cast \" + spell + \" Verdorato\"),\n\t24: () => send(\"cast \" + spell + \" Kum\"),\n\t25: () => send(\"cast \" + spell + \" Lawandino\"),\n\t26: () => send(\"cast \" + spell + \" Sequoia\"),\t\n}\n\nif (parametro) { \n  \n  const comando = parseInt(parametro)\n  if (comando > 0 && comandi[comando]) {\n    // abbiamo il numero come parametro, esegui comando associato\n    comandi[comando]()\n  } else if (comando > 0 && !comandi[comando]) {\n    print(\"Non esiste quel numero di albero!\")\n  } else {\n    send(\"cast \" + spell + \" \" + parametro)\n  }\n  return // non ci serve la lista sotto se diamo parametro\n}\n\nprint(color(\"Portal/Transport via alberi druidici\", \"green\"))\nprint(\"Usa portal numero, oppure portal albero o click sul link.\\n\")\n\nprint(color(\"  1. Foresta di Haon D'Or: \", \"yellow\") + color(link(\"Vertus\", () => comandi[1]()),\"green\") )\nprint(color(\"  2. Foresta di Krall: \", \"yellow\") + color(link(\"Schill\", () => comandi[2]()),\"green\") )\nprint(color(\"  3. Foresta di Rhowyn: \", \"yellow\") + color(link(\"Reddie\", () => comandi[3]()),\"green\") )\nprint(color(\"  4. Foresta di Mirkwood: \", \"yellow\") + color(link(\"Ghimm\", () => comandi[4]()),\"green\") )\nprint(color(\"  5. Foresta di Isengard: \", \"yellow\") + color(link(\"Ciuffofoglio\", () => comandi[5]()),\"green\") )\nprint(color(\"  6. Foresta di Avalon: \", \"yellow\") + color(link(\"Mythris\", () => comandi[6]()),\"green\") )\nprint(color(\"  7. Foresta di Uhmea: \", \"yellow\") + color(link(\"Odliw\", () => comandi[7]()),\"green\") )\nprint(color(\"  8. Foresta di Darkenwood: \", \"yellow\") + color(link(\"Arion\", () => comandi[8]()),\"green\") )\nprint(color(\"  9. Bosco dei Druidi: \", \"yellow\") + color(link(\"Lorina\", () => comandi[9]()),\"green\") )\nprint(color(\" 10. Scacchiera: \", \"yellow\") + color(link(\"Andrew\", () => comandi[10]()),\"green\") )\nprint(color(\" 11. Montagne Orientali: \", \"yellow\") + color(link(\"Errimir\", () => comandi[11]()),\"green\") )\nprint(color(\" 12. Ninja: \", \"yellow\") + color(link(\"Hansi\", () => comandi[12]()),\"green\") )\nprint(color(\" 13. Camelot: \", \"yellow\") + color(link(\"Limoni\", () => comandi[13]()),\"green\") )\nprint(color(\" 14. Roo (mondo capovolto): \", \"yellow\") + color(link(\"Eloise\", () => comandi[14]()),\"green\") )\nprint(color(\" 15. Oasi nel Deserto: \", \"yellow\") + color(link(\"Bambo\", () => comandi[15]()),\"green\") )\nprint(color(\" 16. Castello di Tricksty: \", \"yellow\") + color(link(\"Radix\", () => comandi[16]()),\"green\") )\nprint(color(\" 17. Gallarcity: \", \"yellow\") + color(link(\"Melluyn\", () => comandi[17]()),\"green\") )\nprint(color(\" 18. Mordilnia: \", \"yellow\") + color(link(\"Sagi\", () => comandi[18]()),\"green\") )\nprint(color(\" 19. Skexie: \", \"yellow\") + color(link(\"Udiek\", () => comandi[19]()),\"green\") )\nprint(color(\" 20. Comp: \", \"yellow\") + color(link(\"Wit\", () => comandi[20]()),\"green\") )\nprint(color(\" 21. Albero di Lis: \", \"yellow\") + color(link(\"Lis\", () => comandi[21]()),\"green\") )\nprint(color(\" 22. Valle dei Maghi: \", \"yellow\") + color(link(\"Brian\", () => comandi[22]()),\"green\") )\nprint(color(\" 23. Skyrim: \", \"yellow\") + color(link(\"Verdorato\", () => comandi[23]()),\"green\") )\nprint(color(\" 24. Gilda degli Eroi: \", \"yellow\") + color(link(\"Kum\", () => comandi[24]()),\"green\") )\nprint(color(\" 25. Gilda Dark: \", \"yellow\") + color(link(\"Lawandino\", () => comandi[25]()),\"green\") )\nprint(color(\" 26. Nevi Eterne: \", \"yellow\") + color(link(\"Sequoia\", () => comandi[26]()),\"green\") )\n\nprint(\"\\n\")",
+      "value": "const spell = match[1] == \"portal\" ? \"portal-v-p\" : \"tran-v-p\";\nconst parametro = (match[2] || null)\nconst comandi = {\n    1: () => send(\"cast \" + spell + \" Vertus\"),\n\t2: () => send(\"cast \" + spell + \" Schill\"),\n\t3: () => send(\"cast \" + spell + \" Reddie\"),\n\t4: () => send(\"cast \" + spell + \" Ghimm\"),\n\t5: () => send(\"cast \" + spell + \" Ciuffofoglio\"),\n\t6: () => send(\"cast \" + spell + \" Mythris\"),\n\t7: () => send(\"cast \" + spell + \" Odliw\"),\n\t8: () => send(\"cast \" + spell + \" Arion\"),\t\n\t9: () => send(\"cast \" + spell + \" Lorina\"),\n\t10: () => send(\"cast \" + spell + \" Andrew\"),\n\t11: () => send(\"cast \" + spell + \" Errimir\"),\n\t12: () => send(\"cast \" + spell + \" Hansi\"),\n\t13: () => send(\"cast \" + spell + \" Limoni\"),\n\t14: () => send(\"cast \" + spell + \" Eloise\"),\n\t15: () => send(\"cast \" + spell + \" Bambo\"),\n\t16: () => send(\"cast \" + spell + \" Radix\"),\n\t17: () => send(\"cast \" + spell + \" Melluyn\"),\n\t18: () => send(\"cast \" + spell + \" Sagi\"),\n\t19: () => send(\"cast \" + spell + \" Udiek\"),\n\t20: () => send(\"cast \" + spell + \" Wit\"),\t\n\t21: () => send(\"cast \" + spell + \" Lis\"),\n\t22: () => send(\"cast \" + spell + \" Brian\"),\n\t23: () => send(\"cast \" + spell + \" Verdorato\"),\n\t24: () => send(\"cast \" + spell + \" Kum\"),\n\t25: () => send(\"cast \" + spell + \" Lawandino\"),\n}\n\nif (parametro) { \n  \n  const comando = parseInt(parametro)\n  if (comando > 0 && comandi[comando]) {\n    // abbiamo il numero come parametro, esegui comando associato\n    comandi[comando]()\n  } else if (comando > 0 && !comandi[comando]) {\n    print(\"Non esiste quel numero di albero!\")\n  } else {\n    send(\"cast \" + spell + \" \" + parametro)\n  }\n  return // non ci serve la lista sotto se diamo parametro\n}\n\nprint(color(\"Portal/Transport via alberi druidici\", \"green\"))\nprint(\"Usa portal numero, oppure portal albero o click sul link.\\n\")\n\nprint(color(\"  1. Foresta di Haon D'Or: \", \"yellow\") + color(link(\"Vertus\", () => comandi[1]()),\"green\") )\nprint(color(\"  2. Foresta di Krall: \", \"yellow\") + color(link(\"Schill\", () => comandi[2]()),\"green\") )\nprint(color(\"  3. Foresta di Rhowyn: \", \"yellow\") + color(link(\"Reddie\", () => comandi[3]()),\"green\") )\nprint(color(\"  4. Foresta di Mirkwood: \", \"yellow\") + color(link(\"Ghimm\", () => comandi[4]()),\"green\") )\nprint(color(\"  5. Foresta di Isengard: \", \"yellow\") + color(link(\"Ciuffofoglio\", () => comandi[5]()),\"green\") )\nprint(color(\"  6. Foresta di Avalon: \", \"yellow\") + color(link(\"Mythris\", () => comandi[6]()),\"green\") )\nprint(color(\"  7. Foresta di Uhmea: \", \"yellow\") + color(link(\"Odliw\", () => comandi[7]()),\"green\") )\nprint(color(\"  8. Foresta di Darkenwood: \", \"yellow\") + color(link(\"Arion\", () => comandi[8]()),\"green\") )\nprint(color(\"  9. Bosco dei Druidi: \", \"yellow\") + color(link(\"Lorina\", () => comandi[9]()),\"green\") )\nprint(color(\" 10. Scacchiera: \", \"yellow\") + color(link(\"Andrew\", () => comandi[10]()),\"green\") )\nprint(color(\" 11. Montagne Orientali: \", \"yellow\") + color(link(\"Errimir\", () => comandi[11]()),\"green\") )\nprint(color(\" 12. Ninja: \", \"yellow\") + color(link(\"Hansi\", () => comandi[12]()),\"green\") )\nprint(color(\" 13. Camelot: \", \"yellow\") + color(link(\"Limoni\", () => comandi[13]()),\"green\") )\nprint(color(\" 14. Roo (mondo capovolto): \", \"yellow\") + color(link(\"Eloise\", () => comandi[14]()),\"green\") )\nprint(color(\" 15. Oasi nel Deserto: \", \"yellow\") + color(link(\"Bambo\", () => comandi[15]()),\"green\") )\nprint(color(\" 16. Castello di Tricksty: \", \"yellow\") + color(link(\"Radix\", () => comandi[16]()),\"green\") )\nprint(color(\" 17. Gallarcity: \", \"yellow\") + color(link(\"Melluyn\", () => comandi[17]()),\"green\") )\nprint(color(\" 18. Mordilnia: \", \"yellow\") + color(link(\"Sagi\", () => comandi[18]()),\"green\") )\nprint(color(\" 19. Skexie: \", \"yellow\") + color(link(\"Udiek\", () => comandi[19]()),\"green\") )\nprint(color(\" 20. Comp: \", \"yellow\") + color(link(\"Wit\", () => comandi[20]()),\"green\") )\nprint(color(\" 21. Albero di Lis: \", \"yellow\") + color(link(\"Lis\", () => comandi[21]()),\"green\") )\nprint(color(\" 22. Valle dei Maghi: \", \"yellow\") + color(link(\"Brian\", () => comandi[22]()),\"green\") )\nprint(color(\" 23. Skyrim: \", \"yellow\") + color(link(\"Verdorato\", () => comandi[23]()),\"green\") )\nprint(color(\" 24. Gilda degli Eroi: \", \"yellow\") + color(link(\"Kum\", () => comandi[24]()),\"green\") )\nprint(color(\" 25. Gilda Dark: \", \"yellow\") + color(link(\"Lawandino\", () => comandi[25]()),\"green\") )\nprint(color(\" 26. Nevi Eterne: \", \"yellow\") + color(link(\"Sequoia\", () => comandi[26]()),\"green\") )\n\nprint(\"\\n\")",
       "regex": true,
       "is_script": true,
       "class": "druid",
@@ -3120,6 +3947,18 @@
       "is_prompt": false,
       "shortcut": "",
       "script": null
+    },
+    {
+      "pattern": "^(bash|bas|kick) ?(.+)?",
+      "id": "",
+      "value": "const param = ($2) ? ($2) : \"\"\nsend(\"~kick \" + param)",
+      "regex": true,
+      "is_script": true,
+      "class": "monk",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
     }
   ],
   "classes": [
@@ -3148,7 +3987,7 @@
       "fight",
       {
         "name": "fight",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -3169,28 +4008,28 @@
       "autobash",
       {
         "name": "autobash",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autologin",
       {
         "name": "autologin",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autorescue",
       {
         "name": "autorescue",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
       "autoarmi",
       {
         "name": "autoarmi",
-        "enabled": true
+        "enabled": false
       }
     ],
     [
@@ -3267,7 +4106,7 @@
       "automemorize",
       {
         "name": "automemorize",
-        "enabled": false
+        "enabled": true
       }
     ],
     [
@@ -3295,10 +4134,74 @@
       "selfshield",
       {
         "name": "selfshield",
+        "enabled": false
+      }
+    ],
+    [
+      "login",
+      {
+        "name": "login",
         "enabled": true
+      }
+    ],
+    [
+      "bard",
+      {
+        "name": "bard",
+        "enabled": false
+      }
+    ],
+    [
+      "autosong",
+      {
+        "name": "autosong",
+        "enabled": false
+      }
+    ],
+    [
+      "autoinspire",
+      {
+        "name": "autoinspire",
+        "enabled": false
+      }
+    ],
+    [
+      "util",
+      {
+        "name": "util",
+        "enabled": true
+      }
+    ],
+    [
+      "thief",
+      {
+        "name": "thief",
+        "enabled": false
+      }
+    ],
+    [
+      "autokill",
+      {
+        "name": "autokill",
+        "enabled": false
+      }
+    ],
+    [
+      "afk",
+      {
+        "name": "afk",
+        "enabled": false
+      }
+    ],
+    [
+      "immortal",
+      {
+        "name": "immortal",
+        "enabled": false
       }
     ]
   ],
   "triggersEnabled": true,
-  "aliasesEnabled": true
+  "aliasesEnabled": true,
+  "soundsEnabled": true
 }
