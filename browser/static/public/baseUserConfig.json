@@ -1,6 +1,6 @@
 {
-  "version": 17,
-  "versionMessage": "Aggiunto autokick per monk e corretto vari errori in assist e restab",
+  "version": 18,
+  "versionMessage": "Aggiunto delle script per gli identify (testing)",
   "requiresClientMajor": 1,
   "requiresClientMinor": 3,
   "requiresClientRevision": 3,
@@ -37,7 +37,7 @@
       {
         "Name": "dangerMobs",
         "Class": "",
-        "Value": "karoz barbaro errante|veterani"
+        "Value": "karoz barbaro errante"
       }
     ],
     [
@@ -49,43 +49,11 @@
       }
     ],
     [
-      "autofuryButton",
-      {
-        "Name": "autofuryButton",
-        "Class": "",
-        "Value": "AutoFury"
-      }
-    ],
-    [
-      "renting",
-      {
-        "Name": "renting",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "ImmortalTrigger",
-      {
-        "Name": "ImmortalTrigger",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
       "roundtime",
       {
         "Name": "roundtime",
         "Class": "",
         "Value": 4000
-      }
-    ],
-    [
-      "initDone",
-      {
-        "Name": "initDone",
-        "Class": "",
-        "Value": true
       }
     ],
     [
@@ -97,715 +65,11 @@
       }
     ],
     [
-      "scriptVersion",
-      {
-        "Name": "scriptVersion",
-        "Class": "",
-        "Value": 8
-      }
-    ],
-    [
-      "disableCheckAssist",
-      {
-        "Name": "disableCheckAssist",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "preventAutoStop",
-      {
-        "Name": "preventAutoStop",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "preventAutoRescue",
-      {
-        "Name": "preventAutoRescue",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "_stat_pqsess",
-      {
-        "Name": "_stat_pqsess",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_pqh",
-      {
-        "Name": "_stat_pqh",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_pq5m",
-      {
-        "Name": "_stat_pq5m",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_pq15m",
-      {
-        "Name": "_stat_pq15m",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_pq1h",
-      {
-        "Name": "_stat_pq1h",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_xpsess",
-      {
-        "Name": "_stat_xpsess",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_xph",
-      {
-        "Name": "_stat_xph",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_xp5m",
-      {
-        "Name": "_stat_xp5m",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_xp15m",
-      {
-        "Name": "_stat_xp15m",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "_stat_xp1h",
-      {
-        "Name": "_stat_xp1h",
-        "Class": "",
-        "Value": 0
-      }
-    ],
-    [
-      "usiBlunt",
-      {
-        "Name": "usiBlunt",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiSlash",
-      {
-        "Name": "usiSlash",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiPierce",
-      {
-        "Name": "usiPierce",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiImmuAcid",
-      {
-        "Name": "usiImmuAcid",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiImmuCold",
-      {
-        "Name": "usiImmuCold",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiImmuEle",
-      {
-        "Name": "usiImmuEle",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiImmuFire",
-      {
-        "Name": "usiImmuFire",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "usiExtra",
-      {
-        "Name": "usiExtra",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "RoomName",
-      {
-        "Name": "RoomName",
-        "Class": "",
-        "Value": "La Reception"
-      }
-    ],
-    [
-      "TSRoom",
-      {
-        "Name": "TSRoom",
-        "Class": "",
-        "Value": "3008"
-      }
-    ],
-    [
-      "RoomDesc",
-      {
-        "Name": "RoomDesc",
-        "Class": "",
-        "Value": "Ti trovi alla reception della locanda. Delle scale portano verso\n\rl'ingresso, mentre ad est si trova l'ufficio dello scriba per scrivere,\n\rspedire e smistare le lettere. C'e' un piccolo cartello appeso al muro.\n\rGuardandoti intorno vedi molta pulizia e tanto ordine, nonostante\n\rdurante il giorno attraversino questa stanza centinaia di eroi.\n\r"
-      }
-    ],
-    [
-      "Exits",
-      {
-        "Name": "Exits",
-        "Class": "",
-        "Value": "east|down"
-      }
-    ],
-    [
-      "RoomExit",
-      {
-        "Name": "RoomExit",
-        "Class": "",
-        "Value": "Basso"
-      }
-    ],
-    [
-      "TSHp",
-      {
-        "Name": "TSHp",
-        "Class": "",
-        "Value": "18"
-      }
-    ],
-    [
-      "TSMana",
-      {
-        "Name": "TSMana",
-        "Class": "",
-        "Value": "124"
-      }
-    ],
-    [
-      "TSMov",
-      {
-        "Name": "TSMov",
-        "Class": "",
-        "Value": "118"
-      }
-    ],
-    [
-      "TSXptoLevel",
-      {
-        "Name": "TSXptoLevel",
-        "Class": "",
-        "Value": "2189"
-      }
-    ],
-    [
-      "pauseAutocleric",
-      {
-        "Name": "pauseAutocleric",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "preventAntispalm",
-      {
-        "Name": "preventAntispalm",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "prev_room",
-      {
-        "Name": "prev_room",
-        "Class": "",
-        "Value": {
-          "id": 55,
-          "name": "La Reception",
-          "description": "Ti trovi alla reception della locanda. Delle scale portano verso\r\nl'ingresso, mentre ad est si trova l'ufficio dello scriba per scrivere,\r\nspedire e smistare le lettere. C'e' un piccolo cartello appeso al muro.\r\nGuardandoti intorno vedi molta pulizia e tanto ordine, nonostante\r\ndurante il giorno attraversino questa stanza centinaia di eroi.\r\n",
-          "x": 0,
-          "y": -720,
-          "z": 1,
-          "cost": 1,
-          "zone_id": 1,
-          "shortName": "Rece",
-          "labelDir": 11,
-          "userData": "PEACEFUL|NOPORTAL|NOSUMMON ",
-          "vnum": 3008,
-          "color": "rgb(255,255,0)",
-          "exits": {
-            "d": {
-              "to_room": 52,
-              "to_dir": "u",
-              "name": "",
-              "param": "",
-              "label": "",
-              "type": 0
-            },
-            "e": {
-              "to_room": 56,
-              "to_dir": "w",
-              "name": "",
-              "param": "",
-              "label": "",
-              "type": 0
-            }
-          }
-        }
-      }
-    ],
-    [
       "Immortal",
       {
         "Name": "Immortal",
         "Class": "",
         "Value": false
-      }
-    ],
-    [
-      "autoloot",
-      {
-        "Name": "autoloot",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "parlaStato",
-      {
-        "Name": "parlaStato",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "Gruppo",
-      {
-        "Name": "Gruppo",
-        "Class": "",
-        "Value": "{\"tank\":\"*\",\"mob\":\"*\",\"Guile\":{\"hp\":100,\"mn\":100,\"mv\":100,\"inroom\":1}}"
-      }
-    ],
-    [
-      "TSPosizione",
-      {
-        "Name": "TSPosizione",
-        "Class": "",
-        "Value": "In piedi"
-      }
-    ],
-    [
-      "TSSettore",
-      {
-        "Name": "TSSettore",
-        "Class": "",
-        "Value": "Chiuso"
-      }
-    ],
-    [
-      "TSMaxHp",
-      {
-        "Name": "TSMaxHp",
-        "Class": "",
-        "Value": "18"
-      }
-    ],
-    [
-      "TSMaxMana",
-      {
-        "Name": "TSMaxMana",
-        "Class": "",
-        "Value": "124"
-      }
-    ],
-    [
-      "TSMaxMov",
-      {
-        "Name": "TSMaxMov",
-        "Class": "",
-        "Value": "118"
-      }
-    ],
-    [
-      "TSGold",
-      {
-        "Name": "TSGold",
-        "Class": "",
-        "Value": "1500"
-      }
-    ],
-    [
-      "TSTank",
-      {
-        "Name": "TSTank",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "TSTankCond",
-      {
-        "Name": "TSTankCond",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "TSMob",
-      {
-        "Name": "TSMob",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "TSMobCond",
-      {
-        "Name": "TSMobCond",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "TSLag",
-      {
-        "Name": "TSLag",
-        "Class": "",
-        "Value": "-"
-      }
-    ],
-    [
-      "TSXp",
-      {
-        "Name": "TSXp",
-        "Class": "",
-        "Value": "1811"
-      }
-    ],
-    [
-      "TSBlink",
-      {
-        "Name": "TSBlink",
-        "Class": "",
-        "Value": "-1"
-      }
-    ],
-    [
-      "TSBank",
-      {
-        "Name": "TSBank",
-        "Class": "",
-        "Value": "0"
-      }
-    ],
-    [
-      "TSAlign",
-      {
-        "Name": "TSAlign",
-        "Class": "",
-        "Value": "Angelico"
-      }
-    ],
-    [
-      "TSPersonaggio",
-      {
-        "Name": "TSPersonaggio",
-        "Class": "",
-        "Value": "Guile"
-      }
-    ],
-    [
-      "TSSpells",
-      {
-        "Name": "TSSpells",
-        "Class": "",
-        "Value": "T"
-      }
-    ],
-    [
-      "grandezzaGruppo",
-      {
-        "Name": "grandezzaGruppo",
-        "Class": "",
-        "Value": 1
-      }
-    ],
-    [
-      "TSGoldK",
-      {
-        "Name": "TSGoldK",
-        "Class": "",
-        "Value": "1.5K"
-      }
-    ],
-    [
-      "TSBankK",
-      {
-        "Name": "TSBankK",
-        "Class": "",
-        "Value": "0"
-      }
-    ],
-    [
-      "tankMax",
-      {
-        "Name": "tankMax",
-        "Class": "",
-        "Value": 100
-      }
-    ],
-    [
-      "tankPercent",
-      {
-        "Name": "tankPercent",
-        "Class": "",
-        "Value": 100
-      }
-    ],
-    [
-      "tankKey",
-      {
-        "Name": "tankKey",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "mobMax",
-      {
-        "Name": "mobMax",
-        "Class": "",
-        "Value": 100
-      }
-    ],
-    [
-      "mobPercent",
-      {
-        "Name": "mobPercent",
-        "Class": "",
-        "Value": 100
-      }
-    ],
-    [
-      "mobKey",
-      {
-        "Name": "mobKey",
-        "Class": "",
-        "Value": "*"
-      }
-    ],
-    [
-      "spells",
-      {
-        "Name": "spells",
-        "Class": "",
-        "Value": "T<span class=\"\" style=\"display: inline-block;color:magenta;font-weight:bold;\">B:-1</span>"
-      }
-    ],
-    [
-      "sancato",
-      {
-        "Name": "sancato",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "scadenzaSanc",
-      {
-        "Name": "scadenzaSanc",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "scudato",
-      {
-        "Name": "scudato",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "scadenzaScudo",
-      {
-        "Name": "scadenzaScudo",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "feastFatto",
-      {
-        "Name": "feastFatto",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "afkProcTimout",
-      {
-        "Name": "afkProcTimout",
-        "Class": "",
-        "Value": 129438
-      }
-    ],
-    [
-      "lastTickTime",
-      {
-        "Name": "lastTickTime",
-        "Class": "",
-        "Value": "2022-08-22T17:50:57.860Z"
-      }
-    ],
-    [
-      "TickDuration",
-      {
-        "Name": "TickDuration",
-        "Class": "",
-        "Value": 66
-      }
-    ],
-    [
-      "currentTickLenght",
-      {
-        "Name": "currentTickLenght",
-        "Class": "",
-        "Value": 65
-      }
-    ],
-    [
-      "TickRemaining",
-      {
-        "Name": "TickRemaining",
-        "Class": "",
-        "Value": 22
-      }
-    ],
-    [
-      "tickInterval",
-      {
-        "Name": "tickInterval",
-        "Class": "",
-        "Value": 129439
-      }
-    ],
-    [
-      "Chars",
-      {
-        "Name": "Chars",
-        "Class": "",
-        "Value": "Auriel"
-      }
-    ],
-    [
-      "TSHpRegen",
-      {
-        "Name": "TSHpRegen",
-        "Class": "",
-        "Value": "11"
-      }
-    ],
-    [
-      "TSManaRegen",
-      {
-        "Name": "TSManaRegen",
-        "Class": "",
-        "Value": "30"
-      }
-    ],
-    [
-      "TSMovRegen",
-      {
-        "Name": "TSMovRegen",
-        "Class": "",
-        "Value": "19"
-      }
-    ],
-    [
-      "questorPg",
-      {
-        "Name": "questorPg",
-        "Class": "",
-        "Value": "Guile"
-      }
-    ],
-    [
-      "walkingToId",
-      {
-        "Name": "walkingToId",
-        "Class": "",
-        "Value": "2809"
-      }
-    ],
-    [
-      "questComplete",
-      {
-        "Name": "questComplete",
-        "Class": "",
-        "Value": false
-      }
-    ],
-    [
-      "ticksToLongTick",
-      {
-        "Name": "ticksToLongTick",
-        "Class": "",
-        "Value": 6
-      }
-    ],
-    [
-      "feastTimeout",
-      {
-        "Name": "feastTimeout",
-        "Class": "",
-        "Value": 129436
       }
     ]
   ],
@@ -927,7 +191,7 @@
           "type": "ConnectionState",
           "condition": "telnet",
           "id": "",
-          "value": "this.Mobs = \"\";\nsend(\"generaFunzioni\")",
+          "value": "this.Mobs = \"\";\nsend(\"generaFunzioni\")\nif (args) {\n\tsend(\"ident_init\")\n}",
           "class": "",
           "enabled": true
         }
@@ -1984,6 +1248,90 @@
       "is_prompt": false,
       "shortcut": "",
       "script": null
+    },
+    {
+      "pattern": "^\\[.\\d\\] ([^([]+)( \\(|\\[\\d+\\]|)",
+      "id": "ident_inv",
+      "value": "var util = window.dbIdentUtil;\nlet descshort = match[1].trim();\nlet r = util.withshort(descshort);\nif (util.debug) {console.log(\"Item trovato: nel trigget ident_inv:\" + match[1])}\nif (r.length>0) {\n  console.log(util)\n  let firstword = $1;\n  const spaceIndex = firstword.indexOf(\" \");\n  if (spaceIndex>-1) {\n    firstword = firstword.substring(0, spaceIndex);\n  }\n\n  let testoident = ((r.length==1) && (r[0][util.db.fieldsPos.Provenienza]==\"\")) ?\n      color(\"[Ident]\",\"lightgray\") : color(\"[Ident]\",\"green\");\n\n  //sub(firstword, link(testoident,()=>{print(out)},\"vedi identify\") + \" \" + firstword);\n  sub(firstword, link(testoident,()=>{\n    let out = util.getStringIdents(r);\n    print(out)\n  },\"vedi identify\") + \" \" + firstword);\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^(.+)$",
+      "id": "roomContent",
+      "value": "//Normalmente NON abilitato.\n//Viene abilitato da altri trigger/alias\n\nif (match[0] == \"\" || \n    match[0] == \"-----------------\" || \n    match[0].search(/^H:\\[\\d+\\/\\d+\\] M:\\[\\d+\\/\\d+\\] V:\\[\\d+\\/\\d+\\]/)>-1) {\n\ttoggleTrigger(\"roomContent\",false);\n} else {\n    var util = window.dbIdentUtil;\n    let desclong = match[1];\n  \t//se presente alla fine (condizioni) lo tolgo\n    let m = desclong.match(/([^(]+)(?=\\()/);\n\tif (m != null) {desclong = m[1]};\n    //se pezzi multipli con [] a inizio e fine le tolgo\n\tm = desclong.match(/^(?:\\[..\\] |)(.+?)(?:\\[\\d+\\]|)$/);\n    if (m != null) {desclong = m[1]}; \n    desclong = desclong.trim()\n    if (util.debug) {console.log(\"Item trovato nel trigger roomContent:\" + desclong)}\n    let r = util.withlong(desclong);\n    if (r.length>0) {\n      //const start = performance.now(); //PROFILAZIONE      \n      let firstword = $1;\n      const spaceIndex = firstword.indexOf(\" \");\n      if (spaceIndex>-1) {\n      \tfirstword = firstword.substring(0, spaceIndex);\n      }\n      let testoident = ((r.length==1) && (r[0][util.db.fieldsPos.Provenienza]==\"\") ) ?\n          color(\"[Ident]\",\"lightgray\") : color(\"[Ident]\",\"green\");\n      \n      sub(firstword, link(testoident,()=>{\n        let out = util.getStringIdents(r);\n        print(out)\n      },\"vedi identify\") + \" \" + firstword);\n      //const duration = performance.now() - start; //PROFILAZIONE\n      //print(\"Profilazione: \" + duration, \"Social\"); \n    }  \n}\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": false,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^(.+)$",
+      "id": "identContent",
+      "value": "//Normalmente NON abilitato.\n//Viene abilitato da altri trigger/alias\n\nwindow.identText +=  match[0] + \"\\n\";\n//print(window.identText + \"\\n\\n\", \"Social\");",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": false,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^Percepisci le informazioni:",
+      "id": "",
+      "value": "toggleTrigger(\"identContent\", true);\nwindow.identText = \"\";\nif (typeof window.dbIdentUtil === \"undefined\") {send(\"ident_init\");}",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "Non percepisci altre informazioni sull'oggetto.",
+      "id": "",
+      "value": "toggleTrigger(\"identContent\", false);\nlet identText = window.identText;\n\nvar util = window.dbIdentUtil;\nvar ultimoMobUcciso = window.ultimoMobUcciso;\n\n//tolgo l'ultima riga perchè contiene la scritta Non percepisci... che devo escludere dall'ident.\nidentText = identText.substr(0,identText.search(\"Non percepisci altre informazioni sull'oggetto\")-1);\nlet obj = util.parseident(identText);             \n           \n    \n                  \n//cerco se esiste già nel db\nlet found = util.find({\"Oggetto\":obj.Oggetto,\n           \"DescrizioneShort\":obj.DescrizioneShort,\n           \"DescrizioneLong\": obj.DescrizioneLong});\n\nlet hasprovenienza=false;\nutil.autoprovenienzaclear();\nutil.autoprovenienza.area = mapper.current.zone_id;\nif (found != null) { //l'oggetto esiste\n  hasprovenienza = (found[10].length > 0);\n  obj.ID = found[util.db.fieldsPos.ID];\n  util.db.lastID = obj.ID;\n  \n  if (obj.Identify !== found[util.db.fieldsPos.Identify]) {\n    print(\"L'oggetto è già nel database. ID:\" + found[util.db.fieldsPos.ID] + \n          \" con un identify Diverso.  \" + link(\"Click per aggiungerlo\", ()=>{\n      util.add(obj);\n      //util.buildautoprovenienza();\n  \t})); \n  } else {\n    print(\"L'oggetto è già nel database. ID:\" + found[util.db.fieldsPos.ID]);  \n  }\n  \n  \n  if (hasprovenienza) {\n    print(\"L'oggetto nel database ha provenienza: \" + found[util.db.fieldsPos.Provenienza] + \"\\n\");\n  } else {\n    print(\"L'oggetto nel database non ha provenienza indicata.\\n\");  \t\n  }\n  //util.buildautoprovenienza();\n} else {\n  //L'oggetto non è nel DB\n  print(\"L'oggetto non esiste nel database. \" + link(\"Click per aggiungerlo\", ()=>{\n      util.add(obj);\n      //util.buildautoprovenienza();\n  }));\n\n}\n\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^Uscite visibili: .*",
+      "id": "usciteVisibili",
+      "value": "//Normalmente NON abilitato.\n//Viene abilitato da altri trigger/alias\n\ntoggleTrigger(\"roomContent\", true);\ntoggleTrigger(\"usciteVisibili\",false);\n//delay(\"disable_roomContent\",300,()=>{toggleTrigger(\"roomContent\", false);})\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": false,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^Il tuo sangue si raggela non appena senti il grido di morte di (.+)!$",
+      "id": "",
+      "value": "window.ultimoMobUcciso = match[1];\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
     }
   ],
   "aliases": [
@@ -2423,7 +1771,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "^bark (.*)|^bark$",
@@ -2900,7 +2249,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "sr",
@@ -3233,7 +2583,8 @@
       "is_script": true,
       "class": "",
       "enabled": true,
-      "is_prompt": false
+      "is_prompt": false,
+      "script": null
     },
     {
       "pattern": "ar",
@@ -3652,18 +3003,6 @@
       "script": null
     },
     {
-      "pattern": "look",
-      "id": "",
-      "value": "this.Mobs = \"\"\nsend(\"~look\" + (($1) ? (\" \" + ($1)) : \"\"))",
-      "regex": false,
-      "is_script": true,
-      "class": "",
-      "enabled": true,
-      "is_prompt": false,
-      "shortcut": "",
-      "script": null
-    },
-    {
       "pattern": "salta",
       "id": "",
       "value": "if (this.searchRooms) {\n\tvar rooms = this.searchRooms()\n    if (!rooms || !rooms.length) return;\n  \n    let removeIndex = !($1) ? 0 : rooms.findIndex(r => r.id == Number($1))\n    if (removeIndex>-1) {\n      print(\"Salto: \" + rooms[removeIndex].id + \" - \" + rooms[removeIndex].name)\n      rooms.splice(removeIndex, 1)\n      if (rooms.length) {\n         this.searchRooms = () => rooms;\n      } else {\n      \t this.searchRooms = null;\n      }\n    }\n}\n",
@@ -3959,6 +3298,90 @@
       "is_prompt": false,
       "shortcut": "",
       "script": null
+    },
+    {
+      "pattern": "ident_init",
+      "id": "",
+      "value": "toggleClass(\"Ident\", !!this.enableident)\nif (!this.enableident) {return;}\n\nvar util = (window.dbIdentUtil = {})\nconst indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;\n\n\n//aggiungere abilitazione this.enableident == true\nutil.autoprovenienzaclear = function() {\n\tutil.autoprovenienza = {area:null, mob:null, room:null};\n}\n\n\nvar debug = this.debug;\n//Carica da indexedDB to memory (util.db) la lista ident pubblica e privata\nutil.init_load = function() {\n  util.db = {};\n  util.db.lastID = -1;\n  util.db.dbinfo = {};\n  util.db.ogglistPubl = [];\n  util.db.ogglistPriv = [];\n  util.db.fields = [];\n  util.db.fieldsPos = {};\n  util.debug = debug;\n  util.autoprovenienzaclear();\n\n  function buildFieldsPos() {\n    for ( let fieldidx in util.db.fields) {\n      util.db.fieldsPos[util.db.fields[fieldidx].nome] = fieldidx;\n    } \n  }\n  \n  \n  const dbconn = window.indexedDB.open(\"IdentDb\", 1);\n  dbconn.onerror = (event) => {\n    print(\"Errore nella connessione al DB degli ident\");\n  };\n\n  dbconn.onupgradeneeded = (event) => {\n    const dbresult = event.target.result;\n\n    // Create an objectStore for this database\n    const objectStore = dbresult.createObjectStore(\"JSONstore\", { keyPath: \"ID\" });\n    objectStore.createIndex(\"JSONstring\", \"JSONstring\", { unique: true });\n  }; \n  \n  dbconn.onsuccess = (event) => {\n    const dbresult = event.target.result;\n\tconst transaction = dbresult.transaction(\"JSONstore\", \"readonly\");\n    const store = transaction.objectStore(\"JSONstore\");\n    //nel record 1 di JSONStore c'è il db pubblico\n    //nel record 2 di JSONStore c'è il db privato\n    const jsonqueryPubl = store.get(1);\n    const jsonqueryPriv = store.get(2);\n  \n    jsonqueryPubl.onsuccess = function(event) {\n    if (util.debug) {print(\"Ident DB Pubblico caricato\");}\n      const r = event.target.result;\n      if (r != undefined) {\n        const objsaved = JSON.parse(r.JSONstring);\n        util.db.fields = objsaved.fields;\n        buildFieldsPos();\n        util.db.ogglistPubl = objsaved.data;\n        util.db.dbinfo = objsaved.dbinfo;\n      }\n    };\n  \n    jsonqueryPubl.onerror = (event) => {\n      if (util.debug) {\n        print(\"jsonqueryPubl error. Vedi console\");\n        console.log(event.target.errorCode);\n      }\n    };\n    \n    jsonqueryPriv.onsuccess = function(event) {\n    if (util.debug) {print(\"Ident DB Privato caricato\");}\n      const r = event.target.result;\n      if (r != undefined) {\n        const objsaved = JSON.parse(r.JSONstring);\n        if (!util.db.fields || !util.db.fields.length) {\n       \t  util.db.fields = objsaved.fields;\n          buildFieldsPos();\n        }\n        util.db.ogglistPriv = objsaved.data || [];\n        if (!util.db.dbinfo) {\n          util.db.dbinfo = objsaved.dbinfo;\n        }\n      }\n    };\n  \n    jsonqueryPriv.onerror = (event) => {\n      if (util.debug) {\n        print(\"jsonqueryPriv error. Vedi console\");\n        console.log(event.target.errorCode);\n      }\n    };    \n    \n    transaction.oncomplete = function() {    \n      if (util.debug) {\n        print(\"Transaction complete\");\n        print(\"LOG Ident Publico DB Size:\" + util.getSize()[0]);\n        print(\"LOG Ident Privato DB Size:\" + util.getSize()[1]);\n      }\n      print(\"Database degli ident caricato. Versione: \" + util.db.dbinfo.ver + \" (\" + util.db.dbinfo.data + \") - \" + util.db.dbinfo.msg);\n      print(\"Elementi caricati nel db pubblico: \" + util.getSize()[0]);\n      print(\"Elementi caricati nel db privato:  \" + util.getSize()[1]);\n      \n      \n      if (!util.db.fields || !util.db.fields.length) {\n        util.db.fields = [{\"nome\":\"Oggetto\",\"type\":\"TEXT\"},{\"nome\":\"Tipo\",\"type\":\"TEXT\"},{\"nome\":\"DescrizioneShort\",\"type\":\"TEXT\"},{\"nome\":\"PosizioneIndossabile\",\"type\":\"TEXT\"},{\"nome\":\"Proprieta\",\"type\":\"TEXT\"},{\"nome\":\"Peso\",\"type\":\"NUMBER\"},{\"nome\":\"Valore\",\"type\":\"NUMBER\"},{\"nome\":\"Rent\",\"type\":\"NUMBER\"},{\"nome\":\"DescrizioneLong\",\"type\":\"TEXT\"},{\"nome\":\"Identify\",\"type\":\"TEXT\"},{\"nome\":\"Provenienza\",\"type\":\"TEXT\"},{\"nome\":\"Rare\",\"type\":\"BOOL\"},{\"nome\":\"NoRent\",\"type\":\"BOOL\"},{\"nome\":\"DannoArma\",\"type\":\"NUMBER\"},{\"nome\":\"Danno\",\"type\":\"NUMBER\"},{\"nome\":\"SP\",\"type\":\"NUMBER\"},{\"nome\":\"HP\",\"type\":\"NUMBER\"},{\"nome\":\"Mana\",\"type\":\"NUMBER\"},{\"nome\":\"Affect1Tipo\",\"type\":\"TEXT\"},{\"nome\":\"Affect1Valore\",\"type\":\"TEXT\"},{\"nome\":\"Affect2Tipo\",\"type\":\"TEXT\"},{\"nome\":\"Affect2Valore\",\"type\":\"TEXT\"},{\"nome\":\"Affect3Tipo\",\"type\":\"TEXT\"},{\"nome\":\"Affect3Valore\",\"type\":\"TEXT\"},{\"nome\":\"Affect4Tipo\",\"type\":\"TEXT\"},{\"nome\":\"Affect4Valore\",\"type\":\"TEXT\"},{\"nome\":\"Affect5Tipo\",\"type\":\"TEXT\"},{\"nome\":\"Affect5Valore\",\"type\":\"TEXT\"},{\"nome\":\"ID\",\"type\":\"TEXT/NUMBER\"},{\"nome\":\"Nota\",\"type\":\"TEXT\"}];\n        buildFieldsPos();\n        if (util.debug) {\n          print(\"Caricamento preset Fields\");\n        }\n      }\n      \n      \n      \n      dbresult.close();\n    };  \n  };\n}\n\n\n//Salve da memoria a indexedDB i 2 database.\nutil.save = function(savePublic=false) {\n  const dbconn = window.indexedDB.open(\"IdentDb\", 1);\n  dbconn.onerror = (event) => {\n    print(\"Errore nella connessione al DB degli ident\");\n  };\n  \n  dbconn.onsuccess = (event) => {\n    const dbresult = event.target.result;\n\tconst transaction = dbresult.transaction(\"JSONstore\", \"readwrite\");\n    const store = transaction.objectStore(\"JSONstore\");\n    if (savePublic) {\n      const saveobj = {dbinfo: this.db.dbinfo, fields:this.db.fields, data:this.db.ogglistPubl}\n      const addqueryPubl = store.put({ID:1, JSONstring: JSON.stringify(saveobj)});\n\n      addqueryPubl.onsuccess = function(event) {\n        if (util.debug) {print(\"Ident DB Pubblico salvato\");}\n      };\n\n      addqueryPubl.onerror = (event) => {\n        if (util.debug) {\n          print(\"addqueryPubl error. Vedi console\");\n          console.log(event.target.errorCode);\n        }\n      };   \n    }\n    const saveobjPriv = {dbinfo: {}, fields:this.db.fields, data:this.db.ogglistPriv}\n    const addqueryPriv = store.put({ID:2, JSONstring: JSON.stringify(saveobjPriv)});\n  \n    addqueryPriv.onsuccess = function(event) {\n      if (util.debug) {print(\"Ident DB Privato salvato\");}\n    };\n  \n    addqueryPriv.onerror = (event) => {\n      if (util.debug) {\n        print(\"addqueryPriv error. Vedi console\");\n        console.log(event.target.errorCode);\n      }\n    };    \n    \n    transaction.oncomplete = function() {\n      if (util.debug) {\n        print(\"Transaction complete\");\n        print(\"LOG Ident Publico DB Size:\" + util.getSize()[0]);\n        print(\"LOG Ident Privato DB Size:\" + util.getSize()[1]);\n      }\n      dbresult.close();\n    };  \n  }; \n}\n\n\n//Cerca l'oggetto basando su key, descshort e desclong\n//restituisce l'oggetto se trovato oppure null\n//Si usa l'assunto che gli oggetti del db sono univoci per Oggetto+Short+Long\n//Qualora ce ne fossero più d'uno viene restituito il primo\nutil.find = function(ogg) {\n  for (let objdb of this.db.ogglistPriv.concat(this.db.ogglistPubl)) {\n    if (\n        (objdb[util.db.fieldsPos.Oggetto] === ogg.Oggetto) &&\n        (objdb[util.db.fieldsPos.DescrizioneShort] === ogg.DescrizioneShort) &&\n        (objdb[util.db.fieldsPos.DescrizioneLong] === ogg.DescrizioneLong)\n    )\n    {return objdb;}\n  }\n  return null;\n}\n\n\n//restituisce l'elenco degli oggetti con la descshort specificata\nutil.withshort = function(descshort) {\n    let found = [];\n    for (let objdb of this.db.ogglistPriv.concat(this.db.ogglistPubl)) {\n        if ((objdb[util.db.fieldsPos.DescrizioneShort] == descshort) && !this.isalreadyin(found, objdb))  {\n            found.push(objdb)\n        }\n    }\n    return found;\n}\n\n//restituisce l'elenco degli oggetti con la desclong specificata\nutil.withlong = function(desclong) {\n    let found = [];\n    for (let objdb of this.db.ogglistPriv.concat(this.db.ogglistPubl)) {\n        if ((objdb[util.db.fieldsPos.DescrizioneLong].split(\"\\n\")[0] == desclong) && !this.isalreadyin(found, objdb))  {\n            found.push(objdb)\n        }\n    }\n    return found;\n}\n\n\n//Cerca l'oggetto basando su ID\n//restituisce l'oggetto se trovato oppure null\n//Si usa l'assunto che gli oggetti del db sono univoci per ID\n//Qualora ce ne fossero più d'uno viene restituito il primo\nutil.findID = function(id) {\t\n    if (this.debug) {\n\t\tprint(\"Ricerca dell'oggetto con ID: -->\" + id + \"<--\");\n\t}\n\tfor (let objdb of this.db.ogglistPriv.concat(this.db.ogglistPubl)) {\n      if (String(objdb[util.db.fieldsPos.ID]) === String(id)) {return objdb;}\n  \t}\n  \treturn null;\n}\n\n\n//La funzione delID permette di rimuovere un elemento dal db\n//è inernamente limitata a cancellare solo da db Privato.\nutil.delID = function(id) {\n  this.db.ogglistPriv = this.db.ogglistPriv.filter( _obj => (String(_obj[util.db.fieldsPos.ID]) != String(id)) ); \n  this.save();\n}\n\n\n//restituisce l'elenco degli oggetti che contengono\n//tutti gli elementi specificati nel testo e divisi da |, nell'ident\nutil.search = function(text) {\n    let criteriricerca = text.split(\"|\");\n    let found = [];\n    for (let objdb of this.db.ogglistPriv.concat(this.db.ogglistPubl)) {\n      let criteriotrovato = true; \n      for (let criterio of criteriricerca) {\n      \t  if (objdb[util.db.fieldsPos.Identify].toLowerCase().search(criterio.toLowerCase())<0) {\n          criteriotrovato = false;\n          break;\n          }\n        } \n      if ( criteriotrovato && !this.isalreadyin(found, objdb) ) {\n      \t//trovato un oggetto che soddisfa i requisiti\n        //e non già tra quelli trovati       \n        found.push(objdb);\n      }    \n    }\n    return found;\n}\n\n//Data una lista, verifica se l'oggetto è già presente nella lista\n//Da usare nelle varie funzioni find e search per non mettere duplicati\nutil.isalreadyin = function(list, ogg) {\n  let isgiatrovato = false;\n  for (let oggettolista of list) {\n    if (\n      (oggettolista[util.db.fieldsPos.Oggetto] === ogg[util.db.fieldsPos.Oggetto]) && \n      (oggettolista[util.db.fieldsPos.DescrizioneShort] === ogg[util.db.fieldsPos.DescrizioneShort]) &&\n      (oggettolista[util.db.fieldsPos.DescrizioneLong] === ogg[util.db.fieldsPos.DescrizioneLong])  \n    ) {\n      return true;\n    }\n  }\n  return false;\n}\n\n//Aggiunge l'oggetto passato al DB Privato e salva.\n//Assegna automaticamente il nuovo ID\nutil.add = function(ogg, oggisarray=false) {\n  function formattedDate(d = new Date) {\n    return [d.getDate(), d.getMonth()+1, d.getFullYear()].map(n => n < 10 ? `0${n}` : `${n}`).join('/');\n  }\n  \n  if (util.debug) {print(\"LOG (util.add): Aggiunta dell'oggetto al DB Privato\");}    \n  util.db.lastID = \"Priv\" + String(this.getMaxID() + 1);\n  if (oggisarray) {    \n    ogg[util.db.fieldsPos.ID] = util.db.lastID;\n  \tif (util.debug) {print(JSON.stringify(ogg));}\n  \tthis.db.ogglistPriv.push(ogg);    \n  } else {\n    ogg.ID = util.db.lastID;\n    let objarr = [ogg.Oggetto,\n                  null, //ogg.Tipo,\n                  ogg.DescrizioneShort,\n                  null, //ogg.PosizioneIndossabile,\n                  null, //ogg.Proprieta,\n                  null, //ogg.Peso,\n                  null, //ogg.Valore,\n                  null, //ogg.Rent,\n                  ogg.DescrizioneLong,\n                  ogg.Identify,\n                  ogg.Provenienza,\n                  null, //ogg.Rare,\n                  null, //ogg.NoRent,\n                  null, //ogg.DannoArma,\n                  null, //ogg.Danno,\n                  null, //ogg.SP,\n                  null, //ogg.HP,\n                  null, //ogg.Mana,\n                  null, //ogg.Affect1Tipo,\n                  null, //ogg.Affect1Valore,\n                  null, //ogg.Affect2Tipo,\n                  null, //ogg.Affect2Valore,\n                  null, //ogg.Affect3Tipo,\n                  null, //ogg.Affect3Valore,\n                  null, //ogg.Affect4Tipo,\n                  null, //ogg.Affect4Valore,\n                  null, //ogg.Affect5Tipo,\n                  null, //ogg.Affect5Valore,\n                  ogg.ID,\n                  formattedDate() //ogg.Nota\n                 ];\n  \tif (util.debug) {print(JSON.stringify(objarr));}\n  \tthis.db.ogglistPriv.push(objarr);\n  }\n  this.save();\n  print(\"Oggetto aggiunto all'archivio privato con ID: \" + util.db.lastID)\n}\n\nutil.getStringIdents = function(arr) {\n  let out=\"\";\n  for (let ogg of arr) {\n      out += \"ID: \" + color(ogg[util.db.fieldsPos.ID],\"yellow\") + \"\\n\";\n      out += ogg[util.db.fieldsPos.Identify] + \"\\n\";\n      out += \"Provenienza: \" + ogg[util.db.fieldsPos.Provenienza] + \"\\n\\n\";\n  }\n  return(out);\n}\n\nutil.getSize = function() {\n  return [this.db.ogglistPubl?.length, this.db.ogglistPriv?.length];\n}\n\n//restituisce l'ID maggiore nell'db Privato\n//Nel DB privato gli ID vengono salvati nella forma PrivXXXX\nutil.getMaxID = function() {\n  let id = 0;\n  for (let objdb of this.db.ogglistPriv) {\n    let objdbid = Number(objdb[util.db.fieldsPos.ID].substring(4));\n    if (objdbid>id) {id=objdbid;}\n  }\n  return id;\n}\n\nutil.parseident = function(identText) {\n  let obj={};\n\n  try {\n    obj.Oggetto = identText.match(/^Oggetto '(.+?)' - Tipo: (.+)$/m)[1];\n    obj.Tipo = identText.match(/^Oggetto '(.+?)' - Tipo: (.+)$/m)[2];\n  }\n  catch(err) {\n    obj.Oggetto = \"\";\n    obj.Tipo = \"\";\n  }\n  \n  try {\n    obj.DescrizioneShort = identText.match(/^Descrizione (?:corta|short): '(.+?)'$/ms)[1].replace(\"\\n\",\" \");\n  }\n  catch(err) {\n    obj.DescrizioneShort = \"\";\n  }\n\n  try {\n    obj.DescrizioneLong = identText.match(/^Descrizione (?:lunga|long): '(.*?)'$/ms)[1].replace(\"\\n\",\" \");\n  }\n  catch(err) {\n    obj.DescrizioneLong = \"\";\n  }\n  \n  obj.Identify = identText;\n  obj.Provenienza = \"\"; \n  return obj;\n}\n\nutil.getCurrentZonaLabel = function() {\n  if (util.mapZones === undefined) {\n    util.mapZones = new Map(\n  \t\tmapper.db.zones.map(object => {\n    \t\treturn [object.id, object.label];\n  \t\t}),\n\t);\n  }\n  return util.mapZones.get(mapper.current.zone_id);\n}\n\n\nutil.getautoprovenienza = function() {\n  let prov = this.getCurrentZonaLabel();\n  if (util.autoprovenienza.ultimoMobUcciso != null) {\n    prov += \" - \" + util.autoprovenienza.ultimoMobUcciso;\n  }\n  if (util.autoprovenienza.room != null) {\n    prov += \" (\" + util.autoprovenienza.room + \")\";\n  }\n  return prov;\n}\n\n\nutil.buildautoprovenienza = function() {\n    print(link(\"Click per aggiungere la provenienza:\",()=>{\n      send(\"setprovenienza \\\"\" + util.getautoprovenienza() + \"\\\"\");\n    }\n    ) + \" \" + util.getautoprovenienza());\n  \n    print(link(\"Aggiungi ultimo mob ucciso:\", ()=>{\n        util.autoprovenienza.ultimoMobUcciso = (window.ultimoMobUcciso || null);\n        this.buildautoprovenienza();  \n    }                                                   \n    ) + \" \" + (window.ultimoMobUcciso || \"\") ); \n  \n    print(link(\"Aggiungi stanza:\", ()=>{\n        util.autoprovenienza.room = mapper.current.id;\n        this.buildautoprovenienza();\n    }                                                   \n    ) + \" \" + mapper.current.id);  \n    print(\"\\n\");\n}\n\nutil.init_load();\n\n",
+      "regex": false,
+      "is_script": true,
+      "class": "IdentInit",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^identimport( privato$| pubblico$|$)",
+      "id": "",
+      "value": "var util = window.dbIdentUtil;\nconst database = match[1].trim() || \"privato\";\n\nfunction importPublico(text) {\n  let objparsed = JSON.parse(text);\n  util.db.ogglistPubl = objparsed.data;\n  util.db.dbinfo = objparsed.dbinfo;  \n  util.db.fields = objparsed.fields;\n  util.save(true);\n}\n\nfunction importPrivato(text) {\n  let objparsed = JSON.parse(text);\n  util.db.ogglistPriv = objparsed.data;\n/*  if (Object.keys(util.db.dbinfo).length == 0) {\n  \tutil.db.dbinfo = objparsed.dbinfo;\n    console.log(objparsed);\n  }\n  if (!util.db.fields || !util.db.fields.length) {\n  \tutil.db.fields = objparsed.fields;\n  }\n*/\n  util.save(false);\n}\n\n\nfunction importFromFile(callback) {\n    if (!callback) return;\n    let inp = document.createElement(\"input\");\n    inp.type = \"file\";\n    inp.style.visibility = \"hidden\";\n\n    inp.addEventListener(\"change\", (e) => {\n        let file = e.target.files[0];\n        if (!file) {\n            return;\n        }\n\n        let reader = new FileReader();\n        reader.onload = (e1) => {\n            let text = e1.target.result;\n            callback(text)\n        };\n        reader.readAsText(file);\n\n    });\n\n    document.body.appendChild(inp);\n    inp.click();\n    document.body.removeChild(inp);\n}\n\nif (database == \"pubblico\") {\n  importFromFile(importPublico);\n} else if (database == \"privato\") {\n  importFromFile(importPrivato);\n}\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^ident(Dev|) (.+)$",
+      "id": "",
+      "value": "var util = window.dbIdentUtil;\n\nlet r;\nif (match[2].search(/^\\d+$|^Priv\\d+/)==0) {\n  r = [util.findID(match[2])];\n} else {\n  r = util.search(match[2]);\n}\n\nlet out=\"\";\nfor (let ogg of r) {\n  out += (\"ID: \" + color(ogg[util.db.fieldsPos.ID],\"yellow\") + \"\\n\");\n  out += (ogg[util.db.fieldsPos.Identify] + \"\\n\");\n  out += (\"Provenienza: \" + ogg[util.db.fieldsPos.Provenienza] + \"\\n\");\n  \n  if (match[1] === \"Dev\") {\n  \tout += \"Oggetto: \" + ogg[util.db.fieldsPos.Oggetto] + \"\\n\";\n  \tout += \"DescrizioneShort: \" + ogg[util.db.fieldsPos.DescrizioneShort] + \"\\n\";\n  \tout += \"DescrizioneLong: \" + ogg[util.db.fieldsPos.DescrizioneLong] + \"\\n\";    \n  \tout += \"Tipo: \" + ogg[util.db.fieldsPos.Tipo] + \"\\n\";\n  \tout += \"PosizioneIndossabile: \" + ogg[util.db.fieldsPos.PosizioneIndossabile] + \"\\n\";\n  \tout += \"Proprieta: \" + ogg[util.db.fieldsPos.Proprieta] + \"\\n\";\n  \tout += \"Peso: \" + ogg[util.db.fieldsPos.Peso] + \"\\n\";\n  \tout += \"Valore: \" + ogg[util.db.fieldsPos.Valore] + \"\\n\";\n  \tout += \"Rent: \" + ogg[util.db.fieldsPos.Rent] + \"\\n\";   \n  \tout += \"Rare: \" + ogg[util.db.fieldsPos.Rare] + \"\\n\";\n  \tout += \"NoRent: \" + ogg[util.db.fieldsPos.NoRent] + \"\\n\";\n  \tout += \"DannoArma: \" + ogg[util.db.fieldsPos.DannoArma] + \"\\n\";\n    out += \"Danno: \" + ogg[util.db.fieldsPos.Danno] + \"\\n\";\n  \tout += \"SP: \" + ogg[util.db.fieldsPos.SP] + \"\\n\";\n  \tout += \"HP: \" + ogg[util.db.fieldsPos.HP] + \"\\n\";\n  \tout += \"Mana: \" + ogg[util.db.fieldsPos.Mana] + \"\\n\";\n  \tout += \"Affect1Tipo: \" + ogg[util.db.fieldsPos.Affect1Tipo] + \"\\n\";\n  \tout += \"Affect1Valore: \" + ogg[util.db.fieldsPos.Affect1Valore] + \"\\n\";\n  \tout += \"Affect2Tipo: \" + ogg[util.db.fieldsPos.Affect2Tipo] + \"\\n\";\n  \tout += \"Affect2Valore: \" + ogg[util.db.fieldsPos.Affect2Valore] + \"\\n\";\n  \tout += \"Affect3Tipo: \" + ogg[util.db.fieldsPos.Affect3Tipo] + \"\\n\";\n  \tout += \"Affect3Valore: \" + ogg[util.db.fieldsPos.Affect3Valore] + \"\\n\";\n  \tout += \"Affect4Tipo: \" + ogg[util.db.fieldsPos.Affect4Tipo] + \"\\n\";\n  \tout += \"Affect4Valore: \" + ogg[util.db.fieldsPos.Affect4Valore] + \"\\n\";\n  \tout += \"Affect5Tipo: \" + ogg[util.db.fieldsPos.Affect5Tipo] + \"\\n\";\n  \tout += \"Affect5Valore: \" + ogg[util.db.fieldsPos.Affect5Valore] + \"\\n\";\n \n  }\n  out += \"\\n\";\n  \n}\nprint(out);\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^l(o|$)(o|$)k{0,1} ?(.*)$",
+      "id": "look",
+      "value": "toggleTrigger(\"usciteVisibili\", true);\nthis.Mobs = \"\"\nsend(\"~look\" + (($3) ? (\" \" + ($3)) : \"\"))",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^identdel (Priv\\d+|All)$",
+      "id": "",
+      "value": "var util = window.dbIdentUtil;\nif (match[1] == \"All\") {\n  util.db.ogglistPriv = [];\n  util.save();\n  print(\"il database privato è stato svuotato\");\n} else {\n\tutil.delID(match[1]);\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^setprovenienza (?:(Priv\\d+|\\d+) |)\\\"(.*)\\\"$|^setprovenienza$",
+      "id": "",
+      "value": "/*\nEsempi:\nsetprovenienza 1234 \"nuova provenienza\"\nsetprovenienza Priv456 \"nuova provenienza\"\nsetprovenienza \"nuova provenienza\"\nsetprovenienza Priv333 \"\"\nsetprovenienza \"\"\n\n\nConfigurazioni non ok:\nsetprovenienza test232 \"\"\nsetprovenienza 123a \"\"\nsetprovenienza Priv333\n*/\n\n//Volendo le \" \" si potrebbero togliere ma aggiungerebbe dubbi interpretativi il alcuni comandi\nvar util = window.dbIdentUtil;\n\n\nif (match[0] == \"setprovenienza\") {\n  util.buildautoprovenienza();\n  return;\n} \n\n\nlet objID = match[1] || util.db.lastID;\nlet provenienza = match[2] || \"\";\n\nlet oggdb = util.findID(objID);\nif (oggdb == null) {\n  print(\"L'oggetto con ID \" + objID + \" non esiste\");\n} else {\n  //2 possibili casi: \n  //1) Se l'oggetto è già nel db privato posso cambiare direttamente la provenienza\n  //2) Se l'oggetto è nel db pubblico devo fare una copia dell'oggetto \n  //con la nuova provenienza da mettere nel privato\n  if (String(oggdb[util.db.fieldsPos.ID]).slice(0,4)==\"Priv\") {\n    let provenienza_old = oggdb[util.db.fieldsPos.Provenienza];\n    oggdb[util.db.fieldsPos.Provenienza] = provenienza;\n    print(\"La provenienza dell'oggetto \\\"\" + oggdb[util.db.fieldsPos.Oggetto] + \"\\\" è stata cambiata\");\n    print(\"DA: \" + provenienza_old);\n    print(\"A: \" + provenienza);\n  } else {\n    let provenienza_old = oggdb[util.db.fieldsPos.Provenienza];\n\tlet oggcopiato = JSON.parse(JSON.stringify(oggdb));\n    oggcopiato[util.db.fieldsPos.Provenienza] = provenienza;\n    print(\"La provenienza dell'oggetto \\\"\" + oggdb[util.db.fieldsPos.Oggetto] + \"\\\" è stata cambiata creando una copia nell'elenco privato\");\n    print(\"DA: \" + provenienza_old);\n    print(\"A: \" + provenienza);    \n    util.add(oggcopiato, true);\n  }  \n  util.save();\n}",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "pattern": "^identexport( privato$| pubblico$|$)",
+      "id": "",
+      "value": "var util = window.dbIdentUtil;\nconst database = match[1].trim() || \"privato\";\n\nfunction downloadJsonToFile(json, filename) {\n    let jsonstr = JSON.stringify(json, null, 2);\n    downloadString(jsonstr, filename);\n}\n\nfunction downloadString(jsonstr, filename) {\n    let blob = new Blob([jsonstr], { type: \"octet/stream\" });\n    let url = window.URL.createObjectURL(blob);\n\n    let link = document.createElement(\"a\");\n    link.setAttribute(\"href\", url);\n    link.setAttribute(\"download\", filename);\n    link.style.visibility = \"hidden\";\n\n    document.body.appendChild(link);\n    link.click();\n    window.URL.revokeObjectURL(url);\n    document.body.removeChild(link);\n}\n\nfunction formattedDate(d = new Date) {\n    return [d.getDate(), d.getMonth()+1, d.getFullYear()].map(n => n < 10 ? `0${n}` : `${n}`).join('/');\n  }\n\nif (database == \"pubblico\") {\n  const saveobj = {dbinfo: util.db.dbinfo, fields:util.db.fields, data: util.db.ogglistPubl}\n  downloadJsonToFile(saveobj,\"identdbPubblico.json\");\n} else if (database == \"privato\") {\n  const privdbinfo = {\n    ver: util.db.dbinfo.ver,\n    data: formattedDate(),\n    msg: \"Exported from WebClient\" \n  }\n  const saveobj = {dbinfo: privdbinfo, fields:util.db.fields, data: util.db.ogglistPriv}\n  downloadJsonToFile(saveobj,\"identdbPrivato.json\");\n}\n",
+      "regex": true,
+      "is_script": true,
+      "class": "Ident",
+      "enabled": true,
+      "is_prompt": false,
+      "shortcut": "",
+      "script": null
     }
   ],
   "classes": [
@@ -4198,6 +3621,20 @@
       {
         "name": "immortal",
         "enabled": false
+      }
+    ],
+    [
+      "Ident",
+      {
+        "name": "Ident",
+        "enabled": false
+      }
+    ],
+    [
+      "IdentInit",
+      {
+        "name": "IdentInit",
+        "enabled": true
       }
     ]
   ],

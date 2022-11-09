@@ -18,7 +18,7 @@ exec(build, (error, stdout, stderr) => {
     }
     let txt = `export namespace AppInfo {
         export let AppTitle: string = "TS2 Web Client";
-        export let RepoUrl: string = "https://github.com/msimic/mudslinger";
+        export let RepoUrl: string = "https://github.com/temporasanguinis/TS2-Client";
         export let Version: string = "${pjson.version}";
         export let Build: string = "${buildhash}";
     }`;

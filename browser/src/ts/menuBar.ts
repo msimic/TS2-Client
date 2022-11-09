@@ -636,19 +636,19 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
                     
                     const trgMap = new Map<string, TrigAlItem>()
                     trgs.forEach((el) => {
-                        trgMap.set(el.pattern, el)
+                        trgMap.set(el.pattern+el.class+el.id, el)
                     });
                     trgsI.forEach((el) => {
-                        trgMap.set(el.pattern, el)
+                        trgMap.set(el.pattern+el.class+el.id, el)
                     });
                     const newTr = [...trgMap.values()]
 
                     const alsMap = new Map<string, TrigAlItem>()
                     als.forEach((el) => {
-                        alsMap.set(el.pattern, el)
+                        alsMap.set(el.pattern+el.class+el.id, el)
                     });
                     alsI.forEach((el) => {
-                        alsMap.set(el.pattern, el)
+                        alsMap.set(el.pattern+el.class+el.id, el)
                     });
                     const newAls = [...alsMap.values()]
 

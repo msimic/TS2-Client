@@ -519,7 +519,7 @@ export class JsScript {
     }
 
     saveBase() {
-        this.saveVariablesAndEventsToConfig(this.baseEvents, this.baseVariables);
+        this.saveBaseVariablesAndEventsToConfig(this.baseEvents, this.baseVariables);
     }
 
     private saveVariablesAndEventsToConfig:any;
