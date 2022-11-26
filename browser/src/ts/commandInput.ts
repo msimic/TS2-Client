@@ -11,13 +11,51 @@ export enum ScrollType {
     PageDown
 }
 
+export const NumPadConfigDef = {
+    NumpadSubtract: "NumpadSubtract",
+    NumpadAdd: "NumpadAdd",
+    NumpadMultiply: "NumpadMultiply",
+    NumpadDivide: "NumpadDivide",
+    NumpadEnter: "NumpadEnter",
+    NumpadDecimal: "NumpadDecimal",
+    Numpad0: "Numpad0",
+    Numpad1: "Numpad1",
+    Numpad2: "Numpad2",
+    Numpad3: "Numpad3",
+    Numpad4: "Numpad4",
+    Numpad5: "Numpad5",
+    Numpad6: "Numpad6",
+    Numpad7: "Numpad7",
+    Numpad8: "Numpad8",
+    Numpad9: "Numpad9"
+}
+
+export const defNumpad:typeof NumPadConfigDef = {
+    NumpadSubtract: "immufire",
+    NumpadAdd: "cambiaarma",
+    NumpadMultiply: "immuele",
+    NumpadDivide: "immucold",
+    NumpadEnter: "",
+    NumpadDecimal: "porte",
+    Numpad0: "cura",
+    Numpad1: "casta",
+    Numpad2: "south",
+    Numpad3: "down",
+    Numpad4: "west",
+    Numpad5: "stoporfleeorlook",
+    Numpad6: "east",
+    Numpad7: "attack",
+    Numpad8: "north",
+    Numpad9: "up"
+}
+
 export class CommandInput {
     public EvtEmitScroll = new EventHook<ScrollType>();
     public EvtEmitCommandsAboutToArrive = new EventHook<boolean>();
     public EvtEmitPreparseCommands = new EventHook<{commands:string, callback:(parsed:string[])=>void}>();
     public EvtEmitCmd = new EventHook<{command:string,fromScript:boolean}>();
     public EvtEmitAliasCmds = new EventHook<{orig: string, commands: string[]}>();
-
+    public NumPad:typeof NumPadConfigDef = defNumpad;
     private cmd_history: string[] = [];
     private cmd_index: number = -1;
     private cmd_entered: string = "";
@@ -38,8 +76,18 @@ export class CommandInput {
         this.chkCmdAliases.prop('checked', isTrue(this.config.getDef("aliasesEnabled",true)));
         this.chkCmdTriggers.prop('checked', isTrue(this.config.getDef("triggersEnabled",true)));
 
+        const readNumpad = ()=> {
+            if (this.config.getDef("numpad",false)!=false) {
+                const npd = this.config.get("numpad")
+                this.NumPad = typeof npd === "string" ? JSON.parse(npd) : npd;
+            }
+        }
         this.config.onSet("triggersEnabled", (v)=>{
             this.chkCmdTriggers.prop('checked', isTrue(v))
+        });
+
+        this.config.onSet("numpad", (v)=>{
+            readNumpad();
         });
 
         this.config.onSet("aliasesEnabled", (v)=>{
@@ -54,7 +102,7 @@ export class CommandInput {
             this.config.set("triggersEnabled", this.chkCmdTriggers.is(":checked"));
         })
 
-        this.$cmdInput.keydown((event: KeyboardEvent) => { return this.keydown(event); });
+        this.$cmdInput.keydown((event: JQueryEventObject) => { return this.keydown(event); });
         const thrInputChange = throttle(this.inputChange, 200, this)
         this.$cmdInput.bind("keyup", v => <any>thrInputChange(v));
 
@@ -84,7 +132,10 @@ export class CommandInput {
             this.EvtEmitAliasCmds.fire({orig: ocmd, commands: cmds});
         } else if (!result) {
             this.EvtEmitCmd.fire({command:cmd,fromScript:fromScript});
+        } else if (result === true) {
+            this.EvtEmitAliasCmds.fire({orig:cmd,commands:[]});
         }
+
     }
 
     public prepareCommands(cmd:string,cmds:string[],ocmds:string[]) {
@@ -168,34 +219,44 @@ export class CommandInput {
         }
     };
 
-    private keydown(event: KeyboardEvent): boolean {
-        switch (event.which) {
-            case 33:
+    private onNumpad(key:string):boolean {
+        const cmd = (<any>this.NumPad)[<any>key]
+        if (cmd) {
+            this.sendCmd(cmd, true, false);
+            return true;
+        }
+        return false;
+    }
+
+    private keydown(event: JQueryEventObject): boolean {
+        const code = (<any>event.originalEvent).code;
+        switch (code) {
+            case "PageUp":
                 this.EvtEmitScroll.fire(ScrollType.PageUp)
                 return false;
-            case 34:
+            case "PageDown":
                 this.EvtEmitScroll.fire(ScrollType.PageDown)
                 return false;
-            case 35:
+            case "Home":
                 if (event.ctrlKey) {
                     this.EvtEmitScroll.fire(ScrollType.Top)
                     return false;
                 }
                 return true
-            case 36:
+            case "End":
                 if (event.ctrlKey) {
                     this.EvtEmitScroll.fire(ScrollType.Bottom)
                     return false;
                 }
                 return true
-            case 13: // enter
+            case "Enter": // enter
                 if (event.shiftKey) {
                     return true;
                 } else {
-                    this.sendCmd();
+                    this.sendCmd(undefined, false, false);
                     return false;
                 }
-            case 38: // up
+            case "ArrowUp": // up
                 if (this.cmd_index === -1) {
                     this.cmd_entered = this.$cmdInput.val();
 
@@ -221,7 +282,7 @@ export class CommandInput {
                 this.inputChange();
                 //this.$cmdInput.select();
                 return false;
-            case 40: // down
+            case "ArrowDown": // down
                 if (this.cmd_index === -1) {
                     break;
                 }
@@ -238,39 +299,27 @@ export class CommandInput {
                 this.inputChange();
                 //this.$cmdInput.select();
                 return false;
-            case 97:
-                this.sendCmd("southwest", true);
-                return false;
-            case 98:
-                this.sendCmd("south", true)
-                return false;
-            case 99:
-                this.sendCmd("southeast", true);
-                return false;
-            case 100:
-                this.sendCmd("west", true);
-                return false;
-            case 101:
-                this.sendCmd("look",true);
-                return false;
-            case 102:
-                this.sendCmd("east", true);
-                return false;
-            case 103:
-                this.sendCmd("northwest", true);
-                return false;
-            case 104:
-                this.sendCmd("north", true);
-                return false;
-            case 105:
-                this.sendCmd("northeast",true);
-                return false;
-            case 107:
-                this.sendCmd("down",true);
-                return false;
-            case 109:
-                this.sendCmd("up",true);
-                return false;
+            case NumPadConfigDef.Numpad0:
+            case NumPadConfigDef.Numpad1:
+            case NumPadConfigDef.Numpad2:
+            case NumPadConfigDef.Numpad3:
+            case NumPadConfigDef.Numpad4:
+            case NumPadConfigDef.Numpad5:
+            case NumPadConfigDef.Numpad6:
+            case NumPadConfigDef.Numpad7:
+            case NumPadConfigDef.Numpad8:
+            case NumPadConfigDef.Numpad9:
+            case NumPadConfigDef.NumpadAdd:
+            case NumPadConfigDef.NumpadEnter:
+            case NumPadConfigDef.NumpadDecimal:
+            case NumPadConfigDef.NumpadSubtract:
+            case NumPadConfigDef.NumpadMultiply:
+            case NumPadConfigDef.NumpadDivide:
+                if (this.onNumpad(code)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false; 
+                }
             default:
                 this.cmd_index = -1;
                 return true;
@@ -290,7 +339,7 @@ export class CommandInput {
         setTimeout(()=>{
             const style = (input[0] as HTMLElement).style
             if (style.height != nh + "px") {
-                console.log("changing command input height")
+                //console.log("changing command input height")
                 style.height = nh + "px"
             }
         },0);

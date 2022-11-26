@@ -37,6 +37,7 @@ import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
 import {  } from './cacheServiceWorker'
 import { copyData } from "./trigAlEditBase";
+import { NumpadWin } from "./numpadWin";
 
 declare global {
     interface JQuery {
@@ -84,6 +85,7 @@ export class Client {
     baseEventsEditor: EventsEditor;
     socketConnected: boolean;
     layoutManager: LayoutManager;
+    numpadWin: NumpadWin;
     public get connected():boolean {
         return this._connected;
     }
@@ -177,7 +179,8 @@ export class Client {
 
         this.connectWin = new ConnectWin(this.socket);
         this.baseEventsEditor = new EventsEditor(this.jsScript, true);
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.jsScript, this.outputWin, this.baseConfig);
+        this.numpadWin = new NumpadWin(this.profileManager.activeConfig);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 

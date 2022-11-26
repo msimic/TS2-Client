@@ -112,6 +112,8 @@ export class MapperWindow {
                     <ul class='custom'>
                         <li id="dati" class='custom' data-option-type="mapper" data-option-name="load">Dati
                             <ul  class='custom'>
+                            <li  class='custom' data-option-type="mapper" data-option-name="mapmode">Modalita' mappaggio</li>
+                            <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
                             <li type='separator'></li>
@@ -357,6 +359,9 @@ export class MapperWindow {
             if ($((<any>event).target).closest(".jqx-menu-popup").length!=0) this.closeMenues($("#mapperMenubar",this.$win));
             (this.$contextMenu as any).jqxMenu('close')
             switch (name) {
+                case "mapmode":
+                    this.toggleMapMode();
+                    break;
                 case "reload":
                     this.load();
                     break;
@@ -448,7 +453,13 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         console.log("refresh favorites " + (fv||[]).length)
         this.addFavoritesToMenu(fv)
     }
-
+    toggleMapMode() {
+        this.mapper.mapmode = !this.mapper.mapmode;
+        if (this.mapper.mapmode)
+            this.message("Modalita Mapping ABILITATA")
+        else
+            this.message("Modalita Mapping DISABILITATA")
+    }
     addFavoritesToMenu(favs: Favorite[]) {
         $("#mapFavorites").empty();
         if (favs.length == 0) {

@@ -248,6 +248,8 @@ export const Short2LongExitIta = new Map<string,string>([
 ]);
 
 export function IsDirectionalCommand(cmd:string, ita:boolean):boolean {
+    if (cmd.indexOf(" ")>-1) return false;
+
     const sh = ita ? Short2LongExitIta : Short2LongExit;
     const long = ita ? Long2ShortExitIta : Long2ShortExit;
     let ret = false
@@ -329,6 +331,7 @@ export class Mapper {
         this._useItalian = value;
     }
 
+    private lastStep:Step = null;
     private manualSteps:Step[]=[]
     public clearManualSteps() {
         this.manualSteps.splice(0, this.manualSteps.length)
@@ -356,6 +359,7 @@ export class Mapper {
             }
             if (!st.exit) return [command];
             this.manualSteps.push(st)
+            this.lastStep = st;
             doLog = true
             const queue:WalkCommand[] = []
             this.handlePossibleDoor(st, this.manualSteps.length == 1 && this.doorAlreadyOpen(st.room, st.dir), queue)
@@ -455,7 +459,13 @@ export class Mapper {
     public get current(): Room {
         return this._current;
     }
-
+    private _mapmode: Boolean = null;
+    public get mapmode(): Boolean {
+        return this._mapmode;
+    }
+    public set mapmode(value: Boolean) {
+        this._mapmode = value
+    }
     private _prevZoneId:number = null;
     private _zoneId:number = null;
 
@@ -615,10 +625,17 @@ export class Mapper {
                         }
     
                         this.acknowledgingWalkStep = false
-
-                        this.setRoomByVNum(parseInt(newVnum));
-                        this.acknowledgeStep(newVnum);
-                        if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
+                        if (this.mapmode && this._previous && this.lastStep) {
+                            const existingRoom = this.getRoomByVnum(parseInt(newVnum))
+                            if (!existingRoom) {
+                                this.createRoomOnMovement(newVnum);
+                            }
+                        }
+                        {
+                            this.setRoomByVNum(parseInt(newVnum));
+                            this.acknowledgeStep(newVnum);
+                            if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
+                        }
                     }, 0);
                 } 
                 else
@@ -644,6 +661,97 @@ export class Mapper {
                     this.roomDesc = null
             }
         })
+    }
+
+    private createRoomOnMovement(newVnum: any) {
+        if (!this.lastStep) return;
+
+        const dir = this.lastStep;
+        const fromRoom = dir.room;
+        const oneRoomWidth = 240
+        const sett = this.scripting.getVariableValue("TSSettore")
+        const toRoom:Room = {
+            id: 0,
+            name: this.scripting.getVariableValue("RoomName"),
+            description: this.scripting.getVariableValue("RoomDesc"),
+            exits: {},
+            zone_id: fromRoom.zone_id,
+            color: "rgb(255,255,255)",
+            x: fromRoom.x,
+            y: fromRoom.y,
+            z: fromRoom.z,
+            type: sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
+        };
+        switch (dir.dir) {
+            case ExitDir.Down:
+                toRoom.z--;
+                break;        
+            case ExitDir.Up:
+                toRoom.z++;
+                break;        
+            case ExitDir.West:
+                toRoom.x-=oneRoomWidth;
+                break;        
+            case ExitDir.East:
+                toRoom.x+=oneRoomWidth;
+                break;        
+            case ExitDir.South:
+                toRoom.y+=oneRoomWidth;
+                break;        
+            case ExitDir.North:
+                toRoom.y-=oneRoomWidth;
+                break;        
+    
+                default:
+                break;
+        }
+        toRoom.vnum = parseInt(newVnum);
+        const occVnums = [...this.idToRoom.keys()].sort((v1, v2) => v1 < v2 ? -1 : 1);
+        let newId = 0;
+        for (let index = occVnums.indexOf(fromRoom.id) + 1; index < occVnums.length - 1; index++) {
+            const e1 = occVnums[index];
+            const e2 = occVnums[index + 1];
+            if (e1 + 1 != e2) {
+                newId = e1 + 1;
+                break;
+            }
+        }
+        if (newId == 0) {
+            newId = occVnums[occVnums.length - 1] + 1;
+        }
+        toRoom.id = newId;
+        toRoom.exits = {}
+        this.activeExits.forEach((e)=>{
+            toRoom.exits[<ExitDir>Long2ShortExit.get(e)] = {
+                type: ExitType.Normal,
+            }
+        })
+        if (dir?.dir) {
+            console.log("mapmode: ", fromRoom.id, toRoom.id, dir?.dir);
+            fromRoom.exits[dir?.dir] = {
+                type: ExitType.Normal,
+                to_room: toRoom.id,
+                to_dir: ReverseExitDir.get(dir?.dir)
+            }
+            toRoom.exits[ReverseExitDir.get(dir?.dir)] = {
+                type: ExitType.Normal,
+                to_room: fromRoom.id,
+                to_dir: (dir?.dir)
+            }
+        }
+        const fromIndex = this.db.rooms.findIndex(r => r.id == fromRoom.id)
+        if (fromIndex>-1) {
+            this.db.rooms.splice(fromIndex, 1)
+        }
+        this.db.rooms.push(fromRoom)
+        const toIndex = this.db.rooms.findIndex(r => r.id == toRoom.id)
+        if (toIndex>-1) {
+            this.db.rooms.splice(toIndex, 1)
+        }
+        this.db.rooms.push(toRoom)
+        this.prepareRoom(fromRoom)
+        this.prepareRoom(toRoom)
+        this.createGraph()
     }
 
     public setRoomData(id:number, roomData:Room) {
@@ -746,50 +854,26 @@ export class Mapper {
         }
 
         for (const rm of this.db.rooms) {
-            if (rm.id) {
-                if (this.favorites.has(rm.id)) {
-                    const f = this.favorites.get(rm.id)
-                    if (f.color) {
-                        rm.color = f.color
-                    }
-                    if (f.key) {
-                        rm.shortName = f.key
-                    }
-                }
-                this.idToRoom.set(rm.id, rm);
-                this.roomIdToZoneId.set(rm.id, rm.zone_id);
-                if (rm.shortName && rm.shortName.length) this.shortNameToRoom.set(rm.shortName.toLowerCase(), rm);
-                const z = this.zoneRooms.get(rm.zone_id);
-                if (z) {
-                    z.push(rm);
-
-                    const zrl = this._zoneRoomsByLevel.get(rm.zone_id);
-                    if (zrl) {
-                        let lv = zrl.get(rm.z)
-                        if (!lv) {
-                            zrl.set(rm.z, [])
-                        }
-                        lv = zrl.get(rm.z)
-                        if (lv) {
-                            lv.push(rm)
-                        }
-                    }
-                }
-            }
-            if (rm.vnum) this.vnumToRoom.set(rm.vnum, rm);
+            this.prepareRoom(rm);
         }
 
+        this.createGraph();
+    }
+
+    private createGraph() {
         let graph = ngraph.default();
 
         for (const rm of this.db.rooms) {
             graph.addNode(rm.id, {
                 room: rm
-            })
+            });
             for (const rex in rm.exits) {
-                let exDir:ExitDir = <ExitDir>rex;
-                if (!rm.exits[exDir] || !rm.exits[exDir].to_room) continue;
+                let exDir: ExitDir = <ExitDir>rex;
+                if (!rm.exits[exDir] || !rm.exits[exDir].to_room)
+                    continue;
                 const rm2 = this.idToRoom.get(rm.exits[exDir].to_room);
-                if (!rm2) continue;
+                if (!rm2)
+                    continue;
 
                 graph.addLink(rm.id, rm.exits[exDir].to_room, {
                     dir: exDir,
@@ -799,7 +883,7 @@ export class Mapper {
                     weight: rm2.cost || 1
                 });
 
-                
+
             }
         }
 
@@ -811,13 +895,48 @@ export class Mapper {
                 }
             }
         })*/
-
         this.pathFinder = aStar<Step, any>(graph, {
             distance(fromNode, toNode, link) {
-                return (link.data.weight || 1)
+                return (link.data.weight || 1);
             },
             oriented: true
-          });
+        });
+    }
+
+    private prepareRoom(rm: Room) {
+        if (rm.id) {
+            if (this.favorites.has(rm.id)) {
+                const f = this.favorites.get(rm.id);
+                if (f.color) {
+                    rm.color = f.color;
+                }
+                if (f.key) {
+                    rm.shortName = f.key;
+                }
+            }
+            this.idToRoom.set(rm.id, rm);
+            this.roomIdToZoneId.set(rm.id, rm.zone_id);
+            if (rm.shortName && rm.shortName.length)
+                this.shortNameToRoom.set(rm.shortName.toLowerCase(), rm);
+            const z = this.zoneRooms.get(rm.zone_id);
+            if (z) {
+                z.push(rm);
+
+                const zrl = this._zoneRoomsByLevel.get(rm.zone_id);
+                if (zrl) {
+                    let lv = zrl.get(rm.z);
+                    if (!lv) {
+                        zrl.set(rm.z, []);
+                    }
+                    lv = zrl.get(rm.z);
+                    if (lv) {
+                        lv.push(rm);
+                    }
+                }
+            }
+        }
+        if (rm.vnum)
+            this.vnumToRoom.set(rm.vnum, rm);
     }
 
     public getRoomZone(roomId: number): Zone {
@@ -846,6 +965,7 @@ export class Mapper {
             let existing = this.db.zones.findIndex(dbz => dbz.id == z.id)
             if (existing>-1) {
                 this.db.zones[existing] = z
+                this.db.rooms = this.db.rooms.filter(ir => ir.zone_id != z.id)
             } else {
                 this.db.zones.push(z)
             }
@@ -853,7 +973,7 @@ export class Mapper {
             const zrooms = db.rooms.filter(ir => ir.zone_id == z.id)
             for (const ir of zrooms) {
                 let existingR = this.db.rooms.findIndex(dbr => dbr.id == ir.id)
-                if (existing>-1) {
+                if (existingR>-1) {
                     this.db.rooms[existingR] = ir
                 } else {
                     this.db.rooms.push(ir)

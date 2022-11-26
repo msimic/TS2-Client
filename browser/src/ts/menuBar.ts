@@ -20,6 +20,7 @@ import { Button, Messagebox } from "./messagebox";
 import { Class } from "./classManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { AppInfo } from "./appInfo";
+import { NumpadWin } from "./numpadWin";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -167,6 +168,7 @@ export class MenuBar {
         private classEditor: ClassEditor,
         private eventEditor: EventsEditor,
         private baseEventEditor: EventsEditor,
+        private numpadWin: NumpadWin,
         private jsScript: JsScript,
         private outWin:OutputWin,
         private baseConfig: UserConfig
@@ -434,6 +436,10 @@ export class MenuBar {
                 removeFonts();
                 $(".outputText").addClass("lucida");
             }
+        };
+
+        this.clickFuncs["numpadconfig"] = (val) => {
+            this.numpadWin.show()            
         };
 
         this.clickFuncs["monospace"] = (val) => {

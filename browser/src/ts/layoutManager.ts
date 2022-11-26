@@ -89,6 +89,7 @@ export class LayoutManager {
     public variableChangedMap = new Map<string, Control[]>();
     public variableStyleChangedMap = new Map<string, Control[]>();
     public onVariableChangedThrottled = new Map<string, Function>();
+    public controlContentMap = new Map<Control, string>();
 
     private defaultPanes = [
         {position: PanelPosition.PaneTopLeft, id: "row-top-left"},
@@ -122,12 +123,25 @@ export class LayoutManager {
 
     public onVariableChanged(variableName:string) {
         let ctrls;
+        let numCtrl = 0;
         if (ctrls=this.variableChangedMap.get(variableName)) {
             for (const c of ctrls) {
+                numCtrl++;
                 let index = this.layout.items.indexOf(c);
+                //let t0 = performance.now();        
                 let cont = this.createContent(c, false);
+                if (this.controlContentMap.get(c) == cont) {
+                    continue;
+                }
+                this.controlContentMap.set(c, cont);
+                //let t1 = performance.now();
+                //if (variableName != "TickRemaining" && numCtrl>0) console.log(`VarChanged-${numCtrl} ${variableName} ${t1 - t0} ms.`);
                 let ui = this.controls.get(index);
-                $(".ui-control-content", ui).html(cont);
+                //t0 = performance.now();        
+                const ccont = $(".ui-control-content", ui)
+                ccont[0].innerHTML = cont;
+                //t1 = performance.now();
+                //if (variableName != "TickRemaining" && numCtrl>0) console.log(`VarChanged-${numCtrl}/${ccont.length} ${variableName} ${t1 - t0} ms.`);
             }
         }
         if (ctrls=this.variableStyleChangedMap.get(variableName)) {
@@ -588,7 +602,7 @@ export class LayoutManager {
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.execCommand(ctrl.commands,ctrl.commands, false);
+                    this.cmdInput.sendCmd(ctrl.commands,true, false);
                 });
             }
         }
@@ -685,7 +699,7 @@ export class LayoutManager {
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.execCommand(ctrl.commands,ctrl.commands, false);
+                    this.cmdInput.sendCmd(ctrl.commands,true, false);
                 });
             }
         }

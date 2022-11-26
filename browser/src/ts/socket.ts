@@ -148,7 +148,8 @@ export class Socket {
         return true;
     }
 
-    public openTelnet(host: string, port: number) {
+    public async openTelnet(host: string, port: number) {
+        await this.closeTelnet();
         this.EvtTelnetTryConnect.fire([host, port]);
         this.ioEvt.clReqTelnetOpen.fire([host, port]);
     }
