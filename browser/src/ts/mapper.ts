@@ -322,7 +322,16 @@ export class Mapper {
     
     private _useItalian: boolean = true;
     defaultDoorName: string = "porta";
-    virtualCurrent: Room;
+    private _virtualCurrent: Room;
+    public get virtualCurrent(): Room {
+        return this._virtualCurrent;
+    }
+    public set virtualCurrent(value: Room) {
+        this._virtualCurrent = value;
+        if (value==null) {
+            this.acknowledgingWalkStep = false;
+        }
+    }
     public loading = false;
     public get useItalian(): boolean {
         return this._useItalian;
