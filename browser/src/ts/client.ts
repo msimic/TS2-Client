@@ -38,6 +38,7 @@ import { Mapper } from "./mapper";
 import {  } from './cacheServiceWorker'
 import { copyData } from "./trigAlEditBase";
 import { NumpadWin } from "./numpadWin";
+import { HelpWin } from "./helpWindow";
 
 declare global {
     interface JQuery {
@@ -86,6 +87,8 @@ export class Client {
     socketConnected: boolean;
     layoutManager: LayoutManager;
     numpadWin: NumpadWin;
+    helpWin: HelpWin;
+    
     public get connected():boolean {
         return this._connected;
     }
@@ -124,6 +127,43 @@ export class Client {
         (<any>window)["Messagebox"] = Messagebox;
         this.aboutWin = new AboutWin();
         this.mapper = new Mapper();
+        (<any>$.fn).findByContentText = function (text:string) {
+            const start = $(this)
+            const allEl = start.find(":not(iframe)").addBack().contents().filter(function() {
+                return this.nodeType == 3;
+            });
+            const res = allEl.filter((i,v) => {
+                const found = v.textContent.trim().toLowerCase().indexOf(text.trim().toLowerCase())!=-1;
+                if (found) {
+                    return true;
+                }
+                return false;
+            });
+            let nodes = res.map((i,v) => {
+                while (v.parentElement && !v.scrollIntoView) {
+                    v = v.parentElement
+                    if (v == start[0]) {
+                        return null;
+                    }
+                }
+                return v;
+            })
+            nodes = nodes.filter((i,v)=>v!=null)
+            let nodesArray = (jQuery.unique(nodes.toArray()))
+            let index = 0;
+            function isAncestor(descendant:Node,ancestor:Node){
+                return descendant.compareDocumentPosition(ancestor) & 
+                    Node.DOCUMENT_POSITION_CONTAINED_BY;
+            }
+            while (index < nodesArray.length - 1) {
+                if (isAncestor(nodesArray[index+1],nodesArray[index])) {
+                    nodesArray.splice(index,1)
+                } else {
+                    index++;
+                }
+            }
+            return $(nodesArray);
+        };
 
         this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
         this.mapper.setScript(this.jsScript)
@@ -180,7 +220,9 @@ export class Client {
         this.connectWin = new ConnectWin(this.socket);
         this.baseEventsEditor = new EventsEditor(this.jsScript, true);
         this.numpadWin = new NumpadWin(this.profileManager.activeConfig);
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig);
+        
+        this.helpWin = new HelpWin();
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 

@@ -318,8 +318,10 @@ export class CommandInput {
                 if (this.onNumpad(code)) {
                     event.preventDefault();
                     event.stopPropagation();
-                    return false; 
+                } else if (code == NumPadConfigDef.NumpadEnter && !event.shiftKey) {
+                    this.sendCmd(undefined, false, false);
                 }
+                return false;
             default:
                 this.cmd_index = -1;
                 return true;

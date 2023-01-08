@@ -149,7 +149,7 @@ export class Socket {
     }
 
     public async openTelnet(host: string, port: number) {
-        await this.closeTelnet();
+        if (this.telnetClient) await this.closeTelnet();
         this.EvtTelnetTryConnect.fire([host, port]);
         this.ioEvt.clReqTelnetOpen.fire([host, port]);
     }
@@ -161,8 +161,12 @@ export class Socket {
         });
 
         this.ioEvt.clReqTelnetClose.fire(null);
+        let cnt = 0;
         let interval = setInterval(() => {
-            if (this.telnetClient) return;
+            if (this.telnetClient && ++cnt<5) {
+                return;
+            }
+            this.telnetClient = null;
             clearInterval(interval);
             resolve();
         }, 100);

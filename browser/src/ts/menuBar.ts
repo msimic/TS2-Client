@@ -21,6 +21,7 @@ import { Class } from "./classManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { AppInfo } from "./appInfo";
 import { NumpadWin } from "./numpadWin";
+import { HelpWin } from "./helpWindow";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -171,7 +172,8 @@ export class MenuBar {
         private numpadWin: NumpadWin,
         private jsScript: JsScript,
         private outWin:OutputWin,
-        private baseConfig: UserConfig
+        private baseConfig: UserConfig,
+        private helpWin: HelpWin
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -228,6 +230,15 @@ export class MenuBar {
             mnu.jqxMenu('closeItem',"altro")
         });
 
+        $("#menuBar").on('keyup', (event) =>
+        {
+            if (event.key == "Escape") {
+                event.preventDefault()
+                event.stopPropagation()
+                $("#cmdInput").focus()
+            }
+        });
+
         $(document).on("keydown", (ev)=>{
             if (ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
                 ev.preventDefault()
@@ -249,7 +260,8 @@ export class MenuBar {
 
         $("#cmdInput").on("keyup", (ev)=>{
             if (!ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
-                if (document.activeElement != mnu[0]) {
+                const loc = (<any>ev.originalEvent).location || 0;
+                if (document.activeElement != mnu[0] && loc == 1) {
                     mnu.jqxMenu('focus');
                     ev.preventDefault()
                     ev.stopPropagation()
@@ -327,6 +339,10 @@ export class MenuBar {
             else {
                 this.EvtConnectClicked.fire();
             }
+        };
+
+        this.clickFuncs["help"] = (val) => {
+            this.helpWin.show();            
         };
 
         this.clickFuncs["log"] = (val) => {

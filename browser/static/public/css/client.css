@@ -11,6 +11,88 @@ a {
     color: inherit;
 }
 
+#helpContent {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    margin: 5px !important;
+}
+
+#helpContent a {
+    color:rgb(72, 80, 194);
+    cursor: pointer;
+}
+
+.searchResult {
+    background-color: yellow;
+}
+
+#helpContent pre {
+    font-family: monospace;
+    clear: both;
+    color: #fff;
+    background: rgb(33, 33, 33);
+    padding: 3px;
+    -moz-tab-size: 2;
+    -o-tab-size: 2;
+    tab-size: 2;
+    -ms-word-break: normal;
+    word-break: normal;
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+    margin: 5px;
+}
+
+#helpContent blockquote {
+    background: #f9f9f9;
+    border-left: 10px solid #ccc;
+    margin: 1.5em 10px;
+    padding: 2px 10px 2px 10px;
+    quotes: "\201C""\201D""\2018""\2019";
+}
+
+#helpContent table {
+    max-width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    border: 1px solid #333333;
+    border-radius: 5px;
+}
+
+#helpContent table td,#helpContent table th{
+    padding: 5px;
+}
+#helpContent table th {
+    background-color: #959595;
+}
+
+#helpContent code {
+    font-family: monospace;
+    font-size: inherit;
+    display: inline-block;
+    max-width: 100%;
+  }
+  
+  #helpContent p {
+    margin: 5px;
+  }
+
+  /* Code in text */
+  #helpContent p > code,
+  #helpContent pre > code,
+  #helpContent li > code,
+  #helpContent dd > code,
+  #helpContent td > code {
+    word-wrap: break-word;
+    box-decoration-break: clone;
+    padding: .1rem .3rem .2rem;
+    border-radius: .2rem;
+  }
+
 a:link, a:visited {
     text-decoration: none;
 }
