@@ -2,8 +2,8 @@ import { EventHook } from './event';
 import { EvtScriptEmitPrint, JsScript } from './jsScript'
 import { EvtScriptEvent, ScripEventTypes, EvtScriptEmitCmd } from './jsScript'
 import { aStar, PathFinder } from 'ngraph.path';
-import { compress, decompress } from 'lz-string';
 import * as ngraph from 'ngraph.graph';
+import {MapperStorage} from './MapperStorage'
 
 export interface Zone {
     id: number;
@@ -349,7 +349,7 @@ export class Mapper {
     parseCommandsForDirection(command: string): string[] {
         if (!this.current) return [command];
         
-        const lastStepRoom = this.manualSteps.length ? this.idToRoom.get(this.manualSteps[this.manualSteps.length-1].exit.to_room) : this.current
+        const lastStepRoom = this.manualSteps.length && this.manualSteps[this.manualSteps.length-1].exit ? this.idToRoom.get(this.manualSteps[this.manualSteps.length-1].exit.to_room) : this.current
         if (!lastStepRoom) return [command];
         const ret:string[] = <string[]>[command];
         let doLog = false;
@@ -366,7 +366,13 @@ export class Mapper {
                 room: lastStepRoom,
                 exit: lastStepRoom.exits[dir]
             }
-            if (!st.exit) return [command];
+            if (!st.exit) {
+                if (this.mapmode) {
+                    this.manualSteps.push(st)
+                    this.lastStep = st;
+                }
+                return [command];
+            }
             this.manualSteps.push(st)
             this.lastStep = st;
             doLog = true
@@ -473,7 +479,18 @@ export class Mapper {
         return this._mapmode;
     }
     public set mapmode(value: Boolean) {
+        const oldV = this._mapmode 
         this._mapmode = value
+        if (!value && !!oldV) {
+            if (this.db.version) {
+                this.db.version.version++
+                this.db.version.message = "Modifiche locali"
+                var now = new Date()
+                this.db.version.date = `${now.getDay()}/${now.getMonth()}/${now.getFullYear()}`
+            }
+
+            this.saveLocal()
+        }
     }
     private _prevZoneId:number = null;
     private _zoneId:number = null;
@@ -597,6 +614,10 @@ export class Mapper {
     public async loadVersion():Promise<MapVersion> {
         let data:MapVersion = null;
         try {
+            if (this.useLocal) {
+                await this.loadLocal(true)
+                return this.db.version
+            }
             let prefix = ""
             if ((<any>window).ipcRenderer) {
                 prefix = "https://temporasanguinis.it/client/"
@@ -612,7 +633,45 @@ export class Mapper {
         return data;
     }
 
-    constructor() {
+    async loadLocalDb() {
+        this.emitMessage.fire("Inizializzo mapper... attendere.");
+        await this.loadLocal(false)
+        return this.loadDb(this.db);
+    }
+
+    private _useLocal: boolean;
+    public get useLocal(): boolean {
+        return this._useLocal;
+    }
+    public set useLocal(value: boolean) {
+        this._useLocal = value;
+    }
+
+    async saveLocal() {
+        await this.storage.clearVersion()
+        await this.storage.setVersion(this.db.version?.version || 1, this.db.version || { version: 1})
+        await this.storage.clearZones()
+        await this.storage.setZones(this.db.zones)
+        /*for (const zone of this.db.zones) {
+            await this.storage.setZone(zone.id, zone)
+        }*/
+        await this.storage.clearRooms()
+        await this.storage.setRooms(this.db.rooms)
+        /*for (const room of this.db.rooms) {
+            await this.storage.setRoom(room.id, room)
+        }*/
+    }
+
+    async loadLocal(onlyVersion:boolean) {
+        this.db = { zones: null, rooms: null}
+        this.db.version = await this.storage.getVersion(1)
+        if (!onlyVersion) {
+            this.db.zones = await this.storage.allZones()
+            this.db.rooms = await this.storage.allRooms()
+        }
+    }
+
+    constructor(private storage:MapperStorage) {
         this.loadFavorites();
         EvtScriptEvent.handle(d => {
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.vnumVariable) {
@@ -622,22 +681,25 @@ export class Mapper {
                     const newVnum = (<any>d.value).newValue;
 
                     setTimeout(() => {
-                        this.virtualCurrent = null;
                         console.log("got vnum " + newVnum)
-
                         if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
                             console.log("discarding " + this.discardWalkStep)
                             this.discardWalkStep = -1;
                             this.acknowledgingWalkStep = false
                             this.recalculating = false
+                            this.virtualCurrent = null;
+                        
                             return;
                         }
     
                         this.acknowledgingWalkStep = false
                         if (this.mapmode && this._previous && this.lastStep) {
+                            console.log("MAPPING:"+parseInt(newVnum))
                             const existingRoom = this.getRoomByVnum(parseInt(newVnum))
                             if (!existingRoom) {
                                 this.createRoomOnMovement(newVnum);
+                            } else {
+                                this.updateRoomOnMovement(existingRoom)
                             }
                         }
                         {
@@ -645,6 +707,11 @@ export class Mapper {
                             this.acknowledgeStep(newVnum);
                             if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
                         }
+
+                        if (!this.currentWalk) {
+                            this.virtualCurrent = null;
+                        }
+                        
                     }, 0);
                 } 
                 else
@@ -672,9 +739,54 @@ export class Mapper {
         })
     }
 
+    private updateRoomOnMovement(room: Room) {
+        const oldExits = room.exits
+        room.exits = {}
+        console.log("updateRoomOnMovement")
+        
+        if (this.lastStep) {
+            const dir = this.lastStep;
+            const fromRoom = dir.room;
+            if (dir?.dir && fromRoom) {
+                fromRoom.exits[dir?.dir] = {
+                    type: ExitType.Normal,
+                    to_room: room.id,
+                    to_dir: ReverseExitDir.get(dir?.dir)
+                }
+                room.exits[ReverseExitDir.get(dir?.dir)] = {
+                    type: ExitType.Normal,
+                    to_room: fromRoom.id,
+                    to_dir: (dir?.dir)
+                }
+                this.prepareRoom(fromRoom)
+            }
+        }
+        const sett = this.scripting.getVariableValue("TSSettore")
+        room.name = this.scripting.getVariableValue("RoomName"),
+        room.description = this.scripting.getVariableValue("RoomDesc"),
+        room.vnum = this.scripting.getVariableValue("TSRoom")
+        if (!room.type) room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
+        if (!room.color) room.color = "rgb(255,255,255)"
+
+        this.activeExits.forEach((e)=>{
+            if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
+                room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
+            } else if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && !oldExits[<ExitDir>Long2ShortExit.get(e)]) {
+                room.exits[<ExitDir>Long2ShortExit.get(e)] = {
+                    type: ExitType.Normal,
+                }
+            }
+        })
+        this.lastStep = null;
+        this.prepareRoom(room)
+        this.createGraph()
+        this.roomChanged.fire({ id: 0, vnum: 0, room: null})
+        this.roomChanged.fire({ id: room.id, vnum: room.vnum, room: room})
+    }
+
     private createRoomOnMovement(newVnum: any) {
         if (!this.lastStep) return;
-
+        console.log("createRoomOnMovement")
         const dir = this.lastStep;
         const fromRoom = dir.room;
         const oneRoomWidth = 240
@@ -714,6 +826,8 @@ export class Mapper {
                 default:
                 break;
         }
+        // todo check overlap var zoneRooms = this.getZoneRooms(fromRoom.zone_id)
+
         toRoom.vnum = parseInt(newVnum);
         const occVnums = [...this.idToRoom.keys()].sort((v1, v2) => v1 < v2 ? -1 : 1);
         let newId = 0;
@@ -758,6 +872,7 @@ export class Mapper {
             this.db.rooms.splice(toIndex, 1)
         }
         this.db.rooms.push(toRoom)
+        this.lastStep = null;
         this.prepareRoom(fromRoom)
         this.prepareRoom(toRoom)
         this.createGraph()
@@ -841,6 +956,7 @@ export class Mapper {
     }
 
     private prepare() {
+        const oldCurrent = this.current
         this.vnumToRoom.clear();
         this.idToRoom.clear();
         this.idToZone.clear();
@@ -867,6 +983,12 @@ export class Mapper {
         }
 
         this.createGraph();
+        this.roomChanged.fire({id:-1, vnum:-1,room:null})
+        this.zoneChanged.fire({id:-1,zone:null})
+        if (oldCurrent) {
+            this.zoneChanged.fire({ id: oldCurrent.zone_id, zone: this.getRoomZone(oldCurrent.id)})
+            this.roomChanged.fire({id: oldCurrent.id, vnum: oldCurrent.vnum, room: oldCurrent})
+        }
     }
 
     private createGraph() {
@@ -920,13 +1042,13 @@ export class Mapper {
                     rm.color = f.color;
                 }
                 if (f.key) {
-                    rm.shortName = f.key;
+                    rm.shortName = '['+f.key+']';
                 }
             }
             this.idToRoom.set(rm.id, rm);
             this.roomIdToZoneId.set(rm.id, rm.zone_id);
-            if (rm.shortName && rm.shortName.length)
-                this.shortNameToRoom.set(rm.shortName.toLowerCase(), rm);
+            if (rm.shortName && rm.shortName.length && rm.shortName[0]=='[' && rm.shortName[rm.shortName.length-1]==']')
+                this.shortNameToRoom.set(rm.shortName.toLowerCase().substring(1,rm.shortName.length-1), rm);
             const z = this.zoneRooms.get(rm.zone_id);
             if (z) {
                 z.push(rm);
@@ -1025,6 +1147,7 @@ export class Mapper {
         try {
             this.loading = true
             this.db = mapDb;
+            this.mapmode = false
 
             this.acknowledgingWalkStep = false;
             const currentRoom = this.current;
@@ -1403,6 +1526,15 @@ export class Mapper {
             }
         }
 
+        for (let index = this.currentWalk.index; index < this.currentWalk.steps.length; index++) {
+            const step = this.currentWalk.steps[index].room.vnum
+            if (step>0 && step == vnum) {
+                stepVnum = step
+                this.currentWalk.index = index;
+                break;
+            }
+        }
+
         if (stepVnum &&
             stepVnum != vnum) {
             if (wasRecalculating) {
@@ -1420,14 +1552,15 @@ export class Mapper {
             //this.failWalk( `Percorso fallito. Sei in ${vnum} ma il percorso aspettava ${stepVnum}`)
             return;
         }
+        
         for (let index = this.currentWalk.index; index < this.currentWalk.steps.length; index++) {
-            const step = this.currentWalk.steps[index];
             stepVnum = this.currentWalk.steps[index].room.vnum
             if (stepVnum>0 && stepVnum == vnum) {
                 this.currentWalk.index = index;
                 break;
             }
         }
+
         const step = this.currentWalk.steps[this.currentWalk.index++];
         if (step) for (const walkCommand of step.commands) {
             const doorOpen = this.doorAlreadyOpen(this.current, step.direction)
@@ -1635,3 +1768,4 @@ export class Mapper {
         });
     }
 }
+

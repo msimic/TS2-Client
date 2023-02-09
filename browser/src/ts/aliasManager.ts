@@ -202,12 +202,12 @@ export class AliasManager {
     private createSimpleAliasCommands(alias: TrigAlItem, match: RegExpMatchArray, aliasManager: this) {
         let value = alias.value;
 
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
             if (d == undefined)
                 return m;
             return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
         });
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
             if (d == undefined)
                 return m;
             return aliasManager.jsScript.getVariableValue(d) || "";
@@ -218,15 +218,15 @@ export class AliasManager {
     private createAliasScript(alias: TrigAlItem, match: RegExpMatchArray) {
         if (!alias.script) {
             let value = alias.value;
-            value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+            value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
                 if (d == undefined)
                     return m;
                 return d == 0 ? match.input.substring(match[0].length) : "(match[" + parseInt(d) + "] || '')";
             });
-            value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+            value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
                 if (d == undefined)
                     return m;
-                return "variable('" + d + "')";
+                return "(variable('" + d + "'))";
             });
             alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
         }

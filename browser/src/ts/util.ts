@@ -3,6 +3,12 @@ import { EventHook } from "./event";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { TrigAlItem } from "./trigAlEditBase";
 
+export function htmlEscape(text:string) {
+    return replaceLf(
+        replaceLtGt(
+        replaceAmp(text)));
+}
+
 export function replaceLtGt(text: string): string {
     return text.replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
@@ -294,13 +300,16 @@ export function addIntellisense(editor:any) {
     $.ajax("./modules/ecmascript.json").done(function(code:any) {
         let server = new CodeMirror.TernServer({ecmaVersion: 10, allowAwaitOutsideFunction: true, defs: [code]});
         editor.setOption("extraKeys", {
-            "Ctrl-Space": function(cm:any) { /*server.complete(cm);*/ cm.showHint({hint: server.getHint, completeSingle:false}); },
+            "Ctrl-Space": function(cm:any) { /*server.complete(cm);*/ cm.showHint({hint: server.getHint, completeSingle:true}); },
             "Ctrl-I": function(cm:any) { server.showType(cm); },
             "Ctrl-O": function(cm:any) { server.showDocs(cm); },
             "Alt-.": function(cm:any) { server.jumpToDef(cm); },
             "Alt-,": function(cm:any) { server.jumpBack(cm); },
             "F2": function(cm:any) { server.rename(cm); },
-            "Ctrl-.": function(cm:any) { server.selectName(cm); }
+            "Ctrl-.": function(cm:any) { server.selectName(cm); },
+            "Tab": function(cm:any){
+                cm.replaceSelection("  " , "end");
+              }
         })
         editor.on("keydown", function(cm:any, event:any) {
             if (event.code == "Escape") {

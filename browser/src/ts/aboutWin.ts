@@ -1,4 +1,5 @@
 import { AppInfo } from "./appInfo";
+import { htmlEscape } from "./util";
 
 export class AboutWin {
     private $win: JQuery;
@@ -15,20 +16,27 @@ export class AboutWin {
         <!--header-->
         <div>INFORMAZIONI</div>
         <!--content-->
-        <div>
+        <div style="text-align:center;">
             <h1>${title}</h1>
-            <br>
-            <a href="${AppInfo.RepoUrl}" target="_blank">${AppInfo.RepoUrl}</a>
-            <br>
-            Version: ${AppInfo.Version}
+            Versione: ${AppInfo.Version}
             <br>
             Build: ${AppInfo.Build}
+            <br>
+            <br>
+            Sito: <a href="${AppInfo.RepoUrl}" style="color:blue;" target="_blank">${AppInfo.RepoUrl}</a>
+            <br>
+            Bug report: <a href="${AppInfo.BugsUrl}" style="color:blue;" target="_blank">${AppInfo.BugsUrl}</a>
+            <br>
+            <br>
+            Autore: ${htmlEscape(AppInfo.Author)}
+            <br>
+            Contributori: ${htmlEscape(AppInfo.Contributors.join(", "))}
         </div>
         `;
 
         this.$win = $(win);
 
-        (<any>this.$win).jqxWindow({width: 360, height: 200});
+        (<any>this.$win).jqxWindow({width: 440, height: 250});
     }
 
     public show() {

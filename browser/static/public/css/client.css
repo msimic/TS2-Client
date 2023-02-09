@@ -877,7 +877,7 @@ input:focus,button:focus {
   }
 
 .jqx-window {
-    /*border: 1px solid #a8a8a869 !important;*/
+    border: 1px solid rgb(21 106 167 / 25%) !important;
     box-shadow: 0px 0px 5px 1px black;
 }
 

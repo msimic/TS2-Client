@@ -39,6 +39,7 @@ import {  } from './cacheServiceWorker'
 import { copyData } from "./trigAlEditBase";
 import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
+import { MapperStorage } from "./MapperStorage";
 
 declare global {
     interface JQuery {
@@ -126,7 +127,7 @@ export class Client {
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
         (<any>window)["Messagebox"] = Messagebox;
         this.aboutWin = new AboutWin();
-        this.mapper = new Mapper();
+        this.mapper = new Mapper(new MapperStorage());
         (<any>$.fn).findByContentText = function (text:string) {
             const start = $(this)
             const allEl = start.find(":not(iframe)").addBack().contents().filter(function() {

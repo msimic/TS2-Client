@@ -115,6 +115,7 @@ export class MapperWindow {
                             <li  class='custom' data-option-type="mapper" data-option-name="mapmode">Modalita' mappaggio</li>
                             <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Ricarica mappa</li>
+                            <li  class='custom' data-option-type="mapper" data-option-name="reloadLocal">Carica da locale</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Ricarica mappa dal sito</li>
                             <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="exportzone">Scarica zona corrente</li>
@@ -363,7 +364,7 @@ export class MapperWindow {
                     this.toggleMapMode();
                     break;
                 case "reload":
-                    this.load();
+                    this.load(false);
                     break;
                 case "info":
                     Messagebox.Show("Informazioni", 
@@ -393,6 +394,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                     break;
                 case "reloadweb":
                     this.loadSite();
+                    break;
+                case "reloadLocal":
+                    this.load(true);
                     break;
                 case "pathfind":
                     this.findpath();
@@ -636,15 +640,20 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         })
     }
 
-    public load() {
+    public load(useLocal:boolean) {
         let version: MapVersion = null;
+        this.mapper.useLocal = useLocal
+                    
         this.mapper.loadVersion().then(v => {
             version = v;
             let vn = Math.random()
             if (v.version != 0) {
                 vn = v.version
             }
-            return this.mapper.load('mapperData.json?v='+vn)
+            if (this.mapper.useLocal)
+                return this.mapper.loadLocalDb()
+            else
+                return this.mapper.load('mapperData.json?v='+vn)
         }).then(mDb => {
             if (!version) {
                 version = mDb.version;
@@ -655,21 +664,11 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                 this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
         });
 
-        
-        /*const image = new Image(); // Using optional size for image
-        image.onload = () => {
-            const w = (<HTMLCanvasElement>this.canvas[0]).width;
-            const h = (<HTMLCanvasElement>this.canvas[0]).height;
-            this.ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, w, h);
-        }; // Draw when image has loaded
-
-        image.src = "https://www.temporasanguinis.it/mappa_small.jpg";
-        */
-
     }
 
     public loadSite() {
         let version: MapVersion = null;
+        this.mapper.useLocal = false
         this.mapper.loadVersion().then(v => {
             version = v;
             let vn = Math.random()

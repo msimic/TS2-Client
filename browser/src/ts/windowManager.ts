@@ -659,7 +659,11 @@ export class WindowManager {
             data.visible = false
             await this.destroyWindow(window, true);
             w = this.createWindow(window, data);
-            w.data.visible = true
+            if (w && w.data) {
+                w.data.visible = true
+            } else {
+                debugger;
+            }
         }
         if ((w && w.window) && !this.loading) {
             if (!(<any>w.window).jqxWindow('isOpen')) (<any>w.window).jqxWindow("open");

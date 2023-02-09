@@ -982,7 +982,7 @@ export class MapperDrawing {
                         } else */{
                             const steps:Point[] = [ ];
  
-                            if (destRoom == roomData.room) {
+                            if (destRoom == roomData.room && exitData) {
                                 recursive = true
                                 destPosX = (roomData.rect.x + exitData.xInner + offsX)|0
                                 destPosy = (roomData.rect.y + exitData.yInner + offsY)|0

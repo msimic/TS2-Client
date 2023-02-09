@@ -244,13 +244,13 @@ export class TriggerManager {
 
     private createSimpleTriggerCommands(value: string, line: string, match: RegExpMatchArray, jsScript: JsScript) {
 
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
             if (d == undefined)
                 return m;
             return d == 0 ? "`" + line + "`" : (match[parseInt(d)] || '');
         });
 
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
             if (d == undefined)
                 return m;
             return jsScript.getVariableValue(d) || "";
@@ -262,15 +262,15 @@ export class TriggerManager {
 
     private createTriggerScript(trig: TrigAlItem, line: string, jsScript: JsScript) {
         let value = trig.value;
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
             if (d == undefined)
                 return m;
             return d == 0 ? "`" + line + "`" : "(match[" + parseInt(d) + "] || '')";
         });
-        value = value.replace(/(?:\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
             if (d == undefined)
                 return m;
-            return "variable('" + d + "')";
+            return "(variable('" + d + "'))";
         });
         trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
     }
