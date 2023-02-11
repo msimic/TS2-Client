@@ -654,7 +654,7 @@ export class WindowManager {
     public async show(window:string) {
         var w = this.windows.get(window);
         //console.log("SHOW " + w.data.name)
-        if (!w.output && !w.custom) {
+        if (!w.output && !w.custom && !this.loading) {
             const data = w.data;
             data.visible = false
             await this.destroyWindow(window, true);

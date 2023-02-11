@@ -219,8 +219,10 @@ export class AliasManager {
         if (!alias.script) {
             let value = alias.value;
             value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-                if (d == undefined)
+                if (d == undefined) {
+                    m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`")
                     return m;
+                }
                 return d == 0 ? match.input.substring(match[0].length) : "(match[" + parseInt(d) + "] || '')";
             });
             value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {

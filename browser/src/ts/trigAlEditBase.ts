@@ -207,6 +207,10 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
+                tabSize: 2,
+                autoCloseBrackets: true,
+                styleActiveLine: true,
+                search: { bottom:true},
                 extraKeys: {"Ctrl-Space": "autocomplete"},
             }
         );
