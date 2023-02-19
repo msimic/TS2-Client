@@ -97,6 +97,7 @@ function mergeJqwidgets(next) {
         './static/public/jqwidgets/jqxbuttons.js',
         './static/public/jqwidgets/jqxlistbox.js',
         './static/public/jqwidgets/jqxdropdownlist.js',
+        './static/public/jqwidgets/jqxnotification.js',
         './static/public/jqwidgets/jqxsplitter.js'],
     output: './dist/jqwidgets_module.js',
     callback: function(err, min) { if (!err && next) next(); }

@@ -2,7 +2,7 @@
   "name": "ts2-client",
   "description": "Tempora Sanguinis 2 Client",
   "main": "electron_main.js",
-  "version": "1.3.9",
+  "version": "1.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/temporasanguinis/TS2-Client"

@@ -875,7 +875,41 @@ input:focus,button:focus {
   #chkCmdAliases:checked + .checker {
     opacity: 0.7;
   }
-
+  .jqx-notification a {
+    color: yellow;
+    text-decoration: underline;
+  }
+.jqx-notification {
+    min-width: auto;
+    max-width: 50%;
+    position: relative;
+    right: 0;
+    padding: 0px !important;
+    margin: 5px !important;
+    float:right;
+    clear: both;
+    pointer-events: all;
+    overflow: hidden;
+}
+#notification-top {
+    top:0;
+    right:0;
+    width: 100%;
+    position: absolute;
+    pointer-events: none;
+}
+#notification-bottom {
+    bottom:0;
+    right:0;
+    width: 100%;
+    position: absolute;
+    pointer-events: none;
+}
+.jqx-notification-info {
+    background-color: rgb(21 106 167 / 77%) !important;
+    border-color: rgb(21 106 167 / 77%) !important;
+    padding: 0px !important;
+}
 .jqx-window {
     border: 1px solid rgb(21 106 167 / 25%) !important;
     box-shadow: 0px 0px 5px 1px black;

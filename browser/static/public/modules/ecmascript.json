@@ -2020,6 +2020,13 @@
       "!doc": "Piu' domande in un pannello, ritorna in .results l'array. Usare con (await Messagebox.ShowMultiInput(...)))"
     }
   },
+  "Notification": {
+    "!doc": "Notificazione / Toast popup",
+    "Show": {
+      "!type": "fn(text: string, top?: bool, ripeti?: bool, delay?: number, html?: bool, trasparenza?: number, blink?: bool) -> void",
+      "!doc": "Mostra notificazione con <text>. Se <top> e' true, in alto, altrimenti in basso. <ripeti> cancella la notificazione precedente e la ripete con nuovo testo. <delay> e' il tempo di chiusura, <html> se vuoi usare html. <trasparenza> e' da 0.0 a 1.0 e <blink> lampeggia."
+    }
+  },
   "Proxy": {
     "!type": "fn(target: ?, handler: Proxy_handler)",
     "!doc": "The Proxy object is used to define the custom behavior in JavaScript fundamental operation (e.g. property lookup, assignment, enumeration, function invocation, etc).",

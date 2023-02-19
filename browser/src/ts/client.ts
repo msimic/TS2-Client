@@ -31,7 +31,7 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { Button, Messagebox } from "./messagebox";
+import { Button, Messagebox, Notification } from "./messagebox";
 import { LayoutManager } from "./layoutManager";
 import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
@@ -126,6 +126,7 @@ export class Client {
 
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
         (<any>window)["Messagebox"] = Messagebox;
+        (<any>window)["Notification"] = Notification;
         this.aboutWin = new AboutWin();
         this.mapper = new Mapper(new MapperStorage());
         (<any>$.fn).findByContentText = function (text:string) {

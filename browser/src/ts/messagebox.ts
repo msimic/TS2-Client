@@ -1,3 +1,5 @@
+import del from "del";
+import { htmlEscape } from "./util";
 
 export const ButtonOK = 1;
 export const ButtonCancel = 0;
@@ -11,6 +13,38 @@ export interface MessageboxResult {
     button:Button;
     result: string;
     results: string[];
+}
+
+export class Notification {
+    public static lastNotificationTop: any;
+    public static lastNotificationBottom: any;
+    public static Show(text: string, top?:boolean, continueLast?:boolean, delay?:number, html?:boolean, opacity?:number, blink?:boolean) {
+        delay = delay || 3000;
+        let centralPanel = $(top ? "#notificationTop" : "#notificationBottom");
+        let content = $(top ? "#notificationTopContent" : "#notificationBottomContent");
+        if (html) 
+            content.html(text)
+        else
+            content.text(htmlEscape(text));
+        let lastSetting = {
+            appendContainer: top ? "#notification-top" : "#notification-bottom",
+            width: "auto", position: top ? "top-right" : "bottom-right", opacity: opacity || 0.9,
+            autoOpen: false, animationOpenDelay: 500, autoClose: true, autoCloseDelay: delay, blink: blink,
+            height: "auto"
+        };
+        if (top && this.lastNotificationTop && continueLast) {
+            (<any>centralPanel).jqxNotification("closeAll")
+        } else if (!top && this.lastNotificationBottom && continueLast) {
+            (<any>centralPanel).jqxNotification("closeAll")
+        } else {
+            if (top)
+                this.lastNotificationTop = lastSetting;
+            else
+                this.lastNotificationBottom = lastSetting;
+            (<any>centralPanel).jqxNotification(lastSetting);
+        }
+        (<any>centralPanel).jqxNotification("open");
+    }
 }
 
 export class Messagebox {
