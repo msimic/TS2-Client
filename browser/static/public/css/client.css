@@ -1435,6 +1435,10 @@ ul.select {
     max-width: max-content;
 }
 
+#helpContent pre {
+    overflow: visible;
+}
+
 #helpContent ul>li>ul>li {
     border: 0 !important;
 }
