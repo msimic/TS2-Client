@@ -694,6 +694,10 @@
     "!type": "fn(name: string)",
     "!doc": "Ritorna il valore della variabile con il nome richiesto."
   },
+  "var": {
+    "!type": "?",
+    "!doc": "Accede alle variabili."
+  },
   "playAudio": {
     "!type": "fn(url: string)",
     "!doc": "Suona un file audio dall'URL assegnato."

@@ -1320,7 +1320,7 @@ export class Mapper {
         rooms = rooms.filter(r => (r.name||'').toLowerCase().match((name||'').toLowerCase()));
         if (desc && desc.length) {
             rooms = rooms.filter(r => {
-                const d1 = (r.description||'').replace("\r","")
+                const d1 = (r.description||'').replace("\r\n"," ")
                 return d1.toLowerCase().match(desc.toLowerCase());
             })
         }

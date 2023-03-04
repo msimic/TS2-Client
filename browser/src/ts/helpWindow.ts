@@ -3,7 +3,7 @@ import { marked } from "marked";
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import json from 'highlight.js/lib/languages/javascript';
-import { importFromFile } from "./util";
+import { downloadString, importFromFile } from "./util";
 import { Messagebox } from "./messagebox";
 
 hljs.registerLanguage('javascript', javascript);
@@ -20,10 +20,13 @@ interface WindowPos {
 export class HelpWin {
     private $win: JQuery;
     private $helpContent: JQuery;
+    private $helpIndex: JQuery;
     private searchButton: JQuery;
     private searchText: JQuery;
     private uploadButton: JQuery;
+    private downloadButton: JQuery;
     private currentSearchHit:Element;
+    private lastParsed: string;
 
     constructor() {
         let win = document.createElement("div");
@@ -35,14 +38,19 @@ export class HelpWin {
         <!--header-->
         <div>Aiuto / Help</div>
         <!--content-->
-        <div>
-            <div style="display:flex;flex-direction:column;position: relative;height: 100%;">
-                <div style="flex:auto">
-                    Ricerca: <input type="text" id="helpSearchText">
-                    <button title="Cerca" id="helpSearch">&#128269;</button>
-                    <button title="Carica locale" id="helpLoad">&#8682;</button>
+        <div style="display: flex;flex-direction:column;position: absolute;/* height: 100%; *//* overflow-y: auto; */flex: auto;top: 0;bottom: 0;left: 0;right: 0;">
+            <div style="flex:auto">
+                Ricerca: <input type="text" id="helpSearchText">
+                <button title="Cerca" id="helpSearch">🔍</button>
+                <button title="Carica locale" id="helpLoad">🡅</button>
+                <button title="Scarica" id="helpDownload">🡇</button>
                 </div>
-                <div id="helpContent" style="flex:auto">
+                <div style="flex:auto;display:flex;flex-direction:row;position: relative;overflow-y: auto;top: 0;bottom: 0;right: 0;left: 0;">
+                    <div id="helpIndex" style="flex:auto;min-width: 360px;overflow-y:auto;width: auto;/* background-color:white; */margin-right: 10px;font-size: 12px;">
+                        <div id="helpIndexInner" style="background-color: white;border: 1px solid #80808073;border-radius: 5px;margin: 0;/* padding: 10px; */padding-right: 10px;margin-right: 5px;"></div>
+                    </div>
+                    <div id="helpContent" style="flex:auto;width:auto;top: 0;bottom: 0;display: flex;flex-direction: column;overflow-y: auto !important;">
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,8 +58,10 @@ export class HelpWin {
 
         this.$win = $(win);
         this.$helpContent = $("#helpContent", win);
+        this.$helpIndex = $("#helpIndex", win);
         this.searchButton = $("#helpSearch",this.$win);
         this.uploadButton = $("#helpLoad",this.$win);
+        this.downloadButton = $("#helpDownload",this.$win);
         this.searchText = $("#helpSearchText",this.$win);
         this.searchText.on("keydown", ev => {
             if (ev.key == "Enter") {
@@ -65,6 +75,10 @@ export class HelpWin {
             importFromFile((d)=>{
                 this.loadHelp(d);
             })
+        });
+
+        this.downloadButton.on("click", ()=> {
+            downloadString(this.lastParsed,"TS2Client_Help.md")
         });
 
         (<any>this.$win).jqxWindow({width: 360, height: 200});
@@ -141,15 +155,40 @@ export class HelpWin {
             (<any>this.$win).jqxWindow('move', data.x, data.y);
             (<any>this.$win).jqxWindow('resize', data.w, data.h);
         }
-        const helpMd = await fetch("./help/TS2Client_Help.md")
+        const helpMd = await fetch("./help/TS2Client_Help.md?v="+AppInfo.Version)
         const helpTxt = await helpMd.text()
+
         await this.loadHelp(helpTxt);
     }
 
     private async loadHelp(helpTxt: string) {
         const parsed = await marked.parse(helpTxt, { async: true });
         if (parsed) {
-            this.$helpContent.html(parsed);
+            this.lastParsed = parsed;
+            let parsedContent = parsed;
+            const rx = /(\<h1.+\>Indice\<\/h1\>)/.exec(parsedContent);
+            const indexY = rx.index + rx[1].length
+            const indexY2 = /\<hr\>/.exec(parsedContent).index
+            let parsedIndex = "";
+            if (indexY>-1 && indexY2 > -1) {
+                parsedIndex = parsed.substring(indexY, indexY2 + 5);
+                parsedContent = parsed.substring(indexY2 + 5)
+                parsedIndex = parsedIndex.replace(/\<hr\>\n?$/gi, "")
+            }
+            $("#helpIndexInner",this.$helpIndex).html(parsedIndex);
+            $("a[href]", this.$helpIndex).each((i, e) => {
+                const url = $(e).attr("href");
+                if (url.startsWith("#")) {
+                    $(e).removeAttr("href");
+                    $(e).css("cursor", "pointer");
+                    $(e).on("click", evt => {
+                        const elm = $("a[name=" + url.substring(1) + "]", this.$helpContent)[0];
+                        if (elm)
+                            elm.scrollIntoView();
+                    });
+                }
+            });
+            this.$helpContent.html(parsedContent);
             $("a[href]", this.$helpContent).each((i, e) => {
                 const url = $(e).attr("href");
                 if (url.startsWith("#")) {
