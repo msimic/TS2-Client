@@ -655,7 +655,7 @@
     "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink."
   },
   "sub": {
-    "!type": "fn(cosa: RegExp, conCosa:string)",
+    "!type": "fn(regex: string, conCosa: string)",
     "!doc": "All interno di un trigger viene usato per cambiare 'cosa' con 'conCosa' nell'output a schermo."
   },
   "gag": {
