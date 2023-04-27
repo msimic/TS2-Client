@@ -47,11 +47,26 @@ Il WebClient di *Tempora Sanguinis 2* permette un esperienza di gioco più compl
 
 In questo help verranno presentate, e forse spiegate, tutte le parti dell'interfaccia per permetterne un loro uso più completo.
 
+## 1.1 Installazione del WebClient
+
+Il WebClient può essere utilizzato direttamente in una finestra del browser. Per una esperienza migliore si suggerisce però l'installazione come applicazione esterna con questa procedrura:
+
+1. Aprire Google Chrome o Microsoft Edge
+2. Andare all'indirizzo https://www.temporasanguinis.it/client/index.html
+3. Nella barra dell'indirizzo pigiare sull'icona sulla destra "Installa Tempora Sanguinis 2 Client"  o "Applicazione disponibile"
+   - Alternativamente aprire il menu a tre puntini del browser e cercare l'opzione per installare app
+4. Confermare l'installazione dell'App
+5. Sul desktop dovrebbe essere comparsa l'icona di un Pegaso e la dicitura "Tempora Sanguinis 2 Client"
+
+Si potrà avviare il client direttamente da quella icona o dal menu Avvio.
+
+Si ricorda che il WebClient è testato usando l'ultima versione disponibile di Google Chrome o Edge. Eventuali malfunzionamenti potrebbero essere legati all'uso di un browser o ad una versione differente
+
 ---
 
 # 2. La barra dei menu <a name="Menu"></a>
 
-![Menu screenshot](./help/menu.jpg)
+<img src="./help/Menu.jpg" alt="Menu screenshot" width="60%"/>
 
 ## 2.1 Menu Connessione <a name="MenuConnessione"></a>
 
@@ -208,7 +223,7 @@ NOTA: L'help sugli script predefiniti può essere invece consultato direttamente
 
 # 3. Elementi della finestra <a name="Elements"></a>
 
-<img src="./help/Totale.jpg" alt="Totale" width="40%"/>
+<img src="./help/Totale.jpg" alt="Totale" width="60%"/>
 
 La applicazione contiene una grossa parte centrale per le risposte ricevute dal server di gioco.
 Per migliorare l'esperienza di gioco è possibile aggiungere finestre flottanti (si posizionano sopra l'area centrale) o bloccate su un lato (riducono l'area centrale ma non rischiano di nasconderne il contenuto).
@@ -278,13 +293,13 @@ Per SANC, DO, il **+** indica la presenza dell'incantesimo, **-** l'assenza e **
 
 ### 3.1.5 Riquadro delle armi e degli scudi
 
-<img src="./help/Armi.jpg" alt="Armi"/>
+<img src="./help/Armi.jpg" alt="Armi" width="30%"/>
 
 Questi pulsanti permettono di vedere quale arma (colonna di sinistra) e scudo (colonna di destra) sono indossati. La pressione del tasto permette il cambio veloce dell'arma o dello scudo.
 
 ### 3.1.6 Riquadro dello stato del pg e del tick timer
 
-<img src="./help/Stato.jpg" alt="Stato"/>
+<img src="./help/Stato.jpg" alt="Stato" width="30%"/>
 
 Vengono indicati e rappresentati da barre i 4 indicatori:
 
@@ -382,7 +397,9 @@ Il mapper, vista la sua complessità, ha un suo menu specifico:
 Al centro, nella barra del menu, è indicato il livello a cui ci si trova e le 2 frecce ai lati permettono di vedere i livelli superiori o inferiori della mappa.
 Sulla destra infine è indicato ed è modificabile il livello di zoom a cui si vuole vedere la mappa nel riquadro del mapper.
 
-Appena sotto il menu è indicato il nome dell'area visualizzata. *Attenzione che il nome dell'area nel mapper non corrisponde al nome dell'area per il MUD.*
+Appena sotto il menu è indicato il nome dell'area visualizzata. 
+
+**_NOTA:_** Il nome dell'area nel mapper non corrisponde al nome dell'area per il MUD.
 
 Nella parte più bassa del riquadro è indicato in numero della *stanza* in cui ci si trova e il suo nome.
 E' il numero da usare con il comando *vai* per raggiungere quella stanza. 
@@ -405,7 +422,7 @@ Gli script, indipendentemente dal contenuto di azioni che devono essere svolte, 
 
 - [**gli alias**](#alias): script attivati da un comando impartito dal player nella riga di comando. E' sempre noto quindi quando questi script vengono attivati. Un esempio può essere l'alias ```slash``` che impartito dal player provoca il cambio dell'arma.
 Un elenco e una spiegazione degli alias preimpostati è visibile impartendo il comando ```help client```
-- [**i trigger**](#trigger): script attivati dalla ricezione dal server di gioco di particolari sequenze di testo. Un esempio può essere l'aggiunta automatica del player *Nome* nel gruppo alla ricezione del testo ```[Nome] inizia a seguirti```
+- [**i triggers**](#triggers): script attivati dalla ricezione dal server di gioco di particolari sequenze di testo. Un esempio può essere l'aggiunta automatica del player *Nome* nel gruppo alla ricezione del testo ```[Nome] inizia a seguirti```
 - [**gli eventi**](#eventi): script attivati dal verificarsi della condizione impostata nell'evento. Ad esempio il cambio nel valore di una variabile. L'uso degli eventi rientra in un livello di scripting più avanzato e per le automazioni più facili è normalmente sufficiente l'uso di [alias](#alias) e [triggers](#triggers).
 
 
@@ -413,7 +430,7 @@ Un elenco e una spiegazione degli alias preimpostati è visibile impartendo il c
 
 Gli alias sono script attivati da un comando impartito dal player nella riga di comando.
 
-![Alias](./help/Alias.jpg)
+<img src="./help/Alias.jpg" alt="Alias" width="80%"/>
 
 | Campo | Funzione |
 | ----- | -------- |
@@ -483,7 +500,7 @@ if (match[1]==="a") {  //Se la lettera passata ed intercettata nel gruppo 1 è a
 
 I trigger sono script attivati dalla ricezione dal server di gioco di particolari sequenze di testo.
 
-![Trigger](./help/Trigger.jpg)
+<img src="./help/Trigger.jpg" alt="Trigger" width="80%"/>
 
 | Campo | Funzione |
 | ----- | -------- |
@@ -505,20 +522,20 @@ Qualora serva lanciare un comando che non deve essere interpretato come alias è
 
 ## 4.3 Variabili <a name="variabili"></a>
 
-![Variabili](./help/Variabili.jpg)
+<img src="./help/Variabili.jpg" alt="Variabili" width="60%"/>
 
 E' possibile definire variabili il cui contenuto viene salvato nel profilo del personaggio e il cui valore quindi viene mantenuto anche all'uscita del WebClient.
 Queste variabili, accessibili dagli script con ```this.nome_variabile``` hanno una visibilità globale e possono essere accedute da tutti gli script (trigger, alias e eventi).
 Variabili definite all'interno di script con ```let``` sono accessibili solo dallo script che le definisce.
 
-ATTENZIONE: il contenuto di queste variabili viene tramutato in JSON per permetterne l'archiviazione nel profilo utente, questo comporta che: 
+**_NOTA:_** Il contenuto di queste variabili viene tramutato in JSON per permetterne l'archiviazione nel profilo utente, questo comporta che: 
 
 - le variabili possono contenere solo informazioni serializzabili
 - le variabili non possono contenere moli di dati troppo onerose visto che lo spazio che il browser mette a disposizione è limitato.
 
 ## 4.4 Classi <a name="classi"></a>
 
-![Classi](./help/Classi.jpg)
+<img src="./help/Classi.jpg" alt="Classi" width="60%"/>
 
 La classe è un descrittivo che può essere attribuito nel campo classe a Trigger, Alias e Eventi.
 
@@ -526,11 +543,10 @@ Ogni classe può poi essere abilitata e disabilitata. Questo produce la corrispo
 
 ## 4.5 Eventi <a name="eventi"></a>
 
-Gli eventi sono tipi speciali di [Trigger](#trigger), nel senso che entrambi sono script attivati automaticamente dal WebClient al verificarsi di una condizione in gioco.
-Se i [Trigger](#trigger) scattano quando il MUD manda la sequenza di testo impostata, gli eventi permettono di scattare all'accadere di altre condizioni.
+Gli eventi sono tipi speciali di [Trigger](#triggers), nel senso che entrambi sono script attivati automaticamente dal WebClient al verificarsi di una condizione in gioco.
+Se i [Trigger](#triggers) scattano quando il MUD manda la sequenza di testo impostata, gli eventi permettono di scattare all'accadere di altre condizioni.
 
-![Eventi](./help/Eventi.jpg)
-
+<img src="./help/Eventi.jpg" alt="Eventi" width="60%"/>
 
 | Campo | Funzione |
 | ----- | -------- |
@@ -551,10 +567,598 @@ Se i [Trigger](#trigger) scattano quando il MUD manda la sequenza di testo impos
 
 ## 4.6 Funzioni disponibili <a name="funzioni"></a>
 
-In questa sezione verranno riportate tutte le funzioni messe a disposizione dal WebClient.
+Elenco in ordine alfabetico delle funzioni messe a disposizione dal WebClient.
+
+
+### Marcatori speciali %n e $n
+
+Sono usati negli [alaias](#alias) e nei [triggers](#triggers) per identificare i campi variabili in alternativa alle regex e all'uso di ```match[n]```
+
+%1, %2, ... nel pattern
+$1, $2, ... nelle azioni.
+
+**Esempio:**
+
+Pattern: Non riesci a reggere %1 che ti cade in terra.
+
+Azioni: 
+```js
+Notification.Show("Ti e' caduto " + $1);
+send("get ed" + TSPersonaggio)
+```
+
+### aliasEnabled <a name="f_aliasEnabled"></a>
+
+Ritorna lo stato di abilitazione del'[alias](#alias) con ID 'id': true se abilitato, false altrimenti.
+
+**Sintassi**: 
+```js
+aliasEnabled(id: string) -> bool
+```
+
+### aliasManager <a name="f_aliasManager"></a>
+
+Utility per gli alias.
+
+**Funzioni**:
+```js
+ getById(aliasId:string) -> alias
+ isEnabled(aliasId:string) -> bool
+```
+
+### cap <a name="f_cap"></a>
+
+Se usato all'interno di un [trigger](#triggers) copia la linea che ha fatto scattare il trigger nella finestra 'window'
+
+**Sintassi**: 
+```js
+cap(window: string)
+```
+
+### classEnabled <a name="f_classEnabled"></a>
+
+Ritorna lo stato di abilitazione della [classe](#classi) con ID 'id': true se abilitato, false altrimenti.
+
+**Sintassi**: 
+```js
+classEnabled(id: string) -> bool
+```
+
+### classManager <a name="f_classManager"></a>
+
+Utility per le classi alias/trigger.
+
+**Funzioni**:
+```js
+Delete(id:string)
+Create(id:string, val:boolean)
+isEnabled(id: string) -> bool
+```
+
+### cls <a name="f_cls"></a>
+
+Cancella il contenuto della finestra 'window'.
+
+**Sintassi**: 
+```js
+cls(window: string)
+```
+
+### color <a name="f_color"></a>
+
+Restituisce una stringa in cui viene aggiunto un colore al 'testo'.
+E' possibile aggiungere anche effetti mettendo a true il parametro. Di default è falso.
+
+I nomi dei colori possono essere trovati in internet cercando *javascript color names*
+
+Vedi anche [print][#f_print]
+
+**Sintassi**: 
+```js
+color(testo: string, foreground: string, background?: string, bold?: bool, underline?: bool, blink?: bool) -> string
+```
+
+**Esempio d'uso**:
+```js
+print("Questo help e' " + color('bellissimo', 'red', 'Gold', true, false, true));
+```
+
+### createWindow <a name="f_createWindow"></a>
+
+Funzione per apire una finestra con i parametri specificati. Ritorna un riferimento alla definizione della finestra per una manipolazione successiva tramite windowManager.
+
+**Sintassi**: 
+```js
+createWindow(windowName:string, data?:WindowData) -> WindowDefinition
+```
+
+WindowData opzionale è un oggetto con la seguente struttura:
+```js
+interface WindowData {
+    name: string;
+    x:number;
+    y:number;
+    w:number;
+    h:number;
+    visible:boolean;
+    collapsed:boolean;
+    docked:boolean;
+    font?:string;
+    fontSize?:number;
+    anchorWidth?:number;
+    anchorHeight?:number;
+}
+```
+
+WindowDefinition è un oggetto con la seguente struttura:
+```js
+interface WindowDefinition {
+    data: WindowData;
+    created:boolean;
+    initialized:boolean;
+}
+```
+
+### delay <a name="f_delay"></a>
+
+Esegue la funzione 'function' dopo 'milliseconds' millisecondi. L'ID è necessario e se esiste già un delay con lo stesso ID, esso verrà annullato e sovrascritto
+
+**Sintassi**: 
+```js
+delay(id: string, milliseconds: number, function: fn())
+```
+
+**Esempio d'uso**:
+```js
+const ts = () => {
+  const n = new Date();
+  return (n.getHours().toString().padStart(2,'0') + ":" 
+        + n.getMinutes().toString().padStart(2,'0') + ":" 
+        + n.getSeconds().toString().padStart(2,'0') + "." 
+        + n.getMilliseconds().toString().padStart(3,'0')
+         );
+}
+
+print(ts() + ': avvio');
+delay('d_smile', 2500, ()=>{print(ts() + ': dopo delay');});
+```
+
+### deleteWindow <a name="f_deleteWindow"></a>
+
+Cancella la finestra con quel nome e la rimuove dalla lista di finestra nel menu finestre.
+
+**Sintassi**: 
+```js
+deleteWindow(windowName:string)
+```
+
+### eventEnabled <a name="f_eventEnabled"></a>
+
+Ritorna lo stato di abilitazione del'[evento](#eventi) con ID 'id': true se abilitato, false altrimenti.
+
+**Sintassi**: 
+```js
+eventEnabled(id: string) -> bool
+```
+
+### gag <a name="f_gag"></a>
+
+Se usato all'interno di un [trigger](#triggers), rimuove dall'output la riga che ha fatto scattare il trigger
+
+**Sintassi**: 
+```js
+gag()
+```
+
+### getAlias <a name="f_getAlias"></a>
+
+Accede all'aliasManager e ritorna l'[alias](#alias) con l'ID richiesto
+
+**Sintassi**: 
+```js
+getAlias(id: string) -> alias
+```
+
+### getEvent <a name="f_getEvent"></a>
+
+Accede all'aliasManager e ritorna l'[evento](#eventi) con l'ID richiesto
+
+**Sintassi**: 
+```js
+getEvent(id: string) -> event
+```
+
+### getTrigger <a name="f_getTrigger"></a>
+
+Accede all'aliasManager e ritorna il [trigger](#triggers) con l'ID richiesto
+
+**Sintassi**: 
+```js
+getTrigger(id: string) -> trigger
+```
+
+### getvar <a name="f_getvar"></a>
+
+Restituisce la variabile 'varname'. 
+
+Analogo a ```this.varname```
+
+**Sintassi**: 
+```js
+getvar(varname: string) -> variable
+```
+
+### getWindow <a name="f_getWindow"></a>
+
+Ritorna un oggetto WindowDefinition ([vedi createWindow](#f_createWindow)) della finestra con il nome impostato.
+
+**Sintassi**: 
+```js
+getWindow(window:string) -> WindowDefinition
+```
+
+### highlight <a name="f_highlight"></a>
+
+Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il lampeggio.
+
+**Sintassi**: 
+```js
+highlight(foreground: string, background: string, blink?: bool)
+```
+
+### link <a name="f_link"></a>
+
+Crea un link cliccabile che esegue la funzione 'click'. Opzionalmente 'hover' mostrerà un testo quando il mouse è sopra al link.
+
+**_NOTA:_** Il link non viene automaticamente mostrato. Deve essere incapsulato in un comando print
+
+**Sintassi**:
+```js
+link(text: string, click: fn(), hoover?: string)
+```
+
+**Esempio d'uso**:
+```js
+print("E' il momento di " + 
+      link(color('sorridere','yellow'),
+              ()=>{
+                   send('smile')
+                  },
+           'smile'
+          )
+     )
+```
+
+Gli a capo sono solo per facilità di lettura in questo help e non necessari.
+
+### map / mapper <a name="f_mapper"></a>
+
+Oggetto per comandare il mapper via script. 
+
+Vedi elementi specifici.
+
+### mapper.current
+
+Oggetto contentente la locazione corrente nel mapper.
+
+**Sintassi**:
+```js
+mapper.current -> Room
+```
+
+Proprietà dell'oggetto room:
+
+| proprietà | descirzione |
+| --------- | ----------- |
+| color | colore della cella in formato web - css|
+| description | descrizione della locazione |
+| exits | Oggetto contenente le uscite disponibili nella locazione | 
+| id | ID della locazione |
+| name | nome della locazione |
+| shortName | nome breve della locazione usabile con il comando vai |
+| zone_id | id dell'area a cui appartiene la locazione |
+
+### mapper.getRoomById
+
+Cerca e ritorna la room con quell'ID
+
+**Sintassi**:
+```js
+mapper.getRoomById(id: number) -> Room
+```
+
+### mapper.getRoomByVnum
+
+Cerca e ritorna la room con quel numero virtuale
+
+**Sintassi**:
+```js
+mapper.getRoomByVnum(vnum: number) -> Room
+```
+
+### mapper.search
+
+Cerca la room per nome e opzionalmente descrizione, visualizza a schermo e ritorna un array di Room trovate
+
+**Sintassi**:
+```js
+mapper.search(name: string, desc?: string) -> Room[]
+```
+
+**Esempio d'uso**:
+```js
+mapper.search("reception");
+```
+
+### mapper.searchRooms
+
+Simile a mapper.search. Cerca la room per nome e opzionalmente descrizione, non visualizza a schermo e ritorna un array di Room trovate.
+
+**Sintassi**:
+```js
+mapper.searchRooms(name: string, desc?: string) -> Room[]
+```
+
+**Esempio d'uso**:
+```js
+const trovate = mapper.searchRooms("reception");
+for (let r of trovate) {
+  print(r.name); 
+}
+```
+
+### mapper.setRoomById
+
+Assegna la locazione con ID come corrente nel mapper
+
+**Sintassi**:
+```js
+mapper.setRoomByID(id: number)
+```
+
+### mapper.setRoomByVnum
+
+Assegna la locazione con numero virtuale come corrente nel mapper
+
+**Sintassi**:
+```js
+mapper.setRoomByVnum(vnum: number)
+```
+
+### mapper.setZoneById
+
+Assegna la zona con ID specificato come corrente nel mapper
+
+**Sintassi**:
+```js
+mapper.setZoneById(id: number)
+```
+
+### mapper.walkToId
+
+Attiva l'auto vai all'ID specificato. Crea il percorso e lo segue
+
+**Sintassi**:
+```js
+mapper.walkToId(id: number)
+```
+
+### mapper.walkToVnum
+
+Attiva l'auto vai al numero virtuale specificato. Crea il percorso e lo segue
+
+**Sintassi**:
+```js
+mapper.walkToVnum(vnum: number)
+```
+
+### Messagebox <a name="f_Messagebox"></a>
+
+Oggetto per apire form di dialogo.
+
+| Funzioni | Descrizione |
+| -------- | ----------- |
+| Question | Fornisce una domanda e viene restituita la risposta |
+| Show | Messagebox semplice, con titolo e messaggio |
+| ShowFull | Fornisce una domande e viene restituita la risposta |
+| ShowInput | Permette multiline per testi lunghi | 
+| ShowInputWithButtons | Permette bottoni personalizzabili |
+| ShowMultiInput | Permette più domande in un pannello. Ritorna un array con le risposte |
+
+**_NOTA:_** Aggiungere ```await``` per mettere in pausa lo script e attendere la risposta.
+
+**Esempio d'uso**:
+```js
+const risposta = await Messagebox.ShowInputWithButtons("Titolo", "Corpo del messaggio", "Testo di default", "Conferma", "Annulla")
+if (risposta.button == 1) {
+  print(risposta.result);
+} else {
+  print("Annullato");
+}
+```
+
+### Notification.Show <a name="f_Notification"></a>
+
+Aggiunge una notifica popup con il testo e la configurazione opzionale passata"
+
+**Sintassi**:
+```js
+Notification.Show(testo: string, top?: bool, ripeti?: bool, delay?: number, html?: bool, trasparenza?: number, blink?: bool)
+```
+
+| Parametro | Descrizione |
+| --------- | ----------- |
+| testo | Testo da mostrare nella finestra popup |
+| top | se true mostra il popup dall'alto verso il basso, se false (default) dal basso verso l'alto |
+| ripeti | se true toglie istantaneamente dallo schermo la notifica precedente e la sostituisce con questa, se false (predefinito) aggiunge la notifica senza rimuovere la precedente |
+| delay | millisecondi di permanenza del popup |
+| html | se true il testo viene interptretato come formato html, se false (default) come stringa di testo |
+| trasparenza | numero tra 0 e 1 indicante il livello di trasparenza richiesto. 0 equivale a trasparenza completa, 1 equivale a opacità completa |
+| blink | se true attiva il lampeggio del popup |
+
+### owner <a name="f_owner"></a>
+
+Restituisce una stringa contenente chi ha lanciato lo script.
+
+**Sintassi**
+```js
+Owner -> string
+``` 
+
+### playAudio <a name="f_playAudio"></a>
+
+Suona un file audio dall'URL specificato.
+
+**Sintassi**
+```js
+playAudio(url: string)
+```
+
+### print <a name="f_print"></a>
+
+Visualizza nella finestra indicata (di default l'output del MUD) il testo richiesto.
+
+**Sintassi**
+```js
+print(testo: string, finestra?: string)
+```
+
+**Esempio d'uso**
+```js
+print("Esempio di print", "Social")
+```
+
+### repeat <a name="f_repeat"></a>
+
+Esegue a ripetizione la funzione 'function' ogni 'milliseconds' millisecondi. L'ID è necessario e se esiste già un repeat con lo stesso ID, esso verrà annullato e sovrascritto.
+
+**Sintassi**
+```js
+repeat(id: string, milliseconds: number, function: fn())
+```
+
+**Esempio d'uso**
+```js
+repeat('test_repeat', 3000, ()=>{send('smile')})
+```
+per fermarlo si passa null a function:
+**Esempio d'uso**:
+```js
+repeat('test_repeat', 0, null)
+```
+
+### send <a name="f_send"></a>
+
+Manda un comando, o più comandi se separati da ; al mud. 
+
+Può contenere [alias](#alias) che verranno eseguiti.
+
+**Sintassi**
+```js
+send(command: string)
+```
+
+### setvar <a name="f_setvar"></a>
+
+Analogo a ```this.varname = value```
+
+Imposta il valore di una variabile
+
+**Sintassi**
+```js
+setvar(varname:string, value:any))
+```
+
+### stopAudio <a name="f_stopAudio"></a>
+
+Interrompe ogni audio che sta suonando al momento.
+
+**Sintassi**
+```js
+stopAudio()
+```
+
+### sub <a name="f_sub"></a>
+
+All'interno di un [trigger](#triggers) viene usato per sostituire il testo 'cosa' con il testo 'conCosa' nell'output a schermo
+
+**Sintassi**
+```js
+sub(cosa: string, conCosa: string)
+```
+
+**Esempio d'uso**
+```js
+sub("lucertola a quattro zampe","paleoscincus")
+```
+
+### toggleAlias <a name="f_toggleAlias"></a>
+
+Abilita o disabilita l'[alias](#alias) con ID 'id' impostandolo allo stato 'state' richiesto
+
+**Sintassi**
+```js
+toggleAlias(id: string, state: bool)
+```
+
+### toggleClass <a name="f_toggleClass"></a>
+
+Abilita o disabilita la [classe](#classe) con ID 'id' impostandola allo stato 'state' richiesto
+
+**Sintassi**
+```js
+toggleClass(id: string, state: bool)
+```
+
+### toggleEvent <a name="f_toggleEvent"></a>
+
+Abilita o disabilita l'[evento](#eventi) con ID 'id' impostandola allo stato 'state' richiesto
+
+**Sintassi**
+```js
+toggleEvent(id: string, state: bool)
+```
+
+### toggleTrigger <a name="f_toggleTrigger"></a>
+
+Abilita o disabilita il [trigger](#triggers) con ID 'id' impostandola allo stato 'state' richiesto
+
+**Sintassi**
+```js
+toggleTrigger(id: string, state: bool)
+```
+
+### triggerEnabled <a name="f_triggerEnabled"></a>
+
+Ritorna lo stato di abilitazione del [trigger](#triggers) con ID 'id': true se abilitato, false altrimenti.
+
+**Sintassi**: 
+```js
+triggerEnabled(id: string) -> bool
+```
+
+### triggerManager <a name="f_triggerManager"></a>
+
+Utility per gli trigger.
+
+**Sintassi**: 
+```js
+getById(trgId:string) -> trigger
+isEnabled(trgId:string) -> bool
+```
+
+### variable <a name="f_variable"></a>
+
+Ritorna il valore della variabile con il nome richiesto. Analogo a [getvar](#f_getvar) e a ```this.name```
+
+**Sintassi**: 
+```js
+variable(name: string) -> variable
+```
 
 ## 4.7 Come fare per? <a name="howto"></a>
 
 In questa sezione verranno aggiunte man mano le soluzioni alle domande più frequenti riguardo agli script non già riportate nelle spiegazioni precedenti.
 
-[TODO aggiungere help per l'installazione di WebClient]
+
+---
