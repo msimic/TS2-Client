@@ -1,7 +1,8 @@
 import { EventHook } from "./event";
 import { denyClientVersion, throttle } from "./util";
 import { AppInfo } from './appInfo'
-import { Messagebox } from "./messagebox";
+import { ButtonOK, Messagebox } from "./messagebox";
+import { Favorite, Mapper } from "./mapper";
 
 export class UserConfig {
     name:string;
@@ -119,8 +120,17 @@ export class UserConfig {
         return this.saveFunc(val);
     }
 
-    public exportToFile() {
-        let jso = JSON.parse(JSON.stringify(this.cfgVals));
+    public async exportToFile(mapper?:Mapper) {
+        let vals = JSON.stringify(this.cfgVals);
+        let jso = JSON.parse(vals);
+        
+        if (mapper) {
+            const res = await Messagebox.ShowWithButtons("Export config","Esporta favoriti mapper nel file?","Si", "No");
+            if (res.button == ButtonOK) {
+                var favorites = mapper.getFavorites();
+                jso.favorites = favorites;
+            }
+        }
         const ver = AppInfo.Version.split(".")
         jso.requiresClientMajor = parseInt(ver[0]);
         jso.requiresClientMinor = parseInt(ver[1]);
@@ -128,7 +138,6 @@ export class UserConfig {
         let json = JSON.stringify(jso, null, 2);
         let blob = new Blob([json], {type: "octet/stream"});
         let url = window.URL.createObjectURL(blob);
-
         let link = document.createElement("a");
         link.setAttribute("href", url);
         link.setAttribute("download", "userConfig.json");
@@ -140,7 +149,7 @@ export class UserConfig {
         document.body.removeChild(link);
     }
 
-    public importFromFile() {
+    public importFromFile(mapper?:Mapper) {
         let inp: HTMLInputElement = document.createElement("input");
         inp.type = "file";
         inp.style.visibility = "hidden";
@@ -152,9 +161,23 @@ export class UserConfig {
             }
 
             let reader = new FileReader();
-            reader.onload = (e1: any) => {
+            reader.onload = async (e1: any) => {
                 let text = e1.target.result;
-                this.ImportText(text);
+                let favorites = null;
+                if (mapper) {
+                    let vals = JSON.parse(text);
+                    if (vals && vals.favorites) {
+                        const res = await Messagebox.ShowWithButtons("Import config","Importa favoriti mapper dal file?","Si", "No");
+                        if (res.button == ButtonOK) {
+                            favorites = vals.favorites;
+                            delete vals.favorites;
+                            text = JSON.stringify(vals);
+                        }
+                    }
+                }
+                if (this.ImportText(text) && favorites) {
+                    mapper.loadFavorites(favorites);
+                }
                 // saveConfig();
             };
             reader.readAsText(file);

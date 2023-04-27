@@ -90,6 +90,14 @@ export class MapperWindow {
         var scrollLeft = $(window).scrollLeft();
         scrollLeft += this.canvas.offset().left;
         scrollTop += this.canvas.offset().top;
+        const fav = !this.drawing.contextRoom ? null : this.mapper.getFavorites().find(f => f.roomId == this.drawing.contextRoom.id)
+        if (fav) {
+            $("[data-option-name='addfavorite']", this.$contextMenu).addClass("disabled");
+            $("[data-option-name='removefavorite']", this.$contextMenu).removeClass("disabled");
+        } else {
+            $("[data-option-name='removefavorite']", this.$contextMenu).addClass("disabled");
+            $("[data-option-name='addfavorite']", this.$contextMenu).removeClass("disabled");
+        }
         (this.$contextMenu as any).jqxMenu('open', (data.x) + 5 + scrollLeft, (data.y) + 5 + scrollTop);
         return false;
     }
@@ -158,7 +166,7 @@ export class MapperWindow {
             <div class="midrow"><canvas tabindex="999" id="mapcanvas"></canvas></div>
             <div class="bottomrow"><span id="mapmessage"></span></div>
             <div id='mapperContextMenu' style="display:none">
-                <ul>
+                <ul style="overflow:visible;">
                 <li  class='custom' data-option-type="mapper" data-option-name="addfavorite">Aggiungi a favoriti</li>
                 <li  class='custom' data-option-type="mapper" data-option-name="removefavorite">Rimuovi da favoriti</li>
                 <li type='separator'></li>
@@ -316,7 +324,11 @@ export class MapperWindow {
         mapper.emitSearch.handle(this.onEmitMapperSearch);
         mapper.zoneChanged.handle(this.onEmitMapperZoneChanged);
         mapper.roomChanged.handle(this.onEmitMapperRoomChanged);
+        mapper.favoritesChanged.handle(this.favoritesChanged);
         windowManager.EvtEmitWindowsChanged.handle(this.onEmitWindowsChanged);
+    }
+    private favoritesChanged = (favoritesChanged: any) => {
+        this.refreshFavorites();
     }
 
     private detachHandlers(mapper: Mapper, windowManager:WindowManager) {
@@ -324,6 +336,8 @@ export class MapperWindow {
         mapper.emitSearch.release(this.onEmitMapperSearch);
         mapper.zoneChanged.release(this.onEmitMapperZoneChanged);
         mapper.roomChanged.release(this.onEmitMapperRoomChanged);
+        mapper.favoritesChanged.release(this.favoritesChanged);
+        
         windowManager.EvtEmitWindowsChanged.release(this.onEmitWindowsChanged);
     }
 
@@ -439,10 +453,10 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                     if (this.drawing.contextRoom) this.editRoom((this.drawing.contextRoom))
                     break;
                 case "addfavorite":
-                    if (this.drawing.contextRoom) this.addFavorite((this.drawing.contextRoom))
+                    if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.addFavorite((this.drawing.contextRoom))
                     break;
                 case "removefavorite":
-                    if (this.drawing.contextRoom) this.removeFavorite((this.drawing.contextRoom))
+                    if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.removeFavorite((this.drawing.contextRoom))
                     break;
                 case "legend":
                     this.drawing.showLegend=!!!this.drawing.showLegend;
@@ -465,19 +479,19 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             this.message("Modalita Mapping DISABILITATA")
     }
     addFavoritesToMenu(favs: Favorite[]) {
-        $("#mapFavorites").empty();
+        const favUl = $("#mapFavorites");
+        favUl.empty();
         if (favs.length == 0) {
-            $("#mapFavorites").append("<li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>&lt;nessuno&gt;</li>");
+            favUl.append("<li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>&lt;nessuno&gt;</li>");
             return;
         }
         for (const fv of favs) {
             let li = $("<li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>" + fv.key + "</li>");
-            let self = this;
             li.on("click", () => {
                 this.closeMenues($("#mapperMenubar",this.$win))
                 this.mapper.walkToId(fv.roomId)
             });
-            $("#mapFavorites").append(li);
+            favUl.append(li);
         }
     }
 
@@ -486,6 +500,10 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         this.refreshFavorites()
     }
     async addFavorite(r: Room) {
+        if (!r) return;
+        if (r.shortName && r.shortName.startsWith("[") && r.shortName.endsWith("]")) {
+            r.shortName = r.shortName.slice(1, r.shortName.length -1);
+        }
         const fvi = await Messagebox.ShowMultiInput("Crea favorito", ["Nome (per vai, opzionale)", "Colore (opzionale)"], [r.shortName, r.color])
         if (fvi.button != Button.Ok) return;
 

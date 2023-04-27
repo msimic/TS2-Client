@@ -3,7 +3,7 @@ import { EvtScriptEmitPrint, JsScript } from './jsScript'
 import { EvtScriptEvent, ScripEventTypes, EvtScriptEmitCmd } from './jsScript'
 import { aStar, PathFinder } from 'ngraph.path';
 import * as ngraph from 'ngraph.graph';
-import {MapperStorage} from './MapperStorage'
+import {MapperStorage} from './mapperStorage'
 
 export interface Zone {
     id: number;
@@ -286,6 +286,12 @@ export class Mapper {
     }
 
     public addFavorite(fv:Favorite) {
+        for (const f of this.favorites.values()) {
+            if (f.key == fv.key) {
+                this.favorites.delete(f.roomId);
+                // duplicates
+            }
+        }
         this.favorites.set(fv.roomId, fv);
         this.saveFavorites();
     }
@@ -293,15 +299,21 @@ export class Mapper {
     public removeFavorite(id:number) {
         this.favorites.delete(id);
         const rm = this.getRoomById(id)
-        if (rm) rm.color = "rgb(255,255,255)"
+        if (rm) {
+            rm.color = "rgb(255,255,255)"
+            rm.shortName = null;
+        }
         this.saveFavorites();
     }
 
-    private loadFavorites() {
+    public loadFavorites(override?:Favorite[]) {
         this.favorites.clear()
-        const fv = JSON.parse(localStorage.getItem("mapper_favorites")) as Favorite[];
-        if (fv) for (const f of fv) {
-            this.favorites.set(f.roomId, f);
+        const fv = override ? override : JSON.parse(localStorage.getItem("mapper_favorites")) as Favorite[];
+        if (fv) {
+            for (const f of fv) {
+                this.favorites.set(f.roomId, f);
+            }
+            this.favoritesChanged.fire(null);
         }
     }
 
@@ -519,6 +531,7 @@ export class Mapper {
     private db: MapDatabase = null;
     public roomChanged = new EventHook<{id: number, vnum:number, room:Room}>();
     public zoneChanged = new EventHook<{id: number, zone:Zone}>();
+    public favoritesChanged = new EventHook();
     public emitMessage = new EventHook<string>();
     public emitSearch = new EventHook<string>();
 

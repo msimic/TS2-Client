@@ -39,7 +39,7 @@ import {  } from './cacheServiceWorker'
 import { copyData } from "./trigAlEditBase";
 import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
-import { MapperStorage } from "./MapperStorage";
+import { MapperStorage } from "./mapperStorage";
 
 declare global {
     interface JQuery {
@@ -224,7 +224,7 @@ export class Client {
         this.numpadWin = new NumpadWin(this.profileManager.activeConfig);
         
         this.helpWin = new HelpWin();
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 

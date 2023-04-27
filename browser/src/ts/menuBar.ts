@@ -22,6 +22,7 @@ import { TrigAlItem } from "./trigAlEditBase";
 import { AppInfo } from "./appInfo";
 import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
+import { Mapper } from "./mapper";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -173,7 +174,8 @@ export class MenuBar {
         private jsScript: JsScript,
         private outWin:OutputWin,
         private baseConfig: UserConfig,
-        private helpWin: HelpWin
+        private helpWin: HelpWin,
+        private mapper: Mapper
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -368,11 +370,11 @@ export class MenuBar {
         };
 
         this.clickFuncs["export-settings"] = () => {
-            this.config.exportToFile();
+            this.config.exportToFile(this.mapper);
         };
 
         this.clickFuncs["import-settings"] = () => {
-            this.config.importFromFile();
+            this.config.importFromFile(this.mapper);
         };
 
         this.clickFuncs["export-layout"] = () => {

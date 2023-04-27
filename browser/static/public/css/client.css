@@ -1603,6 +1603,10 @@ NO TITLE WINDOW
     z-index: 5000 !important;
     font: 10pt sans-serif;
     color: black;
+    overflow: visible;
+}
+.disabled{
+    color: lightgray;
 }
 
 #electronMenu {
