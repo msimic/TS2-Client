@@ -149,7 +149,7 @@ export class Mxp {
 
         this.tagHandlers.push((tag) => {
             /* hande image tags */
-            let re = /^<T?S?im(age|g) ?(FName=["|']?([^ '"]+)["|']?)? ?url="([^">]*)"? ?(W=\"?(\d+)\"?)? ?(H=\"?(\d+)\"?)? ?(ALIGN=\"?([^\"\>]+)\"?)?>/i;
+            let re = /^<(tsimg|tsimage|image|img) ?(FName=["|']?([^ '"]+)["|']?)? ?url="([^">]*)"? ?(W=\"?(\d+)\"?)? ?(H=\"?(\d+)\"?)? ?(ALIGN=\"?([^\"\>]+)\"?)?>/i;
             let match = re.exec(tag);
             if (match) {
                 /* push and pop is dirty way to do this, clean it up later */
