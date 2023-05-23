@@ -4,6 +4,7 @@ import { OutputManager } from "./outputManager";
 import { OutWinBase } from "./outWinBase";
 import { CommandInput } from "./commandInput";
 import { JsScript } from "./jsScript";
+import { UserConfig } from "./userConfig";
 
 
 // class DestWin extends OutWinBase {
@@ -53,7 +54,7 @@ export class Mxp {
 
     // private destWins: {[k: string]: DestWin} = {};
 
-    constructor(private outputManager: OutputManager, private commandInput: CommandInput, private script: JsScript) {
+    constructor(private outputManager: OutputManager, private commandInput: CommandInput, private script: JsScript, private config: UserConfig) {
         this.elementRegex = (/<!ELEMENT (?<name>(\w|_)+) +(('|")+(?<definition>([^"'])*)?('|")+)? ?(ATT='?(?<att>[^" ']*)'? ?)?(TAG='?(?<tag>[^" ']*)'? ?)?(FLAG=('|")?(?<flag>[^"']*)('|")? ?)?(?<open>OPEN)? ?(?<empty>EMPTY)? ?(?<delete>DELETE)? ?[^>]*>/gi);
         this.entityRegex = (/<!ENTITY +(?<name>(\w|_)+) +(('|")+(?<definition>([^>])*)?('|")+)? ?(?<private>PRIVATE)? ?(?<delete>DELETE)? ?(?<remove>REMOVE)? ?(?<add>ADD)?>/gi);
         this.makeTagHandlers();
@@ -152,17 +153,19 @@ export class Mxp {
             let re = /^<(tsimg|tsimage|image|img) ?(FName=["|']?([^ '"]+)["|']?)? ?url="([^">]*)"? ?(W=\"?(\d+)\"?)? ?(H=\"?(\d+)\"?)? ?(ALIGN=\"?([^\"\>]+)\"?)?>/i;
             let match = re.exec(tag);
             if (match) {
-                /* push and pop is dirty way to do this, clean it up later */
-                const mw = (match[6] || "90") + (match[6] ? "px" : "%")
-                const mh = (match[8] || "70") + (match[8] ? "px" : "%")
-                const va = match[10] || "unset"
-                const url = match[4] && match[3] ? match[4] + match[3] : match[4]
+                if (this.config.getDef("mxpImagesEnabled", true)) {
+                    /* push and pop is dirty way to do this, clean it up later */
+                    const mw = (match[6] || "90") + (match[6] ? "px" : "%")
+                    const mh = (match[8] || "70") + (match[8] ? "px" : "%")
+                    const va = match[10] || "unset"
+                    const url = match[4] && match[3] ? match[4] + match[3] : match[4]
 
-                //let elem = $("<img style=\"width:"+mw+";height:"+mh+";float:"+va+";\" src=\"" + url + "\">");
-                let elem = $(`<div style="width:${mw};height:${mh};float:${va};background-size:cover;background-position:center center;clear:both;margin:10px;background-repeat:no-repeat;background-image:url('${url}');"></div>`)
-                this.outputManager.pushMxpElem(elem);
-                this.outputManager.popMxpElem();
-                //console.debug("MXP Image: ", match[2] + match[1]);
+                    //let elem = $("<img style=\"width:"+mw+";height:"+mh+";float:"+va+";\" src=\"" + url + "\">");
+                    let elem = $(`<div style="width:${mw};height:${mh};float:${va};background-size:cover;background-position:center center;clear:both;margin:10px;background-repeat:no-repeat;background-image:url('${url}');"></div>`)
+                    this.outputManager.pushMxpElem(elem);
+                    this.outputManager.popMxpElem();
+                    //console.debug("MXP Image: ", match[2] + match[1]);
+                }
                 return true;
             }
 

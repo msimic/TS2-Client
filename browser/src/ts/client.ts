@@ -209,7 +209,7 @@ export class Client {
         
         this.windowManager = new WindowManager(this.profileManager);
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
-        this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript);
+        this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
         this.jsScript.setOutputManager(this.outputManager);
         this.layoutManager = new LayoutManager(this.profileManager, this.jsScript, this.commandInput);
@@ -665,6 +665,7 @@ export namespace Mudslinger {
         setDefault(cfg, "wrap-lines", true);
         setDefault(cfg, "utf8Enabled", false);
         setDefault(cfg, "mxpEnabled", true);
+        setDefault(cfg, "mxpImagesEnabled", true);
         setDefault(cfg, "aliasesEnabled", true);
         setDefault(cfg, "triggersEnabled", true);
         setDefault(cfg, "soundsEnabled", true);

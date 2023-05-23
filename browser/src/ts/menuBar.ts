@@ -55,6 +55,7 @@ export class MenuBar {
         ["enable-color", "colorsEnabled"],
         ["enable-utf8", "utf8Enabled"],
         ["enable-mxp", "mxpEnabled"],
+        ["enable-mxp-images", "mxpImagesEnabled"],
         ["enable-aliases", "aliasesEnabled"],
         ["enable-triggers", "triggersEnabled"],
         ["enable-sounds", "soundsEnabled"],
