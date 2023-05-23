@@ -30,7 +30,7 @@
     document.write('<meta http-equiv="expires" content="' + dt.toGMTString() + '"/>');
 
     $(document).ready(function() {
-      if (typeof(Mudslinger)!=undefined) {
+      if (typeof(Mudslinger)!='undefined') {
         Mudslinger.init();
       } else {
         setTimeout(() => window.location.reload(), 3000);
