@@ -43,6 +43,17 @@ export interface mxpElement {
     closing:string;
 }
 
+export interface mxpElementAlt extends mxpElement {
+    nameAlt: string;
+    definitionAlt:string;
+    attAlt:string;
+    flagAlt:string;
+    tagAlt:string;
+    emptyAlt:string;
+    openAlt:string;
+    deleteAlt:string;
+}
+
 export class Mxp {
     public EvtEmitCmd = new EventHook<{value: string, noPrint: boolean}>();
 
@@ -55,25 +66,45 @@ export class Mxp {
     // private destWins: {[k: string]: DestWin} = {};
 
     constructor(private outputManager: OutputManager, private commandInput: CommandInput, private script: JsScript, private config: UserConfig) {
-        this.elementRegex = (/<!ELEMENT (?<name>(\w|_)+) +(('|")+(?<definition>([^"'])*)?('|")+)? ?(ATT='?(?<att>[^" ']*)'? ?)?(TAG='?(?<tag>[^" ']*)'? ?)?(FLAG=('|")?(?<flag>[^"']*)('|")? ?)?(?<open>OPEN)? ?(?<empty>EMPTY)? ?(?<delete>DELETE)? ?[^>]*>/gi);
-        this.entityRegex = (/<!ENTITY +(?<name>(\w|_)+) +(('|")+(?<definition>([^>])*)?('|")+)? ?(?<private>PRIVATE)? ?(?<delete>DELETE)? ?(?<remove>REMOVE)? ?(?<add>ADD)?>/gi);
+        this.elementRegex = (/<!ELEMENT (?<name>[\w_]+) +((")+(?<definition>([^"])*)?(")+)? ?(ATT='?(?<att>[^" ']*)'? ?)?(TAG='?(?<tag>[^" ']*)'? ?)?(FLAG=('|")?(?<flag>[^"']*)('|")? ?)?(?<open>OPEN)? ?(?<empty>EMPTY)? ?(?<delete>DELETE)? ?[^>]*>(?=$|\<|\n|\r)|<!ELEMENT (?<nameAlt>[\w_]+) +((')+(?<definitionAlt>([^'])*)?(')+)? ?(ATT='?(?<attAlt>[^" ']*)'? ?)?(TAG='?(?<tagAlt>[^" ']*)'? ?)?(FLAG=('|")?(?<flagAlt>[^"']*)('|")? ?)?(?<openAlt>OPEN)? ?(?<emptyAlt>EMPTY)? ?(?<deleteAlt>DELETE)? ?[^>]*>(?=$|\<|\n|\r)/gi);
+        this.entityRegex = (/<!ENTITY +(?<name>[\w_]+) +((")+(?<definition>([^>])*)?(")+)? ?(?<private>PRIVATE)? ?(?<delete>DELETE)? ?(?<remove>REMOVE)? ?(?<add>ADD)?>(?=$|\<|\n|\r)|<!ENTITY +(?<nameAlt>[\w_]+) +((')+(?<definitionAlt>([^>])*)?(')+)? ?(?<privateAlt>PRIVATE)? ?(?<deleteAlt>DELETE)? ?(?<removeAlt>REMOVE)? ?(?<addAlt>ADD)?>(?=$|\<|\n|\r)/gi);
         this.makeTagHandlers();
     }
 
-    private addElement(e:mxpElement):mxpElement {
-        e = this.parseElement(e);
-        this.elements.push(e);
-        return e;
+    private addElement(e:mxpElementAlt):mxpElement {
+        let ret:mxpElement = {
+            name: e.nameAlt || e.name,
+            regex: null,
+            att: e.attAlt || e.att,
+            definition: e.definitionAlt || e.definition,
+            delete: e.deleteAlt || e.delete,
+            empty: e.emptyAlt || e.empty,
+            flag: e.flagAlt || e.flag,
+            open: e.openAlt || e.open,
+            tag: e.tagAlt || e.tag,
+            closing: null
+        };
+        ret = this.parseElement(ret);
+        const existingIndex = this.elements.findIndex(ee => ee.name == ret.name);
+        if (existingIndex != -1) {
+            this.elements.splice(existingIndex, 1)   
+        }
+        this.elements.push(ret);
+        return ret;
     }
 
     private parseElement(e: mxpElement):mxpElement {
+        
         if (e.definition && e.definition.indexOf("<") > -1) {
             // replacement tags
             const tags = e.definition.match(/<([^>]+)>/g);
             if (tags && tags.length) {
-                e.closing = '';
+                e.closing = ''; 
                 for (let index = tags.length - 1; index >= 0; index--) {
-                    const closeTag = "</" + tags[index].slice(1);
+                    let closeTag = "</" + tags[index].slice(1).split(" ")[0];
+                    if (!closeTag.endsWith(">")) {
+                        closeTag += ">"
+                    }
                     e.closing += closeTag;
                 }
             }
@@ -86,15 +117,16 @@ export class Mxp {
 
         this.elements = [];
         this.tagHandlers.push((t) => {
-            if (t.match(/!element/i)) {
+            if (t.match(/<!element/i)) {
                 var re = this.elementRegex; // (/<!ELEMENT (?<name>(\w|_)+) +(('|")+(?<definition>([^"'])*)?('|")+)? ?(ATT='?(?<att>[^" ']*)'? ?)?(TAG='?(?<tag>[^" ']*)'? ?)?(FLAG=('|")?(?<flag>[^"']*)('|")? ?)?(?<open>OPEN)? ?(?<empty>EMPTY)? ?(?<delete>DELETE)? ?[^>]*>/gi);
                 re.lastIndex = 0;
                 let m = re.exec(t);
+
                 if (m) {
-                    let ele = this.addElement(<mxpElement>(<any>m).groups);
+                    let ele = this.addElement(<mxpElementAlt>(<any>m).groups);
                     //console.debug("Element: ", ele);
                     while (m = re.exec(t)) {
-                        ele = this.addElement(<mxpElement>(<any>m).groups);
+                        ele = this.addElement(<mxpElementAlt>(<any>m).groups);
                         //console.debug("MXP Element: ", ele);
                     }
                     return true;
@@ -108,7 +140,33 @@ export class Mxp {
                 var re = this.entityRegex;
                 re.lastIndex = 0;
                 let m = re.exec(t);
+
                 if (m) {
+
+                    if (m.groups.nameAlt && !m.groups.name) {
+                        m.groups.name = m.groups.nameAlt;
+                    }
+
+                    if (m.groups.definitionAlt && !m.groups.definition) {
+                        m.groups.definition = m.groups.definitionAlt;
+                    }
+
+                    if (m.groups.privateAlt && !m.groups.private) {
+                        m.groups.private = m.groups.privateAlt;
+                    }
+
+                    if (m.groups.deleteAlt && !m.groups.delete) {
+                        m.groups.delete = m.groups.deleteAlt;
+                    }
+
+                    if (m.groups.removeAlt && !m.groups.remove) {
+                        m.groups.remove = m.groups.removeAlt;
+                    }
+
+                    if (m.groups.addAlt && !m.groups.add) {
+                        m.groups.add = m.groups.addAlt;
+                    }
+
                     const def = (<any>m).groups.definition || '';
                     if (!this.script.getScriptThis()[(<any>m).groups.name]) {
                         this.script.getScriptThis()[(<any>m).groups.name] = "";
@@ -161,7 +219,7 @@ export class Mxp {
                     const url = match[4] && match[3] ? match[4] + match[3] : match[4]
 
                     //let elem = $("<img style=\"width:"+mw+";height:"+mh+";float:"+va+";\" src=\"" + url + "\">");
-                    let elem = $(`<div style="width:${mw};height:${mh};float:${va};background-size:cover;background-position:center center;clear:both;margin:10px;background-repeat:no-repeat;background-image:url('${url}');"></div>`)
+                    let elem = $(`<img style="width:${mw};height:${mh};float:${va};clear:both;${va=="unset"?"margin:10px;display:block;":"display:inline;margin-left:1px;margin-right:4px;vertical-align:middle;"}" src='${url}'/>`)
                     this.outputManager.pushMxpElem(elem);
                     this.outputManager.popMxpElem();
                     //console.debug("MXP Image: ", match[2] + match[1]);
@@ -265,30 +323,69 @@ export class Mxp {
             if (match) {
                 
                 /* just the tag */
-                let tag_re = /^<send ?(?:href=)?(["'](.*)["'])?([^>]*)?>([^<]+)<\/send>/i;
+                let tag_re = /^<send ?(?:href=)?(["']([^']*)["'])? ?(?:hint=)?(["']([^']*)["'])?([^>]*)?>(.+)<\/send>/i;
                 let tag_m = tag_re.exec(tag);
                 if (tag_m) {
                     this.openTags.push("send");
-                    let html_tag = "<a>";
+
+                    let html_tag = "<a style='display:inline-block;vertical-align:middle;'>";
                     let elem = $(html_tag);
-                    const tagCommand = stripAnsi(tag_m[2] ? tag_m[2] : tag_m[4]);
-                    elem[0].setAttribute("title", tagCommand);
-                    elem[0].setAttribute("aria-label", tagCommand);
+                    const tagCommand = stripAnsi(tag_m[2] ? tag_m[2] : tag_m[6]).split("|");
+                    const title = (tag_m[4] || tagCommand[0]).split("|");
+                    const content = tag_m[6];
+
+                    elem[0].setAttribute("title", title[0]);
+                    elem[0].setAttribute("aria-label", title[0]);
+                    
                     // elem[0].setAttribute("aria-live", "off");
                     elem.addClass("underline");
                     elem.addClass("clickable");
-                    if (tag_m[3] && tag_m[3].match(/prompt/i)) {
+
+                    if (tag_m[5] && tag_m[5].match(/prompt/i)) {
                         elem.click(() => {
-                            this.commandInput.setInput(tagCommand);
+                            this.commandInput.setInput(tagCommand[0]);
                         });
                     }
                     else {
-                        elem.click(() => {
-                            this.EvtEmitCmd.fire({value: tagCommand, noPrint: false});
+                        elem.click((event) => {
+                            if (tagCommand.length == 1) {
+                                this.EvtEmitCmd.fire({value: tagCommand[0], noPrint: false});
+                            } else {
+                                const rng = (Math.trunc(Math.random()*10000))
+                                let items = ""
+                                const start = tagCommand.length == title.length-1 ? 1 : 0
+
+                                for (let i = start; i < title.length; i++) {
+                                    items += `<li class='custom' style="white-space: nowrap;" data-command="${tagCommand[i-start]}">${title[i]}</li>`
+                                }
+
+                                let menu = `<div id='mxpSendMenu${rng}' style="display:none;">
+                                    <ul style="overflow:visible;">
+                                    ${items}
+                                    </ul>
+                                </div>`
+                                const cmenu = <JQuery>((<any>$(menu))).jqxMenu({ autoSizeMainItems: false, minimizeWidth: null, animationShowDelay: 0, animationShowDuration : 0,width: null, height: null, autoOpenPopup: false, mode: 'popup'});
+                                var scrollTop = $(window).scrollTop();
+                                var scrollLeft = $(window).scrollLeft();
+                                (<any>cmenu).jqxMenu('open', (event.clientX) + 5 + scrollLeft, (event.clientY) + 5 + scrollTop);
+                                (<any>cmenu).on("close", () => {
+                                    (<any>cmenu).jqxMenu('destroy')
+                                });
+                                (<any>cmenu).on("shown", () => {
+                                    cmenu.attr("style", cmenu.attr("style")+";width:auto !important;");
+                                    $("li",cmenu).click(ev => {
+                                        this.EvtEmitCmd.fire({value: $(ev.target).data("command"), noPrint: false});
+                                    })
+                                    $("ul",cmenu).css('overflow',"unset")
+                                    setTimeout(() => {
+                                        $("ul",cmenu).css('overflow',"visible")
+                                    }, 200)
+                                })
+                            }
                         });
                     }
                     this.outputManager.pushMxpElem(elem);
-                    this.outputManager.handleTelnetData(this.str2ab(tag_m[4]));
+                    this.outputManager.handleTelnetData(this.str2ab(content));
                     this.openTags.pop();
                     this.outputManager.popMxpElem();
                     return true;
@@ -334,12 +431,34 @@ export class Mxp {
         for (var i = 0; i < this.elements.length; i++) {
             let tmp:RegExpMatchArray;
             if (this.elements[i].regex && (tmp = data.match(this.elements[i].regex))) {
+                tmp[0] = tmp[0].substring(0, tmp[0].indexOf(tmp[1]))
+                const attrs:any = {};
+                if (this.elements[i].att) {
+                    for (let att of this.elements[i].att.split(",")) {
+                        const re = new RegExp(`${att}="([^"]*)"`, 'gi')
+                        let m = re.exec(tmp[0])
+                        if (!m) {
+                            const reAlt = new RegExp(`${att}='([^']*)'`, 'gi')
+                            m = reAlt.exec(tmp[0])
+                        }
+                        if (m && m[1]) {
+                            attrs[att] = m[1];
+                        }
+                    }
+                }
+
                 data = '';
                 if (this.elements[i].definition) {
-                    data += this.elements[i].definition;
+                    let temp = this.elements[i].definition;
+                    for (let att of Object.keys(attrs)) {
+                        const re = new RegExp(`&${att}\;?`, 'gi')
+                        temp = temp.replace(re, attrs[att])
+                    }
+                    data += temp;
                 }
                 handled = true;
                 data += tmp[1];
+                
                 if (this.elements[i].closing) {
                     data += this.elements[i].closing;
                 }

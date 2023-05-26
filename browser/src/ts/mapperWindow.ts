@@ -227,7 +227,7 @@ export class MapperWindow {
         this.ctx.imageSmoothingEnabled = false;
         
         var w = (<any>this.$win).jqxWindow({width: 450, height: 290, showCollapseButton: true, isModal: false});
-        this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu"))).jqxMenu({ width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
+        this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu"))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
         
         this.refreshFavorites();
 

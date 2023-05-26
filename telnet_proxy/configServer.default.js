@@ -4,7 +4,7 @@ config.mudLibPath = "./";
 config.serverHost = "0.0.0.0";
 config.serverPort = 80;
 
-config.fixedTelnetHost = "192.168.8.164,mud.temporasanguinis.it,localhost";
+config.fixedTelnetHost = "172.18.161.56,192.168.8.164,mud.temporasanguinis.it,localhost";
 config.fixedTelnetPort = "4000,6000,8001";
 
 config.adminHost = "localhost";
