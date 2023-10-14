@@ -22,7 +22,7 @@ const folders = [
     }
 ];
 
-console.log(execSync("git submodule init && git submodule update && git submodule foreach --recursive git pull").toString());
+console.log(execSync("git submodule init && git submodule update --recursive --remote && git submodule foreach --recursive git pull origin main").toString());
 
 folders.forEach(folder => {
     fsx.readdirSync(folder.path).forEach(file => {
