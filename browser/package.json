@@ -16,7 +16,10 @@
     "electron"
   ],
   "author": "Marino Šimić <marino.simic@gmail.com> (Auriel)",
-  "contributors": ["Matteo (Mikko) <triggers, help>","Gaetano (Traxter) <mappe>"],
+  "contributors": [
+    "Matteo (Mikko) <triggers, help>",
+    "Gaetano (Traxter) <mappe>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/temporasanguinis/TS2-Client/issues"
@@ -84,6 +87,7 @@
     "@types/resize-observer-browser": "^0.1.7",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^6.0.0",
+    "electron-builder": "^24.6.4",
     "fs-extra": "^2.1.2",
     "html-webpack-plugin": "^5.0.4",
     "json5": "^2.2.3",
