@@ -231,6 +231,11 @@ function copyToPublic() {
             outputFolder: './dist/public/images'
         },
         {
+            path: './static/public/modules/images',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/modules/images'
+        },
+        {
             path: './static/public/sounds',
             regex: /^.*\..*$/i,
             outputFolder: './dist/public/sounds'

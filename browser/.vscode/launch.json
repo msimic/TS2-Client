@@ -15,6 +15,16 @@
             "skipFiles": [  
                 "${workspaceRoot}/node_modules/**/*.js",
             ]
-        }
+        },
+        {
+            "name": "Debug Electron Main Process",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            //"runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+            // Use the following for Windows
+             "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd",
+            "program": "${workspaceRoot}"
+          },
     ]
   }

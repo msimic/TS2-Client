@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require("path");
+var cp = require('child_process')
 
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, ipcMain, session, protocol } = require("electron");
@@ -151,6 +152,10 @@ mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
+    if (proxy && !proxy.exitCode && !proxy.killed) {
+      proxy.kill();
+      proxy = null;
+    }
     app.exit()
   });
   mainWindow.on('close', function(e) { 
@@ -161,21 +166,35 @@ mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
   mainWindow.show()
 }
 
+let proxy = null;
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", () => {
   createWindow();
   interceptLocal();
+  proxy = cp.fork(require.resolve('./dist/public/telnet_proxy.js'), [
+    "--serverHost","localhost",
+    "--serverPort","4040", 
+    "--fixedTelnetHost","mud.temporasanguinis.it,localhost"
+  ])
+  if (!proxy || proxy.exitCode) {
+    console.log("Proxy failed");
+  }
 });
 
 // Quit when all windows are closed.
 app.on("window-all-closed", function() {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== "darwin") {
+  //if (process.platform !== "darwin") {
+    if (proxy && !proxy.exitCode && !proxy.killed) {
+      proxy.kill();
+      proxy = null;
+    }
     app.quit();
-  }
+  //}
 });
 
 app.on("activate", function() {
