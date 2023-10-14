@@ -6,7 +6,7 @@ click==7.1.2
 coverage==5.1
 dnspython==1.16.0
 email-validator==1.1.1
-Flask==1.1.2
+Flask==2.2.5
 Flask-Cors==3.0.9
 Flask-HTTPAuth==4.0.0
 Flask-Mail==0.9.1
@@ -24,9 +24,9 @@ py==1.11.1
 pyparsing==2.4.7
 pytest==7.2.0
 pytest-mock==3.1.1
-requests==2.23.0
+requests==2.31.0
 six==1.15.0
-urllib3==1.26.5
+urllib3==1.26.17
 wcwidth==0.2.3
 Werkzeug==>=2.2.3
 WTForms==2.3.1
