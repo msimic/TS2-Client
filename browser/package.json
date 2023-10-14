@@ -98,7 +98,6 @@
   },
   "build": {
     "productName": "ts2-client",
-    "remoteBuild": false,
     "appId": "ts2.client",
     "files": [
       "!**/*",
