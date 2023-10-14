@@ -259,7 +259,12 @@ function copyToPublic() {
             path: './static/public',
             regex: /^versions\.txt$/i,
             outputFolder: './dist/public'
-        }
+        },
+        {
+            path: './static/public/help',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/help'
+        },
     ];
 
     folders.forEach(folder => {
