@@ -17,7 +17,7 @@ export class VersionsWin {
         <!--content-->
         <div style="text-align:center;display: flex;flex-direction: column;">
             
-            <pre id="versionsDiv" style="margin:5px;text-align:left;white-space: pre-wrap;overflow-y: scroll;"></pre>
+            <pre id="versionsDiv" style="font: bold 12px consolas;margin:5px;text-align:left;white-space: pre-wrap;overflow-y: scroll;"></pre>
         </div>
         `;
 

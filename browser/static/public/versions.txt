@@ -1,3 +1,7 @@
+1.4.6
+- correzione a un bug della versione binaria
+- aggiornamento DB identify
+____________________________________________________________
 1.4.5
 - Aggiornato codemirror (editor script) alla nuova versione
 - Risolti alcuni bug minori

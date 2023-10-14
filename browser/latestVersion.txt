@@ -1,8 +1,2 @@
-- Aggiornato codemirror (editor script) alla nuova versione
-- Risolti alcuni bug minori
-- Implementato scrolling animato dell output (vedere impostazioni)
-- Aggiunto autologging (in menu connessione dopo a registrazione), interrompibile e scaricabile
-- Mapper: corretto il comportamento con comandi italiani
-- Aggiornato "socket-io" per risolvere vulnerability
-- Aggiungo TS2-Contrib nel build, lo clonera a ogni build per includere i file nella distribuzione
-- Aggiunta la finestra per versioning
+- correzione a un bug della versione binaria
+- aggiornamento DB identify

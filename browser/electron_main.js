@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require("path");
+const fs = require("fs");
 var cp = require('child_process')
 
 // Modules to control application life and create native browser window
@@ -24,13 +25,28 @@ const appPath = process.env.PORTABLE_EXECUTABLE_DIR || app.getPath("exe") || app
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'local', privileges: { bypassCSP: true } },
-  { scheme: 'home', privileges: { bypassCSP: true } }
-])
+  { scheme: 'local', privileges: { bypassCSP: true, supportFetchAPI: true, "corsEnabled": true } },
+  { scheme: 'home', privileges: { bypassCSP: true, supportFetchAPI: true, "corsEnabled": true } },
+  {
+      scheme: "electron",
+      privileges: {
+          bypassCSP: true,
+          supportFetchAPI: true,
+          "corsEnabled": false
+      }
+  }
+]);
 
 function interceptLocal() {
   console.log("registering local protocol")
-  protocol.registerFileProtocol('local', (request, callback) => {
+    protocol.registerBufferProtocol('electron', function(request, callback) {
+        //work out file path
+        var file = request.url.substring(11).split("?")[0];
+        //console.log(file);
+        file = path.join(__dirname, file);
+        callback(fs.readFileSync(file))
+    });
+    protocol.registerFileProtocol('local', (request, callback) => {
     let url = request.url.substring(8)
     url = path.normalize(`${appPath}/${url}`)
     console.log("local url: " + url)
