@@ -270,29 +270,26 @@ telnetNs.on("connection", (client: socketio.Socket) => {
 
         let telnetId: number = telnetIdNext++;
 
-        let host: string;
-        let port: number;
+        let host: string = (args[0]||"").trim();
+        let port: number = args[1];
 
         let conStartTime: Date;
 
-        if (serverConfig.fixedTelnetHost && args[0] && (<string>serverConfig.fixedTelnetHost).indexOf(args[0])==-1) {
+        if (serverConfig.fixedTelnetHost && host && (<string>serverConfig.fixedTelnetHost).indexOf(host)==-1) {
             const error = "The telnet host is fixed on the proxy and must not be changed by the client";
             ioEvt.srvTelnetError.fire(error);
             return;
-        } else if (serverConfig.fixedTelnetHost && !args[0]) {
-            args[0] = (<string>serverConfig.fixedTelnetHost).split(",")[0];
+        } else if (serverConfig.fixedTelnetHost && !host) {
+            host = (<string>serverConfig.fixedTelnetHost).split(",")[0];
         }
 
-        if (serverConfig.fixedTelnetPort && args[1] && (<string>serverConfig.fixedTelnetPort).indexOf(args[1].toString())==-1) {
+        if (serverConfig.fixedTelnetPort && port && (<string>serverConfig.fixedTelnetPort).indexOf(port.toString())==-1) {
             const error = "The telnet port is fixed on the proxy and must not be changed by the client";
             ioEvt.srvTelnetError.fire(error);
             return;
-        } else if (serverConfig.fixedTelnetPort && !args[1]) {
-            args[1] = parseInt((<string>serverConfig.fixedTelnetPort).split(",")[0]);
+        } else if (serverConfig.fixedTelnetPort && !port) {
+            port = parseInt((<string>serverConfig.fixedTelnetPort).split(",")[0]);
         }
-
-        host = args[0];
-        port = args[1];
 
         openConns[telnetId] = {
             telnetId: telnetId,
