@@ -51,7 +51,7 @@ export class ProfileWindow {
                         <div class="select-box" style="margin-left:-10px;margin-right:-10px;">   
                             <div class="inner-box">    
                                 <label for="serverName" class="label select-box1"><span class="label-desc"></span> </label>
-                                <select tabindex="2" id="serverName" size=1" class="dropdown serverName">
+                                <select tabindex="2" id="serverName" size="1" class="dropdown serverName">
                                 </select>
                             </div>
                         </div>

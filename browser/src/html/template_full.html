@@ -7,6 +7,7 @@
   <meta http-equiv="Cache-control" content="no-cache"/>
   <meta http-equiv="Expires" content="-1"/>
   <meta http-equiv="Pragma" content="no-cache" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <title>TS Web Client</title>
 
@@ -56,7 +57,10 @@
           <li data-option-name="use-profile"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/profiles.png' />Personaggi</li>
           <li type="separator"></li>
           <li id="menuBar-conn-disconn" data-option-name="connect"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti</li>
-          <li id="menuBar-conn-log" data-option-name="log"><label for="menuBar-chkLog"><input id="menuBar-chkLog" type="checkbox">Registrazione (Log)</label></li>
+          <li type="separator"></li>
+          <li id="menuBar-conn-log" data-option-name="log">Nuova registrazione (Log)</li>
+          <li id="menuBar-conn-stoplog" data-option-name="stoplog">Interrompi registrazione</li>
+          <li id="menuBar-conn-downloadlog" data-option-name="downloadlog">Scarica registrazione</li>
         </ul>
       </li>
       <li id="impostazioni" class="configMenuItem" data-option-name="config">Impostazioni
@@ -94,6 +98,17 @@
               </li>
               <li type="separator"></li>
               <li data-option-name="enable-utf8"><label for="menuBar-chkEnableUtf8"><input id="menuBar-chkEnableUtf8" type="checkbox" checked>UTF-8</label></li>
+              <li data-option-name="copyOnMouseUp"><label for="menuBar-chkcopyOnMouseUp"><input id="menuBar-chkcopyOnMouseUp" type="checkbox" checked>Copia selezionando</label></li>
+            </ul>
+          </li>
+          <li data-option-name="text-color">Scorrimento
+            <ul>
+              <li data-option-name="scrollbuffer" data-option-value="1000">Predefinito</li>
+              <li data-option-name="scrollbuffer" data-option-value="500">500 linee</li>
+              <li data-option-name="scrollbuffer" data-option-value="2500">2500 linee</li>
+              <li data-option-name="scrollbuffer" data-option-value="5000">5000 linee</li>
+              <li type="separator"></li>
+              <li data-option-name="animatescroll"><label for="menuBar-chkEnableScroll"><input id="menuBar-chkEnableScroll" type="checkbox" checked>Animato</label></li>
             </ul>
           </li>
           
@@ -148,16 +163,25 @@
           </li>
         </ul>
       </li>
-      <li id="altro">Altro
+      <li id="finestre">Finestre
         <ul>
-          <li data-option-name="windows">Finestre
+          <li data-option-name="windows">Finestre utente
             <ul id="windowList">
               <li>&lt;nessuna&gt;</li>
             </ul>
           </li>
+          <li type="separator"></li>
+          <li data-option-name="layouteditor">Disposizione schermo (-)</li>
+          <li type="separator"></li>
           <li data-option-name="mapper">Mapper</li>
+        </ul>
+      </li>
+      <li id="altro">Informazioni
+        <ul>
           <li data-option-name="about">Versione</li>
-          <li data-option-name="help">Help</li>
+          <li data-option-name="changelog">Registro modifiche</li>
+          <li type="separator"></li>
+          <li data-option-name="help">Aiuto (Help)</li>
         </ul>
       </li>
       <li data-require-api="true" data-option-name="docs"><a href="/docs/" target="_blank">Docs</a></li>

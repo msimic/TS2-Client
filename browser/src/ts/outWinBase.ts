@@ -2,6 +2,7 @@ import * as Util from "./util";
 import { colorIdToHtml } from "./color";
 import { EventHook } from "./event";
 import { ConfigIf, padStart } from "./util";
+import { Notification } from "./messagebox"
 
 /*export interface ConfigIf {
     onSet(key: string, cb: (val: any) => void): void;
@@ -21,8 +22,9 @@ export class OutWinBase {
 
     private lineCount: number = 0;
     private maxLines: number = 500;
+    private animatescroll: boolean = true;
     private mouseWasDown = false;
-    private _log: boolean;
+    private _log: boolean = localStorage.getItem("autologging")=="true";
     public get log(): boolean {
         return this._log;
     }
@@ -31,12 +33,31 @@ export class OutWinBase {
             localStorage.setItem("log", "")
         }
         this._log = value;
+        localStorage.setItem("autologging", (!!value).toString())
     }
 
     private onMouseUp = () => {
+        if (!this.copyOnMouseUp) {
+            this.mouseWasDown = false;
+            this.$rootElem[0].removeEventListener("mousedown", this.onMouseDown);
+            this.$rootElem[0].removeEventListener("mouseup", this.onMouseUp);
+            if (!document.getSelection().toString()) {
+                $("#cmdInput").focus();
+            }
+            return;
+        }
         if (this.mouseWasDown) {
             this.mouseWasDown = false;
-            document.execCommand('copy');
+            const testo = document.getSelection().toString();
+            if (testo) {
+                if (!navigator.clipboard){
+                    document.execCommand('copy');
+                } else {
+                    navigator.clipboard.writeText(testo).then(()=>{
+                        Notification.Show("Selezione copiata automaticamente", true);
+                    });
+                }
+            }
             $("#cmdInput").focus();
         }
     }
@@ -45,7 +66,8 @@ export class OutWinBase {
     onDebugScripts = (v:any) => {
          this.debugScripts = v; 
     }
-    onMaxLinesChanged = (val: any) => { this.setMaxLines(val); }
+    onMaxLinesChanged = (val: any) => { this.setMaxLines(parseInt(val)); }
+    onAnimateScrollChanged = (val: any) => { this.animatescroll = !!val; }
     onColorsEnabledChanged = (val: any) => { this.setColorsEnabled(val); }
     onCopyOnMOuseUpChanged = (val: any) => { 
         this.copyOnMouseUp = val;
@@ -61,6 +83,7 @@ export class OutWinBase {
         this.config.onSetRelease("logTime", this.onLogTime)
         this.config.onSetRelease("debugScripts", this.onDebugScripts)
         this.config.onSetRelease("maxLines", this.onMaxLinesChanged)
+        this.config.onSetRelease("animatescroll", this.onAnimateScrollChanged)
         this.config.onSetRelease("colorsEnabled", this.onColorsEnabledChanged)
         this.config.onSetRelease("copyOnMouseUp", this.onCopyOnMOuseUpChanged)
     }
@@ -84,6 +107,9 @@ export class OutWinBase {
         this.maxLines = config.getDef("maxLines", 1000);
         this.config.onSet("maxLines", this.onMaxLinesChanged);
 
+        this.animatescroll = config.getDef("animatescroll", true);
+        this.config.onSet("animatescroll", this.onAnimateScrollChanged);
+
         this.colorsEnabled = this.config.getDef("colorsEnabled", true);
         this.config.onSet("colorsEnabled", this.onColorsEnabledChanged);
 
@@ -101,7 +127,6 @@ export class OutWinBase {
     }
 
     protected postInit() {
-        //this.getOuterElement().bind("scroll", (e: any) => { this.handleScroll(e); });
         this.getOuterElement().on('wheel', (e: any) => {
             this.handleScroll()
         })
@@ -120,6 +145,7 @@ export class OutWinBase {
     }
     
     public setMaxLines(count: number) {
+        if (!count) count = 500;
         this.maxLines = count;
     }
 
@@ -407,7 +433,7 @@ export class OutWinBase {
     private privScrolBottom() {
         // console.time("_scroll_bottom");
         let elem = this.getOuterElement();
-        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 50);
+        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 100);
         //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = false;
         this.scrollRequested = false;
@@ -417,7 +443,7 @@ export class OutWinBase {
     public ScrollPageUp() {
         let elem = this.getOuterElement();
         const scrollH = parseInt(elem.prop('scrollTop'))-elem.height()
-        elem.stop().animate({scrollTop:scrollH}, 50);
+        elem.stop().animate({scrollTop:scrollH}, 150);
         //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = true;
         this.scrollRequested = false;
@@ -425,7 +451,7 @@ export class OutWinBase {
     public ScrollPageDown() {
         let elem = this.getOuterElement();
         const scrollH = parseInt(elem.prop('scrollTop'))+elem.height()
-        elem.stop().animate({scrollTop:scrollH}, 50);
+        elem.stop().animate({scrollTop:scrollH}, 150);
         //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = true;
         this.scrollRequested = false;
@@ -447,7 +473,13 @@ export class OutWinBase {
             return;
         }
         
-        requestAnimationFrame(() => {this.getOuterElement()[0].scrollTop = this.getOuterElement()[0].scrollHeight; this.scrollRequested = false;//this.privScrolBottom()
+        requestAnimationFrame(() => {
+            if (!this.animatescroll) {
+                this.getOuterElement()[0].scrollTop = this.getOuterElement()[0].scrollHeight; this.scrollRequested = false;//this.privScrolBottom()
+            } else {
+                this.privScrolBottom();
+            }
+            this.scrollRequested = false;
         });
         this.scrollRequested = true;
     }

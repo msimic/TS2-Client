@@ -13,7 +13,7 @@ import { MenuBar } from "./menuBar";
 import { ClassManager } from "./classManager";
 import { Mxp } from "./mxp";
 import { OutputManager } from "./outputManager";
-import { OutputWin } from "./outputWin";
+import { EvtLogExceeded, OutputWin } from "./outputWin";
 import { Socket } from "./socket";
 import { TriggerEditor, EvtCopyTriggerToBase } from "./triggerEditor";
 import { TriggerManager } from "./triggerManager";
@@ -26,7 +26,7 @@ import * as apiUtil from "./apiUtil";
 import { ProfilesWindow } from "./profilesWindow";
 import { ProfileManager } from "./profileManager";
 import { ProfileWindow } from "./profileWindow";
-import { Acknowledge, linesToArray, raw, rawToHtml } from "./util";
+import { Acknowledge, downloadString, linesToArray, raw, rawToHtml } from "./util";
 import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
@@ -40,6 +40,7 @@ import { copyData } from "./trigAlEditBase";
 import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
 import { MapperStorage } from "./mapperStorage";
+import { VersionsWin } from "./versionsWindow";
 
 declare global {
     interface JQuery {
@@ -89,6 +90,7 @@ export class Client {
     layoutManager: LayoutManager;
     numpadWin: NumpadWin;
     helpWin: HelpWin;
+    changelog: VersionsWin;
     
     public get connected():boolean {
         return this._connected;
@@ -107,6 +109,16 @@ export class Client {
     }
 
     public connect(ct?:ConnectionTarget) {
+        let log = '';
+        if ((log = localStorage.getItem("log"))) {
+            (async () => {
+                const ret = await Messagebox.Question("Autologging attivo (menu Connessione).\nSta per partire una nuova registrazione!\n\nAvevi una registrazione precedente in corso.\nPuoi scaricarla ora se rispondi Si, altrimenti verra' persa.")
+                if (ret.button == 1) {
+                    this.menuBar.triggerAction("downloadlog", log)
+                }
+            })();
+        }
+        localStorage.setItem("log","")
         if (ct) {
             this.connectionTarget = ct;
         }
@@ -224,7 +236,8 @@ export class Client {
         this.numpadWin = new NumpadWin(this.profileManager.activeConfig);
         
         this.helpWin = new HelpWin();
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper);
+        this.changelog = new VersionsWin();
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.changelog);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
@@ -426,6 +439,23 @@ export class Client {
             if (data.noPrint !== true) {
                 apiUtil.apiPostMxpSend();
             }
+        });
+
+        let awaitingLogResponse = false;
+        EvtLogExceeded.handle((data:{owner:string, message:string, silent:boolean}) => {
+            if (!data.silent) {
+                const log = localStorage.getItem("log")
+                if (log && !awaitingLogResponse) {
+                    awaitingLogResponse = true;
+                    (async (log) => {
+                        if (((await Messagebox.Question(data.message)).button == 1)) {
+                            this.menuBar.triggerAction("downloadlog", log)
+                        }
+                        awaitingLogResponse = false;
+                    })(log);
+                }
+            }
+            localStorage.setItem("log","")
         });
 
         // JsScript events
@@ -799,7 +829,6 @@ export namespace Mudslinger {
     }
 
     export async function init() {
-        
         jQuery.fn.extend({
             focusable: function() {
                 const inputs = this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()

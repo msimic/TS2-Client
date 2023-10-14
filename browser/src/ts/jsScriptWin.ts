@@ -45,7 +45,13 @@ export class JsScriptWin {
                 theme: "neat",
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
-                lineNumbers: true
+                lineNumbers: true,
+                scrollbarStyle: "overlay",
+                tabSize: 2,
+                autoCloseBrackets: true,
+                styleActiveLine: true,
+                search: { bottom:true},
+                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
             }
         );
 

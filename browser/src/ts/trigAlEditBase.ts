@@ -207,11 +207,12 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
+                scrollbarStyle: "overlay",
                 tabSize: 2,
                 autoCloseBrackets: true,
                 styleActiveLine: true,
                 search: { bottom:true},
-                extraKeys: {"Ctrl-Space": "autocomplete"},
+                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
             }
         );
         Util.addIntellisense(this.codeMirror);

@@ -134,8 +134,11 @@ export class MapperWindow {
                             <ul  class='custom'>
                             <li  class='custom' data-option-type="mapper" data-option-name="pathfind">Vai a num. locazione</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="search">Cerca locazione</li>
+                            <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="sync">Sincronizza mappa</li>
                             <li  class='custom' data-option-type="mapper" data-option-name="export">Esporta immagine</li>
+                            <li type='separator'></li>
+                            <li  class='custom' data-option-type="mapper" data-option-name="mapperroom">Modifica stanza (-)</li>
                             </ul>
                         </li>
                         <li id="mapperaltro" class='custom'>Altro
@@ -147,6 +150,8 @@ export class MapperWindow {
                                 </li>
                                 <li  class='custom' data-option-type="mapper" data-option-name="info">Informazioni</li>
                                 <li  class='custom' data-option-type="mapper" data-option-name="legend">Leggenda</li>
+                                <li type='separator'></li>
+                                <li  class='custom' data-option-type="mapper" data-option-name="impostazioni">Impostazioni (-)</li>
                             </ul>
                         </li>
                     </ul>

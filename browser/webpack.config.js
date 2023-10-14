@@ -9,6 +9,10 @@ module.exports = {
     path: path.resolve(__dirname, "static/public"),
     filename: 'mudslinger-[contenthash].js'
   },
+  performance: {
+    maxEntrypointSize: 1024000,
+    maxAssetSize: 1024000
+  },
   plugins: [
     new CleanWebpackPlugin({
       /*dry: true,*/

@@ -16,13 +16,14 @@ import { AskReload, denyClientVersion, downloadJsonToFile, downloadString, impor
 import { LayoutManager } from "./layoutManager";
 import { EvtScriptEmitPrint, JsScript, ScriptEvent, Variable } from "./jsScript";
 import { OutputWin } from "./outputWin";
-import { Button, Messagebox } from "./messagebox";
+import { Button, Messagebox, Notification } from "./messagebox";
 import { Class } from "./classManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { AppInfo } from "./appInfo";
 import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
 import { Mapper } from "./mapper";
+import { VersionsWin } from "./versionsWindow";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -81,33 +82,43 @@ export class MenuBar {
         ["docs", ""],
         ["contact", ""],
         ["profiles", ""],
+        ["scrollbuffer", "maxLines"],
+        ["animatescroll", "animatescroll"],
+        ["copyOnMouseUp", "copyOnMouseUp"],
     ]); 
 
-    private attachMenuOption(name:string, element:Element, checkbox:Element) {
+    private attachMenuOption(name:string, value:string, element:Element, checkbox:Element) {
         const clickable = name in this.clickFuncs;
         const storageKey = this.optionMappingToStorage.get(name);
         if (checkbox && storageKey) {
             const storageVal = this.config.get(storageKey);
-            const onStorageChanged:(val:string)=>void = (storageVal) => {
-                if (storageVal) {
-                    $(checkbox).attr('checked', storageVal);
-                    $(checkbox).prop('checked', storageVal);
-                    $(element)[0].setAttribute("data-checked", storageVal);
-                    if (clickable) this.clickFuncs[name](storageVal);
-                } else if (storageVal != undefined) {
+            const onStorageChanged:(val:string)=>void = (storageValNew) => {
+                if (storageValNew) {
+                    $(checkbox).attr('checked', storageValNew);
+                    $(checkbox).prop('checked', storageValNew);
+                    $(element)[0].setAttribute("data-checked", storageValNew);
+                    if (clickable) this.clickFuncs[name](storageValNew);
+                } else if (storageValNew != undefined) {
                     $(checkbox).removeAttr('checked');
-                    $(checkbox).prop('checked', storageVal);
+                    $(checkbox).prop('checked', storageValNew);
                     $(element)[0].setAttribute("data-checked", "false");
-                    if (clickable) this.clickFuncs[name](storageVal);
+                    if (clickable) this.clickFuncs[name](storageValNew);
                 }
-                if (storageVal != undefined) console.log(`${name} set to ${storageVal}`);
+                if (storageValNew != undefined) {
+                    console.log(`${name} set to ${storageValNew}`);
+                    //Notification.Show(`${name}: ${storageValNew}`, true)
+                }
             };
             onStorageChanged(storageVal);
             this.config.onSet(storageKey, onStorageChanged);
             let config = this.config
             $(checkbox).change((event: JQueryEventObject) => {
-                config.set(storageKey, (<any>event.target).checked);
-                if (clickable) this.clickFuncs[name]((<any>event.target).checked);
+                const val = (<any>event.target).checked;
+                config.set(storageKey, val);
+                if (!clickable) {
+                    Notification.Show(`${name}: ${val?"abilitato":"disabilitato"}`, true)
+                }
+                //if (clickable) this.clickFuncs[name]((<any>event.target).checked);
             });
         } else if (checkbox && !storageKey) {
             $(checkbox).change((event: JQueryEventObject) => {
@@ -120,15 +131,31 @@ export class MenuBar {
             //console.log(`Attaching menu item ${name}`);
             let x = $(element);
             $(element).click((event: JQueryEventObject) => {
-                if (!event.target || (event.target.tagName != "LI" /*&& event.target.tagName != "LABEL"*/)) return;
+                if (!event.target || (event.target.tagName != "LI")) return;
                 if (!checkbox && storageKey) {
-                    this.config.set(storageKey, name);
+                    this.config.set(storageKey, value || name);
                     this.clickFuncs[name](name);
+                    //Notification.Show(`${name}: ${value|| name}`, true)
                 } else {
-                    this.clickFuncs[name]($(element)[0].getAttribute("data-checked"));
+                    const checked = $(element)[0].getAttribute("data-checked");
+                    this.clickFuncs[name](checked);
+                    //Notification.Show(`${name}: ${checked}`, true)
                 }
             });
-        };
+        } else if (value && name && storageKey) {
+            $(element).click((event: JQueryEventObject) => {
+                if (!event.target || (event.target.tagName != "LI" /*&& event.target.tagName != "LABEL"*/)) return;
+                
+                this.config.set(storageKey, value);
+                Notification.Show(`${name}: ${value}`, true)
+            });
+        } /*else if (name && storageKey) {
+            $(element).click((event: JQueryEventObject) => {
+                if (!event.target || (event.target.tagName != "LI" )) return;
+                
+                this.config.set(storageKey, name);
+            });
+        };*/
     }
 
     private detachMenuOption(name:string, element:Element, checkbox:Element) {
@@ -142,8 +169,9 @@ export class MenuBar {
         $("document").ready(()=>{
             $("[data-option-name]").each((i, e) => {
                 const name = $(e)[0].getAttribute("data-option-name");
+                const val = $(e)[0].getAttribute("data-option-value");
                 const chk = $(e).find("input[type='checkbox']")[0];
-                this.attachMenuOption(name, e, chk);
+                this.attachMenuOption(name, val, e, chk);
             });
         });
     }
@@ -176,7 +204,8 @@ export class MenuBar {
         private outWin:OutputWin,
         private baseConfig: UserConfig,
         private helpWin: HelpWin,
-        private mapper: Mapper
+        private mapper: Mapper,
+        private changelog: VersionsWin
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -306,6 +335,7 @@ export class MenuBar {
             return;
         }
         for (const iterator of windows) {
+            if (iterator == "Mapper") continue;
             let li = $("<li class='jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>" + iterator + "</li>");
             let self = this;
             li.on("click", () => {
@@ -325,6 +355,15 @@ export class MenuBar {
         this.attachMenu();
     }
 
+    public triggerAction(action: string, param: string) {
+        const f = this.clickFuncs[action]
+        if (f instanceof Function) {
+            f(param)
+        } else {
+            this.outWin.handleWindowError(`L'azione ${action} non esiste.`, "menuBar.triggerAction", '', '', null); 
+        }
+    }
+
     private onImport = ()=> {
         //this.detachMenu();
         //this.attachMenu();
@@ -338,9 +377,11 @@ export class MenuBar {
         this.clickFuncs["connect"] = (val) => {
             if (isTrue(val)) {
                 this.EvtDisconnectClicked.fire();
+                Notification.Show(`Disconnessione`, true)
             }
             else {
                 this.EvtConnectClicked.fire();
+                Notification.Show(`Connessione`, true)
             }
         };
 
@@ -348,21 +389,25 @@ export class MenuBar {
             this.helpWin.show();            
         };
 
+        this.clickFuncs["changelog"] = (val) => {
+            this.changelog.show();            
+        };
+
+        this.clickFuncs["stoplog"] = (val) => {
+            localStorage.setItem("log","")
+            this.outWin.log = false
+            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Logging interrotto"})
+            Notification.Show(`Logging interrotto`, true)
+        };
         this.clickFuncs["log"] = (val) => {
-            let newVal = !isTrue(val);
-            $("#menuBar-conn-log")[0].setAttribute("data-checked", newVal.toString())
-            $("#menuBar-chkLog").attr('checked', newVal.toString());
-            $("#menuBar-chkLog").prop('checked', newVal);
-            if (isTrue(newVal)) {
-                this.outWin.log = true
-                EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log"})
-            }
-            else {
-                this.outWin.log = false
-                EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Fine log"})
-                downloadString(localStorage.getItem("log"), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
-                localStorage.setItem("log","")
-            }
+            localStorage.setItem("log","")
+            this.outWin.log = true
+            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log"})
+            Notification.Show(`Inizio log`, true)
+        };
+
+        this.clickFuncs["downloadlog"] = (val) => {
+            downloadString(val || localStorage.getItem("log"), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
         };
 
         this.clickFuncs["reset-settings"] = (val) => {
@@ -394,8 +439,6 @@ export class MenuBar {
         }
 
         this.clickFuncs["mapper"] = () => {
-            //let script = this.jsScript.makeScript("Mapper", "createWindow('Mapper')", "");
-            //if (script) { script(); };
             this.windowManager.createWindow("Mapper");
             this.windowManager.show("Mapper");
         };
@@ -403,13 +446,15 @@ export class MenuBar {
         this.clickFuncs["wrap-lines"] = (val) => {
             if (!isTrue(val)) {
                 $(".outputText").addClass("output-prewrap");
+                Notification.Show(`Capolinea disabilitato`, true)
             } else {
                 $(".outputText").removeClass("output-prewrap");
+                Notification.Show(`Capolinea abilitato`, true)
             }
         };
 
         var removeFontSizes = () => {
-            $(".outputText").removeClass("smalles-text");
+            $(".outputText").removeClass("smallest-text");
             $(".outputText").removeClass("extra-small-text");
             $(".outputText").removeClass("small-text");
             $(".outputText").removeClass("normal-text");
@@ -429,6 +474,9 @@ export class MenuBar {
             if (isTrue(val)) {
                 this.EvtChangeDefaultColor.fire(["white", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
+                Notification.Show(`Colori ANSI abilitati`, true)
+            } else {
+                Notification.Show(`Colori ANSI disabilitati`, true)
             }
         }
 
@@ -440,6 +488,7 @@ export class MenuBar {
             if (val == "courier") {
                 removeFonts();
                 $(".outputText").addClass("courier");
+                Notification.Show(`Font: Courier`, true)
             }
         };
 
@@ -447,6 +496,7 @@ export class MenuBar {
             if (val == "consolas") {
                 removeFonts();
                 $(".outputText").addClass("consolas");
+                Notification.Show(`Font: Consolas`, true)
             }
         };
 
@@ -454,6 +504,7 @@ export class MenuBar {
             if (val == "lucida") {
                 removeFonts();
                 $(".outputText").addClass("lucida");
+                Notification.Show(`Font: Lucida Console`, true)
             }
         };
 
@@ -465,6 +516,7 @@ export class MenuBar {
             if (val == "monospace") {
                 removeFonts();
                 $(".outputText").addClass("monospace");
+                Notification.Show(`Font: Monospace`, true)
             }
         };
 
@@ -472,6 +524,7 @@ export class MenuBar {
             if (val == "vera") {
                 removeFonts();
                 $(".outputText").addClass("vera");
+                Notification.Show(`Font: Bitstream Vera Sans`, true)
             }
         };
 
@@ -479,6 +532,7 @@ export class MenuBar {
             if (val == "extra-small-font") {
                 removeFontSizes();
                 $(".outputText").addClass("extra-small-text");
+                Notification.Show(`Font: minuscolo`, true)
             }
         };
 
@@ -486,6 +540,7 @@ export class MenuBar {
             if (val == "smallest-font") {
                 removeFontSizes();
                 $(".outputText").addClass("smallest-text");
+                Notification.Show(`Font: microscopico`, true)
             }
         };
 
@@ -493,6 +548,7 @@ export class MenuBar {
             if (val == "small-font") {
                 removeFontSizes();
                 $(".outputText").addClass("small-text");
+                Notification.Show(`Font: piccolo`, true)
             }
         };
 
@@ -500,6 +556,7 @@ export class MenuBar {
             if (val == "normal-font") {
                 removeFontSizes();
                 $(".outputText").addClass("normal-text");
+                Notification.Show(`Font: normale`, true)
             }
         };
 
@@ -507,6 +564,7 @@ export class MenuBar {
             if (val == "large-font") {
                 removeFontSizes();
                 $(".outputText").addClass("large-text");
+                Notification.Show(`Font: grande`, true)
             }
         };
 
@@ -514,6 +572,7 @@ export class MenuBar {
             if (val == "extra-large-font") {
                 removeFontSizes();
                 $(".outputText").addClass("extra-large-text");
+                Notification.Show(`Font: enorme`, true)
             }
         };
 
@@ -737,6 +796,9 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
         this.clickFuncs["colorsEnabled"] = (val) => {
             if (isTrue(val)) {
                 this.config.set("text-color", undefined);
+                Notification.Show(`Colori: abilitati`, true)
+            } else {
+                Notification.Show(`Colori: disabilitati`, true)
             }
         };
 
@@ -744,6 +806,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "green-on-black") {
                 this.EvtChangeDefaultColor.fire(["green", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
+                Notification.Show(`Testo: verde su nero`, true)
             }
         };
 
@@ -751,6 +814,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "white-on-black") {
                 this.EvtChangeDefaultColor.fire(["white", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
+                Notification.Show(`Testo: bianco su nero`, true)
             }
         };
 
@@ -758,6 +822,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "black-on-gray") {
                 this.EvtChangeDefaultColor.fire(["black", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["white", "low"]);
+                Notification.Show(`Testo: nero su grigio (funziona solo senza colori ansi)`, true)
             }
         };
 
@@ -780,6 +845,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "black-on-white") {
                 this.EvtChangeDefaultColor.fire(["black", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["white", "high"]);
+                Notification.Show(`Testo: nero su bianco (funziona solo senza colori ansi)`, true)
             }
         };
 

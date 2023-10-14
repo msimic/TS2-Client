@@ -313,14 +313,20 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     background-image: url(images/pinned-black.png);
 }
 
-  .full {
-      width:100%;
-      height: 100%;
-  }
+.full {
+    width:100%;
+    height: 100%;
+}
 
-  .scrollable {
-      overflow: auto;
-  }
+.CodeMirror-search-hint {
+    display: none;
+}
+
+.scrollable {
+    overflow: auto;
+    -webkit-overflow-scrolling: auto;
+}
+
   #row-bottom-left>* {
     float: left;
     clear: none;
@@ -403,6 +409,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
   #row-bottom {
     flex-direction: row;
     display: flex;
+    overflow: hidden;
   }
   #row-input {
     background-color: rgb(21 106 167 / 77%);

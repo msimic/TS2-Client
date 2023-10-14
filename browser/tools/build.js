@@ -68,6 +68,8 @@ function minifyCss(next) {
             './static/public/codemirror/addon/hint/show-hint.css',
             './static/public/codemirror/addon/dialog/dialog.css',
             './static/public/codemirror/addon/tern/tern.css',
+            './static/public/codemirror/addon/scroll/simplescrollbars.css',
+            './static/public/codemirror/addon/search/matchesonscrollbar.css',
             './static/public/jqwidgets/styles/jqx.base.css'],
         output: './dist/modules.min.css',
         callback: function(err, min) { if (!err && next) next();}
@@ -115,6 +117,13 @@ function mergeCodemirror(next) {
         './static/public/codemirror/addon/hint/show-hint.js',
         './static/public/codemirror/addon/hint/javascript-hint.js',
         './static/public/codemirror/addon/dialog/dialog.js',
+        './static/public/codemirror/addon/scroll/simplescrollbars.js',
+        './static/public/codemirror/addon/scroll/annotatescrollbar.js',
+        './static/public/codemirror/addon/search/search.js',
+        './static/public/codemirror/addon/search/jump-to-line.js',
+        './static/public/codemirror/addon/search/matchesonscrollbar.js',
+        './static/public/codemirror/addon/search/match-highlighter.js',
+        './static/public/codemirror/addon/search/searchcursor.js',
         './static/public/codemirror/addon/tern/tern.js'],
     output: './dist/codemirror_module.js',
     callback: function(err, min) { if (!err && next) next(); }
@@ -244,6 +253,11 @@ function copyToPublic() {
         {
             path: './static/public',
             regex: /^.*\.json$|^.*\.webmanifest$/i,
+            outputFolder: './dist/public'
+        },
+        {
+            path: './static/public',
+            regex: /^versions\.txt$/i,
             outputFolder: './dist/public'
         }
     ];

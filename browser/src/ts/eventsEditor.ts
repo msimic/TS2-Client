@@ -219,7 +219,12 @@ export class EventsEditor {
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
-                extraKeys: {"Ctrl-Space": "autocomplete"},
+                scrollbarStyle: "overlay",
+                tabSize: 2,
+                autoCloseBrackets: true,
+                styleActiveLine: true,
+                search: { bottom:true},
+                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
             }
         );
         Util.addIntellisense(this.codeMirror);

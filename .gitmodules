@@ -1,0 +1,3 @@
+[submodule "browser/TS2-Contrib"]
+	path = browser/TS2-Contrib
+	url = https://github.com/temporasanguinis/TS2Client-contrib.git

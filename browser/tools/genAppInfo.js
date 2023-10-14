@@ -28,4 +28,41 @@ exec(build, (error, stdout, stderr) => {
     }`;
     
     fs.writeFileSync('src/ts/appInfo.ts', txt);
+
+    generateVersions();
 });
+
+function generateVersions() {
+    const ver = pjson.version
+
+    let versions = fs.readFileSync("./static/public/versions.txt").toString()
+    let latest = fs.readFileSync("./latestVersion.txt").toString()
+    const currentVersionStart = versions.indexOf(ver)
+    console.log(ver + " " + currentVersionStart)
+
+    if (currentVersionStart==-1 || currentVersionStart!=0) {
+        versions = addLatestVersion(latest, versions)
+        fs.writeFileSync("./static/public/versions.txt", versions)
+    } else {
+        let lines = versions.split(/\r\n|\r|\n/g)
+        const index = lines.findIndex((v)=>{
+            const m = v.match(/^\d+\.\d+\.\d+$/gi)
+            const ok = v != ver && m
+            return ok
+        })
+        console.log(index)
+        if (index > 0 && index<lines.length) {
+            lines.splice(0, index)
+            versions = lines.join("\n")
+            versions = addLatestVersion(latest, versions)
+            fs.writeFileSync("./static/public/versions.txt", versions)
+        }
+    }
+
+    function addLatestVersion(latest, versions) {
+        return `${ver}
+${latest}
+____________________________________________________________
+${versions}`;
+    }
+}

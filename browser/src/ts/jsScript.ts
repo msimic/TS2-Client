@@ -1,4 +1,3 @@
-import del from "del";
 import { isNumeric } from "jquery";
 import { AliasManager } from "./aliasManager";
 import { ClassManager } from "./classManager";

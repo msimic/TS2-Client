@@ -392,7 +392,14 @@ export class Mapper {
             this.handlePossibleDoor(st, this.manualSteps.length == 1 && this.doorAlreadyOpen(st.room, st.dir), queue)
             ret.splice(0, ret.length)
             if (queue.length) {
-                queue.map(q => ret.push(q.command))
+                queue.map(q => {
+                    if (q.type == WalkCommandType.Directional) {
+                        const longCommad = Short2LongExit.get(q.command)
+                        ret.push(longCommad || command)
+                    } else {
+                        ret.push(q.command)
+                    }
+                })
             }
         }
         
@@ -1591,7 +1598,8 @@ export class Mapper {
             const nr = this.getRoomById(step.room.exits[step.direction].to_room)
             console.log("sending next dir for vnum " + nr.vnum + " -> in " + (this.virtualCurrent?.vnum||this.current?.vnum) + ":" + step.direction )
             this.virtualCurrent = nr;
-            EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command, silent: false})
+            const longDir = walkCommand.type == WalkCommandType.Directional ? Short2LongExit.get(walkCommand.command) || walkCommand.command : walkCommand.command 
+            EvtScriptEmitCmd.fire( { owner: "Mapper", message: longDir, silent: false})
         }
     }
 
@@ -1620,7 +1628,8 @@ export class Mapper {
         this.walkQueue = []
         for (const walkData of this.currentWalk.steps) {
             for (const walkCommand of walkData.commands) {
-                EvtScriptEmitCmd.fire( { owner: "Mapper", message: walkCommand.command, silent: false})
+                const longDir = walkCommand.type == WalkCommandType.Directional ? Short2LongExit.get(walkCommand.command) || walkCommand.command : walkCommand.command
+                EvtScriptEmitCmd.fire( { owner: "Mapper", message: longDir, silent: false})
                 if (walkCommand.type == WalkCommandType.Directional) {
                     this.walkQueue.push(walkData);
                 }

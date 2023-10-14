@@ -1,7 +1,9 @@
+import { EventHook } from "./event";
 import { OutWinBase } from "./outWinBase";
 import { TriggerManager } from "./triggerManager";
 import * as Util from "./util";
 import { ConfigIf } from "./util";
+export let EvtLogExceeded = new EventHook<{owner:string, message:string, silent:boolean}>();
 
 export class OutputWin extends OutWinBase {
     private outer:JQuery;
@@ -30,7 +32,15 @@ export class OutputWin extends OutWinBase {
     protected logLine(): void {
         if (this.log) {
             const line = this.lineText;
-            localStorage.setItem("log", localStorage.getItem("log") + line)
+            const newLog = localStorage.getItem("log") + line
+            localStorage.setItem("log", newLog)
+            if (newLog.length > 2000000) {
+                EvtLogExceeded.fire({
+                    owner: "outputWindow",
+                    message: "Lunghezza Log superata (2 MB). Verra' azzerato. Vuoi scaricarlo ora?",
+                    silent: false
+                })
+            }
         }
     }
 
@@ -205,7 +215,7 @@ export class OutputWin extends OutWinBase {
         this.scrollBottom(true);
     }
 
-    private handleWindowError(message: any, source: any, lineno: any, colno: any, error: any) {
+    public handleWindowError(message: any, source: any, lineno: any, colno: any, error: any) {
         this.append(
             "<span style=\"color:red\"><br/>"
             + "[[Web Client Errore:<br>"
@@ -213,7 +223,7 @@ export class OutputWin extends OutWinBase {
             + source + "<br>"
             + lineno + "<br>"
             + colno + "<br>"
-            + error && error.stack ? error.stack : ""
+            + (error ? error.stack : "")
             + "]]"
             + "<br>"
             + "</span>", true
@@ -245,7 +255,7 @@ export class OutputWin extends OutWinBase {
             + "[[Errore Script (" + data.owner + "):<br>"
             + data.err.toString() + "<br>"
             + "<br>"
-            + data.err.stack + "<br>"
+            + (data.stack || data.err.stack) + "<br>"
             + "]]"
             + "<br>"
             + "</span>", true

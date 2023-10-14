@@ -14,7 +14,7 @@ export class AboutWin {
 
         win.innerHTML = `
         <!--header-->
-        <div>INFORMAZIONI</div>
+        <div>INFORMAZIONI CLIENT E VERSIONE</div>
         <!--content-->
         <div style="text-align:center;">
             <h1>${title}</h1>
@@ -36,7 +36,7 @@ export class AboutWin {
 
         this.$win = $(win);
 
-        (<any>this.$win).jqxWindow({width: 440, height: 250});
+        (<any>this.$win).jqxWindow({width: 480, height: 290});
     }
 
     public show() {
