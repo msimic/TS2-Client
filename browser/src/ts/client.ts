@@ -121,6 +121,15 @@ export class Client {
         localStorage.setItem("log","")
         if (ct) {
             this.connectionTarget = ct;
+            if (!this.connectionTarget.host) {
+                this.connectionTarget.host = "mud.temporasanguinis.it"
+                this.connectionTarget.port = 4000              
+            }
+        } else {
+            this.connectionTarget = {
+                host: "mud.temporasanguinis.it",
+                port: 4000 
+            }
         }
         if (this.connectionTarget) {
             this.socket.openTelnet(

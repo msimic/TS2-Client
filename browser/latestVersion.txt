@@ -1,2 +1,3 @@
-- risolto un problema per le versioni binarie
-   -> non si poteva conettere al profilo base senza creare un profilo
+- un altro problema per la connessione al profilo base per Mac risolto
+- cambiato descrizione al client binario: ora si chiama Tempora Sanguinis
+- cambiata la dimensione di un messaggio che veniva torncato
