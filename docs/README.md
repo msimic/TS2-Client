@@ -37,13 +37,16 @@ Il proxy fatto in Node.js tramite Socket.IO crea le connessioni telnet e trasfer
 * configurare i config per l'esecuzione in locale
 * > npm run build && npm run start
 
-# Prerequisiti per build del client: Git, Node.js / NPM, Docker
+# Prerequisiti per build del client: Git, Node.js / NPM
 * In cartella browser
 * > npm install
 * > npm run build
+
+# Prerequisiti per build delle versioni binarie
+* > npm run build_for_electron
 * > npm run electronWindows
-* > docker pull electronuserland/builder
-* > npm run electronLinux
+* > npm run electronLinux (solo sotto linux)
+* > npm run electronMac (solo sotto macOS)
 
 # Esecuzione
 * Aprire in VSCode i progetti telnet_proxy e browser
