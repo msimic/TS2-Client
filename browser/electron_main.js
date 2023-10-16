@@ -193,7 +193,8 @@ app.on("ready", () => {
   proxy = cp.fork(require.resolve('./dist/public/telnet_proxy.js'), [
     "--serverHost","localhost",
     "--serverPort","4040", 
-    "--fixedTelnetHost","mud.temporasanguinis.it,localhost"
+    "--fixedTelnetHost","mud.temporasanguinis.it,localhost",
+    "--fixedTelnetPort","4000"
   ])
   if (!proxy || proxy.exitCode) {
     console.log("Proxy failed");

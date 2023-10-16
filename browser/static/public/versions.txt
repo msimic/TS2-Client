@@ -1,3 +1,7 @@
+1.4.8
+- risolto un problema per le versioni binarie
+   -> non si poteva conettere al profilo base senza create un profilo
+____________________________________________________________
 1.4.7
 - varie correzioni al mapper e alla finestra del mapper
 - correggo loading DB identify per versioni binarie
