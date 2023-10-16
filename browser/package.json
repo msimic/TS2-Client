@@ -2,7 +2,7 @@
   "name": "ts2-client",
   "description": "Tempora Sanguinis 2 Client",
   "main": "electron_main.js",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/temporasanguinis/TS2-Client"
@@ -39,8 +39,7 @@
     "electron": "electron .",
     "electronWindows": "rm -f dist/public/cacheServiceWorker.js && electron-builder --win --x64",
     "electronMac": "rm -f dist/public/cacheServiceWorker.js && electron-builder --mac --x64",
-    "electronLinuxBuild": "rm -f dist/public/cacheServiceWorker.js && electron-builder --linux --x64",
-    "electronLinux": "node tools/dockerCheck.js && node tools/linux-electron-build.js \"%PWD%\" \"electronuserland/builder\"",
+    "electronLinux": "rm -f dist/public/cacheServiceWorker.js && electron-builder --linux --x64",
     "publish": "npm run build",
     "publishElectron": "npm run build_for_electron && npm run electronWindows && npm run electronLinux && npm run electronMac"
   },
@@ -101,6 +100,7 @@
   "build": {
     "productName": "ts2-client",
     "appId": "ts2.client",
+    "icon": "src/icons/favicon-256x256.png",
     "files": [
       "!**/*",
       "!**/node_modules/**",
@@ -139,7 +139,6 @@
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "linux": {
-      "icon": "src/icons/favicon-256x256.png",
       "category": "Game",
       "target": [
         "deb",

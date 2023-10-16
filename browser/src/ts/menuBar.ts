@@ -434,7 +434,7 @@ export class MenuBar {
         this.clickFuncs["update-triggers"] = async () => {
             if ((await Messagebox.Question("Sei sicuro di voler aggiornare i script preimpostati?")).button == Button.Ok) {
                 localStorage.setItem("old_UserConfig", localStorage.getItem("userConfig"))
-                this.profileWin.ImportBaseTriggers();
+                this.profileWin.ImportBaseTriggers(true);
             }
         }
 

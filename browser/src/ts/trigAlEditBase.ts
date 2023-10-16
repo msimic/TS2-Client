@@ -40,6 +40,8 @@ export abstract class TrigAlEditBase {
     protected codeMirror: any;
     protected $codeMirrorWrapper: JQuery;
     protected $newButton: JQuery;
+    protected $importButton: JQuery;
+    protected $exportButton: JQuery;
     protected $deleteButton: JQuery;
     protected $mainSplit: JQuery;
     protected $saveButton: JQuery;
@@ -136,6 +138,8 @@ export abstract class TrigAlEditBase {
                         <textarea class="winEdit-scriptArea" disabled></textarea>
                     </div>
                     <div class="pane-footer">
+                        <button class="winEdit-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">^</button>
+                        <button class="winEdit-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">v</button>
                         <button class="winEdit-btnSave bluebutton" disabled>Salva</button>
                         <button class="winEdit-btnCancel" disabled>Annulla</button>
                     </div>
@@ -148,6 +152,8 @@ export abstract class TrigAlEditBase {
         }
         this.$mainSplit = $(myDiv.getElementsByClassName("winEdit-mainSplit")[0]);
         this.$newButton = $(myDiv.getElementsByClassName("winEdit-btnNew")[0]);
+        this.$importButton = $(myDiv.getElementsByClassName("winEdit-btnImport")[0]);
+        this.$exportButton = $(myDiv.getElementsByClassName("winEdit-btnExport")[0]);
         this.$copyButton = $(myDiv.getElementsByClassName("winEdit-btnCopy")[0]);
         this.$deleteButton = $(myDiv.getElementsByClassName("winEdit-btnDelete")[0]);
         this.$listBox = $(myDiv.getElementsByClassName("winEdit-listBox")[0]);
@@ -223,6 +229,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$listBox.click(this.itemClick.bind(this));
         this.$listBox.keyup(this.itemSelect.bind(this));
         this.$newButton.click(this.handleNewButtonClick.bind(this));
+        this.$importButton.click(this.handleImportButtonClick.bind(this));
+        this.$exportButton.click(this.handleExportButtonClick.bind(this));
         this.$copyButton.click(this.handleCopyButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
@@ -232,6 +240,51 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
     }
+
+    copyProperties(ind:number) {
+        let item = this.getItem(ind);
+        if (!item) return;
+        Util.importFromFile((str) => {
+            if (str) {
+                const tr:TrigAlItem = JSON.parse(str)
+                if (tr) {
+                    for (var prop in item) {
+                        if (Object.prototype.hasOwnProperty.call(item, prop)) {
+                            (item as any)[prop] = (tr as any)[prop];
+                        }
+                    }
+                }
+                this.handleListBoxChange();
+            }
+        })
+    }
+
+    async handleImportButtonClick(ev: any) {
+        let ind = this.$listBox.data("selectedIndex");
+        if (ind == undefined || ind < 0) return;
+        if (this.isDirty()) {
+            await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
+            return
+        }
+        const ans = await Messagebox.Question("Sei sicuro di voler sovrascrivere il trigger corrente?")
+        if (ans.button == Button.Ok) {
+            this.copyProperties(ind);
+            this.handleListBoxChange();
+        }
+    }
+
+    async handleExportButtonClick(ev: any) {
+        let ind = this.$listBox.data("selectedIndex");
+        if (ind == undefined || ind < 0) return;
+        if (this.isDirty()) {
+            await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
+            return
+        }
+        let item = this.getItem(ind);
+        if (!item) return;
+        Util.downloadJsonToFile(item, "trigger_export_" + (item.id ? item.id : "no_id") + ".json")
+    }
+
     async handleCopyButtonClick(ev: any) {
         let ind = this.$listBox.data("selectedIndex");
         if (ind == undefined || ind < 0) return;
@@ -315,6 +368,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$textArea.prop("disabled", state);
         this.$codeMirrorWrapper.prop("disabled", state);
         this.$saveButton.prop("disabled", state);
+        this.$importButton.prop("disabled", state);
+        this.$exportButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
         this.showTextInput();
     }

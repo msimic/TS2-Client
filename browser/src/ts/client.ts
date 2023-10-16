@@ -241,27 +241,6 @@ export class Client {
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
-        setTimeout(()=>this.mapper.loadVersion().then(async v => {
-            let vn = Math.random()
-            if (v.version != 0) {
-                vn = v.version
-            }
-            let prefix = ""
-            if ((<any>window).ipcRenderer) {
-                prefix = "https://temporasanguinis.it/client/"
-            }
-            let remVer:number;
-            if ((remVer = await this.profilesWin.checkNewTriggerVersion())) {
-                const r = await Messagebox.ShowWithButtons("Aggiornamento preimpostati", "C'e' una nuova versione dei trigger preimpostati.\nVuoi aggiornare ora?\n\nP.S. Se rispondi No, salterai la versione e dovrai aggiornare manualmente dal menu Scripting.", "Si", "No")
-                if (r.button == Button.Ok) {
-                    this.profilesWin.ImportBaseTriggers();
-                } else {
-                    this.baseConfig.set("version", remVer)
-                }
-            }
-            return this.mapper.load(prefix + 'mapperData.json?v='+vn)
-        }), 2000);
-
         // MenuBar events
         this.menuBar.EvtChangeDefaultColor.handle((data: [string, string]) => {
             this.outputManager.handleChangeDefaultColor(data[0], data[1]);
@@ -569,6 +548,40 @@ export class Client {
                 this.profilesWin.show();
             }
         });
+
+        let loadContrib = async () => {
+
+            const mapOnline = await this.mapper.loadVersion(true);
+            const mapOffline = await this.mapper.loadVersion(false);
+            const mapOnlineIsNewer = mapOnline.version > mapOffline.version;
+            let vn = Math.random();
+            if (mapOnlineIsNewer && mapOnline.version != 0) {
+                vn = mapOnline.version;
+            } else if (!mapOnlineIsNewer && mapOffline.version != 0) {
+                vn = mapOffline.version;
+            }
+            let prefix  = mapOnlineIsNewer ? "https://temporasanguinis.it/client/" : "";
+            console.log("Carico mappe da " + (prefix || "locale"))
+            this.mapper.load(prefix + 'mapperData.json?v=' + vn, mapOnlineIsNewer ? mapOnline : mapOffline)
+            
+
+            let remVer: number = await this.profilesWin.checkNewTriggerVersion(true);
+            let localVer: number = await this.profilesWin.checkNewTriggerVersion(false);
+
+            console.log("remote trig: " + remVer + " local trig: " + localVer)
+            const update = (remVer && remVer > localVer) || (localVer && localVer > remVer)
+
+            if (update) {
+                const r = await Messagebox.ShowWithButtons("Aggiornamento preimpostati", "C'e' una nuova versione dei trigger preimpostati.\nVuoi aggiornare ora?\n\nP.S. Se rispondi No, salterai la versione e dovrai aggiornare manualmente dal menu Scripting.", "Si", "No");
+                if (r.button == Button.Ok) {
+                    this.profilesWin.ImportBaseTriggers(remVer > localVer);
+                } else {
+                    this.baseConfig.set("version", (remVer > localVer ? remVer : localVer));
+                }
+            }
+        }
+
+        setTimeout(loadContrib, 2000);
     }
 
     copyAliasToOther(data: copyData) {

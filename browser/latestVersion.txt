@@ -1,2 +1,4 @@
-- correzione a un bug della versione binaria
-- aggiornamento DB identify
+- varie correzioni al mapper e alla finestra del mapper
+- correggo loading DB identify per versioni binarie
+- aggiornate le icone di TS
+- aggiunto bottoni per import o export sui trigger e alias

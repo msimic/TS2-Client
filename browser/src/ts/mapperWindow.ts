@@ -64,18 +64,18 @@ export class MapperWindow {
     }
 
     onEmitMapperZoneChanged = (d:any) => {
-        this.zoneId = d.id
+        this.zoneId = d?.id
         this.zones = [...this.mapper.idToZone.values()]
-        this.zoneMessage(d.zone ? d.zone.name : "Zona sconosciuta")
+        this.zoneMessage(d?.zone?.name)
     }
 
     onEmitMapperRoomChanged = (d:any) => {
         this.zoneId = d.room ? d.room.zone_id : -1
         this.message(this.mapper.getRoomName(d.room))
-        if (!d.room) {
+        if (!d.room || this.zoneId < 0) {
             this.zoneMessage("Zona sconosciuta")
         } else {
-            this.zoneMessage(this.mapper.getRoomZone(d.room.id).name)
+            this.zoneMessage(this.mapper.getRoomZone(d.room.id)?.name)
         }
         if (this.drawing) this.drawing.setActiveRoom(d.room);
     }
@@ -255,10 +255,11 @@ export class MapperWindow {
             self.setMapFont()
             self.onZoomChange(self.drawing.scale)
             if ((<any>window).ipcRenderer) {
-                self.loadSite.bind(self)();
+                self.loadSite.bind(self)(false);
             } else {
                 self.load.bind(self)();
             }
+            self.onEmitMapperZoneChanged(self.mapper.idToZone.get(0));
             self.refreshFavorites();
         });
 
@@ -412,7 +413,7 @@ Nota: Per eventuali errori o richieste rivolgetevi
 nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bidi: embed;font-family: monospace;white-space: pre;")
                     break;
                 case "reloadweb":
-                    this.loadSite();
+                    this.loadSite(true);
                     break;
                 case "reloadLocal":
                     this.load(true);
@@ -667,7 +668,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         let version: MapVersion = null;
         this.mapper.useLocal = useLocal
                     
-        this.mapper.loadVersion().then(v => {
+        this.mapper.loadVersion(false).then(v => {
             version = v;
             let vn = Math.random()
             if (v.version != 0) {
@@ -676,7 +677,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             if (this.mapper.useLocal)
                 return this.mapper.loadLocalDb()
             else
-                return this.mapper.load('mapperData.json?v='+vn)
+                return this.mapper.load('mapperData.json?v='+vn, v)
         }).then(mDb => {
             if (!version) {
                 version = mDb.version;
@@ -689,16 +690,25 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
 
     }
 
-    public loadSite() {
+    public loadSite(force:boolean) {
         let version: MapVersion = null;
         this.mapper.useLocal = false
-        this.mapper.loadVersion().then(v => {
+        this.mapper.loadVersion(true).then(v => {
             version = v;
             let vn = Math.random()
             if (v.version != 0) {
                 vn = v.version
             }
-            return this.mapper.load('https://temporasanguinis.it/client/mapperData.json?v='+vn)
+            const localVer = this.mapper.getVersion()
+            const remoteVer = v.version
+            console.log(`mapperWindow loadSite remote ${remoteVer} local ${localVer}`)
+            if (!force && remoteVer <= localVer) {
+                version = null;
+                console.log("Keep using builtin map since newer")
+                return this.mapper.getDB()
+            }
+            console.log("Load map from site")
+            return this.mapper.load('https://temporasanguinis.it/client/mapperData.json?v='+vn, v)
         }).then(mDb => {
             if (!version) {
                 version = mDb.version;
@@ -708,18 +718,6 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             } else 
                 this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
         });
-
-        
-        /*const image = new Image(); // Using optional size for image
-        image.onload = () => {
-            const w = (<HTMLCanvasElement>this.canvas[0]).width;
-            const h = (<HTMLCanvasElement>this.canvas[0]).height;
-            this.ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, w, h);
-        }; // Draw when image has loaded
-
-        image.src = "https://www.temporasanguinis.it/mappa_small.jpg";
-        */
-
     }
 
     public message(mess:string) {

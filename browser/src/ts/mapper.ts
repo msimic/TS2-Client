@@ -273,12 +273,18 @@ export interface Favorite {
 };
 
 export class Mapper {
+    getVersion():number {
+        return (this.db?.version?.version) || 0;
+    }
+    getDB(): MapDatabase {
+        return this.db;
+    }
     private favorites = new Map<number, Favorite>();
 
     private saveFavorites() {
         const fv = [...this.favorites.values()]
         localStorage.setItem("mapper_favorites", JSON.stringify(fv))
-        if (this.db) this.loadDb(this.db)
+        if (this.db) this.loadDb(this.db, this.db?.version)
     }
 
     public getFavorites():Favorite[] {
@@ -324,9 +330,11 @@ export class Mapper {
         if (!this.current) {
             const name = this.scripting.getVariableValue(this.roomNameVariable)
             const desc = this.scripting.getVariableValue(this.roomDescVariable)
-            const candidates = this.searchRoomsByNameAndDesc(name, desc)
-            if (candidates && candidates.length) {
-                this.setRoomById(candidates[0].id)
+            if (name?.length || desc?.length) {
+                const candidates = this.searchRoomsByNameAndDesc(name, desc)
+                if (candidates && candidates.length) {
+                    this.setRoomById(candidates[0].id)
+                }
             }
         }
         return !!this.current
@@ -631,16 +639,19 @@ export class Mapper {
         this.scripting = script;
     }
 
-    public async loadVersion():Promise<MapVersion> {
+    public async loadVersion(online:boolean):Promise<MapVersion> {
         let data:MapVersion = null;
         try {
             if (this.useLocal) {
                 await this.loadLocal(true)
-                return this.db.version
+                return this.db.version || {
+                    version: 0,
+                    message: "Unknown"
+                };
             }
             let prefix = ""
             if ((<any>window).ipcRenderer) {
-                prefix = "https://temporasanguinis.it/client/"
+                prefix = online ? "https://temporasanguinis.it/client/" : ""
             }
             const response = await fetch(prefix + "mapperVersion.json?rnd="+Math.random());
             data = await response.json();
@@ -656,7 +667,7 @@ export class Mapper {
     async loadLocalDb() {
         this.emitMessage.fire("Inizializzo mapper... attendere.");
         await this.loadLocal(false)
-        return this.loadDb(this.db);
+        return this.loadDb(this.db, this.db?.version);
     }
 
     private _useLocal: boolean;
@@ -905,7 +916,7 @@ export class Mapper {
         } else {
             this.db.rooms[pos] = roomData
         }
-        this.loadDb(this.db)
+        this.loadDb(this.db, this.db?.version)
         this.setSelected(this.idToRoom.get(roomData.id))
 
         this.roomChanged.fire({ id: 0, vnum: 0, room: null})
@@ -930,49 +941,18 @@ export class Mapper {
         return this.vnumToRoom.get(vnum)
     }
 
-    public async load(url:string):Promise<MapDatabase> {
+    public async load(url:string, ver: MapVersion):Promise<MapDatabase> {
+        console.log("Caricamento db mappe da " + url)
         this.emitMessage.fire("Inizializzo mapper... attendere.");
         let response;
         try {
-        response = await fetch(url);
-        //console.log("Mappe:" + response.statusText  + "(" + response.status + ")")
+            response = await fetch(url);
         } catch {
             this.emitMessage.fire("Errore nello scaricamento mappe.");
         }
         const data = await response.json();
-        /*
-        const r2 = await fetch(url);
-        const total = Number(r2.headers.get('content-length'));
-        const tot = total;
-        const buffer = new Uint8Array(total);
-        const self = this;
-        function consume(reader:ReadableStreamDefaultReader<Uint8Array>) {
-            var total = 0
-            return new Promise<Uint8Array>((resolve, reject) => {
-              function pump() {
-                reader.read().then(({done, value}) => {
-                  if (done) {
-                    resolve(buffer)
-                    return
-                  }
-                  buffer.set(value, total);
-                  total += value.byteLength
-                  self.emitMessage.fire(`Scaricato ${total} byte (${tot} in totale)`);
-                  setTimeout(pump, 25);
-                }).catch(reject)
-              }
-              pump()
-            })
-          }
-          
-
-          const reData = await consume(r2.body.getReader());
-          var string = new TextDecoder().decode(reData);
-          var compressed = compress(string);
-          localStorage.setItem("mapperDatabase", compressed);
-*/
         this.emitMessage.fire("Carico database mappe... attendere.");
-        return this.loadDb(data);
+        return this.loadDb(data, ver);
     }
 
     private prepare() {
@@ -1132,7 +1112,7 @@ export class Mapper {
             }
         }
 
-        this.loadDb(this.db);
+        this.loadDb(this.db, this.db?.version);
         this.emitMessage.fire("File mapper importato.")
     }
 
@@ -1163,11 +1143,15 @@ export class Mapper {
         return ret;
     }
 
-    public loadDb(mapDb: MapDatabase):MapDatabase {
+    public loadDb(mapDb: MapDatabase, ver: MapVersion):MapDatabase {
         try {
             this.loading = true
             this.db = mapDb;
             this.mapmode = false
+
+            if (this.db) {
+                this.db.version = this.db?.version && this.db?.version?.version > 0 ? this.db?.version : ver
+            }
 
             this.acknowledgingWalkStep = false;
             const currentRoom = this.current;
@@ -1176,9 +1160,12 @@ export class Mapper {
 
             this.prepare();
 
-            if (!this.current && currentId>=0) {
+            let existsByVnum = !currentRoom && currentVnum >=0 ? this.containsVnum(currentVnum) : false;
+            let existsById = !currentRoom && currentId >=0 ? this.containsId(currentId) : false;
+
+            if (!currentRoom && existsById) {
                 this.setRoomById(currentId);
-            } else if (!this.current && currentVnum>=0) {
+            } else if (!currentRoom && existsByVnum) {
                 this.setRoomByVNum(currentVnum);
             }
             else if (currentRoom) {
@@ -1188,6 +1175,7 @@ export class Mapper {
                     this.zoneChanged.fire({ id: null, zone:null})
                 }
             }
+            console.log("Mapper Loaded data version " + this.getVersion())
             return mapDb;
         } finally {
             this.loading = false;
@@ -1199,6 +1187,14 @@ export class Mapper {
         if (typeof id != 'number')
             id = parseInt(id);
         return this.idToRoom.get(id);
+    }
+
+    public containsId(id:number):boolean {
+        return this.idToRoom.has(id)
+    }
+
+    public containsVnum(vn:number):boolean {
+        return this.vnumToRoom.has(vn)
     }
 
     public setRoomById(id:number) {

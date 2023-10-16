@@ -224,10 +224,10 @@ export class ProfilesWindow {
         }
     }
 
-    public async checkNewTriggerVersion():Promise<number> {
+    public async checkNewTriggerVersion(online: boolean):Promise<number> {
         let prefix = ""
         if ((<any>window).ipcRenderer) {
-            prefix = "https://temporasanguinis.it/client/"
+            prefix = online ? "https://temporasanguinis.it/client/" : ""
         }
         const code = await $.ajax(prefix + "baseUserConfig.json?rnd="+Math.random());
     
@@ -241,10 +241,10 @@ export class ProfilesWindow {
         return 0;
     }
 
-    public async ImportBaseTriggers() {
+    public async ImportBaseTriggers(online: boolean) {
         let prefix = ""
         if ((<any>window).ipcRenderer) {
-            prefix = "https://temporasanguinis.it/client/"
+            prefix = online ? "https://temporasanguinis.it/client/" : ""
         }
         await $.ajax(prefix + "baseUserConfig.json?rnd="+Math.random()).done((code:any) => {
             let baseConfig = this.manager.getBaseConfig()
@@ -276,7 +276,7 @@ export class ProfilesWindow {
             <b>Vuoi includere/aggiornare i trigger e alias preimpostati nel profilo base?</b>
             `).then(v => {
                 if (v.button == ButtonOK) {
-                    this.ImportBaseTriggers();
+                    this.ImportBaseTriggers(true);
                 }
             });
         } else {
@@ -324,7 +324,7 @@ Potrai ad ogni modo farlo in futuro premendo il bottone giallo sul profilo base.
 
 Vuoi caricare i trigger e alias preimpostati nel profilo base?`).then(async v => {
                 if (v.button == 1) {
-                    await this.ImportBaseTriggers().then(v => {
+                    await this.ImportBaseTriggers(true).then(v => {
                         this.profileWin.load()
                     });
                 }

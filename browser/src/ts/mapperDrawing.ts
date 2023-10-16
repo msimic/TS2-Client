@@ -627,9 +627,9 @@ export class MapperDrawing {
         const x = rx*2;
         const y= ry*2;
 
-        let zoneId = this.active?.zone_id || this.rooms[0]?.zone_id
+        let zoneId = this.active?.zone_id || (this.rooms?.length ? this.rooms[0]?.zone_id : -1);
 
-        const rows = !zoneId || !this.mapper.zoneRooms.get(zoneId) ? null : this.mapper.zoneRooms.get(zoneId).filter(room => {
+        const rows = zoneId < 0 || !this.mapper.zoneRooms.get(zoneId) ? null : this.mapper.zoneRooms.get(zoneId).filter(room => {
             if (room.z != this.level) return false;
             let rRect = this.roomDrawRect(room, this.canvas);
             return this.PointInRect(x,y,rRect.x,rRect.x2, rRect.y, rRect.y2)
@@ -681,7 +681,7 @@ export class MapperDrawing {
         const drawDataBelow = new Map<number, DrawData>();
         const drawDataAbove = new Map<number, DrawData>();
 
-        for (let i = 0; i < this.rooms.length; i++) {
+        if (this.rooms) for (let i = 0; i < this.rooms.length; i++) {
             let room = this.rooms[i]
             if (room.z == this.level-1) {
                 let rdr = this.roomInnerDrawRect(room, canvas)
