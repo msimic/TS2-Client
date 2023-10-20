@@ -35,3 +35,12 @@ jobs:
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
           release: true
+        
+      - name: Build
+        run: npm run build
+        
+      - name: Zip
+        uses: vimtor/action-zip@v1.1
+        with:
+          files: dist/public
+          dest: web_client.zip
