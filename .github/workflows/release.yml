@@ -39,15 +39,11 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          updateOnlyUnreleased: true
-          draft: true
           artifacts: "release-web.zip"
           
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          updateOnlyUnreleased: true
-          draft: true
           artifacts: "./telnet_proxy/dist/telnet_proxy/bundle/telnet_proxy.js"
 
       - name: Web finished
