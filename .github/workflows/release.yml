@@ -26,14 +26,15 @@ jobs:
         run: cd browser && npm install
         
       - name: Build
-        run: cd browser && npm run build
+        run: cd browser && npm run build && cd ./../telnet_proxy && npm install && npm run build && npm run webpack
           
       - name: Archive Release
         uses: thedoctor0/zip-release@0.7.1
         with:
+          directory: './browser/dist'
           type: 'zip'
-          filename: 'release-web.zip'
-          path: './browser/dist/public'
+          filename: '../../release-web.zip'
+          path: './public'
           exclusions: '*.git* /*node_modules/* .editorconfig'
 
       - uses: ncipollo/release-action@v1
@@ -41,3 +42,9 @@ jobs:
           allowUpdates: true
           updateOnlyUnreleased: true
           artifacts: "release-web.zip"
+          
+      - uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          updateOnlyUnreleased: true
+          artifacts: "./telnet_proxy/dist/telnet_proxy/bundle/telnet_proxy.js"
