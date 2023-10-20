@@ -49,6 +49,9 @@ jobs:
         with:
           node-version: 16
 
+      - name: browser
+        run: cd browser
+        
       - name: Install
         run: npm install
         
