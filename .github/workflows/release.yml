@@ -7,36 +7,8 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v3
-
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Build/release Electron app
-        uses: ZacharyWin/z-electron-builder@v0.0.2
-        with:
-          build_script_name: build_for_electron
-          package_root: browser
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
-
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: true
-
-  build:
+  
+  release-web:
 
     runs-on: ubuntu-latest
 
@@ -54,14 +26,11 @@ jobs:
         
       - name: Build
         run: cd browser && npm run build
-        
-      - name: Zip
-        uses: vimtor/action-zip@v1.1
-        with:
-          files: browser/dist/public
-          dest: web_client.zip
           
-      - uses: actions/upload-artifact@v3
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.1
         with:
-          name: web_client.zip
-          path: web_client.zip
+          type: 'zip'
+          filename: 'release-web.zip'
+          path: './browser/dist/public'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
