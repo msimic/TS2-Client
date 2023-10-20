@@ -1,3 +1,6 @@
+1.5.0
+- release con inclusi i file zip contenenti il web client
+____________________________________________________________
 1.4.9
 - un altro problema per la connessione al profilo base per Mac risolto
 - cambiato descrizione al client binario: ora si chiama Tempora Sanguinis
