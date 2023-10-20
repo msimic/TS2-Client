@@ -1,1 +1,2 @@
 - release con inclusi i file zip contenenti il web client
+- cambiato favicon
