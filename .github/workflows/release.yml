@@ -41,10 +41,12 @@ jobs:
         with:
           allowUpdates: true
           updateOnlyUnreleased: true
+          prerelease: true
           artifacts: "release-web.zip"
           
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           updateOnlyUnreleased: true
+          prerelease: true
           artifacts: "./telnet_proxy/dist/telnet_proxy/bundle/telnet_proxy.js"
