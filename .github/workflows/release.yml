@@ -51,6 +51,7 @@ jobs:
           artifacts: "./telnet_proxy/dist/telnet_proxy/bundle/telnet_proxy.js"
 
       - name: Web finished
+        run: echo OK
 
   release:
     runs-on: ${{ matrix.os }}
