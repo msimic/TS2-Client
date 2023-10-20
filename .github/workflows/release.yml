@@ -35,6 +35,22 @@ jobs:
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
           release: true
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install
+        run: npm install
         
       - name: Build
         run: npm run build
@@ -44,3 +60,8 @@ jobs:
         with:
           files: dist/public
           dest: web_client.zip
+          
+      - uses: actions/upload-artifact@v3
+        with:
+          name: web_client.zip
+          path: web_client.zip
