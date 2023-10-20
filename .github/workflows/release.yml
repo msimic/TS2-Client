@@ -11,7 +11,8 @@ jobs:
   release-web:
 
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -34,3 +35,7 @@ jobs:
           filename: 'release-web.zip'
           path: './browser/dist/public'
           exclusions: '*.git* /*node_modules/* .editorconfig'
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release-web.zip"
