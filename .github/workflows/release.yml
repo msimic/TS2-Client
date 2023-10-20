@@ -49,19 +49,16 @@ jobs:
         with:
           node-version: 16
 
-      - name: browser
-        run: cd browser
-        
       - name: Install
-        run: npm install
+        run: cd browser && npm install
         
       - name: Build
-        run: npm run build
+        run: cd browser && npm run build
         
       - name: Zip
         uses: vimtor/action-zip@v1.1
         with:
-          files: dist/public
+          files: browser/dist/public
           dest: web_client.zip
           
       - uses: actions/upload-artifact@v3
