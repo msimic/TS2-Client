@@ -5,6 +5,7 @@
 - il proxy legge in modo piu sicuro l'ip della connessione
 - risolto un bug del mapper che faceva rientrare sempre a olimpo
 - risolto un problema che poteva cancellare una finestra configurata
+- fix per versione binaria, non connetteva al server test
 ____________________________________________________________
 1.5.1
 - fix a un bug nella finestra per variabili

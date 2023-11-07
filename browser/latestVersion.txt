@@ -4,3 +4,4 @@
 - il proxy legge in modo piu sicuro l'ip della connessione
 - risolto un bug del mapper che faceva rientrare sempre a olimpo
 - risolto un problema che poteva cancellare una finestra configurata
+- fix per versione binaria, non connetteva al server test

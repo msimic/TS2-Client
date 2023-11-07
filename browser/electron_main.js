@@ -194,7 +194,7 @@ app.on("ready", () => {
     "--serverHost","localhost",
     "--serverPort","4040", 
     "--fixedTelnetHost","mud.temporasanguinis.it,localhost",
-    "--fixedTelnetPort","4000"
+    "--fixedTelnetPort","4000,6000"
   ])
   if (!proxy || proxy.exitCode) {
     console.log("Proxy failed");
