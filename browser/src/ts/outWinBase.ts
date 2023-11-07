@@ -321,6 +321,12 @@ export class OutWinBase {
         }
     }
 
+    public markCurrentTargetAsPrompt() {
+        if (this.$target != this.$rootElem) {
+            this.$target.addClass("prompt")
+        }
+    }
+
     protected appendToCurrentTarget(o:any) {
         if (this.$target == this.$rootElem) {
             this.lineCount++;

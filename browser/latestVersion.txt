@@ -1,2 +1,4 @@
-- fix a un bug nella finestra per variabili
-- fix a un bug che non faceva caricare i trigger preimpostati
+il prompt ora manda a caporiga anche se ci sono immagini allineate sullo schermo che interferirebbero
+risolti alcuni problemi di caching
+il client ora manda versione al server
+il proxy legge in modo piu sicuro l'ip della connessione

@@ -322,6 +322,11 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     display: none;
 }
 
+.prompt {
+    display: block;
+    clear: both;
+}
+
 .scrollable {
     overflow: auto;
     -webkit-overflow-scrolling: auto;

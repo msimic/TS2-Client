@@ -187,6 +187,9 @@ export class Mxp {
                     else {
                         this.script.getScriptThis()[(<any>m).groups.name] = unescape(def.replace(/\\"/g, '"'));
                     }
+                    if ((<any>m).groups.name == "STARTPROMPT") {
+                        this.outputManager.markCurrentTargetAsPrompt()
+                    }
                     return true;
                 }
             };

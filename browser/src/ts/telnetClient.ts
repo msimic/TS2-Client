@@ -5,7 +5,7 @@ import { AppInfo } from "./appInfo";
 
 
 const TTYPES: string[] = [
-    "TS2 Web Client",
+    AppInfo.AppTitle + " " + AppInfo.Version,
     "ANSI",
     "-256color"
 ];
@@ -149,12 +149,17 @@ export class TelnetClient extends Telnet {
             }
             else if (sb.length === 2 && sb[0] === Opt.TTYPE && sb[1] === SubNeg.SEND) {
                 let ttype: string;
-                if (this.ttypeIndex >= TTYPES.length) {
+                if (this.ttypeIndex > 0)
+                    return; // support only one TType by joinging all ttypes, legacy telnet clients are not supporter anymore
+                ttype = TTYPES.join(", ") + ", IP<" + (this.clientIp || "Missing-IP") + ">";
+                this.ttypeIndex++;
+                
+                /*if (this.ttypeIndex >= TTYPES.length) {
                     ttype = this.clientIp || "UNKNOWNIP";
                 } else {
                     ttype = TTYPES[this.ttypeIndex];
                     this.ttypeIndex++;
-                }
+                }*/
                 this.writeArr( ([Cmd.IAC, Cmd.SB, Opt.TTYPE, SubNeg.IS]).concat(
                     arrayFromString(ttype),
                     [Cmd.IAC, Cmd.SE]

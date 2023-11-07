@@ -138,6 +138,12 @@ export class OutputManager {
         }
     }
 
+    public markCurrentTargetAsPrompt() {
+        if (this.target) {
+            this.target.markCurrentTargetAsPrompt();
+        }
+    }
+
     private setFgColorId(colorId: string) {
         this.fgColorId = colorId;
         this.pushFgColorIdToTarget();

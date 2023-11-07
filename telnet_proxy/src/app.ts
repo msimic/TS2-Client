@@ -217,13 +217,14 @@ if (!isHttps) {
     }
 }
 
-io = new socketio.Server(actualServer, {
+io = new socketio.Server(actualServer, <any>{
     // socket.io erroneusly uses fs.readyFileSync on require.resolve in runtime therefore
     // when webpacked serving client would fail, and we cannot serve it in this case
     // no problems for running in normal mode without webpacking the whole bundle
     serveClient: (typeof require.resolve("socket.io-client") === "string"),
     pingTimeout: 120000,
     allowEIO3: true,
+    exclusive: true,
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
@@ -237,7 +238,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
     
     let telnet: net.Socket;
     let ioEvt = new IoEvent(client);
-    let remoteAddr = client.request.headers['x-real-ip'] || client.request.connection.remoteAddress;
+    let remoteAddr = client.request.headers['x-real-ip'] || client.conn.remoteAddress;
     let ipAddr = remoteAddr ? (typeof remoteAddr == 'string' ? <string>remoteAddr : (<string[]>remoteAddr)[0]) : "";
 
     let writeQueue: any[] = [];
