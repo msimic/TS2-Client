@@ -257,13 +257,13 @@ export class VariablesEditor {
     private handleListBoxChange() {
         let ind = this.$listBox.data("selectedIndex");
         let item = this.getItem(ind);
-        this.prevName = item.name;
 
         if (!item) {
             this.clearEditor();
             this.setEditorDisabled(true);
             return;
         }
+        this.prevName = item.name;
         this.setEditorDisabled(false);
         this.$name.val(item.name);
         this.$value.val(item.value);

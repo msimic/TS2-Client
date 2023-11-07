@@ -578,7 +578,7 @@ export class Client {
             let localVer: number = await this.profilesWin.checkNewTriggerVersion(false);
 
             console.log("remote trig: " + remVer + " local trig: " + localVer)
-            const update = (remVer && remVer > localVer) || (localVer && localVer > remVer)
+            const update = remVer || localVer;
 
             if (update) {
                 const r = await Messagebox.ShowWithButtons("Aggiornamento preimpostati", "C'e' una nuova versione dei trigger preimpostati.\nVuoi aggiornare ora?\n\nP.S. Se rispondi No, salterai la versione e dovrai aggiornare manualmente dal menu Scripting.", "Si", "No");

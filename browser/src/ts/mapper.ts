@@ -1217,6 +1217,10 @@ export class Mapper {
     }
 
     public setRoomByVNum(vnum:number) {
+        if (typeof(vnum) != "number") {
+            console.log("Vnum not numeric");
+            return;
+        }
         this.roomVnum = vnum;
         const old = this.current;
         const prev = this._previous;

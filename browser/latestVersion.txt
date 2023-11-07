@@ -1,2 +1,2 @@
-- release con inclusi i file zip contenenti il web client
-- cambiato favicon
+- fix a un bug nella finestra per variabili
+- fix a un bug che non faceva caricare i trigger preimpostati
