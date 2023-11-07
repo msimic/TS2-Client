@@ -5,6 +5,7 @@ import { Mapper } from "./mapper";
 import { MapperWindow } from "./mapperWindow";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
+import { waitForVariableValue } from "./util";
 
 export interface WindowData {
     name: string;
@@ -427,14 +428,16 @@ export class WindowManager {
     public createWindow(name:string,createData?:WindowData):WindowDefinition {
 
         //console.log("createWindow " + name);
-        if (this.loading) {
-            return null;
-        }
+
         if (this.windows.has(name)) {
             const def = this.windows.get(name);
             //console.log("OLD " + name);
             //console.log(def);
             return def;
+        }
+
+        if (this.loading) {
+            return null;
         }
         //console.log("NEW window" + name);
 
@@ -653,11 +656,12 @@ export class WindowManager {
 
     public async show(window:string) {
         var w = this.windows.get(window);
-        //console.log("SHOW " + w.data.name)
+        //console.log("SHOW " + w.data.name) 
         if (!w.output && !w.custom && !this.loading) {
             const data = w.data;
             data.visible = false
             await this.destroyWindow(window, true);
+            await waitForVariableValue(this, "loading", false);
             w = this.createWindow(window, data);
             if (w && w.data) {
                 w.data.visible = true

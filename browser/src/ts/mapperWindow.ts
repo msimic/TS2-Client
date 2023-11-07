@@ -735,7 +735,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             }));*/
 
             const zones = this.zones && this.zones.length ? [...this.zones].sort(this.zoneSort) : null
-            if (zones) {
+            if (zones && mess) {
                 newIndex = zones.findIndex((z) => z.name == mess)
             }
             if (zones && zones.length) $.each(zones, (i, item) => {
@@ -745,7 +745,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                 });
             });
             //(<any>this.$zoneList).jqxDropDownList('loadFromSelect', 'zonelist_jqxDropDownList');
-           (<any>this.$zoneList).jqxDropDownList('selectIndex', newIndex > -1 ? newIndex : 0 ); 
+           if (mess) (<any>this.$zoneList).jqxDropDownList('selectIndex', newIndex > -1 ? newIndex : 0 ); 
         } else {
             /*this.$zoneList.find("option").first().text(mess||"?")*/
             /*const items = (<any>this.$zoneList).jqxDropDownList('getItems');

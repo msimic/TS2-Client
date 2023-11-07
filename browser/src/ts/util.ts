@@ -153,6 +153,24 @@ export function Acknowledge(ack:string, str:string) {
     }, "OK", "", false, [""], 550, null, false, "");
 }
 
+export function waitForVariableValue(obj: any, varName:string, expectedValue:any, timeout?:number) {
+    return new Promise<boolean>(resolve => {
+      var tmo = timeout || 1000;
+      var start_time = Date.now();
+      async function checkFlag() {
+        if (obj[varName] == expectedValue) {
+          resolve(true);
+        } else if (Date.now() > start_time + tmo) {
+          resolve(false);
+        } else {
+          await new Promise<boolean>(resolve => setTimeout(resolve, 100));
+          checkFlag();
+        }
+      }
+      checkFlag();
+    });
+}
+
 export function escapeRegExp(string:string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }

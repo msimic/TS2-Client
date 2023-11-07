@@ -1,4 +1,6 @@
-il prompt ora manda a caporiga anche se ci sono immagini allineate sullo schermo che interferirebbero
-risolti alcuni problemi di caching
-il client ora manda versione al server
-il proxy legge in modo piu sicuro l'ip della connessione
+- il prompt ora manda a caporiga anche se ci sono immagini allineate sullo schermo che interferirebbero
+- risolti alcuni problemi di caching
+- il client ora manda versione al server
+- il proxy legge in modo piu sicuro l'ip della connessione
+- risolto un bug del mapper che faceva rientrare sempre a olimpo
+- risolto un problema che poteva cancellare una finestra configurata
