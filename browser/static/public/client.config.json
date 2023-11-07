@@ -1,5 +1,5 @@
 {
 	"apiBaseUrl": null,
-	"socket_io_host": "localhost",
+	"socket_io_host": "192.168.8.108",
 	"socket_io_port": 4040
 }
