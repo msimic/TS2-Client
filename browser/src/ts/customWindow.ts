@@ -11,7 +11,7 @@ export class CustomWin extends OutWinBase {
         this.lineText = text.indexOf("<span")!=-1 ? stripHtml(text) : text;
         this.appendBuffer = buffer;
         this.appendToCurrentTarget(this.appendBuffer);
-        this.newLine();
+        //this.newLine();
         this.outputDone();
     }
 

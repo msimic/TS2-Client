@@ -75,6 +75,7 @@ export class ProfileManager {
         }
         this.setCurrent("");
         this.lastProfile = last || "";
+        localStorage.setItem("lastProfile", this.lastProfile);
     }
 
     private saveConfigToStorage(key:string): (val: string) => string {

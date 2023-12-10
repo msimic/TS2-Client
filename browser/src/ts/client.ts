@@ -685,6 +685,10 @@ export async function setupWorkers() {
 }
 
 export namespace Mudslinger {
+    let theme_name: string = "metro";
+    let theme_brightness: string = "light";
+    let theme_codemirror: string = "neat";
+
     export let client: Client;
     export let baseConfig = new UserConfig();
     export let profileManager:ProfileManager = null;
@@ -696,6 +700,34 @@ export namespace Mudslinger {
         });
         return axinst.get('./client.config.json');
     };
+
+    export function GetCodeMirrorTheme() {
+        return theme_codemirror
+    }
+
+    export function setTheme(theme?:string, bright?: string, codem_theme?:string) {
+
+        if (!theme && localStorage.getItem("theme_name")) {
+            theme_name = localStorage.getItem("theme_name") || '';
+            theme_brightness = localStorage.getItem("theme_brightness") || 'light';
+            theme_codemirror = localStorage.getItem("theme_codeMirrorTheme") || 'light';
+        } else if (theme) {
+            theme_name = theme;
+            localStorage.setItem("theme_name", theme_name);
+            theme_brightness = bright;
+            localStorage.setItem("theme_brightness", theme_brightness);
+            theme_codemirror = codem_theme;
+            localStorage.setItem("theme_codeMirrorTheme", theme_codemirror);
+        }
+
+        $("body").removeClass("light");
+        $("body").removeClass("dark");
+        $("body").addClass(theme_brightness);
+
+        $.jqx.theme = theme_name;
+
+        if (theme) window.location.reload();
+    }
 
     export async function GetLocalBaseConfig() {
         let axinst = axios.create({

@@ -12,7 +12,7 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { AskReload, denyClientVersion, downloadJsonToFile, downloadString, importFromFile, isTrue } from "./util";
+import { AskReload, circleNavigate, denyClientVersion, downloadJsonToFile, downloadString, importFromFile, isTrue } from "./util";
 import { LayoutManager } from "./layoutManager";
 import { EvtScriptEmitPrint, JsScript, ScriptEvent, Variable } from "./jsScript";
 import { OutputWin } from "./outputWin";
@@ -219,7 +219,7 @@ export class MenuBar {
             }
           }
 
-        $("#menuBar").append("<div class='rightMenu'><span class='electron' id='electronMenu'><button id='electronZoomOut'>-</button><span id='electronZoom'></span><button id='electronZoomIn'>+</button></span><span id='currentTime'></span><span id='fullscreenButton' title='Schermo intero'>&#x26F6;</span></div>");
+        $("#menuBar>ul").append("<div class='rightMenu'><span class='electron' id='electronMenu'><button id='electronZoomOut'>-</button><span id='electronZoom'></span><button id='electronZoomIn'>+</button></span><span id='currentTime'></span><span id='fullscreenButton' title='Schermo intero'>&#x26F6;</span></div>");
         var currentTimeSpan = $("#currentTime");
         var fsButton = $("#fullscreenButton");
         if (!document.documentElement.requestFullscreen) {
@@ -246,8 +246,10 @@ export class MenuBar {
             $(".electron", "#menuBar").remove();
         }
 
-        const mnu:any = <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: false, theme: "menuBar", clickToOpen: true, keyboardNavigation: true}));
+        const mnu:any = <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: true, clickToOpen: true, keyboardNavigation: true}));
 
+        circleNavigate($("#connessione",$("#menuBar")), $("#altro",$("#menuBar")), null, null);
+        
         $("#menuBar").on('itemclick', (event) =>
         {
             document.getSelection().removeAllRanges();
@@ -259,6 +261,7 @@ export class MenuBar {
             mnu.jqxMenu('closeItem',"connessione")
             mnu.jqxMenu('closeItem',"impostazioni")
             mnu.jqxMenu('closeItem',"scripting")
+            mnu.jqxMenu('closeItem',"finestre")
             mnu.jqxMenu('closeItem',"altro")
         });
 
@@ -267,14 +270,19 @@ export class MenuBar {
             if (event.key == "Escape") {
                 event.preventDefault()
                 event.stopPropagation()
+                mnu.jqxMenu('closeItem',"connessione")
+                mnu.jqxMenu('closeItem',"impostazioni")
+                mnu.jqxMenu('closeItem',"scripting")
+                mnu.jqxMenu('closeItem',"finestre")
+                mnu.jqxMenu('closeItem',"altro")
                 $("#cmdInput").focus()
             }
         });
 
         $(document).on("keydown", (ev)=>{
-            if (ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
-                ev.preventDefault()
-                ev.stopPropagation()
+            if (ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.key == "Alt") {
+                //ev.preventDefault()
+                //ev.stopPropagation()
             }
         });
         window.addEventListener("blur", (ev)=>{
@@ -291,7 +299,7 @@ export class MenuBar {
         }, true);
 
         $("#cmdInput").on("keyup", (ev)=>{
-            if (!ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.keyCode == 18) {
+            if (!ev.altKey && !ev.shiftKey && !ev.ctrlKey && ev.key == "Alt") {
                 const loc = (<any>ev.originalEvent).location || 0;
                 if (document.activeElement != mnu[0] && loc == 1) {
                     mnu.jqxMenu('focus');
@@ -374,6 +382,18 @@ export class MenuBar {
     }
 
     private makeClickFuncs() {
+        this.clickFuncs["theme-default"] = (val) => {
+            Mudslinger.setTheme("metro", "light", "neat")
+        }
+
+        this.clickFuncs["theme-light"] = (val) => {
+            Mudslinger.setTheme("metro", "light", "neat")
+        }
+
+        this.clickFuncs["theme-dark"] = (val) => {
+            Mudslinger.setTheme("metrodark", "dark", "material")
+        }
+
         this.clickFuncs["connect"] = (val) => {
             if (isTrue(val)) {
                 this.EvtDisconnectClicked.fire();
@@ -863,12 +883,12 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
     }
 
     handleTelnetConnect() {
-        $("#menuBar-conn-disconn").html("<img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Disconnetti");
+        $("#menuBar-conn-disconn").html("<span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;' >&#69464;</span>Disconnetti");
         $("#menuBar-conn-disconn")[0].setAttribute("data-checked", "true");
     }
 
     handleTelnetDisconnect() {
-        $("#menuBar-conn-disconn").html("<img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti");
+        $("#menuBar-conn-disconn").html("<span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;' >&#128279;</span>Connetti");
         $("#menuBar-conn-disconn")[0].setAttribute("data-checked", "false");
     }
 }

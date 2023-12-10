@@ -66,7 +66,7 @@ export class MapperWindow {
     onEmitMapperZoneChanged = (d:any) => {
         this.zoneId = d?.id
         this.zones = [...this.mapper.idToZone.values()]
-        this.zoneMessage(d?.zone?.name)
+        this.zoneMessage(d?.zone?.name||"Zona sconosciuta")
     }
 
     onEmitMapperRoomChanged = (d:any) => {
@@ -75,7 +75,7 @@ export class MapperWindow {
         if (!d.room || this.zoneId < 0) {
             this.zoneMessage("Zona sconosciuta")
         } else {
-            this.zoneMessage(this.mapper.getRoomZone(d.room.id)?.name)
+            this.zoneMessage(this.mapper.getRoomZone(d.room.id)?.name||"Zona sconosciuta")
         }
         if (this.drawing) this.drawing.setActiveRoom(d.room);
     }
@@ -193,7 +193,7 @@ export class MapperWindow {
             $(".electron", this.$win).remove();
         }
 
-        const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true, theme:"mapper"});
+        const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true});
 
         $("#mapperMenubar").on('itemclick', (event: any) => {
             document.getSelection().removeAllRanges();

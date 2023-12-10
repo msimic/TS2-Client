@@ -36,19 +36,23 @@ export class OutWinBase {
         localStorage.setItem("autologging", (!!value).toString())
     }
 
+    public getLines(): string[] {
+        return [...this.$rootElem.children().toArray()].map((e) => e.outerHTML);
+    }
+
     private onMouseUp = () => {
         if (!this.copyOnMouseUp) {
             this.mouseWasDown = false;
             this.$rootElem[0].removeEventListener("mousedown", this.onMouseDown);
             this.$rootElem[0].removeEventListener("mouseup", this.onMouseUp);
-            if (!document.getSelection().toString()) {
+            if (!document.getSelection().toString().trim()) {
                 $("#cmdInput").focus();
             }
             return;
         }
         if (this.mouseWasDown) {
             this.mouseWasDown = false;
-            const testo = document.getSelection().toString();
+            const testo = document.getSelection().toString().trim();
             if (testo) {
                 if (!navigator.clipboard){
                     document.execCommand('copy');
@@ -439,7 +443,7 @@ export class OutWinBase {
     private privScrolBottom() {
         // console.time("_scroll_bottom");
         let elem = this.getOuterElement();
-        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 100);
+        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 150);
         //elem.scrollTop(elem.prop("scrollHeight"));
         this.scrollLock = false;
         this.scrollRequested = false;

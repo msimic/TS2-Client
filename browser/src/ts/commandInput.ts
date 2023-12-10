@@ -229,7 +229,7 @@ export class CommandInput {
     }
 
     private keydown(event: JQueryEventObject): boolean {
-        const code = (<any>event.originalEvent).code;
+        const code = (<KeyboardEvent>event.originalEvent).key;
         switch (code) {
             case "PageUp":
                 this.EvtEmitScroll.fire(ScrollType.PageUp)
@@ -275,7 +275,19 @@ export class CommandInput {
                         this.cmd_index = this.cmd_history.length - 1;
                     }
                 } else {
-                    this.cmd_index -= 1;
+                    let newIndex = -1;
+                    for (let index = this.cmd_index-1; index >= 0; index--) {
+                        const element = this.cmd_history[index];
+                        if (element.toUpperCase().indexOf(this.cmd_entered.toUpperCase())==0) {
+                            newIndex = index;
+                            break;
+                        }
+                    }
+                    if (newIndex>-1) {
+                        this.cmd_index = newIndex;
+                    } else {
+                        this.cmd_index -= 1;
+                    }
                     this.cmd_index = Math.max(this.cmd_index, 0);
                 }
                 this.$cmdInput.val(this.cmd_history[this.cmd_index]);

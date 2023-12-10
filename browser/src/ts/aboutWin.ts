@@ -23,9 +23,9 @@ export class AboutWin {
             Build: ${AppInfo.Build}
             <br>
             <br>
-            Sito: <a href="${AppInfo.RepoUrl}" style="color:blue;" target="_blank">${AppInfo.RepoUrl}</a>
+            Sito: <a href="${AppInfo.RepoUrl}" target="_blank">${AppInfo.RepoUrl}</a>
             <br>
-            Bug report: <a href="${AppInfo.BugsUrl}" style="color:blue;" target="_blank">${AppInfo.BugsUrl}</a>
+            Bug report: <a href="${AppInfo.BugsUrl}" target="_blank">${AppInfo.BugsUrl}</a>
             <br>
             <br>
             Autore: ${htmlEscape(AppInfo.Author)}

@@ -197,12 +197,12 @@ export class WindowManager {
         if (!this.layoutManager.getCurrent()) {
             return;
         }
-        if (!this.windows.get(window)) return;
+        let windowDef = this.windows.get(window);
+        if (!windowDef) return;
         const witm = this.layoutManager.getCurrent().items.find(i => i.type == ControlType.Window && i.content == window);
         let dockPos = $("#window-dock-"+window.replace(" ","-"));
         if (!witm) {
-            const w = this.windows.get(window)
-            if (w) w.data.docked = false;
+            windowDef.data.docked = false;
             this.save();
             Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout e rimarra' staccata.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
@@ -212,36 +212,40 @@ export class WindowManager {
             return;
         }
         let w = ui.parents(".jqx-window");
+        (<any>$(w)).jqxWindow("expand");
         w.hide()
-        w.css({
-            "position":"relative",
-            "left":"unset",
-            "top":"unset"
-        });
-        (<any>$(w)).jqxWindow({ draggable: false });
+        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
+        setTimeout(() => {
+            w.css({
+                "position":"relative",
+                "left":"unset",
+                "top":"unset"
+            });
+            (<any>$(w)).jqxWindow({ draggable: false });
 
-        this.applyDockSizes(this.windows.get(window))
-        $(".jqx-resize", w).css({
-            "width": "100%",
-            "height": "unset",
-        });
-        $(".jqx-window-header", w).css({
-            "width": "unset",
-            "height": "unset",
-        });
-        $(".jqx-window-content", w).css({
-            "width": "unset",
-            "height": "unset",
-        });
-        w.insertAfter(dockPos);
-        $(".jqx-window-pin-button",w).addClass("jqx-window-pin-button-pinned");
-        w.show();
-        w.data("docked", true);
-        this.windows.get(window).data.docked = true;
-        if ((<any>$(w))[0].sizeChanged) {
-            setTimeout(() => (<any>$(w))[0].sizeChanged(), 100);
-        }
-        this.save();
+            this.applyDockSizes(windowDef)
+            $(".jqx-resize", w).css({
+                "width": "100%",
+                "height": "unset",
+            });
+            $(".jqx-window-header", w).css({
+                "width": "unset",
+                "height": "unset",
+            });
+            $(".jqx-window-content", w).css({
+                "width": "unset",
+                "height": "unset",
+            });
+            w.insertAfter(dockPos);
+            $(".jqx-window-pin-button",w).addClass("jqx-window-pin-button-pinned");
+            w.show();
+            w.data("docked", true);
+            windowDef.data.docked = true;
+            if ((<any>$(w))[0].sizeChanged) {
+                setTimeout(() => (<any>$(w))[0].sizeChanged(), (duration||150));
+            }
+            this.save();
+        }, duration);
     }
 
     public async unDock(window:string, ui:JQuery) {
@@ -249,19 +253,25 @@ export class WindowManager {
         $(".jqx-window-pin-button",w).removeClass("jqx-window-pin-button-pinned");
         w.data("docked", false);
         (<any>$(w)).jqxWindow({ draggable: true }); 
-        const wnd = this.windows.get(window);
+        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
+        let wnd = this.windows.get(window);
         wnd.data.docked = false;
+        const prevContent:string[] = wnd.output.getLines();
         if (wnd.output || wnd.custom) {
             if (wnd.output) wnd.output.destroy()
             delete wnd.output
             wnd.output = null;
             wnd.custom = null;
         }
-        //await this.destroyWindow(window,false);
-        //this.createWindow(window);
-        await this.show(window);
+
+        wnd = await this.show(window);
         if ((<any>$(w))[0].sizeChanged) {
-            setTimeout(() => (<any>$(w))[0].sizeChanged(), 100);
+            setTimeout(() => (<any>$(w))[0].sizeChanged(), (duration || 150));
+        }
+        if (wnd?.output && prevContent.length) {
+            for (const line of prevContent) {
+                wnd.output.write(line, line)
+            }
         }
         this.save();
     }
@@ -549,6 +559,7 @@ export class WindowManager {
                 setTimeout(() => {
                     self.addDockButton($(".win-"+name.replace(" ","-")),name);
                     self.addSettingsButton($(".win-"+name.replace(" ","-")),name);
+                    $(".jqx-resize", $win).height('unset')
                     if (collapse) (<any>w).jqxWindow('collapse'); 
                     if (dock) self.dock(name,$(".jqx-window-header", $win));
                     $("#cmdInput").focus();
@@ -673,6 +684,7 @@ export class WindowManager {
             if (!(<any>w.window).jqxWindow('isOpen')) (<any>w.window).jqxWindow("open");
             (<any>w.window).jqxWindow('bringToFront');
         }
+        return w;
     }
 
     private hide(window:string) {

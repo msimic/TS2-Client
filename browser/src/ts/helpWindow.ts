@@ -47,7 +47,7 @@ export class HelpWin {
                 </div>
                 <div style="flex:auto;display:flex;flex-direction:row;position: relative;overflow-y: auto;top: 0;bottom: 0;right: 0;left: 0;">
                     <div id="helpIndex" style="flex:auto;min-width: 360px;overflow-y:auto;width: auto;/* background-color:white; */margin-right: 10px;font-size: 12px;">
-                        <div id="helpIndexInner" style="background-color: white;border: 1px solid #80808073;border-radius: 5px;margin: 0;/* padding: 10px; */padding-right: 10px;margin-right: 5px;"></div>
+                        <div id="helpIndexInner" style="border: 1px solid #80808073;border-radius: 5px;margin: 0;/* padding: 10px; */padding-right: 10px;margin-right: 5px;"></div>
                     </div>
                     <div id="helpContent" style="flex:auto;width:auto;top: 0;bottom: 0;display: flex;flex-direction: column;overflow-y: auto !important;">
                     </div>

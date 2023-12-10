@@ -150,8 +150,12 @@ export class Socket {
 
     public async openTelnet(host: string, port: number) {
         if (this.telnetClient) await this.closeTelnet();
-        this.EvtTelnetTryConnect.fire([host, port]);
-        this.ioEvt.clReqTelnetOpen.fire([host, port]);
+        if (this.socketConnected) {
+            this.EvtTelnetTryConnect.fire([host, port]);
+            this.ioEvt.clReqTelnetOpen.fire([host, port]);
+        } else {
+            this.EvtTelnetError.fire("Il WebSocket deve essere connesso.");
+        }
     }
 
     public async closeTelnet() {

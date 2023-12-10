@@ -7,17 +7,30 @@ export class AliasEditor extends TrigAlEditBase {
     constructor(private aliasManager: AliasManager,  isBase:boolean, private title?:string) {
         super(title || "Alias", isBase);
         aliasManager.changed.handle(()=>{
-            super.refresh()
+            if ((<any>this.$win).jqxWindow('isOpen')) super.refresh()
         })
         this.$isPromptCheckbox.parent().hide();
+    }
+
+    protected getCount() {
+        return (this.aliasManager.aliases || []).length;
+    }
+
+    protected getListItems() {
+        let triggers = this.aliasManager.aliases;
+        let lst = [];
+        for (let i = 0; i < triggers.length; i++) {
+            lst.push(triggers[i]);
+        }
+
+        return lst;
     }
 
     protected supportsMacro():boolean {
         return true;
     }
 
-    protected copyToOther(ind: number): void {
-        const item = this.getItem(ind)
+    protected copyToOther(item: TrigAlItem): void {
         EvtCopyAliasToBase.fire({item: item, source: this.title, isBase: this.isBase})
     }
 
@@ -70,7 +83,8 @@ export class AliasEditor extends TrigAlEditBase {
         }
     }
 
-    protected saveItem(ind: number, alias: TrigAlItem) {
+    protected saveItem(alias: TrigAlItem) {
+        let ind = this.aliasManager.aliases.indexOf(alias)
         if (ind < 0) {
             // New alias
             this.aliasManager.aliases.push(alias);
@@ -81,8 +95,11 @@ export class AliasEditor extends TrigAlEditBase {
         this.aliasManager.saveAliases();
     }
 
-    protected deleteItem(ind: number) {
-        this.aliasManager.aliases.splice(ind, 1);
+    protected deleteItem(item:TrigAlItem) {
+        let index = this.aliasManager.aliases.indexOf(item)
+        if (index < 0)
+            return;
+        this.aliasManager.aliases.splice(index, 1);
         this.aliasManager.saveAliases();
     }
 }

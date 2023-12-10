@@ -4,17 +4,31 @@
     1. [Menu Connessione](#MenuConnessione)
         1. Personaggi
         2. Connetti/Disconnetti
-        3. Registrazione (Log)
+        3. Nuova registrazione (Log)
+        4. Interrompi registrazione
+        5. Scarica registrazione
     2. [Menu Impostazioni](#MenuImpostazioni)
         1. Testo
-        2. Flag capolinea
-        3. Flag Triggers, Aliases, Suoni
-        4. Tasterino numerico
-        5. Avanzate
+        2. Scorrimento
+        3. Flag capolinea
+        4. Flag Triggers, Aliases, Suoni
+        5. Tasterino numerico
+        6. Avanzate
     3. [Menu Scripting](#MenuScripting)
         1. Aliases, Triggers, Variabili, Classi, Eventi
         2. Creazione e test di script
-    4. [Menu Altro](#MenuAltro)
+        3. Esporta scripts
+        4. Importa scripts
+        5. Aggiorna preimpostati
+        6. Avanzate
+    4. [Menu Finestre](#MenuFinestre)
+        1. Finestre utente
+        2. Disposizione schermo
+        3. Mapper
+    5. [Menu Informazioni](#MenuInformazioni)
+        1. Versione
+        2. Registro modifiche
+        3. Aiuto
 3. [Elementi della finestra](#Elements)
     1. [Lato sinistro](#AreaSX)
         1. Riquadro dei pulsanti
@@ -103,14 +117,22 @@ Avvia la connessione al server con il profilo precedentemente selezionato oppure
 
 In caso di disconnessione comparirà automaticamente il menu di scelta del profilo con un timer automatico che ritenterà periodicamente la connessione.
 
-### 2.1.3 Registrazione (Log)
+### 2.1.3 Nuova registrazione (Log)
 
-Se abilitato, avvia la registrazione in memoria di tutto quanto passa nel [riquadro dell'output del mud](#AreaCX).
+Avvia la registrazione in memoria di tutto quanto passa nel [riquadro dell'output del mud](#AreaCX).
 
-Il salvataggio su file avverrà però al momento in cui verrà disabilitata la registrazione.
+Il salvataggio su file avverrà però al momento in cui verrà scaricata la registrazione.
 Uscire dal WebClient senza fermare la registrazione non ne permetterà pertanto il salvataggio su file.
 
-NOTA: Poichè la registrazione verrà mantenuta in memoria fino al suo salvataggio su file, con il passare del tempo e la crescita dei dati mantenuti in memoria potrebbe iniziare ad essere evidente un rallentamento del gioco. Si consiglia in questo caso di fermare la registrazione e avviarne una nuova.
+NOTA: Poichè la registrazione verrà mantenuta in memoria fino al suo salvataggio su file, per evitare una occupazione eccessiva della memoria, raggiunto una dimensione di 1Mb vengono cancellate le righe più vecchie.
+
+### 2.1.4 Interrompi registrazione
+
+Ferma la registrazione del log e cancella quanto registrato.
+
+### 2.1.5 Scarica registrazione
+
+Permette di salvare su file la registrazione raccolta fino a quel momento.
 
 ## 2.2 Menu Impostazioni <a name="MenuImpostazioni"></a>
 
@@ -118,19 +140,24 @@ NOTA: Poichè la registrazione verrà mantenuta in memoria fino al suo salvatagg
 
 Permette di cambiare colore, font e grandezza del carattere usato nel [riquadro dell'output del mud](#AreaCX). Per gli altri riquadri può essere impostato un font separato.
 
-### 2.2.2 Flag capolinea
+### 2.2.2 Scorrimento
+
+Permette di definire quante linee vengono tenute nel [riquadro dell'output del mud](#AreaCX).
+Il flag animato permette di scegliere se le righe devono comparire oppure scorrere nella finestra.
+
+### 2.2.3 Flag capolinea
 
 Se abilitato aggiunge un a capo automatico qualora la riga di testo ricevuta dal MUD superasse in larghezza lo spazio del riquardo di gioco.
 
-### 2.2.3 Flag Triggers, Aliases, Suoni
+### 2.2.4 Flag Triggers, Aliases, Suoni
 
 Abilita o disabilita il funzionamento dei Trigger, Alias e dei suoni.
 
-### 2.2.4 Tasterino numerico
+### 2.2.5 Tasterino numerico
 
 Permette di cambiare i comandi associati ai tasti del tasterino numerico.
 
-### 2.2.5 Avanzate
+### 2.2.6 Avanzate
 
 #### Flag MXP
 
@@ -185,35 +212,45 @@ Apre una maschera che permette l'esportazione su file JSON degli script (alias, 
 
 E' una funziona avanzata pensata per esportare solo parte degli script. Per il salvataggio di backup si consiglia di usare l'esportazione della configurazione presente nel menu [Impostazioni->Avanzate](#MenuImpostazioni)
 
-### Importa scripts
+### 2.3.4 Importa scripts
 
 Permette di importare un file generato con esporta scripts. A differenza dell'importazione della configurazione presente nel menu [Impostazioni->Avanzate](#MenuImpostazioni), questa importazione non sostituisce tutta la configurazione ma aggiunge agli script già presenti, quelli importati da file.
 
-### Aggiorna preimpostati
+### 2.3.5 Aggiorna preimpostati
 
 Scarica da server l'ultima versione degli script preimpostati. 
 
 Poichè il WebClient notifica automaticamente all'avvio la disponibilità di un aggiornamento, questa funzione è pensata per riottenere la versione disponibile su server in conseguenza di modifiche non volute sugli script preimpostati.
 
-### Avanzate
+### 2.3.6 Avanzate
 
 Da questo menu è possibile operare su Alias, Triggers ed Eventi preimpostati. Tipicamente non è necessario operare su questi script e ogni modifica fatta verrà persa quando verranno scaricati o aggiornati gli script preimpostati.
 
-## 2.4 Menu Altro <a name="MenuAltro"></a>
+## 2.4 Menu Finestre <a name="MenuFinestre"></a>
 
-### 2.4.1 Finestre
+### 2.4.1 Finestre utente
 
 Permette di apire un riquadro esistente che precedentemente è stato chiuso.
 
-### 2.4.2 Mapper
+### 2.4.2 Disposizione schermo
+
+TODO: Funzione non ancora implementata
+
+### 2.4.3 Mapper
 
 Permette di aprire il riquadro del mapper.
 
-### 2.4.3 Versione
+## 2.5 Menu informazioni <a name="MenuInformazioni"></a>
+
+### 2.5.1 Versione
 
 Mostra la versione del WebClient.
 
-### 2.4.4 Help
+### 2.5.2 Registro modifiche
+
+Mostra la storia delle modifiche introdotte nel client
+
+### 2.5.3 Help
 
 Apre il presente help del WebClient.
 

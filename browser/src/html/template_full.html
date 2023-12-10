@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -7,15 +7,15 @@
   <meta http-equiv="Cache-control" content="no-cache"/>
   <meta http-equiv="Expires" content="-1"/>
   <meta http-equiv="Pragma" content="no-cache" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <title>TS Web Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content">
+  <meta name="apple-mobile-web-app-capable" content="yes" /> 
+
+  <title>TS Client</title>
 
   <link rel="icon" type="image/png" href="favicon.png?hash=${hash}">
   <link rel="stylesheet" href="modules/modules.min.css?hash=${hash}">
   <link rel="stylesheet" href="css/client.css?hash=${hash}">
   <link rel="manifest" href="ts2client.webmanifest?hash=${hash}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/dark.min.css">
 
   <script src="modules/corejs.min.js?hash=${hash}"></script>
   <script src="modules/jquery.min.js?hash=${hash}" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
@@ -24,20 +24,30 @@
   <script src="modules/tern_module.min.js?hash=${hash}"></script>
   
   <script>
-
-    // set caching to max one month, this prevents browsers from indefinitely caching mudslinger even if the server code has been updated
-    // in case the server does not have response headers that prevent it
-    var dt = new Date();dt.setDate((dt.getDate()+31));
-    document.write('<meta http-equiv="expires" content="' + dt.toGMTString() + '"/>');
-
+    if (window.visualViewport) {
+      let resizer = (e) => {
+        if (e.target?.height) {
+          $("body").height(Math.floor(e.target?.height))
+          console.log("Window innerHeight is: " + Math.floor(window.innerHeight) + " - Resizing height to " + Math.floor(e.target?.height))
+        }
+      };
+      window.visualViewport.addEventListener("resize", resizer);
+      window.visualViewport.addEventListener("scroll", resizer);
+    }
     $(document).ready(function() {
       if (typeof(Mudslinger)!='undefined') {
+        Mudslinger.setTheme();
         Mudslinger.init();
       } else {
         setTimeout(() => window.location.reload(), 3000);
       }
     });
-    console.log(typeof require)
+    window.addEventListener("load",function() {
+      setTimeout(function(){
+        // Hide the address bar!
+        window.scrollTo(0, 1);
+      }, 0);
+    });
     if (typeof require !== 'undefined') {
       const {ipcRenderer} = require('electron');
       console.log("IPC_RENDERER: "+!!ipcRenderer)
@@ -48,22 +58,22 @@
     }
   </script>
 </head>
-<body>
+<body class="light">
 <div id="mudslinger">
   <div id="menuBar">
     <ul>
-      <li id="connessione">Connessione
+      <li id="connessione" class="focus" tabindex="400">Connessione
         <ul>
-          <li data-option-name="use-profile"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/profiles.png' />Personaggi</li>
+          <li data-option-name="use-profile"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#128423;</span>Personaggi</li>
           <li type="separator"></li>
-          <li id="menuBar-conn-disconn" data-option-name="connect"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/connect.png' />Connetti</li>
+          <li id="menuBar-conn-disconn" data-option-name="connect"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;' >&#128279;</span>Connetti</li>
           <li type="separator"></li>
-          <li id="menuBar-conn-log" data-option-name="log">Nuova registrazione (Log)</li>
+          <li id="menuBar-conn-log" data-option-name="log">Registrazione (Log)</li>
           <li id="menuBar-conn-stoplog" data-option-name="stoplog">Interrompi registrazione</li>
           <li id="menuBar-conn-downloadlog" data-option-name="downloadlog">Scarica registrazione</li>
         </ul>
       </li>
-      <li id="impostazioni" class="configMenuItem" data-option-name="config">Impostazioni
+      <li id="impostazioni" tabindex="401" class="focus configMenuItem" data-option-name="config">Impostazioni
         <ul>
           <li data-option-name="text-settings">Testo
             <ul>
@@ -121,12 +131,20 @@
           <li type="separator"></li>
           <li data-option-name="numpadconfig">Tastierino Numerico</li>
           <li type="separator"></li>
+          <li>Tema interfaccia
+            <ul>
+              <li data-option-name="theme-default" data-option-value="">Predefinito</li>
+              <li data-option-name="theme-light" data-option-value="light">Chiaro</li>
+              <li data-option-name="theme-dark" data-option-value="dark">Scuro</li>
+            </ul>
+          </li>
+          <li type="separator"></li>
           <li>Avanzate
             <ul>
               <li data-option-name="enable-mxp" title="Il protocollo MXP permette al server di mandare variabili ed altro al client (preferibile abilitato)"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
               <li data-option-name="enable-mxp-images" title="Se abilitato il mud mostrera immagini in certe room"><label for="menuBar-chkEnableMxpImages"><input id="menuBar-chkEnableMxpImages" type="checkbox" checked>Immagini MXP</label></li>
-              <li data-option-name="log-time"><label><input type="checkbox">Marca tempo nell'output</label></li>
-              <li data-option-name="debug-scripts"><label><input type="checkbox">Informazioni scripting (debug)</label></li>
+              <li data-option-name="log-time"><label><input type="checkbox">Marca tempo</label></li>
+              <li data-option-name="debug-scripts"><label><input type="checkbox">Informazioni (debug)</label></li>
               <li type="separator"></li>
               <li data-option-name="reset-settings">Ripristina</li>
               <li data-option-name="import-settings">Importa Configurazione</li>
@@ -137,33 +155,34 @@
           </li>
         </ul>
       </li>
-      <li id="scripting">Scripting
+      <li id="scripting" class="focus" tabindex="402">Scripting
         <ul>
-          <li data-option-name="aliases">Aliases</li>
-          <li data-option-name="triggers">Triggers</li>
-          <li data-option-name="variables">Variabili</li>
-          <li data-option-name="classes">Classi</li>
-          <li data-option-name="events">Eventi</li>
+          <li data-option-name="aliases"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#9000;</span>Aliases</li>
+          <li data-option-name="triggers"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#9091;</span>Triggers</li>
+          <li data-option-name="variables"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#9089;</span>Variabili</li>
+          <li data-option-name="classes"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#9088;</span>Classi</li>
+          <li data-option-name="events"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#9100;</span>Eventi</li>
           <li type="separator"></li>
           <li data-option-name="script">Creazione e test di script</li>
           <li type="separator"></li>
-          <li data-option-name="exportclass">Esporta scripts</li>
-          <li data-option-name="importscript">Importa scripts</li>
-          <li type="separator"></li>
-          <li data-option-name="update-triggers"><img style='float: left; margin-right: 5px;width:16px;height:16px;' src='images/menu/update.png' />Aggiorna preimpostati</li>
           <li>Avanzate
             <ul>
               <li data-option-name="base_aliases">Alias preimpostati</li>
               <li data-option-name="base_triggers">Triggers preimpostati</li>
               <li data-option-name="base_events">Eventi preimpostati</li>
               <li type="separator"></li>
+              <li data-option-name="exportclass">Esporta scripts</li>
+              <li data-option-name="importscript">Importa scripts</li>
+              <li type="separator"></li>
               <li data-option-name="base_exportclass">Esporta da preimpostati</li>
               <li data-option-name="base_importscript">Importa in preimpostati</li>
+              <li type="separator"></li>
+              <li data-option-name="update-triggers"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#8635;</span>Aggiornamento</li>
             </ul>
           </li>
         </ul>
       </li>
-      <li id="finestre">Finestre
+      <li id="finestre" class="focus" tabindex="403">Finestre
         <ul>
           <li data-option-name="windows">Finestre utente
             <ul id="windowList">
@@ -176,7 +195,7 @@
           <li data-option-name="mapper">Mapper</li>
         </ul>
       </li>
-      <li id="altro">Informazioni
+      <li id="altro" class="focus" tabindex="404">Informazioni
         <ul>
           <li data-option-name="about">Versione</li>
           <li data-option-name="changelog">Registro modifiche</li>
@@ -189,7 +208,7 @@
       <li data-require-api="true" data-option-name="profiles"><a href="/user/profiles">Profiles</a></li>
     </ul>
   </div>
-  <div id="mainWin" style="color:white;">
+  <div id="mainWin">
     <div id="content-wrapper">
       <div id="column-left">
         <div id="column-left-top">
@@ -206,7 +225,7 @@
           </div>
           <div id="row-center">
             <div class="fill-parent">
-              <pre tabindex="2" id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
+              <pre tabindex="500" id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
             </div>
             <div id="notificationTop">
               <div id="notificationTopContent">
@@ -229,7 +248,7 @@
           </div>
           <div id="row-input">
             <div id="cmdCont">
-              <textarea autofocus rows="1" id="cmdInput" aria-label="Barra comandi" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" style="-webkit-user-modify: read-write-plaintext-only;"></textarea>
+              <textarea autofocus tabindex="501" rows="1" id="cmdInput" aria-label="Barra comandi" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" style="-webkit-user-modify: read-write-plaintext-only;"></textarea>
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">
                 <label for="chkCmdTriggers" class="checker checkerTriggers" aria-live="polite" title="Abilita o disabilita Triggers"></label>

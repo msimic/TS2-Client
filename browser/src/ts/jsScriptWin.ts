@@ -1,3 +1,4 @@
+import { Mudslinger } from "./client";
 import {JsScript} from "./jsScript";
 import { addIntellisense } from "./util";
 
@@ -42,7 +43,7 @@ export class JsScriptWin {
         this.codeMirror = CodeMirror.fromTextArea(
             win.getElementsByClassName("winJsScript-code")[0], {
                 mode: "javascript",
-                theme: "neat",
+                theme: Mudslinger.GetCodeMirrorTheme(),
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
@@ -54,6 +55,8 @@ export class JsScriptWin {
                 extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
             }
         );
+
+        $(this.codeMirror.getWrapperElement()).css("height","100%");
 
         this.$runButton.on("blur", () => {
             if ((<any>this.$win).jqxWindow("isOpen")) this.codeMirror.focus()
@@ -84,3 +87,4 @@ export class JsScriptWin {
         (<any>this.$win).jqxWindow("bringToFront");
     }
 }
+

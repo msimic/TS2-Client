@@ -179,7 +179,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         }
     }));
 
-    (<any>$win).jqxWindow({minWidth: width || 350, minHeight: height || 100, showCollapseButton: false, isModal: true, height:'auto', resizable: true});
+    (<any>$win).jqxWindow({minWidth: Math.min($(window).width(), width || 350), minHeight: height || 100, showCollapseButton: false, isModal: true, height:'auto', resizable: true});
 
     $(acceptButton).text(okbuttontext);
     if (!okbuttontext) $(acceptButton).hide();
@@ -238,7 +238,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         if (numInputs>1) {
             newWidth += Math.max(...messageInput.map(v => v.outerWidth()+10));
         }
-        (<any>$win).jqxWindow({width: newWidth}); 
+        (<any>$win).jqxWindow({width: Math.min($(window).width(), newWidth)}); 
     }
 
     setTimeout(()=>{

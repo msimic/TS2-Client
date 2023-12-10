@@ -7,7 +7,11 @@ declare let CodeMirror: any;
 
 export class VariablesEditor {
     protected $win: JQuery;
-
+    protected treeOptions:jqwidgets.TreeOptions = {
+        checkboxes: false, keyboardNavigation: true, source: [],
+        height: "100%", width: "100%",
+        toggleMode: "click", animationShowDuration: 150,
+    };
     protected $listBox: JQuery;
     protected $name: JQuery;
     protected $value: JQuery;
@@ -21,6 +25,7 @@ export class VariablesEditor {
     list: string[];
     values:Variable[];
     prevName: string;
+    protected jqList: jqwidgets.jqxTree;
 
     /* these need to be overridden */
     protected getList(): Array<string> {
@@ -46,15 +51,38 @@ export class VariablesEditor {
     }
 
     protected Filter(str:string) {
-        $("li", this.$listBox).each((i,e) => {
-            const visible = !str || $(e).text().match(new RegExp(str, 'gi')) != null;
-            if (visible) {
-                $(e).show();
+        if (str && str.length < 2) {
+            str = "";
+        }
+        if (!str) {
+            this.jqList.collapseAll()
+        }
+
+        const expand = (itm: jqwidgets.TreeItem) => {
+            $(itm.element).show();
+            if (itm.parentElement) {
+                $(itm.parentElement).show();
+                this.jqList.expandItem(itm.parentElement);
+                expand(itm.parentElement)
             }
-            else {
-                $(e).hide();
+        };
+
+        const rx = new RegExp(str, 'gi');
+        let items = this.jqList.getItems()
+        for (const itm of items) {
+            if (str) {
+                $(itm.element).hide()
+            } else {
+                $(itm.element).show()
             }
-        })
+            if (itm.value && str) {
+                const txt = (<Variable><any>itm.value).name;
+                const visible = txt.match(rx) != null;
+                if (!!visible) {
+                    expand(itm);
+                }
+            }
+        }
     }
 
     constructor(private script:JsScript) {
@@ -75,28 +103,28 @@ export class VariablesEditor {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <input class="winVar-filter" type="text" placeholder="<filtro>"/>
+                        <input class="winVar-filter" type="text" placeholder="<filtro>" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off"/>
                     </div>
                     <div class="list">
-                        <ul size="2" class="winVar-listBox select" style="height: 100%;box-sizing: border-box;"></ul>
+                        <div class="winVar-listBox" tabindex="0"></div>
                     </div>
                     <div class="buttons">
-                        <button title="Crea nuova" class="winVar-btnNew greenbutton">Aggiungi</button>
-                        <button title="Elimina selezionata" class="winVar-btnDelete redbutton">Elimina</button>
+                        <button title="Crea nuova" class="winVar-btnNew greenbutton">✚</button>
+                        <button title="Elimina selezionata" class="winVar-btnDelete redbutton">&#10006;</button>
                     </div>
                 </div>
                 <!--right panel-->
                 <div class="right-pane">
                     <div class="pane-header">
                         <div class="pane-optional">
-                            <label>Nome: <input type="text" class="winVar-name fill-width" disabled></label>
-                            <label>Valore: <input type="text" class="winVar-value fill-width" disabled placeholder="(valore)" title="Il valore della variabile. Se numerica verra convertita in numerico."></label>
-                            <label>Classe: <input type="text" class="winVar-className fill-width" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
+                            <label>Nome: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-name fill-width" disabled></label>
+                            <label>Valore: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-value fill-width" disabled placeholder="(valore)" title="Il valore della variabile. Se numerica verra convertita in numerico."></label>
+                            <label>Classe: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-className fill-width" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
                         </div>
                     </div>                    
                     <div class="pane-footer">
-                        <button class="winVar-btnSave bluebutton" disabled>Salva</button>
-                        <button class="winVar-btnCancel" disabled>Annulla</button>
+                        <button class="winVar-btnSave bluebutton" title="Accetta" disabled>&#10004;</button>
+                        <button class="winVar-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
                 </div>
             </div>
@@ -129,8 +157,41 @@ export class VariablesEditor {
             panels: [{size: "50%"}, {size: "50%"}]
         });
 
-        this.$listBox.click(this.itemClick.bind(this));
-        this.$listBox.keyup(this.itemSelect.bind(this));
+        (<any>this.$listBox).jqxTree(this.treeOptions);
+        this.jqList = (<any>this.$listBox).jqxTree("getInstance");
+        this.$listBox = $(myDiv.getElementsByClassName("winVar-listBox")[0]);
+
+        $(this.$listBox).on("focus", (ev) => {
+            setTimeout(() => {
+                if (this.jqList.getSelectedItem()) this.scrollIntoView(this.jqList.getSelectedItem());
+            }, 1);
+        });
+
+        $(this.$filter).on("keydown", (ev) => {
+            if (ev.key == "Tab" && !ev.shiftKey) {
+                ev.preventDefault()
+                ev.stopPropagation();
+                let item = this.jqList.getSelectedItem() || this.jqList.getItems()[0];
+                if (item) {
+                    (<any>this.$listBox).focus()
+                    this.select(item)
+                    this.handleListBoxChange()
+                } else {
+                    (<any>this.$listBox).focus()
+                }
+            }
+        });
+        (<any>this.$listBox).on('select', (event:any) =>
+        {
+            var args = event.args;
+            var item = this.jqList.getItem(args.element);
+            if (item) {
+                this.select(item)
+                this.handleListBoxChange()
+                event.preventDefault();
+            }
+        });
+
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
@@ -141,37 +202,25 @@ export class VariablesEditor {
         })
     }
 
-    itemSelect(ev: KeyboardEvent) {
-        if (ev.keyCode == 13 || ev.keyCode == 32) {
-            const el = this.$listBox.find("LI:focus")
-            this.selectItem(el)
-            this.handleListBoxChange();
-        }
-    }
+    private scrollIntoView(ti:jqwidgets.TreeItem) {
+        var $container = this.$listBox;      // Only scrolls the first matched container
 
-    private selectItem(item: JQuery) {
-        item.addClass('selected');
-        item.siblings().removeClass('selected');
-        const index = item.parent().children().index(item);
-        this.$listBox.data("selectedIndex", index);
+        var pos = $(ti.element).position(), height = $(ti.element).outerHeight();
+        var containerScrollTop = $container.scrollTop(), containerHeight = $container.height();
+        var top = pos.top + containerScrollTop;     // position.top is relative to the scrollTop of the containing element
+
+        var paddingPx = $(ti.element).height() + 5;      // padding keeps the target from being butted up against the top / bottom of the container after scroll
+
+        if (top < containerScrollTop) {     // scroll up                
+            $container.scrollTop(top - paddingPx);
+        }
+        else if (top + height > containerScrollTop + containerHeight) {     // scroll down
+            $container.scrollTop(top + height - containerHeight + paddingPx);
+        }
     }
 
     private ApplyFilter() {
         this.Filter(this.$filter.val());
-    }
-
-    private itemClick(e:MouseEvent) {
-        var item = $(e.target);
-        if (item.is("li")) {
-            item.addClass('selected');
-            item.siblings().removeClass('selected');
-            const index = item.parent().children().index(item);
-            this.$listBox.data("selectedIndex", index);
-        } else {
-            item.children().removeClass('selected');
-            this.$listBox.data("selectedIndex", -1);
-        }
-        this.handleListBoxChange();
     }
 
     private setEditorDisabled(state: boolean): void {
@@ -180,11 +229,21 @@ export class VariablesEditor {
         this.$className.prop("disabled", state);
         this.$saveButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
+        if (state) {
+            this.$filter.focus();
+        }
     }
 
     private selectNone(): void {
-        this.$listBox.data("selectedIndex", -1);
-        this.$listBox.children().removeClass('selected');
+        this.$listBox.data("selected", null);
+        this.jqList.selectItem(null);
+    }
+
+    private select(item: jqwidgets.TreeItem) {
+        this.$listBox.data("selected", item.value);
+        this.jqList.selectItem(item);
+        this.jqList.expandItem(item);
+        this.scrollIntoView(item);
     }
 
     private clearEditor(): void {
@@ -193,30 +252,36 @@ export class VariablesEditor {
         this.$className.val("");
     }
 
+    getTreeItem(v:Variable) {
+        let item = {
+            label: (v.name || "[senza nome]"),
+            expanded: false,
+            value: v
+        }
+        return item;
+    }
+
     private updateListBox() {
         this.list = this.getList();
         this.values = this.script.getVariables();
-        let html = "";
-        for (let i = 0; i < this.list.length; i++) {
-            html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";
-        }
-        this.$listBox.html(html);
+
+        this.jqList.clear();
+        this.treeOptions.source = this.values.map(v => this.getTreeItem(v));
+        this.jqList.setOptions(this.treeOptions);
+
         this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        let v:Variable;
+        let v:Variable = this.$listBox.data("selected");
 
         if (!this.$name.val()) {
             Messagebox.Show("Errore", "La variabile deve avere un nome!");
             return;
         }
 
-        if (ind == -1) {
+        if (!v) {
             v = {name: null, value: null, class:""};
-        } else {
-            v = this.getItem(ind);
         }
 
         v.name = this.$name.val();
@@ -243,10 +308,10 @@ export class VariablesEditor {
     }
 
     private handleDeleteButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let v = this.$listBox.data("selected");
+        if (!v) return;
 
-        this.deleteItem(this.getItem(ind));
+        this.deleteItem(v);
 
         this.clearEditor();
         this.selectNone();
@@ -255,19 +320,18 @@ export class VariablesEditor {
     }
 
     private handleListBoxChange() {
-        let ind = this.$listBox.data("selectedIndex");
-        let item = this.getItem(ind);
+        let variable = this.$listBox.data("selected");
 
-        if (!item) {
+        if (!variable) {
             this.clearEditor();
             this.setEditorDisabled(true);
             return;
         }
-        this.prevName = item.name;
+        this.prevName = variable.name;
         this.setEditorDisabled(false);
-        this.$name.val(item.name);
-        this.$value.val(item.value);
-        this.$className.val(item.class);
+        this.$name.val(variable.name);
+        this.$value.val(variable.value);
+        this.$className.val(variable.class);
     }
 
     public show() {

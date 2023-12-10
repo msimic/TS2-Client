@@ -9,16 +9,29 @@ export class TriggerEditor extends TrigAlEditBase {
     constructor(private triggerManager: TriggerManager,  isBase:boolean, private title?:string) {
         super(title || "Triggers", isBase);
         triggerManager.changed.handle(()=>{
-            super.refresh()
+            if ((<any>this.$win).jqxWindow('isOpen')) super.refresh()
         })
+    }
+
+    protected getCount() {
+        return (this.triggerManager.triggers || []).length;
+    }
+
+    protected getListItems() {
+        let triggers = this.triggerManager.triggers;
+        let lst = [];
+        for (let i = 0; i < triggers.length; i++) {
+            lst.push(triggers[i]);
+        }
+
+        return lst;
     }
 
     protected supportsMacro():boolean {
         return false;
     }
 
-    protected copyToOther(ind: number): void {
-        const item = this.getItem(ind)
+    protected copyToOther(item: TrigAlItem): void {
         EvtCopyTriggerToBase.fire({item: item, source: this.title, isBase: this.isBase})
     }
 
@@ -67,7 +80,8 @@ export class TriggerEditor extends TrigAlEditBase {
         }
     }
 
-    protected saveItem(ind: number, trigger:TrigAlItem) {
+    protected saveItem(trigger:TrigAlItem) {
+        let ind = this.triggerManager.triggers.indexOf(trigger)
         if (ind < 0) {
             // New trigger
             this.triggerManager.triggers.push(trigger);
@@ -78,8 +92,11 @@ export class TriggerEditor extends TrigAlEditBase {
         this.triggerManager.saveTriggers();
     }
 
-    protected deleteItem(ind: number) {
-        this.triggerManager.triggers.splice(ind, 1);
+    protected deleteItem(item:TrigAlItem) {
+        let index = this.triggerManager.triggers.indexOf(item)
+        if (index < 0)
+            return;
+        this.triggerManager.triggers.splice(index, 1);
         this.triggerManager.saveTriggers();
     }
 }

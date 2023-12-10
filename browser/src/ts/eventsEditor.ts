@@ -2,11 +2,22 @@ import * as Util from "./util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "./jsScript";
 import { Messagebox } from "./messagebox";
 import { circleNavigate } from "./util";
+import { Mudslinger } from "./client";
 declare let CodeMirror: any;
+
+
+interface TypeTreeItem extends jqwidgets.TreeItem {
+    items: Array<jqwidgets.TreeItem>
+}
 
 export class EventsEditor {
     protected $win: JQuery;
-
+    protected treeOptions:jqwidgets.TreeOptions = {
+        checkboxes: false, keyboardNavigation: true, source: [],
+        height: "100%", width: "100%",
+        toggleMode: "dblclick", animationShowDuration: 150
+    };
+    protected jqList: jqwidgets.jqxTree;
     protected $listBox: JQuery;
     protected $type: JQuery;
     protected $condition: JQuery;
@@ -70,22 +81,42 @@ export class EventsEditor {
     }
 
     protected Filter(str:string) {
-        $("li", this.$listBox).each((i,e) => {
-            const visible = !str || $(e).text().match(new RegExp(str, 'gi')) != null;
-            if (visible) {
-                $(e).show();
+        if (str && str.length < 2) {
+            str = "";
+        }
+        if (!str) {
+            this.jqList.collapseAll()
+        }
+
+        const expand = (itm: jqwidgets.TreeItem) => {
+            $(itm.element).show();
+            if (itm.parentElement) {
+                $(itm.parentElement).show();
+                this.jqList.expandItem(itm.parentElement);
+                expand(itm.parentElement)
             }
-            else {
-                $(e).hide();
+        };
+
+        const rx = new RegExp(str, 'gi');
+        let items = this.jqList.getItems()
+        for (const itm of items) {
+            if (str) {
+                $(itm.element).hide()
+            } else {
+                $(itm.element).show()
             }
-        })
+            if (itm.value && str) {
+                const txt = (<any>itm.value).id + "" + (<any>itm.value).condition;
+                const visible = txt.match(rx) != null;
+                if (!!visible) {
+                    expand(itm);
+                }
+            }
+        }
     }
 
     constructor(private script:JsScript, private isBase:boolean) {
         const title: string = isBase ? "Eventi preimpostati" : "Eventi";
-        script.eventChanged.handle(e => {
-            this.refresh();
-        })
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -99,30 +130,24 @@ export class EventsEditor {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <input class="winEvents-filter" type="text" placeholder="<filtro>"/>
+                        <input class="winEvents-filter" type="text" placeholder="<filtro>" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off"/>
                     </div>
                     <div class="list">
-                        <ul size="2" class="winEvents-listBox select" style="height: 100%;box-sizing: border-box;"></ul>
+                        <div class="winEvents-listBox" tabindex="0" style="overflow-y: auto;"></div>
                     </div>
                     <div class="buttons">
-                        <button title="Crea nuovo" class="winEvents-btnNew greenbutton">Aggiungi</button>
-                        <button title="Elimina selezionato" class="winEvents-btnDelete redbutton">Elimina</button>
+                        <button title="Crea nuovo" class="winEvents-btnNew greenbutton">✚</button>
+                        <button title="Elimina selezionato" class="winEvents-btnDelete redbutton">&#10006;</button>
                     </div>
                 </div>
                 <!--right panel-->
                 <div class="right-pane">
                     <div class="pane-header">
                         <div class="pane-optional">
-                            <!--<label>Tipo: <input style="margin:3px;" type="text" class="winEvents-type fill-width" disabled></label>-->
-                            <div class="select-box">
-                                <div class="inner-box">       
-                                <label for="win-events" class="label select-box1"><span class="label-desc"></span> </label>
-                                <select id="win-events" size=1" class="dropdown winEvents-type"></select>
-                                </div>
-                            </div>
-                            <label>Condizione: <input style="margin:3px;" type="text" class="winEvents-condition fill-width" disabled placeholder="(condizione)" title="La condizione richiesta affinche l'evento scatti (dipende dal tipo evento)."></label>
-                            <label>ID: <input type="text" style="width:150px;margin:3px;" class="winEvents-id" disabled placeholder="(opzionale)" title="L'ID per riferire in script."></label>
-                            <label>Classe: <input type="text" style="width:150px;margin:3px;" class="winEvents-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
+                            <label>Tipo: <select placeholder="Seleziona tipo evento" id="win-events${isBase?'1':'2'}" size=1" class="winEvents-type"></select></label>
+                            <label>Condizione: <input autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" type="text" class="winEvents-condition fill-width" disabled placeholder="(condizione)" title="La condizione richiesta affinche l'evento scatti (dipende dal tipo evento)."></label>
+                            <label>ID: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winEvents-id" disabled placeholder="(opzionale)" title="L'ID per riferire in script. (toggleEvent)"></label>
+                            <label>Classe: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winEvents-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
                         </div>
                         <div class="pane-options">
                             <label>
@@ -139,53 +164,20 @@ export class EventsEditor {
                         <textarea class="winEvents-scriptArea" disabled></textarea>
                     </div>               
                     <div class="pane-footer">
-                        <button class="winEvents-btnSave bluebutton" disabled>Salva</button>
-                        <button class="winEvents-btnCancel" disabled>Annulla</button>
+                        <button class="winEvents-btnSave bluebutton" disabled title="Accetta">&#10004;</button>
+                        <button class="winEvents-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
                 </div>
             </div>
         </div>
         `;
 
-        $(document).mouseup(function (e)
-        {
-            var container = $(".select-box");
-
-            if (container.has(e.target).length === 0)
-            {
-                container.removeClass("open");
-            }
-        });
-
-
-        $("select", this.$win).on("click" , function() {
-  
-            $(this).parent(".select-box").toggleClass("open");
-            
-          });
-
-        $("select", this.$win).on("change" , function() {
-  
-            var selection = $(this).find("option:selected").text(),
-                labelFor = $(this).attr("id"),
-                label = $("[for='" + labelFor + "']");
-              
-            label.find(".label-desc").html(selection);
-              
-          });
-
-          $("select", this.$win).on("focus" , function() {
-            $(this).parent().addClass("focused");  
-          });
-
-          $("select", this.$win).on("blur" , function() {
-            $(this).parent().removeClass("focused");              
-          });
-
         this.$mainSplit = $(myDiv.getElementsByClassName("winEvents-mainSplit")[0]);
         this.$newButton = $(myDiv.getElementsByClassName("winEvents-btnNew")[0]);
         this.$deleteButton = $(myDiv.getElementsByClassName("winEvents-btnDelete")[0]);
         this.$listBox = $(myDiv.getElementsByClassName("winEvents-listBox")[0]);
+        this.$type = $(myDiv.getElementsByClassName("winEvents-type")[0]);
+        (<any>this.$type).jqxDropDownList({closeDelay:1, width: '100%', height:'24px',autoItemsHeight: true, placeHolder: "Seleziona tipo evento",autoDropDownHeight: true, scrollBarSize:8, source: [], displayMember: "label", valueMember: "value"});
         this.$type = $(myDiv.getElementsByClassName("winEvents-type")[0]);
         this.$value = $(myDiv.getElementsByClassName("winEvents-scriptArea")[0]);
         this.$dummy = $(myDiv.getElementsByClassName("winEvents-dummy")[0]);
@@ -204,18 +196,21 @@ export class EventsEditor {
         const win_h = $(window).innerHeight()-20;
 
         (<any>this.$win).jqxWindow({width: Math.min(600, win_w), height: Math.min(500, win_h), showCollapseButton: true});
-
+        script.eventChanged.handle(e => {
+            if ((<any>this.$win).jqxWindow('isOpen')) this.refresh();
+        });
+        
         (<any>this.$mainSplit).jqxSplitter({
             width: "100%",
             height: "100%",
             orientation: "vertical",
-            panels: [{size: "25%"}, {size: "75%"}]
+            panels: [{size: "30%"}, {size: "70%"}]
         });
 
         this.codeMirror = CodeMirror.fromTextArea(
             this.$value[0], {
                 mode: {name: "javascript", globalVars: true},
-                theme: "neat",
+                theme: Mudslinger.GetCodeMirrorTheme(),
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
@@ -229,11 +224,35 @@ export class EventsEditor {
         );
         Util.addIntellisense(this.codeMirror);
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
-        this.$codeMirrorWrapper.height("100%");
+        this.$codeMirrorWrapper.css("height","100%");
         
+        (<any>this.$listBox).jqxTree(this.treeOptions);
+        this.jqList = (<any>this.$listBox).jqxTree("getInstance");
+        this.$listBox = $(myDiv.getElementsByClassName("winEvents-listBox")[0]);
 
-        this.$listBox.click(this.itemClick.bind(this));
-        this.$listBox.keyup(this.itemSelect.bind(this));
+        $(this.$filter).on("keydown", (ev) => {
+            if (ev.key == "Tab" && !ev.shiftKey) {
+                ev.preventDefault()
+                ev.stopPropagation();
+                let item = this.jqList.getSelectedItem() || this.jqList.getItems()[0];
+                if (item) {
+                    (<any>this.$listBox).focus()
+                    this.select(item)
+                    this.handleListBoxChange()
+                } else {
+                    (<any>this.$listBox).focus()
+                }
+            }
+        });
+
+        (<any>this.$listBox).on('select', (event:any) =>
+        {
+            var args = event.args;
+            var item = this.jqList.getItem(args.element);
+            this.select(item)
+            this.handleListBoxChange()
+        });
+
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
@@ -246,12 +265,33 @@ export class EventsEditor {
         })
     }
 
-    itemSelect(ev: KeyboardEvent) {
-        if (ev.keyCode == 13 || ev.keyCode == 32) {
-            const el = this.$listBox.find("LI:focus")
-            this.selectItem(el)
-            this.handleListBoxChange();
+    
+    private scrollIntoView(ti:jqwidgets.TreeItem) {
+        var $container = this.$listBox;      // Only scrolls the first matched container
+
+        var pos = $(ti.element).position(), height = $(ti.element).outerHeight();
+        var containerScrollTop = $container.scrollTop(), containerHeight = $container.height();
+        var top = pos.top + containerScrollTop;     // position.top is relative to the scrollTop of the containing element
+
+        var paddingPx = $(ti.element).height() + 5;      // padding keeps the target from being butted up against the top / bottom of the container after scroll
+
+        if (top < containerScrollTop) {     // scroll up                
+            $container.scrollTop(top - paddingPx);
         }
+        else if (top + height > containerScrollTop + containerHeight) {     // scroll down
+            if (top + height < containerHeight) {
+                $container.scrollTop(top + height - containerHeight + paddingPx);
+            } else {
+                $container.scrollTop(top);
+            }
+        }
+    }
+
+    private select(item: jqwidgets.TreeItem) {
+        this.$listBox.data("selected", item.value);
+        this.jqList.selectItem(item);
+        this.jqList.expandItem(item);
+        this.scrollIntoView(item);
     }
 
     private ApplyFilter() {
@@ -259,42 +299,29 @@ export class EventsEditor {
     }
 
     private load(val:string) {
-        this.$type.empty();
-        let base = $(`<option value="">[seleziona tipo evento]</option>`);
-        this.$type.append(base);
+        
+        (<any>this.$type).jqxDropDownList('clear'); 
+        const source = [
+            //{ value: "", label:"[seleziona tipo evento]"},
+        ];
 
         for (const enumMember in ScripEventTypes) {
             var isValueProperty = parseInt(enumMember, 10) >= 0
             if (isValueProperty) {
                 let enumStr = ScripEventTypes[enumMember];
-                $(this.$type).append(`<option value="${ScripEventTypes[enumMember]}" ${enumStr==this.$type.val()}>${ScriptEventsIta.nameof(enumMember)}</option>`);
+                source.push({value: enumStr, label:ScriptEventsIta.nameof(enumMember)});
             }
         }
 
+        (<any>this.$type).jqxDropDownList({source:source});
+
         this.$type.change();
-    }
-
-    private itemClick(e:MouseEvent) {
-        var item = $(e.target);
-        if (item.is("li")) {
-            this.selectItem(item);
-        } else {
-            item.children().removeClass('selected');
-            this.$listBox.data("selectedIndex", -1);
-        }
-        this.handleListBoxChange();
-    }
-
-    private selectItem(item: JQuery) {
-        item.addClass('selected');
-        item.siblings().removeClass('selected');
-        const index = item.parent().children().index(item);
-        this.$listBox.data("selectedIndex", index);
     }
 
     private setEditorDisabled(state: boolean): void {
         this.$type.prop("disabled", state);
         this.$value.prop("disabled", state);
+        (<any>this.$type).jqxDropDownList({ disabled: state });
         this.$id.prop("disabled", state);
         this.$condition.prop("disabled", state);
         this.$enabled.prop("disabled", state).change();
@@ -312,8 +339,9 @@ export class EventsEditor {
     }
 
     private selectNone(): void {
-        this.$listBox.data("selectedIndex", -1);
-        this.$listBox.children().removeClass('selected');
+        this.$listBox.data("selected", null);
+        this.$filter.focus();
+        this.jqList.selectItem(null);
     }
 
     private clearEditor(): void {
@@ -330,6 +358,7 @@ export class EventsEditor {
         this.$className.val("");
     }
 
+
     private updateListBox() {
         
         if (this.isBase) {
@@ -338,17 +367,46 @@ export class EventsEditor {
             this.values = this.script.getEvents();
         }
         this.list = this.getList(this.values);
-        let html = "";
-        for (let i = 0; i < this.list.length; i++) {
-            html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";
+
+        let lst = this.values;
+
+        this.jqList.clear();
+        const itemMap = new Map<string, TypeTreeItem>();
+        
+        for (const enumMember in ScripEventTypes) {
+            var isValueProperty = parseInt(enumMember, 10) >= 0
+            if (isValueProperty) {
+                let enumStr = ScripEventTypes[enumMember];
+                itemMap.set(enumStr, {
+                    label:ScriptEventsIta.nameof(enumMember),
+                    value: enumStr,
+                    items: []
+                })
+            }
         }
-        this.$listBox.html(html);
+
+        for (let i = 0; i < lst.length; i++) {
+            let arr = itemMap.get(lst[i].type).items;
+            arr.push({
+                label: lst[i].id || (lst[i].condition),
+                value: <any>lst[i]
+            });
+        }
+
+        let items = [];
+        for (const [key, value] of itemMap) {
+            items.push(value)
+        }
+        this.treeOptions.source = items;
+        this.jqList.setOptions(this.treeOptions);
+        for (const li of this.jqList.getItems()) {
+            if ((<any>li).level==0 && !(<any>li).hasItems) $(li.element).addClass("jqx-disableselect");
+        }
         this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        let v:ScriptEvent;
+        let v:ScriptEvent = this.$listBox.data("selected");
 
         if (!this.$type.val()) {
             Messagebox.Show("Errore", "Devi selezionare il tipo evento!");
@@ -361,10 +419,8 @@ export class EventsEditor {
             return;
         }
 
-        if (ind == -1) {
+        if (!v) {
             v = { type: null, condition: null, id: null, value: null, class: null, enabled: false};
-        } else {
-            v = this.getItem(ind);
         }
 
         v.type = this.$type.val();
@@ -395,10 +451,10 @@ export class EventsEditor {
     }
 
     private handleDeleteButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let v = this.$listBox.data("selected");
+        if (!v) return;
 
-        this.deleteItem(this.getItem(ind));
+        this.deleteItem(v);
 
         this.clearEditor();
         this.selectNone();
@@ -407,11 +463,10 @@ export class EventsEditor {
     }
 
     private handleListBoxChange() {
-        let ind = this.$listBox.data("selectedIndex");
-        let item = this.getItem(ind);
+        let item = this.$listBox.data("selected");
         this.prev = item;
 
-        if (!item) {
+        if (!item || !item.type) {
             this.clearEditor();
             this.setEditorDisabled(true);
             return;
@@ -444,3 +499,4 @@ export class EventsEditor {
         this.updateListBox();
     }
 }
+

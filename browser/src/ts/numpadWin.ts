@@ -47,50 +47,6 @@ export class NumpadWin {
             
                 <div class="key" data-keyname="Numpad0" style="grid-area:r5c1">0</div>
                 <div class="key" data-keyname="NumpadDecimal" style="grid-area:r5c3">.</div>
-            
-                
-                <style>
-                    .grid-wrap {
-                        display: grid;
-                        margin-left:10px;
-                        grid-template-columns: 50px 50px 50px 50px;
-                        grid-template-rows: 50px 50px 50px 50px 50px;
-                        grid-template-areas:
-                        "r1c1 r1c2 r1c3 r1c4"
-                        "r2c1 r2c2 r2c3 r2c4"
-                        "r3c1 r3c2 r3c3 r2c4"
-                        "r4c1 r4c2 r4c3 r4c4"
-                        "r5c1 r5c1 r5c3 r4c4";
-                    }
-                    .numpad > .key {
-                        border: 1px solid black;
-                        border-radius:10px;
-                        padding:5px;
-                        margin:2px;
-                        background-color: lightgray;
-                        text-align:center;
-                        line-height:35px;
-                        cursor:pointer;
-                    }
-
-                    .numpad > .key:hover {
-                        background-color: azure;
-                    }
-
-                    .numpad > .key.disabled {
-                        opacity:0.25;
-                    }
-
-                    .numpad > .key.disabled:hover {
-                        background-color: transparent;
-                    }
-
-                    .numpad > .key.selected {
-                        background-color: yellow;
-                    }
-                
-                    </style>
-                    
             </div>
             <!--<div style="display:table-row;">
                 <div style="display:table-cell;text-align:left;vertical-align: middle;">

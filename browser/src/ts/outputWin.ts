@@ -34,10 +34,10 @@ export class OutputWin extends OutWinBase {
             const line = this.lineText;
             const newLog = localStorage.getItem("log") + line
             localStorage.setItem("log", newLog)
-            if (newLog.length > 2000000) {
+            if (newLog.length > 1000000) {
                 EvtLogExceeded.fire({
                     owner: "outputWindow",
-                    message: "Lunghezza Log superata (2 MB). Verra' azzerato. Vuoi scaricarlo ora?",
+                    message: "Lunghezza Log superata (1 MB). Verra' azzerato. Vuoi scaricarlo ora?",
                     silent: false
                 })
             }
@@ -198,7 +198,7 @@ export class OutputWin extends OutWinBase {
     handleTelnetError(data: string) {
         this.append(
             "<span style=\"color:red\"><br/>"
-            + "[[Telnet errore:" + "<br>"
+            + "[[Errore Telnet:" + "<br>"
             + data + "<br>"
             + "]]"
             + "<br>"
@@ -209,7 +209,7 @@ export class OutputWin extends OutWinBase {
     handleWsError() {
         this.append(
             "<span style=\"color:red\"><br/>"
-            + "[[Websocket errore]]"
+            + "[[Errore Websocket]]"
             + "<br>"
             + "</span>", true);
         this.scrollBottom(true);
@@ -218,7 +218,7 @@ export class OutputWin extends OutWinBase {
     public handleWindowError(message: any, source: any, lineno: any, colno: any, error: any) {
         this.append(
             "<span style=\"color:red\"><br/>"
-            + "[[Web Client Errore:<br>"
+            + "[[Errore Web Client:<br>"
             + message + "<br>"
             + source + "<br>"
             + lineno + "<br>"

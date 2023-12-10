@@ -2,6 +2,7 @@ import { Profile, ProfileManager } from "./profileManager";
 import { Messagebox, messagebox } from "./messagebox";
 import { isNumeric } from "jquery";
 import { WindowManager } from "./windowManager";
+import { circleNavigate } from "./util";
 
 export class ProfileWindow {
     public defaultServer = "mud.temporasanguinis.it";
@@ -40,7 +41,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Nome profilo</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                        <input id="nomeprofilo" tabindex="1" style="margin-top:5px;width:100%;" title="Il nome del profilo" placeholder="&lt;Il nome del profilo&gt;"type="text"/>
+                        <input id="nomeprofilo" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" tabindex="1" title="Il nome del profilo" placeholder="&lt;Il nome del profilo&gt;"type="text"/>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -48,13 +49,8 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Server</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                        <div class="select-box" style="margin-left:-10px;margin-right:-10px;">   
-                            <div class="inner-box">    
-                                <label for="serverName" class="label select-box1"><span class="label-desc"></span> </label>
-                                <select tabindex="2" id="serverName" size="1" class="dropdown serverName">
-                                </select>
-                            </div>
-                        </div>
+                        <select tabindex="2" id="serverName" size="1" class="serverName">
+                        </select>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;" id="server_row">
@@ -62,7 +58,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Server e porta</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                        <input tabindex="3" id="nomeserver" style="margin-top:5px;width:100%;" title="Server URL" placeholder="&lt;Url server (server:port)&gt;" type="text"/>
+                        <input tabindex="3" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" id="nomeserver" title="Server URL" placeholder="&lt;server:port&gt;" type="text"/>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -70,7 +66,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Autenticazione</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                    <label style="margin-right:10px;"><input type="checkbox" tabindex="3" class="winProfile-autologin" /></label>
+                    <label style="margin-right:10px;"><input type="checkbox" tabindex="4" class="winProfile-autologin" /></label>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -78,7 +74,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Personaggio</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                        <input tabindex="4" id="nomepg" style="margin-top:5px;width:100%;" title="Il nome del personaggio" placeholder="&lt;Il nome del personaggio&gt;" type="text"/>
+                        <input tabindex="5" id="nomepg" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" title="Il nome del personaggio" placeholder="&lt;nome del personaggio&gt;" type="text"/>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -86,7 +82,13 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Password</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                        <input tabindex="5" id="password" style="margin-top:5px;width:100%;" title="La password del personaggio" placeholder="&lt;Password: opzionale&gt;" type="password"/>
+                        <input tabindex="6" id="password" title="La password del personaggio" placeholder="&lt;opzionale&gt;" type="password"/>
+                    </div>
+                </div>
+                <div style="display:table-row;height:10px;">
+                    <div style="display:table-cell;text-align:right;vertical-align: middle;">
+                    </div>
+                    <div style="display:table-cell;vertical-align: middle;">
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -94,7 +96,7 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Trigger preimpostati</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                    <label title="Se abilitato il profilo avra' accesso a una base di trigger e alias gia' creati.\nSe vuoi usare i trigger preimpostati devi importare i trigger nel profilo base, premendo il pulsante giallo su di esso." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-scriptingbase" /></label>
+                    <label title="Se abilitato il profilo avra' accesso a una base di trigger e alias gia' creati.\nSe vuoi usare i trigger preimpostati devi importare i trigger nel profilo base, premendo il pulsante giallo su di esso." style="margin-right:10px;"><input type="checkbox" tabindex="7" class="winProfile-scriptingbase" /></label>
                     </div>
                 </div>
                 <div style="display:table-row;height:29px;">
@@ -102,21 +104,18 @@ export class ProfileWindow {
                         <label style="margin-right:10px;">Disposizione schermo</label>
                     </div>
                     <div style="display:table-cell;vertical-align: middle;">
-                    <label title="Se abilitato questo profilo avra' una predisposizione schermo per ancorare le finestre e vario altro contenuto. Richiede Trigger preimpostati." style="margin-right:10px;"><input type="checkbox" tabindex="6" class="winProfile-uselayout" /></label>
-                    <button tabindex="1000" id="reloadLayout" title="Ricarica disposizione schermo" class="">Ricarica predefinito</button>
-                    <button tabindex="1001" id="editLayout" title="Modifica disposizione schermo" class="">Modifica</button>
+                    <label title="Se abilitato questo profilo avra' una predisposizione schermo per ancorare le finestre e vario altro contenuto. Richiede Trigger preimpostati." style="margin-right:10px;"><input type="checkbox" tabindex="8" class="winProfile-uselayout" /></label>
+                    <button tabindex="1000" id="reloadLayout" title="Ricarica disposizione predefinita" class="">&#x27F3;</button>
+                    <button tabindex="1001" id="editLayout" title="Modifica disposizione schermo" class="">&#x270E;</button>
                     </div>
                 </div>
                 <div style="display:table-row;">
-                    <div style="display:table-cell;text-align:left;vertical-align: middle;">
-                        <span style="display:inline-block;width:160px;color: blue;font-size:9px">N.B. quando cambia la configurazione del sistema, per ragioni di sicurezza, le password vengono invalidate e serve rimetterle manualmente  .</span>
-                    </div>
-                    <div style="display:table-cell;vertical-align: middle;">
-                        <div class="messageboxbuttons" style="margin-top: 10px;display: inline-block;float:right;">
-                            <button tabindex="6" title="Applica" class="acceptbutton greenbutton">Accetta</button>
-                            <button tabindex="7" title="Annulla" class="cancelbutton redbutton">Annulla</button>
+                    <!--<div style="display:table-cell;vertical-align: middle;">-->
+                        <div class="messageboxbuttons" style="margin-top: 10px;display: inline-block;position:absolute;width:100%;">
+                            <button tabindex="9" title="Applica" class="acceptbutton greenbutton">&#10004;</button>
+                            <button tabindex="10" title="Annulla" class="cancelbutton redbutton">&#10006;</button>
                         </div>
-                    </div>
+                    <!--</div>-->
                 </div>
             </div>
         </div>
@@ -164,36 +163,15 @@ export class ProfileWindow {
         });
         this.$autoLogin.prop('checked', true).trigger("change");
 
-        $("select", this.$win).on("click" , function() {
-  
-            $(this).parent(".select-box").toggleClass("open");
-            
-          });
-
-        $("select", this.$win).on("change" , function() {
-  
-            var selection = $(this).find("option:selected").text(),
-                labelFor = $(this).attr("id"),
-                label = $("[for='" + labelFor + "']");
-              
-            label.find(".label-desc").html(selection);
-              
-          });
-          
-          $("select", this.$win).on("focus" , function() {
-            $(this).parent().addClass("focused");  
-          });
-
-          $("select", this.$win).on("blur" , function() {
-            $(this).parent().removeClass("focused");              
-          });
-
         this.$serverList = $(win.getElementsByClassName("serverName")[0] as HTMLSelectElement);
+        (<any>this.$serverList).jqxDropDownList({closeDelay:1, width: '100%', height:'24px',autoItemsHeight: true, autoDropDownHeight: true, scrollBarSize:8, source: [], displayMember: "label", valueMember: "value"});
+        this.$serverList = $(win.getElementsByClassName("serverName")[0] as HTMLSelectElement);
+        
         this.$serverList.change(c => {
             if (this.$serverList.val()=="Manual") {
-                this.$serverRow.show()
+                this.$serverRow.css("visibility", "visible")
             } else {
-                this.$serverRow.hide()
+                this.$serverRow.css("visibility", "hidden")
             }
         })
         this.$name = $("#nomeprofilo", this.$win);
@@ -208,10 +186,12 @@ export class ProfileWindow {
             }, 300);
         });
 
-        (<any>this.$win).jqxWindow({width: 450, height: 340, showCollapseButton: true, isModal: true});
+        (<any>this.$win).jqxWindow({width: 340, height: 350, resizable: false, showCollapseButton: true, isModal: true});
         $(this.okButton).click(this.handleOk.bind(this));
         $(this.cancelButton).click(this.handleCancelClick.bind(this));
         (<any>this.$win).jqxWindow("close");
+
+        circleNavigate(this.$name, this.cancelButton, null, this.$win);
     }
 
     setWindowManager(windowManager: WindowManager) {
@@ -298,14 +278,15 @@ export class ProfileWindow {
             serverName = "Live";
             custom = false;
         }
-        this.$serverList.empty();
-        let base = $(`<option value="Live" ${serverName=="Live"?"selected":""}>Live</option>`);
-        this.$serverList.append(base);
-        let test = $(`<option value="Tester" ${serverName=="Tester"?"selected":""}>Tester</option>`);
-        this.$serverList.append(test);
-        let cserver = $(`<option value="Manual" ${custom?"selected":""}>Manuale</option>`);
-        this.$serverList.append(cserver);
-        this.$serverList.val(serverName).change();
+        (<any>this.$serverList).jqxDropDownList('clear'); 
+        const source = [
+            { value: "Live", label:"Live"},
+            { value: "Tester", label:"Tester"},
+            { value: "Manual", label:"Manuale"}
+        ];
+        (<any>this.$serverList).jqxDropDownList({source:source});
+
+        this.$serverList.val(serverName);
         this.$autoLogin.prop('checked', this.profile.autologin).trigger("change");
         this.$name.val(this.profile.name ?? "");
         this.$char.val(this.profile.char ?? "");
@@ -315,7 +296,7 @@ export class ProfileWindow {
         this.$baseScripting.removeAttr("disabled")
         this.$baseLayout.removeAttr("disabled")
         const trgs = this.manager.getBaseConfig().get("triggers");
-        if (!trgs || !trgs.length || trgs.length < 17) {
+        if (!trgs || !trgs.length || trgs.length < 1) {
             this.$baseScripting.prop('checked', false).trigger("change");
             this.$baseLayout.prop('checked', false).trigger("change");
             this.$baseScripting.attr("disabled", "disabled").trigger("change");

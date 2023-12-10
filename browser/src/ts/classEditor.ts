@@ -7,7 +7,11 @@ declare let CodeMirror: any;
 
 export class ClassEditor {
     protected $win: JQuery;
-
+    protected treeOptions:jqwidgets.TreeOptions = {
+        checkboxes: false, keyboardNavigation: true, source: [],
+        height: "100%", width: "100%",
+        toggleMode: "click", animationShowDuration: 150,
+    };
     protected $listBox: JQuery;
     protected $name: JQuery;
     protected $value: JQuery;
@@ -20,6 +24,7 @@ export class ClassEditor {
     list: string[];
     values:Class[];
     prevName: string;
+    protected jqList: jqwidgets.jqxTree;
 
     /* these need to be overridden */
     protected getList(): Array<string> {
@@ -58,9 +63,6 @@ export class ClassEditor {
     constructor(private classManager:ClassManager) {
         const title: string = "Classi";
         let myDiv = document.createElement("div");
-        classManager.changed.handle(()=>{
-            this.refresh()
-        })
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
         this.$win = $(myDiv);
@@ -73,21 +75,21 @@ export class ClassEditor {
                 <!--left panel-->
                 <div class="left-pane">
                     <div class="buttons">
-                        <input class="winClass-filter" type="text" placeholder="<filtro>"/>
+                        <input class="winClass-filter" type="text" placeholder="<filtro>" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off"/>
                     </div>
                     <div class="list">
-                        <ul size="2" class="winClass-listBox select"  style="height: 100%;box-sizing: border-box;"></ul>
+                        <div class="winClass-listBox" tabindex="0"></div>
                     </div>
                     <div class="buttons">
-                        <button title="Crea nuova" class="winClass-btnNew greenbutton">Aggiungi</button>
-                        <button title="Elimina selezionata" class="winClass-btnDelete redbutton">Elimina</button>
+                        <button title="Crea nuova" class="winClass-btnNew greenbutton">✚</button>
+                        <button title="Elimina selezionata" class="winClass-btnDelete redbutton">&#10006;</button>
                     </div>
                 </div>
                 <!--right panel-->
                 <div class="right-pane">
                     <div class="pane-header">
                         <div class="pane-optional">
-                            <label>Nome: <input type="text" class="winClass-name fill-width" disabled></label>
+                            <label>Nome: <input type="text" class="winClass-name fill-width" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" disabled></label>
                             <label>
                                 Abilitata
                                 <input type="checkbox" title="Se disabilitata trigger/alias nella classe sono disabilitati" class="winClass-chkEnabled" disabled />
@@ -95,8 +97,8 @@ export class ClassEditor {
                         </div>
                     </div>                    
                     <div class="pane-footer">
-                        <button class="winClass-btnSave bluebutton" disabled>Salva</button>
-                        <button class="winClass-btnCancel" disabled>Annulla</button>
+                        <button class="winClass-btnSave bluebutton" disabled title="Accetta">&#10004;</button>
+                        <button class="winClass-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
                 </div>
             </div>
@@ -121,6 +123,10 @@ export class ClassEditor {
 
         (<any>this.$win).jqxWindow({width: Math.min(400, win_w), height: Math.min(300, win_h), showCollapseButton: true});
 
+        classManager.changed.handle(()=>{
+            if ((<any>this.$win).jqxWindow('isOpen')) this.refresh()
+        });
+
         (<any>this.$mainSplit).jqxSplitter({
             width: "100%",
             height: "100%",
@@ -128,10 +134,43 @@ export class ClassEditor {
             panels: [{size: "50%"}, {size: "50%"}]
         });
         
+        (<any>this.$listBox).jqxTree(this.treeOptions);
+        this.jqList = (<any>this.$listBox).jqxTree("getInstance");
+        this.$listBox = $(myDiv.getElementsByClassName("winClass-listBox")[0]);
+
         circleNavigate(this.$filter, this.$cancelButton, this.$deleteButton, this.$win);
 
-        this.$listBox.click(this.itemClick.bind(this));
-        this.$listBox.keyup(this.itemSelect.bind(this));
+        $(this.$listBox).on("focus", (ev) => {
+            setTimeout(() => {
+                if (this.jqList.getSelectedItem()) this.scrollIntoView(this.jqList.getSelectedItem());
+            }, 1);
+        });
+
+        $(this.$filter).on("keydown", (ev) => {
+            if (ev.key == "Tab" && !ev.shiftKey) {
+                ev.preventDefault()
+                ev.stopPropagation();
+                let item = this.jqList.getSelectedItem() || this.jqList.getItems()[0];
+                if (item) {
+                    (<any>this.$listBox).focus()
+                    this.select(item)
+                    this.handleListBoxChange()
+                } else {
+                    (<any>this.$listBox).focus()
+                }
+            }
+        });
+        (<any>this.$listBox).on('select', (event:any) =>
+        {
+            var args = event.args;
+            var item = this.jqList.getItem(args.element);
+            if (item) {
+                this.select(item)
+                this.handleListBoxChange()
+                event.preventDefault();
+            }
+        });
+        
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$deleteButton.click(this.handleDeleteButtonClick.bind(this));
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
@@ -142,37 +181,32 @@ export class ClassEditor {
         })
     }
 
-    itemSelect(ev: KeyboardEvent) {
-        if (ev.keyCode == 13 || ev.keyCode == 32) {
-            const el = this.$listBox.find("LI:focus")
-            this.selectItem(el)
-            this.handleListBoxChange();
+    private scrollIntoView(ti:jqwidgets.TreeItem) {
+        var $container = this.$listBox;      // Only scrolls the first matched container
+
+        var pos = $(ti.element).position(), height = $(ti.element).outerHeight();
+        var containerScrollTop = $container.scrollTop(), containerHeight = $container.height();
+        var top = pos.top + containerScrollTop;     // position.top is relative to the scrollTop of the containing element
+
+        var paddingPx = $(ti.element).height() + 5;      // padding keeps the target from being butted up against the top / bottom of the container after scroll
+
+        if (top < containerScrollTop) {     // scroll up                
+            $container.scrollTop(top - paddingPx);
+        }
+        else if (top + height > containerScrollTop + containerHeight) {     // scroll down
+            $container.scrollTop(top + height - containerHeight + paddingPx);
         }
     }
 
-    private selectItem(item: JQuery) {
-        item.addClass('selected');
-        item.siblings().removeClass('selected');
-        const index = item.parent().children().index(item);
-        this.$listBox.data("selectedIndex", index);
+    private select(item: jqwidgets.TreeItem) {
+        this.$listBox.data("selected", item.value);
+        this.jqList.selectItem(item);
+        this.jqList.expandItem(item);
+        this.scrollIntoView(item);
     }
 
     private ApplyFilter() {
         this.Filter(this.$filter.val());
-    }
-
-    private itemClick(e:MouseEvent) {
-        var item = $(e.target);
-        if (item.is("li")) {
-            item.addClass('selected');
-            item.siblings().removeClass('selected');
-            const index = item.parent().children().index(item);
-            this.$listBox.data("selectedIndex", index);
-        } else {
-            item.children().removeClass('selected');
-            this.$listBox.data("selectedIndex", -1);
-        }
-        this.handleListBoxChange();
     }
 
     private setEditorDisabled(state: boolean): void {
@@ -180,11 +214,14 @@ export class ClassEditor {
         this.$value.prop("disabled", state);
         this.$saveButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
+        if (state) {
+            this.$filter.focus();
+        }
     }
 
     private selectNone(): void {
-        this.$listBox.data("selectedIndex", -1);
-        this.$listBox.children().removeClass('selected');
+        this.$listBox.data("selected", null);
+        this.jqList.selectItem(null);
     }
 
     private clearEditor(): void {
@@ -192,30 +229,36 @@ export class ClassEditor {
         this.$value.val("");
     }
 
+    getTreeItem(v:Class) {
+        let item = {
+            label: (v.name || "[senza nome]"),
+            expanded: false,
+            value: v
+        }
+        return item;
+    }
+
     private updateListBox() {
         this.list = this.getList();
         this.values = [...this.classManager.classes.values()];
-        let html = "";
-        for (let i = 0; i < this.list.length; i++) {
-            html += "<li tabindex='0'>" + Util.rawToHtml(this.list[i]) + "</li>";
-        }
-        this.$listBox.html(html);
+
+        this.jqList.clear();
+        this.treeOptions.source = this.values.map(v => this.getTreeItem(v));
+        this.jqList.setOptions(this.treeOptions);
+
         this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        let v:Class;
+        let v:Class = this.$listBox.data("selected");
 
         if (!this.$name.val()) {
             Messagebox.Show("Errore", "La classe deve avere un nome!");
             return;
         }
 
-        if (ind == -1) {
+        if (!v) {
             v = {name: null, enabled: false};
-        } else {
-            v = this.getItem(ind);
         }
 
         v.name = this.$name.val();
@@ -241,10 +284,10 @@ export class ClassEditor {
     }
 
     private handleDeleteButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let v = this.$listBox.data("selected");
+        if (!v) return;
 
-        this.deleteItem(this.getItem(ind));
+        this.deleteItem(v);
 
         this.clearEditor();
         this.selectNone();
@@ -253,8 +296,7 @@ export class ClassEditor {
     }
 
     private handleListBoxChange() {
-        let ind = this.$listBox.data("selectedIndex");
-        let item = this.getItem(ind);
+        let item = this.$listBox.data("selected");
         this.prevName = item.name;
 
         if (!item) {

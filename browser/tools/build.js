@@ -65,14 +65,22 @@ function minifyCss(next) {
         input: [
             './static/public/codemirror/lib/codemirror.css',
             './static/public/codemirror/theme/neat.css',
+            './static/public/codemirror/theme/material.css',
             './static/public/codemirror/addon/hint/show-hint.css',
             './static/public/codemirror/addon/dialog/dialog.css',
             './static/public/codemirror/addon/tern/tern.css',
             './static/public/codemirror/addon/scroll/simplescrollbars.css',
             './static/public/codemirror/addon/search/matchesonscrollbar.css',
-            './static/public/jqwidgets/styles/jqx.base.css'],
+            './static/public/jqwidgets/styles/jqx.base.css',
+            './static/public/jqwidgets/styles/jqx.metro.css',
+            './static/public/jqwidgets/styles/jqx.metrodark.css'],
         output: './dist/modules.min.css',
-        callback: function(err, min) { if (!err && next) next();}
+        callback: function(err, min) {
+            if (!err) {
+                fs.copyFileSync('./dist/modules.min.css', './static/public/modules/modules.min.css');
+                if (next) next();
+            }
+        }
       });
 }
 
@@ -92,6 +100,8 @@ function mergeJqwidgets(next) {
     compressor: noCompress,
     input: [
         './static/public/jqwidgets/jqxcore.js',
+        './static/public/jqwidgets/jqxcheckbox.js',
+        './static/public/jqwidgets/jqxtree.js',
         './static/public/jqwidgets/jqxdata.js',
         './static/public/jqwidgets/jqxmenu.js',
         './static/public/jqwidgets/jqxwindow.js',
@@ -102,7 +112,11 @@ function mergeJqwidgets(next) {
         './static/public/jqwidgets/jqxnotification.js',
         './static/public/jqwidgets/jqxsplitter.js'],
     output: './dist/jqwidgets_module.js',
-    callback: function(err, min) { if (!err && next) next(); }
+    callback: function(err, min) { 
+        if (!err) {
+            if (next) next();
+        }
+     }
     });
 }
 
@@ -221,6 +235,11 @@ function copyToPublic() {
             outputFolder: './dist/public'
         },
         {
+            path: './static/public/jqwidgets/styles/images',
+            regex: /^.*\..*$/i,
+            outputFolder: './dist/public/css/images'
+        },
+        {
             path: './static/public/css/images',
             regex: /^.*\..*$/i,
             outputFolder: './dist/public/css/images'
@@ -276,7 +295,7 @@ function copyToPublic() {
         fsx.readdirSync(folder.path).forEach(file => {
         if (folder.regex.test(file)) {
             console.log(`copying file ${file}`);
-            fsx.copy(`${folder.path}/${file}`, `${folder.outputFolder}/${file}`)/*
+            fsx.copy(`${folder.path}/${file}`, `${folder.outputFolder}/${file}`, {overwrite: true, recursive: true})/*
             .then(() => console.log('success!'))
             .catch(err => console.error(err));*/
         }

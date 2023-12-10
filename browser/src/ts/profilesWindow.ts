@@ -35,21 +35,15 @@ export class ProfilesWindow {
         <div>
             <div style="display:flex;flex-direction:column;height:100%">
                 <div>
-                    <span style="display:inline-block;margin:5px;">Seleziona il profilo:</span>
+                    <span style="display:inline-block;margin:5px;">Quale profilo vuoi usare?</span>
                 </div>
                 <div>
-                    <div class="select-box">
-                        <div class="inner-box">       
-                        <label for="profiles" class="label select-box1"><span class="label-desc"></span> </label>
-                        <select id="profiles" size=1" class="dropdown winProfiles-profiles"></select>
-                        </div>
-                    </div>
-                    <div id='jqxComboBox'></div>
+                    <select class="winProfiles-profiles"></select>
                 </div>
                 <div>
-                    <button title="Crea profilo" class="winProfiles-crea greenbutton">+</button>
-                    <button title="Cancella selezionato" class="winProfiles-elimina redbutton">X</button>
-                    <button title="Modifica selezionato" class="winProfiles-modifica yellowbutton">...</button>
+                    <button title="Crea profilo" class="winProfiles-crea greenbutton">✚</button>
+                    <button title="Cancella selezionato" class="winProfiles-elimina redbutton">&#10006;</button>
+                    <button title="Modifica selezionato" class="winProfiles-modifica yellowbutton">&#9965;</button>
                     <button class="winProfiles-connect bluebutton">Connessione</button>
                     <button title="Carica il profilo senza connettersi (per modificare importazion/trigger)" class="winProfiles-offline button" style="margin:10px !important;float:right;">Offline</button>
                 </div>
@@ -59,41 +53,6 @@ export class ProfilesWindow {
 
         this.$win = $(win);
 
-        $(document).mouseup(function (e)
-        {
-            var container = $(".select-box");
-
-            if (container.has(e.target).length === 0)
-            {
-                container.removeClass("open");
-            }
-        });
-
-
-        $("select", this.$win).on("click" , function() {
-  
-            $(this).parent(".select-box").toggleClass("open");
-            
-          });
-
-        $("select", this.$win).on("change" , function() {
-  
-            var selection = $(this).find("option:selected").text(),
-                labelFor = $(this).attr("id"),
-                label = $("[for='" + labelFor + "']");
-              
-            label.find(".label-desc").html(selection);
-              
-          });
-
-          $("select", this.$win).on("focus" , function() {
-            $(this).parent().addClass("focused");  
-          });
-
-          $("select", this.$win).on("blur" , function() {
-            $(this).parent().removeClass("focused");              
-          });
-
         this.profileList = $(win.getElementsByClassName("winProfiles-profiles")[0] as HTMLSelectElement);
         this.createButton = win.getElementsByClassName("winProfiles-crea")[0] as HTMLButtonElement;
         this.editButton = win.getElementsByClassName("winProfiles-modifica")[0] as HTMLButtonElement;
@@ -101,11 +60,27 @@ export class ProfilesWindow {
         this.deleteButton = win.getElementsByClassName("winProfiles-elimina")[0] as HTMLButtonElement;
         this.connectButton = win.getElementsByClassName("winProfiles-connect")[0] as HTMLButtonElement;
         this.profileList.width("100%");
+        
+        (<any>this.profileList).jqxDropDownList({closeDelay:1, width: '100%', height:'32px',autoItemsHeight: true, autoDropDownHeight: true, scrollBarSize:8, source: [], displayMember: "label", valueMember: "value"});
+
+        this.profileList = $(win.getElementsByClassName("winProfiles-profiles")[0] as HTMLSelectElement);
+        
+        this.profileList.on("select", (ev, a) => { 
+            var val = this.profileList.val();
+            this.handleSelectClick(val);
+        });
+
+        this.profileList.on("keyup", (ev, a) => { 
+            if (ev.key == "Enter") {
+                this.connectButton.click();
+            }
+        });
+
         this.load();
         
         $(this.connectButton).text(connectText);
 
-        (<any>this.$win).jqxWindow({width: 370, height: 150, showCollapseButton: true});
+        (<any>this.$win).jqxWindow({width: 340, height: 150, showCollapseButton: true});
         $(this.createButton).click(this.handleNew.bind(this));
         $(this.offlineButton).click(this.handleOfflineButtonClick.bind(this));
         $(this.connectButton).click(() => setTimeout(()=>this.handleConnectButtonClick(),1));
@@ -121,23 +96,22 @@ export class ProfilesWindow {
     }
 
     private load() {
-        this.profileList.empty();
-        let base = $(`<option value="">[Profilo Base]</option>`);
-        this.profileList.append(base);
+        (<any>this.profileList).jqxDropDownList('clear'); 
+
+        var source = <any>[];
+
+        source.push({ label: '[Profilo Base]', value: '' })
 
         for (const iterator of this.manager.getProfiles()) {
-            const selected = this.manager.getCurrent() == iterator ? "selected" : "";
-            $(this.profileList).append(`<option value="${iterator}" ${selected}>${iterator}</option>`);
+            source.push({ label: iterator, value: iterator })
         }
 
-        let nuovo = $(`<option value="-1">&lt;... Crea nuovo ...&gt;</option>`);
-        this.profileList.append(nuovo);
+        source.push({ label: '... Crea nuovo ...', value: '-1' });
 
-        this.profileList.val(this.manager.lastProfile).change();
-        this.profileList.change(() => { 
-            var val = this.profileList.val();
-            this.handleSelectClick(val);
-        });
+        (<any>this.profileList).jqxDropDownList({source: source});
+
+        this.profileList.val(this.manager.lastProfile);
+        
     }
 
     private profileCreateChar:string = `Creare un profilo non vuol dire creare un personaggio.
@@ -419,7 +393,7 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
         }
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow('bringToFront');
-        setTimeout(() => $(this.connectButton).focus(), 500);
+        setTimeout(() => $(this.profileList).focus(), 500);
     }
 
     private startAutoreconnect() {

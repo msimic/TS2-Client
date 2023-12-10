@@ -1,9 +1,17 @@
+/// <reference path="../../node_modules/jqwidgets-framework/jqwidgets-ts/jqwidgets.d.ts"/>
+
 import hotkeys from "hotkeys-js";
-import { Button, messagebox, Messagebox } from "./messagebox";
+import { Button, messagebox, Messagebox, Notification } from "./messagebox";
 import * as Util from "./util";
 import { circleNavigate } from "./util";
-
+import { Mudslinger } from "./client";
 declare let CodeMirror: any;
+
+interface ClassTreeItem {
+    name: string;
+    subclasses: Map<string, ClassTreeItem>;
+    items: object[]
+};
 
 export interface TrigAlItem {
     pattern: string;
@@ -24,8 +32,13 @@ export interface copyData {
 
 export abstract class TrigAlEditBase {
     protected $win: JQuery;
-
+    protected treeOptions:jqwidgets.TreeOptions = {
+        checkboxes: false, keyboardNavigation: true, source: [],
+        height: "100%", width: "100%",
+        toggleMode: "dblclick", animationShowDuration: 150
+    };
     protected $listBox: JQuery;
+    protected jqList: jqwidgets.jqxTree;
     protected $pattern: JQuery;
     protected $id: JQuery;
     protected $className: JQuery;
@@ -50,11 +63,13 @@ export abstract class TrigAlEditBase {
     protected $copyButton: JQuery;
 
     /* these need to be overridden */
+    protected abstract getCount(): number;
     protected abstract getList(): Array<string>;
+    protected abstract getListItems(): Array<TrigAlItem>;
     protected abstract getItem(ind: number): TrigAlItem;
-    protected abstract saveItem(ind: number, item:TrigAlItem): void;
-    protected abstract deleteItem(ind: number): void;
-    protected abstract copyToOther(ind: number): void;
+    protected abstract saveItem(item:TrigAlItem): void;
+    protected abstract deleteItem(item:TrigAlItem): void;
+    protected abstract copyToOther(item: TrigAlItem): void;
     protected abstract supportsMacro(): boolean;
 
     protected abstract defaultPattern: string;
@@ -62,15 +77,38 @@ export abstract class TrigAlEditBase {
     protected abstract defaultScript: string;
 
     protected Filter(str:string) {
-        $("li", this.$listBox).each((i,e) => {
-            const visible = !str || $(e).text().match(new RegExp(str, 'gi')) != null;
-            if (visible) {
-                $(e).show();
+        if (str && str.length < 2) {
+            str = "";
+        }
+        if (!str) {
+            this.jqList.collapseAll()
+        }
+
+        const expand = (itm: jqwidgets.TreeItem) => {
+            $(itm.element).show();
+            if (itm.parentElement) {
+                $(itm.parentElement).show();
+                this.jqList.expandItem(itm.parentElement);
+                expand(itm.parentElement)
             }
-            else {
-                $(e).hide();
+        };
+
+        const rx = new RegExp(str, 'gi');
+        let items = this.jqList.getItems()
+        for (const itm of items) {
+            if (str) {
+                $(itm.element).hide()
+            } else {
+                $(itm.element).show()
             }
-        })
+            if (itm.value && str) {
+                const txt = (<any>itm.value).id + "" + (<any>itm.value).pattern;
+                const visible = txt.match(rx) != null;
+                if (!!visible) {
+                    expand(itm);
+                }
+            }
+        }
     }
 
     constructor(title: string, protected isBase:boolean) {
@@ -90,22 +128,25 @@ export abstract class TrigAlEditBase {
                         <input class="winEdit-filter" type="text" placeholder="<filtro>"/>
                     </div>
                     <div class="list">
-                        <ul size="2" class="winEdit-listBox select"></ul>
+                        <div class="winEdit-listBox" tabindex="0" style="overflow-y: auto;"></div>
                     </div>
                     <div class="buttons">
-                        <button title="Crea nuovo" class="winEdit-btnNew greenbutton">Aggiungi</button>
-                        <button title="Copia in privato o preimpostato" class="winEdit-btnCopy">!</button>
-                        <button title="Elimina selezionato" class="winEdit-btnDelete redbutton">Elimina</button>
+                        <button title="Crea nuovo" class="winEdit-btnNew greenbutton">✚</button>
+                        <button title="Copia in privato o preimpostato" class="winEdit-btnCopy">&#8644;</button>
+                        <button title="Elimina selezionato" class="winEdit-btnDelete redbutton">&#10006;</button>
                     </div>
                 </div>
                 <!--right panel-->
                 <div class="right-pane">
                     <div class="pane-header">
-                        <span>Modello</span>
-                        <input type="text" class="winEdit-pattern" disabled><br>
                         <div class="pane-optional">
-                            <label>ID: <input type="text" class="winEdit-id" disabled placeholder="(opzionale)" title="Per visualizzare meglio nella lista o per poter usare toggleTrigger(id, stato) o toggleAlias(id, stato) in script"></label>
-                            <label>Classe: <input type="text" class="winEdit-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe disablitata sara' inattivo (usare toggleClass(id, stato)"></label>
+                            <label>Modello:
+                                <input spellcheck="false" autocomplete="false" type="text" class="winEdit-pattern" disabled>
+                            </label>
+                        </div>
+                        <div class="pane-optional">
+                            <label>ID: <input spellcheck="false" autocomplete="false"  size="5" type="text" class="winEdit-id" disabled placeholder="(opzionale)" title="Per visualizzare meglio nella lista o per poter usare toggleTrigger(id, stato) o toggleAlias(id, stato) in script"></label>
+                            <label>Classe: <input spellcheck="false" autocomplete="false"  size="5" type="text" class="winEdit-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe disablitata sara' inattivo (usare toggleClass(id, stato)"></label>
                         </div>
                         <div class="pane-options">
                             <label class="macroContainer">
@@ -131,17 +172,17 @@ export abstract class TrigAlEditBase {
                         </div>
                     </div>                    
                     <div class="pane-content-title">
-                        <span>Azioni:</span>
+                        <label>Azioni:</label>
                     </div>
                     <div class="pane-content">
-                        <textarea class="winEdit-textArea" disabled></textarea>
+                        <textarea spellcheck="false" autocomplete="false" class="winEdit-textArea" disabled></textarea>
                         <textarea class="winEdit-scriptArea" disabled></textarea>
                     </div>
                     <div class="pane-footer">
-                        <button class="winEdit-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">^</button>
-                        <button class="winEdit-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">v</button>
-                        <button class="winEdit-btnSave bluebutton" disabled>Salva</button>
-                        <button class="winEdit-btnCancel" disabled>Annulla</button>
+                        <button class="winEdit-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">▲</button>
+                        <button class="winEdit-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">▼</button>
+                        <button class="winEdit-btnSave bluebutton" disabled title="Accetta">&#10004;</button>
+                        <button class="winEdit-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
                 </div>
             </div>
@@ -180,6 +221,10 @@ export abstract class TrigAlEditBase {
 
         (<any>this.$win).jqxWindow({width: Math.min(600, win_w), height: Math.min(400, win_h), showCollapseButton: true});
 
+        (<any>this.$listBox).jqxTree(this.treeOptions);
+        this.jqList = (<any>this.$listBox).jqxTree("getInstance");
+        this.$listBox = $(myDiv.getElementsByClassName("winEdit-listBox")[0]);
+
         this.$win.on('open', (event) => {
             this.$win.focusable().focus()
         })
@@ -203,13 +248,13 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             width: "100%",
             height: "100%",
             orientation: "vertical",
-            panels: [{size: "25%"}, {size: "75%"}]
+            panels: [{size: "30%"}, {size: "70%"}]
         });
 
         this.codeMirror = CodeMirror.fromTextArea(
             this.$scriptArea[0], {
                 mode: {name: "javascript", globalVars: true},
-                theme: "neat",
+                theme: Mudslinger.GetCodeMirrorTheme(),
                 autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
                 matchBrackets: true,
                 lineNumbers: true,
@@ -223,11 +268,32 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         );
         Util.addIntellisense(this.codeMirror);
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
-        this.$codeMirrorWrapper.height("100%");
+        this.$codeMirrorWrapper.css("height","100%");
         this.$codeMirrorWrapper.hide();
 
-        this.$listBox.click(this.itemClick.bind(this));
-        this.$listBox.keyup(this.itemSelect.bind(this));
+        $(this.$filter).on("keydown", (ev) => {
+            if (ev.key == "Tab" && !ev.shiftKey) {
+                ev.preventDefault()
+                ev.stopPropagation();
+                let item = this.jqList.getSelectedItem() || this.jqList.getItems()[0];
+                if (item) {
+                    (<any>this.$listBox).focus()
+                    this.select(item)
+                    this.handleListBoxChange()
+                } else {
+                    (<any>this.$listBox).focus()
+                }
+            }
+        });
+
+        (<any>this.$listBox).on('select', (event:any) =>
+        {
+            var args = event.args;
+            var item = this.jqList.getItem(args.element);
+            this.select(item)
+            this.handleListBoxChange()
+        });
+
         this.$newButton.click(this.handleNewButtonClick.bind(this));
         this.$importButton.click(this.handleImportButtonClick.bind(this));
         this.$exportButton.click(this.handleExportButtonClick.bind(this));
@@ -241,8 +307,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     }
 
-    copyProperties(ind:number) {
-        let item = this.getItem(ind);
+    copyProperties(item:TrigAlItem) {
         if (!item) return;
         Util.importFromFile((str) => {
             if (str) {
@@ -260,34 +325,35 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     async handleImportButtonClick(ev: any) {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let item = this.$listBox.data("selected");
+        if (!item) return;
         if (this.isDirty()) {
             await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
             return
         }
         const ans = await Messagebox.Question("Sei sicuro di voler sovrascrivere il trigger corrente?")
         if (ans.button == Button.Ok) {
-            this.copyProperties(ind);
+            this.copyProperties(item);
             this.handleListBoxChange();
         }
     }
 
     async handleExportButtonClick(ev: any) {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let item = this.$listBox.data("selected");
+        if (!item) return;
         if (this.isDirty()) {
             await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
             return
         }
-        let item = this.getItem(ind);
-        if (!item) return;
         Util.downloadJsonToFile(item, "trigger_export_" + (item.id ? item.id : "no_id") + ".json")
     }
 
     async handleCopyButtonClick(ev: any) {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let ind = this.$listBox.data("selected");
+        if (!ind) {
+            Notification.Show("Devi selezionare un trigger o alias.", true)
+            return;
+        }
         if (this.isDirty()) {
             await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
             return
@@ -298,25 +364,37 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
     }
 
-    itemSelect(ev: KeyboardEvent) {
-        if (ev.keyCode == 13 || ev.keyCode == 32) {
-            const el = this.$listBox.find("LI:focus")
-            this.selectItem(el)
-            this.handleListBoxChange();
+    private scrollIntoView(ti:jqwidgets.TreeItem) {
+        var $container = this.$listBox;      // Only scrolls the first matched container
+
+        var pos = $(ti.element).position(), height = $(ti.element).outerHeight();
+        var containerScrollTop = $container.scrollTop(), containerHeight = $container.height();
+        var top = pos.top + containerScrollTop;     // position.top is relative to the scrollTop of the containing element
+
+        var paddingPx = $(ti.element).height() + 5;      // padding keeps the target from being butted up against the top / bottom of the container after scroll
+
+        if (top < containerScrollTop) {     // scroll up                
+            $container.scrollTop(top - paddingPx);
+        }
+        else if (top + height > containerScrollTop + containerHeight) {     // scroll down
+            if (top + height < containerHeight) {
+                $container.scrollTop(top + height - containerHeight + paddingPx);
+            } else {
+                $container.scrollTop(top);
+            }
         }
     }
 
-    private selectItem(item: JQuery) {
-        item.addClass('selected');
-        item.siblings().removeClass('selected');
-        const index = item.parent().children().index(item);
-        this.$listBox.data("selectedIndex", index);
+    private select(item: jqwidgets.TreeItem) {
+        this.$listBox.data("selected", item.value);
+        this.jqList.selectItem(item);
+        this.jqList.expandItem(item);
+        this.scrollIntoView(item);
     }
 
     protected isDirty():boolean {
 
-        let ind = this.$listBox.data("selectedIndex");
-        let item = this.getItem(ind);
+        let item = this.$listBox.data("selected");
 
         if (!item && !this.$cancelButton.prop("disabled")) {
             return true;
@@ -345,17 +423,6 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.Filter(this.$filter.val());
     }
 
-    private itemClick(e:MouseEvent) {
-        var item = $(e.target);
-        if (item.is("li")) {
-            this.selectItem(item)
-        } else {
-            item.children().removeClass('selected');
-            this.$listBox.data("selectedIndex", -1);
-        }
-        this.handleListBoxChange();
-    }
-
     private setEditorDisabled(state: boolean): void {
         this.$pattern.prop("disabled", state);
         this.$id.prop("disabled", state);
@@ -375,8 +442,9 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private selectNone(): void {
-        this.$listBox.data("selectedIndex", -1);
-        this.$listBox.children().removeClass('selected');
+        this.$listBox.data("selected", null);
+        this.$filter.focus();
+        this.jqList.selectItem(null);
     }
 
     private clearEditor(): void {
@@ -393,18 +461,99 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.showTextInput();
     }
 
-    private updateListBox() {
-        let lst = this.getList();
-        let html = "";
-        for (let i = 0; i < lst.length; i++) {
-            html += "<li tabindex='0'>" + Util.rawToHtml(lst[i]) + "</li>";
+    private addToClassTree(map:Map<string, ClassTreeItem>, classes:string[], item:object, trg:TrigAlItem) {
+        
+        if (classes.length == 1) {
+            const cls = (classes[0] || "[senza classe]");
+            let parentClass = map.get(cls);
+            if (!parentClass) {
+                const newCls: ClassTreeItem = {
+                    name: cls,
+                    items: [],
+                    subclasses: new Map<string, ClassTreeItem>()
+                };
+                map.set(cls, newCls)
+                parentClass = newCls;
+            }
+            (<any>item).value = trg;
+            parentClass.items.push(item)
+        } else {
+            const cls = classes[0];
+            classes.splice(0, 1)
+            let parentClass = map.get(cls);
+            if (!parentClass) {
+                const newCls: ClassTreeItem = {
+                    name: cls,
+                    items: [],
+                    subclasses: new Map<string, ClassTreeItem>()
+                };
+                map.set(cls, newCls)
+                parentClass = newCls;
+            }
+            this.addToClassTree(parentClass.subclasses, classes, item, trg)
         }
-        this.$listBox.html(html);
+    }
+
+    getItemTree(parent:ClassTreeItem) {
+        let item = {
+            label: (parent.name || "[senza classe]"),
+            expanded: false,
+            items: <any>[]
+        }
+        if (parent.subclasses.size) {
+            for (let index = 0; index < parent.subclasses.size; index++) {
+                const key = [...parent.subclasses.keys()][index]
+                const element = parent.subclasses.get(key);
+                item.items.push(this.getItemTree(element))
+            }
+        }
+        if (parent.items) {
+            for (const itm of parent.items) {
+                item.items.push(itm)
+            }
+        }
+        return item;
+    }
+
+    private updateListBox() {
+        let lst = this.getListItems();
+
+        this.jqList.clear();
+        const itemMap = new Map<string, ClassTreeItem>();
+        let items: object[] = []
+
+        for (let i = 0; i < lst.length; i++) {
+            this.addToClassTree(itemMap, lst[i].class.split("|"), { label: lst[i].id || Util.rawToHtml(lst[i].pattern) }, lst[i])
+        }
+
+        for (const [key, value] of itemMap) {
+            items.push(this.getItemTree(value))
+        }
+        this.treeOptions.source = items;
+        this.jqList.setOptions(this.treeOptions);
+
         this.ApplyFilter();
     };
 
     private handleSaveButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
+        let trg:TrigAlItem = this.$listBox.data("selected");
+        if (!trg)
+        {
+            // new item
+            trg = {
+                class: '',
+                enabled: true,
+                id: '',
+                is_prompt: false,
+                is_script: true,
+                pattern: '',
+                regex: false,
+                value: '',
+                shortcut: null,
+                script: null
+            };    
+        }
+
         let is_script = this.$scriptCheckbox.is(":checked");
 
         if (this.$macroCheckbox.is(":checked") && !this.$macroLabel.text()) {
@@ -415,20 +564,19 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             Messagebox.Show("Errore", "Un alias regex non puo' essere usato come una macro.");
             return;
         }
-        let trg:TrigAlItem = {
-            pattern: this.$pattern.val(),
-            id: this.$id.val(),
-            value: is_script ? this.codeMirror.getValue() : this.$textArea.val(),
-            regex: this.$regexCheckbox.is(":checked"),
-            is_script: is_script,
-            class: this.$className.val(),
-            enabled: this.$enabledCheckbox.is(":checked"),
-            is_prompt: this.$isPromptCheckbox.is(":checked"),
-            shortcut: this.$macroLabel.text()
-        };
+
+        trg.pattern = this.$pattern.val()
+        trg.id = this.$id.val()
+        trg.value = is_script ? this.codeMirror.getValue() : this.$textArea.val()
+        trg.regex = this.$regexCheckbox.is(":checked")
+        trg.is_script = is_script
+        trg.class = this.$className.val()
+        trg.enabled = this.$enabledCheckbox.is(":checked")
+        trg.is_prompt = this.$isPromptCheckbox.is(":checked")
+        trg.shortcut = this.$macroLabel.text()
+        trg.script = null;
 
         this.saveItem(
-            ind,
             trg
         );
 
@@ -455,8 +603,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private handleDeleteButtonClick() {
-        let ind = this.$listBox.data("selectedIndex");
-        if (ind == undefined || ind < 0) return;
+        let ind = this.$listBox.data("selected");
+        if (!ind) return;
 
         this.deleteItem(ind);
 
@@ -478,8 +626,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private handleListBoxChange() {
-        let ind = this.$listBox.data("selectedIndex");
-        let item = this.getItem(ind);
+        //let ind = this.$listBox.data("selectedIndex");
+        let item = this.$listBox.data("selected"); //this.getItem(ind);
 
         if (!item) {
             this.clearEditor();
@@ -506,7 +654,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$macroLabel.text(item.shortcut||'');
         this.$regexCheckbox.prop("checked", item.regex ? true : false);
         this.$scriptCheckbox.prop("checked", item.is_script ? true : false);
-        this.$pattern.focus()
+        //this.$pattern.focus()
     }
 
     private handleScriptCheckboxChange() {
@@ -606,3 +754,4 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.updateListBox();
     }
 }
+

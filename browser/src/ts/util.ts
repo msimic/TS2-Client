@@ -414,26 +414,26 @@ export function addIntellisense(editor:any) {
 }
 
 export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement, fallback:JQuery|HTMLElement, win:JQuery) {
-    (<any>win).jqxWindow("close");
+    if (win) (<any>win).jqxWindow("close");
     $(last).on("keydown", (ev) => {
         if (ev.keyCode == 9 && !ev.shiftKey) {
             ev.preventDefault()
             ev.stopPropagation()
-            if ((<any>win).jqxWindow("isOpen")) $(first).focus()
+            if (!win || (<any>win).jqxWindow("isOpen")) $(first).focus()
         }
     });
     if (fallback) $(fallback).on("keydown", (ev) => {
         if (ev.keyCode == 9 && !ev.shiftKey && $(last).is(":disabled")) {
             ev.preventDefault()
             ev.stopPropagation()
-            if ((<any>win).jqxWindow("isOpen")) $(first).focus()
+            if (!win || (<any>win).jqxWindow("isOpen")) $(first).focus()
         }
     });
     $(first).on("keydown", (ev) => {
         if (ev.keyCode == 9 && ev.shiftKey) {
             ev.preventDefault()
             ev.stopPropagation()
-            if ((<any>win).jqxWindow("isOpen")) $(last).focus()
+            if (!win || (<any>win).jqxWindow("isOpen")) $(last).focus()
         }
     });
 }
