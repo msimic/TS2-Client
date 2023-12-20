@@ -3,6 +3,7 @@ import { colorIdToHtml } from "./color";
 import { EventHook } from "./event";
 import { ConfigIf, padStart } from "./util";
 import { Notification } from "./messagebox"
+import { OutputLogger } from "./outputLogger";
 
 /*export interface ConfigIf {
     onSet(key: string, cb: (val: any) => void): void;
@@ -13,7 +14,8 @@ import { Notification } from "./messagebox"
 export class OutWinBase {
     public EvtLine = new EventHook<[string, string]>();
     public EvtBuffer = new EventHook<[string, string]>();
-
+    protected logger: OutputLogger = new OutputLogger();
+    
     protected debugScripts = false;
 
     protected colorsEnabled: boolean;
@@ -24,16 +26,23 @@ export class OutWinBase {
     private maxLines: number = 500;
     private animatescroll: boolean = true;
     private mouseWasDown = false;
-    private _log: boolean = localStorage.getItem("autologging")=="true";
+    private _log: boolean = this.logger.isEnabled();
     public get log(): boolean {
         return this._log;
     }
     public set log(value: boolean) {
         if (!this._log && value) {
-            localStorage.setItem("log", "")
+            this.logger.clear()
         }
         this._log = value;
-        localStorage.setItem("autologging", (!!value).toString())
+        if (this._log) {
+            this.append("<span style=\"color:orange\">Registrazione attiva.<br/></span>", true)
+        }
+        if (!!value) {
+            this.logger.start();
+        } else {
+            this.logger.stop();
+        }
     }
 
     public getLines(): string[] {
@@ -123,7 +132,6 @@ export class OutWinBase {
             this.$rootElem.mousedown(this.onMouseDown);
             this.$rootElem.mouseup(this.onMouseUp);
         }
-
     }
 
     public destroy() {

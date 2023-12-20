@@ -39,8 +39,9 @@ export class ConnectWin {
         this.$connectButton = $(win.getElementsByClassName("winConnect-btnConnect")[0]);
         this.$hostInput = $(win.getElementsByClassName("winConnect-inputHost")[0]);
         this.$portInput = $(win.getElementsByClassName("winConnect-inputPort")[0]);
-
-        (<any>this.$win).jqxWindow({width: 450, height: 150});
+        const left = ($(window).width()-450)/2;
+        const top = ($(window).height()-150)/2 - 150;
+        (<any>this.$win).jqxWindow({width: 450, height: 150, position: { x: left, y: top }});
         this.$connectButton.click(this.handleConnectButtonClick.bind(this));
         this.$hostInput.keyup(this.handleKeyUp.bind(this));
         this.$portInput.keyup(this.handleKeyUp.bind(this));

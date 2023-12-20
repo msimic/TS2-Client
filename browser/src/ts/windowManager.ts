@@ -23,7 +23,7 @@ export interface WindowData {
 }
 
 export interface WindowDefinition {
-    window: JQuery;
+    window: JQuery; //jqxWindow
     custom:boolean;
     output: CustomWin;
     data: WindowData;
@@ -88,7 +88,29 @@ export class WindowManager {
                 });
             }
             (this.windows as any).loadedFrom = cp;
-
+            for (let w of this.layoutManager.getCurrent().items) {
+                if (w.type == ControlType.Window) {
+                    if (!this.windows.has(w.content)) {
+                        this.windows.set(w.content, {
+                            window: null,
+                            output: null,
+                            custom: null,
+                            data: {
+                                collapsed: false,
+                                docked: true,
+                                name: w.content,
+                                visible: true,
+                                x: 100,
+                                y: 100,
+                                w: 450,
+                                h: 250
+                            },
+                            created:false,
+                            initialized: false
+                        });
+                    }
+                }
+            }
             this.loading = false;
             await this.showWindows();
             this.triggerChanged();
@@ -208,7 +230,7 @@ export class WindowManager {
             return;
         }
         if (!dockPos.length) {
-            Messagebox.Show("Info", "Non trovo la posizione definita nel layout.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
+            //Messagebox.Show("Info", "Non trovo la posizione definita nel layout.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
         }
         let w = ui.parents(".jqx-window");
@@ -510,7 +532,11 @@ export class WindowManager {
         }
 
         const $win = $(win);
-        const w = (<any>$win).jqxWindow({width: (defaults&&defaults.data?defaults.data.w:450), height: (defaults&&defaults.data?defaults.data.h:250), showCollapseButton: true, autoOpen: false});
+        let wWidth = (defaults&&defaults.data?defaults.data.w:420)
+        wWidth = Math.min($(window).width()-20, wWidth)
+        let wHeight = (defaults&&defaults.data?defaults.data.h:250)
+        wHeight = Math.min($(window).height()-20, wHeight)
+        const w = (<any>$win).jqxWindow({width: wWidth, height: wHeight, showCollapseButton: true, autoOpen: false});
 
         let inresize=false;
         new ResizeObserver(()=>{
@@ -687,7 +713,7 @@ export class WindowManager {
         return w;
     }
 
-    private hide(window:string) {
+    public hide(window:string) {
         var w = this.windows.get(window);
         const oldVis = w.data.visible;
         (<any>w.window).jqxWindow("close");

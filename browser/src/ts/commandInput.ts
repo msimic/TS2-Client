@@ -3,6 +3,7 @@ import { EventHook } from "./event";
 import {AliasManager} from "./aliasManager";
 import { UserConfig } from "./userConfig";
 import { createPath, isTrue, throttle } from "./util";
+import { JsScript } from "./jsScript";
 
 export enum ScrollType {
     Bottom,
@@ -29,6 +30,26 @@ export const NumPadConfigDef = {
     Numpad8: "Numpad8",
     Numpad9: "Numpad9"
 }
+
+export const NumPadMap = {
+    "/": NumPadConfigDef.NumpadDivide,
+    "*": NumPadConfigDef.NumpadMultiply,
+    "-": NumPadConfigDef.NumpadSubtract,
+    "7": NumPadConfigDef.Numpad7,
+    "8": NumPadConfigDef.Numpad8,
+    "9": NumPadConfigDef.Numpad9,
+    "+": NumPadConfigDef.NumpadMultiply,
+    "4": NumPadConfigDef.Numpad4,
+    "5": NumPadConfigDef.Numpad5,
+    "6": NumPadConfigDef.Numpad6,
+    "1": NumPadConfigDef.Numpad1,
+    "2": NumPadConfigDef.Numpad2,
+    "3": NumPadConfigDef.Numpad3,
+    "Enter": NumPadConfigDef.NumpadEnter,
+    "0": NumPadConfigDef.Numpad0,
+    ",": NumPadConfigDef.NumpadDecimal,
+    ".": NumPadConfigDef.NumpadDecimal,
+};
 
 export const defNumpad:typeof NumPadConfigDef = {
     NumpadSubtract: "immufire",
@@ -66,7 +87,7 @@ export class CommandInput {
     private chkCmdAliases: JQuery;
     private chkCmdTriggers: JQuery;
 
-    constructor(private aliasManager: AliasManager, private config:UserConfig) {
+    constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig) {
         this.$cmdInput = $("#cmdInput");
 
         this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
@@ -106,10 +127,62 @@ export class CommandInput {
         const thrInputChange = throttle(this.inputChange, 200, this)
         this.$cmdInput.bind("keyup", v => <any>thrInputChange(v));
 
+        var contextMenu = (<any>$("#menuHistory")).jqxMenu({ animationShowDuration: 0, width: '120px', height: 'auto', source: [], autoOpenPopup: false, autoCloseOnClick: true, mode: 'popup'});
+        
+        let menuX = 0;
+        let menuY = 0;
+        
+        $("#btnHistory").click((event)=>{
+            var scrollTop = $(window).scrollTop();
+            var scrollLeft = $(window).scrollLeft();
+            const src = this.getHistoryMenuSource();
+            contextMenu.jqxMenu({ source: src});
+            menuX = $("#btnHistory").offset().left + 0 + scrollLeft;
+            menuY = $("#btnHistory").offset().top - 5 + scrollTop;
+            contextMenu.jqxMenu('open', menuX, menuY);
+        })
+
+        contextMenu.on("itemclick", (ev:any) => {
+            const cmd = $(ev.target).attr("item-value");
+            this.sendCmd(cmd, true, false);
+        })
+
+        contextMenu.on("shown", (ev:any) => {
+            setTimeout(() => {
+                $(contextMenu).css("max-height", ($(window).height()/2)+"px");
+                $(contextMenu).css("min-height", "20px");
+                $(contextMenu).css("height", "unset");
+                $(contextMenu).css("overflow-y", "auto");
+                $(contextMenu).css("opacity", 0.0);
+                const h = $(contextMenu).height();
+                let top = Math.floor(menuY - h);
+                $(contextMenu)[0].scrollTop = $(contextMenu)[0].scrollHeight;
+                $(contextMenu).animate({
+                    top: top+"px",
+                    opacity: 1.0
+                }, 150)
+            },1);
+        })
+
         $(document).ready(() => {
             this.loadHistory();
             this.inputChange(); // Force a resize
         });
+    }
+
+    private getHistoryMenuSource() {
+        const hist = this.cmd_history;
+        const menu = [];
+
+        for (let i = 0; i < hist.length; i++) {
+            let str = hist[i].replace(/$/g, " ");
+            str = str.length > 20 ? str.slice(0, 20) + "..." : str;
+            menu.push({
+                html: str,
+                value: hist[i]  
+            });
+        }
+        return menu;
     }
 
     public setInput(str:string) {
@@ -162,9 +235,17 @@ export class CommandInput {
 
     public sendCmd(cmd: string = undefined, nohistory:boolean=false, script:boolean=false): void {
 
-        this.EvtEmitCommandsAboutToArrive.fire(true)
         if (cmd==undefined) cmd = this.$cmdInput.val();
 
+        if (cmd[0] == ">" && cmd.length > 1) {
+            cmd = cmd.slice(1)
+            let script = this.jsScript.makeScript("Script", cmd, "");
+            if (script) { script(); };
+            return;
+        }
+
+        this.EvtEmitCommandsAboutToArrive.fire(true)
+        
         let cmds:string[] = [], ocmds:string[] = []
         this.prepareCommands(cmd, cmds, ocmds)
         
@@ -230,6 +311,18 @@ export class CommandInput {
 
     private keydown(event: JQueryEventObject): boolean {
         const code = (<KeyboardEvent>event.originalEvent).key;
+        const location = (<KeyboardEvent>event.originalEvent).location;
+        if (location == 3 /* numpad todo keynames */) {
+            const numpadKey = code in NumPadMap ? (<any>NumPadMap)[code] : null;
+            if (numpadKey && this.onNumpad(numpadKey)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            } else if (code == "Enter" && !event.shiftKey) {
+                this.sendCmd(undefined, false, false);
+                return false;
+            }
+        };
         switch (code) {
             case "PageUp":
                 this.EvtEmitScroll.fire(ScrollType.PageUp)
@@ -310,29 +403,6 @@ export class CommandInput {
                 this.$cmdInput.val(this.cmd_history[this.cmd_index]);
                 this.inputChange();
                 //this.$cmdInput.select();
-                return false;
-            case NumPadConfigDef.Numpad0:
-            case NumPadConfigDef.Numpad1:
-            case NumPadConfigDef.Numpad2:
-            case NumPadConfigDef.Numpad3:
-            case NumPadConfigDef.Numpad4:
-            case NumPadConfigDef.Numpad5:
-            case NumPadConfigDef.Numpad6:
-            case NumPadConfigDef.Numpad7:
-            case NumPadConfigDef.Numpad8:
-            case NumPadConfigDef.Numpad9:
-            case NumPadConfigDef.NumpadAdd:
-            case NumPadConfigDef.NumpadEnter:
-            case NumPadConfigDef.NumpadDecimal:
-            case NumPadConfigDef.NumpadSubtract:
-            case NumPadConfigDef.NumpadMultiply:
-            case NumPadConfigDef.NumpadDivide:
-                if (this.onNumpad(code)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else if (code == NumPadConfigDef.NumpadEnter && !event.shiftKey) {
-                    this.sendCmd(undefined, false, false);
-                }
                 return false;
             default:
                 this.cmd_index = -1;

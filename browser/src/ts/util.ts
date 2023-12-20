@@ -148,9 +148,10 @@ export function stripHtml(sText:string):string {
 export function Acknowledge(ack:string, str:string) {
     const val = localStorage.getItem('ack_'+ack);
     if (val == 'true') return;
+    const w = Math.min($(window).width()-20, 400);
     messagebox("Informazione", str, () => {
         localStorage.setItem('ack_'+ack, "true");
-    }, "OK", "", false, [""], 550, null, false, "");
+    }, "OK", "", false, [""], w, null, false, "");
 }
 
 export function waitForVariableValue(obj: any, varName:string, expectedValue:any, timeout?:number) {

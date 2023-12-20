@@ -24,6 +24,7 @@ import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
 import { Mapper } from "./mapper";
 import { VersionsWin } from "./versionsWindow";
+import { OutputLogger } from "./outputLogger";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -246,6 +247,10 @@ export class MenuBar {
             $(".electron", "#menuBar").remove();
         }
 
+        if (!(<any>window).deferredPrompt) {
+            $("#appInstallMenu").remove()
+        }
+
         const mnu:any = <JQuery>((<any>$("#menuBar")).jqxMenu({autoOpen: true, clickToOpen: true, keyboardNavigation: true}));
 
         circleNavigate($("#connessione",$("#menuBar")), $("#altro",$("#menuBar")), null, null);
@@ -382,6 +387,12 @@ export class MenuBar {
     }
 
     private makeClickFuncs() {
+        let logger = new OutputLogger();
+
+        this.clickFuncs["installapp"] = (val) => {
+            Mudslinger.AskForInstall(true);
+        }
+        
         this.clickFuncs["theme-default"] = (val) => {
             Mudslinger.setTheme("metro", "light", "neat")
         }
@@ -414,20 +425,22 @@ export class MenuBar {
         };
 
         this.clickFuncs["stoplog"] = (val) => {
-            localStorage.setItem("log","")
+            logger.clear()
             this.outWin.log = false
             EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Logging interrotto"})
             Notification.Show(`Logging interrotto`, true)
         };
         this.clickFuncs["log"] = (val) => {
-            localStorage.setItem("log","")
+            logger.clear()
             this.outWin.log = true
             EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log"})
             Notification.Show(`Inizio log`, true)
         };
 
-        this.clickFuncs["downloadlog"] = (val) => {
-            downloadString(val || localStorage.getItem("log"), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+        this.clickFuncs["downloadlog"] = async (val) => {
+            if (val || !logger.empty()) {
+                downloadString(val || await logger.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+            }
         };
 
         this.clickFuncs["reset-settings"] = (val) => {

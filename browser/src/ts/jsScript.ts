@@ -711,6 +711,20 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         }
         return null;
     };
+    const showWindow = function(window:string) {
+        if (outputManager) {
+            if (outputManager.getWindowManager().windows.has(window)) {
+                outputManager.getWindowManager().show(window);
+            }
+        }
+    };
+    const hideWindow = function(window:string) {
+        if (outputManager) {
+            if (outputManager.getWindowManager().windows.has(window)) {
+                outputManager.getWindowManager().hide(window);
+            }
+        }
+    };
     const send = function(cmd: string, silent = false) {
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
@@ -805,6 +819,8 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         variable: variable,
         getvar: getvar,
         setvar: setvar,
+        showWindow: showWindow,
+        hideWindow: hideWindow,
         mapper: mapper,
         classManager: classManager,
         aliasManager: aliasManager,

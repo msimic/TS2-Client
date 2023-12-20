@@ -231,7 +231,10 @@ export class MapperWindow {
         (<any>this.ctx).webkitImageSmoothingEnabled = false;
         this.ctx.imageSmoothingEnabled = false;
         
-        var w = (<any>this.$win).jqxWindow({width: 450, height: 290, showCollapseButton: true, isModal: false});
+        const ww = Math.min($(window).width()-20, 400);
+        const wh = Math.min($(window).height()-20, 300);
+
+        var w = (<any>this.$win).jqxWindow({width: ww, height: wh, showCollapseButton: true, isModal: false});
         this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu"))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
         
         this.refreshFavorites();
@@ -259,8 +262,6 @@ export class MapperWindow {
             } else {
                 self.load.bind(self)();
             }
-            self.onEmitMapperZoneChanged(self.mapper.idToZone.get(0));
-            self.refreshFavorites();
         });
 
         w.on('close', function (evt:any) {
@@ -410,7 +411,7 @@ esemplificativa e non esclusiva:
  e) la facoltà di trasferire a terzi i diritti di cui alle lettere precedenti.
 
 Nota: Per eventuali errori o richieste rivolgetevi
-nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bidi: embed;font-family: monospace;white-space: pre;")
+nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bidi: embed;")
                     break;
                 case "reloadweb":
                     this.loadSite(true);
@@ -686,6 +687,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                 this.message(`Caricato mappe - versione sconosciuta`)
             } else 
                 this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
+            
+            if (!this.mapper.current) this.onEmitMapperZoneChanged(this.mapper.idToZone.get(0));
+            this.refreshFavorites();
         });
 
     }
@@ -717,6 +721,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                 this.message(`Caricato mappe - versione sconosciuta`)
             } else 
                 this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
+            
+            if (!this.mapper.current) this.onEmitMapperZoneChanged(this.mapper.idToZone.get(0));
+            this.refreshFavorites();
         });
     }
 

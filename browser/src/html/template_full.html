@@ -7,8 +7,12 @@
   <meta http-equiv="Cache-control" content="no-cache"/>
   <meta http-equiv="Expires" content="-1"/>
   <meta http-equiv="Pragma" content="no-cache" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content">
-  <meta name="apple-mobile-web-app-capable" content="yes" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content, viewport-fit=cover">
+  <meta viewport='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' mobileAppIOS="true">
+  <meta name="mobile-web-app-capable"  content= "yes">
+  <meta name="full-screen"  content="no">
+  <meta name="browsermode"  content="application">
+  <meta name="screen-orientation"  content="portrait"> 
 
   <title>TS Client</title>
 
@@ -26,9 +30,15 @@
   <script>
     if (window.visualViewport) {
       let resizer = (e) => {
-        if (e.target?.height) {
-          $("body").height(Math.floor(e.target?.height))
-          console.log("Window innerHeight is: " + Math.floor(window.innerHeight) + " - Resizing height to " + Math.floor(e.target?.height))
+        if ((e.target?.height)) {
+          let newH = e?.target?.height ? Math.floor(e.target?.height) : Math.floor(window.innerHeight);
+          if (!newH || isNaN(newH) || Math.floor($("body").height()) == Math.floor(window.innerHeight)) {
+            return;
+          }
+          $("body").height(newH);
+          setTimeout(function(){
+            window.scrollTo(0, 1);
+          }, 0);
         }
       };
       window.visualViewport.addEventListener("resize", resizer);
@@ -56,6 +66,15 @@
           $(selector).text(text);
       });
     }
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      console.log(`'beforeinstallprompt' event was fired.`);
+    });
+    window.addEventListener('appinstalled', () => {
+      window.deferredPrompt = null;
+      console.log('PWA is installed');
+    });
   </script>
 </head>
 <body class="light">
@@ -64,7 +83,7 @@
     <ul>
       <li id="connessione" class="focus" tabindex="400">Connessione
         <ul>
-          <li data-option-name="use-profile"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>&#128423;</span>Personaggi</li>
+          <li data-option-name="use-profile"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;'>♥️</span>Personaggi</li>
           <li type="separator"></li>
           <li id="menuBar-conn-disconn" data-option-name="connect"><span style='float: left; margin-right: 5px;width:16px;height:16px;text-align:center;' >&#128279;</span>Connetti</li>
           <li type="separator"></li>
@@ -200,6 +219,7 @@
           <li data-option-name="about">Versione</li>
           <li data-option-name="changelog">Registro modifiche</li>
           <li type="separator"></li>
+          <li id="appInstallMenu" data-option-name="installapp">Installa App</li>
           <li data-option-name="help">Aiuto (Help)</li>
         </ul>
       </li>
@@ -248,6 +268,10 @@
           </div>
           <div id="row-input">
             <div id="cmdCont">
+              <div class="chkCmdInputCmdStackCont">
+                <span id="btnHistory" aria-label="Comandi precedenti" title="Comandi precedenti">&#x2261;</span>
+                <div id="menuHistory"></div>
+              </div>
               <textarea autofocus tabindex="501" rows="1" id="cmdInput" aria-label="Barra comandi" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" style="-webkit-user-modify: read-write-plaintext-only;"></textarea>
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdTriggers" type="checkbox" checked title="Triggers">

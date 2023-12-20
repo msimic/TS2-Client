@@ -13,7 +13,7 @@ import { MenuBar } from "./menuBar";
 import { ClassManager } from "./classManager";
 import { Mxp } from "./mxp";
 import { OutputManager } from "./outputManager";
-import { EvtLogExceeded, OutputWin } from "./outputWin";
+import { OutputWin } from "./outputWin";
 import { Socket } from "./socket";
 import { TriggerEditor, EvtCopyTriggerToBase } from "./triggerEditor";
 import { TriggerManager } from "./triggerManager";
@@ -31,7 +31,7 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "./variablesEditor";
 import { ClassEditor } from "./classEditor";
 import { EventsEditor } from "./eventsEditor";
-import { Button, Messagebox, Notification } from "./messagebox";
+import { Button, Messagebox, Notification, messagebox } from "./messagebox";
 import { LayoutManager } from "./layoutManager";
 import { MapperWindow } from "./mapperWindow";
 import { Mapper } from "./mapper";
@@ -41,6 +41,7 @@ import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
 import { MapperStorage } from "./mapperStorage";
 import { VersionsWin } from "./versionsWindow";
+import { EvtLogExceeded, OutputLogger } from "./outputLogger";
 
 declare global {
     interface JQuery {
@@ -54,6 +55,7 @@ interface ConnectionTarget {
 }
 
 export class Client {
+    private outputLogger: OutputLogger;
     private aliasEditor: AliasEditor;
     private baseAliasEditor: AliasEditor;
     private aliasManager: AliasManager;
@@ -109,16 +111,17 @@ export class Client {
     }
 
     public connect(ct?:ConnectionTarget) {
-        let log = '';
-        if ((log = localStorage.getItem("log"))) {
+        let logger = new OutputLogger();
+        /*if (!logger.empty()) {
             (async () => {
-                const ret = await Messagebox.Question("Autologging attivo (menu Connessione).\nSta per partire una nuova registrazione!\n\nAvevi una registrazione precedente in corso.\nPuoi scaricarla ora se rispondi Si, altrimenti verra' persa.")
+                const content = await logger.content()
+                logger.clear()
+                const ret = await Messagebox.Question("Autologging attivo (menu Connessione).\nSta per partire una nuova registrazione!\n\nAvevi una registrazione precedente in corso.\nPuoi scaricarla ora se rispondi Si, altrimenti verra' persa.\nPer interrompere la registrazione usa il menu Connessione")
                 if (ret.button == 1) {
-                    this.menuBar.triggerAction("downloadlog", log)
+                    this.menuBar.triggerAction("downloadlog", content)
                 }
             })();
-        }
-        localStorage.setItem("log","")
+        }*/
         if (ct) {
             this.connectionTarget = ct;
             if (!this.connectionTarget.host) {
@@ -148,6 +151,7 @@ export class Client {
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
         (<any>window)["Messagebox"] = Messagebox;
         (<any>window)["Notification"] = Notification;
+        this.outputLogger = new OutputLogger();
         this.aboutWin = new AboutWin();
         this.mapper = new Mapper(new MapperStorage());
         (<any>$.fn).findByContentText = function (text:string) {
@@ -206,7 +210,7 @@ export class Client {
         this.jsScript.setTriggerManager(this.triggerManager);
         this.jsScript.setAliasManager(this.aliasManager);
 
-        this.commandInput = new CommandInput(this.aliasManager, this.profileManager.activeConfig);
+        this.commandInput = new CommandInput(this.aliasManager, this.jsScript, this.profileManager.activeConfig);
         this.commandInput.EvtEmitCommandsAboutToArrive.handle(v=>{
             //this.mapper.clearManualSteps()
         })
@@ -335,6 +339,17 @@ export class Client {
             this.outputWin.handleTelnetDisconnect();
             apiUtil.clientInfo.telnetHost = null;
             apiUtil.clientInfo.telnetPort = null;
+            if (!this.outputLogger.empty()) {
+                (async () => {
+                    const content = await this.outputLogger.content()
+                    const ret = await Messagebox.ShowWithButtons("Registrazione (Log)","Avevi una registrazione in corso.\n\nScegli come continuare:", "Continua registrazione", "Scarica e interrompi")
+                    if (ret.button == Button.Cancel) {
+                        this.menuBar.triggerAction("downloadlog", content)
+                        this.outputLogger.clear()
+                        this.outputLogger.stop()
+                    }
+                })();
+            }
         });
 
         this.socket.EvtTelnetError.handle((data: string) => {
@@ -432,18 +447,17 @@ export class Client {
         let awaitingLogResponse = false;
         EvtLogExceeded.handle((data:{owner:string, message:string, silent:boolean}) => {
             if (!data.silent) {
-                const log = localStorage.getItem("log")
-                if (log && !awaitingLogResponse) {
+                if (!this.outputLogger.empty() && !awaitingLogResponse) {
                     awaitingLogResponse = true;
                     (async (log) => {
                         if (((await Messagebox.Question(data.message)).button == 1)) {
-                            this.menuBar.triggerAction("downloadlog", log)
+                            this.menuBar.triggerAction("downloadlog", await log)
                         }
                         awaitingLogResponse = false;
-                    })(log);
+                    })(this.outputLogger.content());
                 }
             }
-            localStorage.setItem("log","")
+            this.outputLogger.clear()
         });
 
         // JsScript events
@@ -559,7 +573,12 @@ export class Client {
         });
 
         let loadContrib = async () => {
-
+            /*if (window.matchMedia('(display-mode: standalone)').matches) {
+                EvtScriptEmitPrint.fire({
+                    message: `Standalone mode`,
+                    owner: "keyboard"
+                })
+              }*/
             const mapOnline = await this.mapper.loadVersion(true);
             const mapOffline = await this.mapper.loadVersion(false);
             const mapOnlineIsNewer = mapOnline.version > mapOffline.version;
@@ -665,7 +684,7 @@ export async function setupWorkers() {
     if ((<any>window).ipcRenderer || window.location.host.indexOf("localhost")!=-1) return Promise.resolve(null);
 
     if ('serviceWorker' in navigator) {
-        return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
+        return navigator.serviceWorker.register('./serviceWorker.js', {scope: './'}).then(function() {
           // Registration was successful. Now, check to see whether the service worker is controlling the page.
           if (navigator.serviceWorker.controller) {
             // If .controller is set, then this page is being actively controlled by the service worker.
@@ -762,6 +781,28 @@ export namespace Mudslinger {
 
     function onPreloaded() {
         $(".preloading").addClass("preloaded");
+        AskForInstall(false);
+    }
+
+    export async function AskForInstall(force:boolean) {
+        const prompt = (<any>window).deferredPrompt;
+        if (!prompt || (!force && localStorage.getItem("ack_AskForInstall")=="true")) return;
+
+        messagebox("Usa come app",
+`Vuoi usare il client come fosse un applicazione nativa?
+
+Questo ti permetterebbe di lanciarlo piu facilmente,
+averlo disponibile nella barra applicazioni o desktop,
+e anche avere piu' spazio verticale nel client.
+
+Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
+            localStorage.setItem('ack_AskForInstall', "true");
+            if (v == "Si") {
+                prompt.prompt();
+                const { outcome } = await prompt.userChoice;
+                console.log("User responded to prompt: " + outcome)
+            }
+        }, "Si", "No", false, [""], 400, null, false, "");
     }
 
     export function runClient() {

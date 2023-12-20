@@ -1,7 +1,9 @@
 - redesign interfaccia
-- tema interfaccia chiaro e scudo
+- tema interfaccia chiaro e scuro
 - correzioni per far girare meglio il client su cellulari
 - correzioni al resyc del mapper
 - persistenza dell'ultimo pg connesso piu' robusta
 - la lista alias e triggers e' ragruppata in classi
 - corretto un bug del manager finestre che poteva dimenticare di salvare lo stato delle finestre
+- bottone per mostrare la history dei comandi
+- registrazione/log piu performante

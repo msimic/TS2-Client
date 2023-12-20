@@ -75,8 +75,9 @@ export class TriggerManager {
         if (val == undefined) {
             val = !t.enabled;
         }
+        const changed = t.enabled != val;
         t.enabled = val;
-        this.saveTriggers()
+        if (changed) this.saveTriggers()
     }
 
     public getById(id:string):TrigAlItem {

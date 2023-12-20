@@ -3,7 +3,6 @@ import { OutWinBase } from "./outWinBase";
 import { TriggerManager } from "./triggerManager";
 import * as Util from "./util";
 import { ConfigIf } from "./util";
-export let EvtLogExceeded = new EventHook<{owner:string, message:string, silent:boolean}>();
 
 export class OutputWin extends OutWinBase {
     private outer:JQuery;
@@ -32,15 +31,7 @@ export class OutputWin extends OutWinBase {
     protected logLine(): void {
         if (this.log) {
             const line = this.lineText;
-            const newLog = localStorage.getItem("log") + line
-            localStorage.setItem("log", newLog)
-            if (newLog.length > 1000000) {
-                EvtLogExceeded.fire({
-                    owner: "outputWindow",
-                    message: "Lunghezza Log superata (1 MB). Verra' azzerato. Vuoi scaricarlo ora?",
-                    silent: false
-                })
-            }
+            this.logger.log(line);
         }
     }
 

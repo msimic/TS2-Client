@@ -36,7 +36,10 @@ export class AboutWin {
 
         this.$win = $(win);
 
-        (<any>this.$win).jqxWindow({width: 480, height: 290});
+        const w = Math.min($(window).width()-20, 480);
+        const h = Math.min($(window).height()-20, 290);
+
+        (<any>this.$win).jqxWindow({width: w, height: h});
     }
 
     public show() {

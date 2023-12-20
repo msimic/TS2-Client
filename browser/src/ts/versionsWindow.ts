@@ -17,14 +17,18 @@ export class VersionsWin {
         <!--content-->
         <div style="text-align:center;display: flex;flex-direction: column;">
             
-            <pre id="versionsDiv" style="font: bold 12px consolas;margin:5px;text-align:left;white-space: pre-wrap;overflow-y: scroll;"></pre>
+            <pre id="versionsDiv" style="font: bold 12px consolas;margin:5px;text-align:left;white-space: wrap;overflow-y: scroll;"></pre>
         </div>
         `;
 
         this.$win = $(win);
         this.$div = $("#versionsDiv", this.$win);
-        fetch("./versions.txt").then(async r => this.$div.text(await r.text()));
-        (<any>this.$win).jqxWindow({width: 540, height: 280});
+        fetch("./versions.txt").then(async r => this.$div.html((await r.text()).split('\n').join("<br/>")));
+
+        const w = Math.min($(window).width()-20, 480);
+        const h = Math.min($(window).height()-20, 290);
+
+        (<any>this.$win).jqxWindow({width: w, height: h});
     }
 
     public show() {

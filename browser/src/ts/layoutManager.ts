@@ -171,17 +171,180 @@ export class LayoutManager {
         this.unload();
     }
 
+    emptyLayout():LayoutDefinition  {
+        const ret = {
+            "panes": [
+              {
+                "position": 6,
+                "id": "row-bottom-right",
+                "background": "rgb(21 106 167 / 77%);"
+              }
+            ],
+            "items": [
+              {
+                "id": "tap_ui",
+                "w": 150,
+                "h": 150,
+                "paneId": "row-bottom-right",
+                "type": 1,
+                "css": "margin:0;border:0;padding:0;position:absolute;top:-150px;right:0;background-image:url(css/images/clickUI-small.png) !important;opacity:0.7;",
+                "stack": 0,
+                "content": "",
+                "visible": "ClickControls"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 5,
+                "y": 5,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "attack",
+                "tooltip": "Assisti gruppo o attacca il primo mob"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 55,
+                "y": 5,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "nord"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 105,
+                "y": 5,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "up"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 5,
+                "y": 55,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "west"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 55,
+                "y": 55,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "stoporfleeorlook",
+                "tooltip": "Stoppa o flea, o se fuori combat guarda"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 105,
+                "y": 55,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "est"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 5,
+                "y": 105,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "casta",
+                "tooltip": "Cura o casta"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 55,
+                "y": 105,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "sud"
+              },
+              {
+                "parent": "tap_ui",
+                "background": "transparent",
+                "w": 40,
+                "h": 40,
+                "x": 105,
+                "y": 105,
+                "paneId": "row-bottom-right",
+                "type": 0,
+                "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+                "stack": 0,
+                "content": "",
+                "commands": "down"
+              }
+            ]
+          };
+        return ret;
+    }
+
     public load() {
         let cp:string;
         cp = this.profileManager.getCurrent();
 
         this.unload();
         
-        if (!cp) return;
+        if (!cp) {
+            this.loadLayout(this.emptyLayout());
+            return;
+        }
 
         this.deleteLayout();
         let prof = this.profileManager.getProfile(cp);
-        if (prof && prof.layout) this.loadLayout(prof.layout);
+        if (prof && prof.useLayout && prof.layout) {
+             this.loadLayout(prof.layout);
+        } else if (prof && !prof.useLayout) {
+            this.loadLayout(this.emptyLayout());
+        }
+
         this.triggerChanged();
     }
 

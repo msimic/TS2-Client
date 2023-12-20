@@ -19,6 +19,18 @@ a {
     cursor: pointer;
 }
 
+.outputText a {
+    color: unset !important;
+    cursor: pointer;
+}
+
+#btnHistory {
+    padding-left: 4px;
+    padding-right: 0px;
+    padding-bottom: 2px;
+    cursor: pointer;
+}
+
 #helpContent {
     overflow-x: auto !important;
     overflow-y: auto !important;
@@ -28,6 +40,33 @@ a {
 #helpContent a {
     /*color:rgb(72, 80, 194);*/
     cursor: pointer;
+}
+
+.hamburger {
+    margin-right: 10px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+#helpIndex {
+    background-color: white;
+    z-index: 5999;
+}
+
+#helpIndexInner {
+    background-color: white;
+}
+
+#helpSearchText {
+    width: 120px;
+}
+
+.dark #helpIndex {
+    background-color: black;
+}
+
+.dark #helpIndexInner {
+    background-color: black;
 }
 
 #helpIndex a {
@@ -314,6 +353,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     padding: 0 !important;
     flex-direction: row;
     align-items: center;
+    z-index: 2;
   }
   #row-bottom-right {
     /*flex:1; */
@@ -541,7 +581,6 @@ input:disabled::placeholder {
 }
 
 .jqx-dropdownlist-state-focus {
-    filter: drop-shadow(0 0 1px black) !important;
     border: 1px solid rgb(21 106 167 / 77%) !important;
     font-weight: bold;
 }
@@ -630,7 +669,9 @@ body {
     overflow: hidden;
     position: absolute;
     background-color: black;
+    transform: rotate(0);
 }
+
 .outputText {
     font-size: small;
     background-color:black;
@@ -836,6 +877,7 @@ label {
 .messageboxbuttons {
     padding-top: 5px;
     text-align: center;
+    text-wrap: nowrap;
 }
 
 .messageboxtext {
@@ -1375,11 +1417,13 @@ input:focus,button:focus {
 }
 
 .winProfiles-profiles {
-    width: 100%;
-    margin-bottom: 5px;
-    margin-top: 5px;
+    width: 100% !important;
+    margin-bottom: 5px !important;
+    margin-top: 5px !important;
+    margin-left: 5px !important;
+    margin-right: 5px !important;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 14px !important;
 }
 
 .jqx-menu-popup, .jqx-menu-dropdown, .jqx-menu-vertical {
@@ -1654,6 +1698,10 @@ ul.select {
     .jqx-menu-popup, .jqx-menu-dropdown {
         width: 110px !important;
     }
+    .jqx-fill-state-hover, .jqx-fill-state-pressed, .jqx-fill-state-normal {
+        font-size: 10px !important;
+        line-height: unset !important;
+    }
 }
 
 #content-wrapper .jqx-window {
@@ -1703,7 +1751,6 @@ ul.select {
     flex-direction: column;
     display: flex !important;
     position: relative !important;
-    width: auto !important;
     height: 100%;
     border: 0 !important;
     margin: 0 !important;

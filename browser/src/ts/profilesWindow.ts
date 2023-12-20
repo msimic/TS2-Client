@@ -37,7 +37,7 @@ export class ProfilesWindow {
                 <div>
                     <span style="display:inline-block;margin:5px;">Quale profilo vuoi usare?</span>
                 </div>
-                <div>
+                <div style="display:flex;">
                     <select class="winProfiles-profiles"></select>
                 </div>
                 <div>
@@ -80,7 +80,10 @@ export class ProfilesWindow {
         
         $(this.connectButton).text(connectText);
 
-        (<any>this.$win).jqxWindow({width: 340, height: 150, showCollapseButton: true});
+        const left = ($(window).width()-340)/2;
+        const top = ($(window).height()-150)/2 - 150;
+        
+        (<any>this.$win).jqxWindow({width: 340, height: 150, showCollapseButton: true, position: {x: left, y: top}});
         $(this.createButton).click(this.handleNew.bind(this));
         $(this.offlineButton).click(this.handleOfflineButtonClick.bind(this));
         $(this.connectButton).click(() => setTimeout(()=>this.handleConnectButtonClick(),1));
@@ -120,9 +123,10 @@ export class ProfilesWindow {
     
     Un profilo viene legato a uno (o piu') personaggi gia' esistenti.
     
-    Il profilo base connette sempre al server live. E puo' contenere alias e trigger
-    preimpostati usabili da tutti gli altri profili. Premi il bottone per modificare il profilo
-    base per ulteriori informazioni.`;
+    Il profilo base connette sempre al server live.
+    Esso puo' contenere alias e trigger preimpostati usabili da tutti gli altri profili.
+    
+    Premi il bottone per modificare il profilo base per ulteriori informazioni.`;
 
     private async handleNew() {
         const prof = new Profile();
@@ -243,9 +247,8 @@ export class ProfilesWindow {
             Quello che puo' essere fatto e' importare i trigger e alias raccomandati.
 
             N.b.: Gli alias e trigger del profilo base sono acessibili in tutti i profili/personaggi.
-                  Si puo' sopprimere i trigger e alias di base con alias e trigger di pattern identico
-                  creati nel profilo privato del personaggio. Oppure scegliendo di non usarli alla
-                  creazione di un profilo.
+                  Si puo' sopprimere i trigger e alias di base con alias e trigger di pattern identico creati nel profilo privato del personaggio.
+                  Oppure scegliendo di non usarli alla creazione di un profilo.
 
             <b>Vuoi includere/aggiornare i trigger e alias preimpostati nel profilo base?</b>
             `).then(v => {

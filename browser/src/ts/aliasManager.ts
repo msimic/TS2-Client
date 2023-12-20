@@ -67,8 +67,9 @@ export class AliasManager {
         if (val == undefined) {
             val = !t.enabled;
         }
+        const changed = t.enabled != val;
         t.enabled = val
-        this.saveAliases()
+        if (changed) this.saveAliases()
     }
 
     public getById(id:string):TrigAlItem {

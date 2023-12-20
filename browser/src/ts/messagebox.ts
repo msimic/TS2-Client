@@ -80,6 +80,8 @@ export class Messagebox {
 }
 
 export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, labelStyle:string, multiline:boolean=false): Promise<MessageboxResult> {
+    let wData = null;
+    try {
 
     let resolveFunc:Function = null;
     let rejectFunc:Function = null;
@@ -129,7 +131,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
         const template =`
         <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
             <div style="display: table-${rowOrCell};height:auto;">
-                <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};white-space: nowrap;padding:5px" id="message${index}"></div>
+                <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};padding:5px" id="message${index}"></div>
             </div>
             <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
                 ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
@@ -145,7 +147,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     <!--header-->
     <div id="title"></div>
     <!--content-->
-    <div>
+    <div id="msgboxcontent">
         <div style="display: table;height: 100%;width: 100%;box-sizing: border-box;position:relative;">
             <div style="display: table;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
             ${innserMessageboxBody}
@@ -162,90 +164,126 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     
     let $win = $(win);
 
-    const acceptButton = $("#accept", $win);
-    const cancelButton = $("#cancel", $win);
-    const titleText = $("#title", $win);
-    const messageText = [...Array(numInputs).keys()].map((v,i) => $("#message"+i, $win));
-    const messageInput = [...Array(numInputs).keys()].map((v,i) => $("#messageboxinput"+i, $win));
-    if (!input) {
-        messageInput.map(v => v.hide());
-    } else if (inputDefault) {
-        messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked", inputDefault[i]) : v.val(inputDefault[i]));
-    }
-
-    if (!multiline) messageInput.map(v => v.keyup(k => {
-        if (k.key == "Enter" || k.key == "Return") {
-            acceptButton.click();
+        const acceptButton = $("#accept", $win);
+        const cancelButton = $("#cancel", $win);
+        const titleText = $("#title", $win);
+        const messageText = [...Array(numInputs).keys()].map((v,i) => $("#message"+i, $win));
+        const messageInput = [...Array(numInputs).keys()].map((v,i) => $("#messageboxinput"+i, $win));
+        if (!input) {
+            messageInput.map(v => v.hide());
+        } else if (inputDefault) {
+            messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked", inputDefault[i]) : v.val(inputDefault[i]));
         }
-    }));
 
-    (<any>$win).jqxWindow({minWidth: Math.min($(window).width(), width || 350), minHeight: height || 100, showCollapseButton: false, isModal: true, height:'auto', resizable: true});
-
-    $(acceptButton).text(okbuttontext);
-    if (!okbuttontext) $(acceptButton).hide();
-    $(cancelButton).text(cancelbuttontext);
-    if (!cancelbuttontext) $(cancelButton).hide();
-
-    $(acceptButton).click(() => {
-        ret.button = ButtonOK;
-        ret.result = (okbuttontext);
-        (<any>$win).jqxWindow("close");
-    });
-    $(cancelButton).click(() => {
-        ret.result = (cancelbuttontext);
-        ret.button = ButtonCancel;
-        (<any>$win).jqxWindow("close");
-    });
-    $(titleText).text(title);
-    messageText.map((v,i) => v.html(`<span style='${labelStyle?labelStyle+";":""}margin:0;padding:0;'>` + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
-
-    (<any>$win).jqxWindow("open");
-    (<any>$win).jqxWindow('bringToFront');
-    (<any>$win).on("close", () => {
-        if (callback) callback(ret.result);
-        (<any>$win).jqxWindow("destroy");
-        if (input) {
-            ret.result = messageInput[0].val();
-            if (multiinput) {
-                ret.results = messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked") : v.val())
+        if (!multiline) messageInput.map(v => v.keyup(k => {
+            if (k.key == "Enter" || k.key == "Return") {
+                acceptButton.click();
             }
+        }));
+
+        let maxW = width || $(window).width()-20;
+        let maxH = height || $(window).height()-20;
+        let minW = maxW / 4;
+        let minH = maxH / 10;
+
+        wData = {
+            minWidth: minW,
+            minHeight: minH,
+            width: width || "auto",
+            height: height || "auto",
+            maxWidth: maxW,
+            maxHeight: maxH,
+            showCollapseButton: false,
+            isModal: true,
+                resizable: true};
+        (<any>$win).jqxWindow(wData);
+
+        $(acceptButton).text(okbuttontext);
+        if (!okbuttontext) $(acceptButton).hide();
+        $(cancelButton).text(cancelbuttontext);
+        if (!cancelbuttontext) $(cancelButton).hide();
+
+        $(acceptButton).click(() => {
+            ret.button = ButtonOK;
+            ret.result = (okbuttontext);
+            (<any>$win).jqxWindow("close");
+        });
+        $(cancelButton).click(() => {
+            ret.result = (cancelbuttontext);
+            ret.button = ButtonCancel;
+            (<any>$win).jqxWindow("close");
+        });
+        $(titleText).text(title);
+        messageText.map((v,i) => v.html(`<span style='${labelStyle?labelStyle+";":""}margin:0;padding:0;'>` + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
+
+        (<any>$win).jqxWindow("open");
+        (<any>$win).jqxWindow('bringToFront');
+        (<any>$win).on("close", () => {
+            if (callback) callback(ret.result);
+            (<any>$win).jqxWindow("destroy");
+            if (input) {
+                ret.result = messageInput[0].val();
+                if (multiinput) {
+                    ret.results = messageInput.map((v,i) => typeof inputDefault[i] == "boolean" ? v.prop("checked") : v.val())
+                }
+            }
+            if (resolveFunc) resolveFunc(ret);
+            $("#cmdInput").focus();
+        });
+        
+        messageText.forEach(i => i.css({
+            "white-space": "nowrap"
+        }));
+
+        if (!width) {
+            let newWidth = Math.max(...messageText.map(v => v.outerWidth()+10));
+            if (numInputs>1) {
+                newWidth += Math.max(...messageInput.map(v => v.outerWidth()+10));
+            }
+            newWidth = Math.max(100, newWidth);
+            (<any>$win).jqxWindow({width: Math.min($(window).width()-20, newWidth)}); 
         }
-        if (resolveFunc) resolveFunc(ret);
-        $("#cmdInput").focus();
-    });
-    
-    if (!height) {
-        (<any>$win).find('.jqx-window-content').append('<div id="bottomOfContent"></div>');
-        let offset = (<any>$win).find('.jqx-window-content #bottomOfContent').position();
-        $('.jqx-window-content #bottomOfContent', $win).remove();
+        messageText.forEach(i => i.css({
+            "white-space": "wrap"
+        }));
 
-        /*
-        let height = [...messageText.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
-        let inputheight = [...messageInput.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
-        // get new height based on position of marker
-        var newHeight = height +
-             $('.messageboxbuttons', $win).height() +
-             $('.jqx-window-header', $win).height() +
-             (input ? inputheight : 0)+
-              70;
-        */
-        // apply new height
-        (<any>$win).jqxWindow({height: offset.top + 50}); 
-    }
+        if (!height) {
+            (<any>$win).find('.jqx-window-content').append('<div id="bottomOfContent"></div>');
+            let offset = (<any>$win).find('.jqx-window-content #bottomOfContent').position();
+            $('.jqx-window-content #bottomOfContent', $win).remove();
 
-    if (!width) {
-        let newWidth = Math.max(...messageText.map(v => v.outerWidth()+10));
-        if (numInputs>1) {
-            newWidth += Math.max(...messageInput.map(v => v.outerWidth()+10));
+            /*
+            let height = [...messageText.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
+            let inputheight = [...messageInput.map(v => v.height())].reduce(function(a, b) { return a + b; }, 0);
+            // get new height based on position of marker
+            var newHeight = height +
+                $('.messageboxbuttons', $win).height() +
+                $('.jqx-window-header', $win).height() +
+                (input ? inputheight : 0)+
+                70;
+            */
+            // apply new height
+            const newH = Math.max(100, offset.top + 50);
+            (<any>$win).jqxWindow({height: newH}); 
         }
-        (<any>$win).jqxWindow({width: Math.min($(window).width(), newWidth)}); 
-    }
 
-    setTimeout(()=>{
-    if (input) {
-        messageInput[0].focus();
-    } else {
-        acceptButton.focus();
-    }}, 200);
-    return promise;
+        const left = ($(window).width() - (<any>$win).jqxWindow("width")) / 2;
+        const top = ($(window).height() - (<any>$win).jqxWindow("height")) / 2;
+        const pos = {x: Math.max(10, left), y: Math.max(10, top)};
+        (<any>$win).jqxWindow({position: pos}); 
+        
+
+        setTimeout(()=>{
+        if (input) {
+            messageInput[0].focus();
+        } else {
+            acceptButton.focus();
+        }}, 200);
+
+        return promise;
+    }
+    catch (er) {
+        $("#winOutput").text("error: " + er + "\n" + JSON.stringify(wData, null, 2));
+        return null;
+    };
 }

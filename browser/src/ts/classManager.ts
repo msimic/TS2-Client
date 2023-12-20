@@ -52,9 +52,12 @@ export class ClassManager {
         if (val == undefined) {
             val = !cls.enabled;
         }
-        cls.enabled = val;
-        this.saveClasses()
-        EvtScriptEvent.fire({event: ScripEventTypes.ClassChanged, condition: id, value: cls.enabled});
+        const changed = cls.enabled != val;
+        if (changed) {
+            cls.enabled = val;
+            this.saveClasses()
+            EvtScriptEvent.fire({event: ScripEventTypes.ClassChanged, condition: id, value: cls.enabled});
+        }
     }
 
     public isEnabled(id: string):boolean {
