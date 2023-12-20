@@ -491,7 +491,7 @@ if (serverConfig.adminHost && serverConfig.adminPort) adminServer.listen(serverC
 // Admin Web API
 let adminApp = express();
 
-adminApp.get('/conns', (req, res) => {
+adminApp.get('/conns', (req:any, res:any) => {
     let conns = [];
     for (let id in openConns) {
         let c = openConns[id];
@@ -541,7 +541,7 @@ function approveUser(user:string, token:string) {
     fs.renameSync(p1, p2);
 }
 
-adminApp.get('/approve', (req, res) => {
+adminApp.get('/approve', (req:any, res:any) => {
     let status = "Errore di convalidazione Email";
     let message = "Richiesta di convalidazione Email non valida, inesistente oppure scaduta.<br/>Puoi richiederla al menu iniziale del gioco modificando l'email."
     if (!ValidateEmail(<string>req.query.email)) {
