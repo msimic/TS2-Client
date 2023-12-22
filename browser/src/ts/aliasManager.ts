@@ -164,6 +164,23 @@ export class AliasManager {
         this.mergeAliases();
     }
 
+    public findAlias(cmd:string) {
+        const aliasManager = this;
+
+        for (let i = 0; i < this.allAliases.length; i++) {
+            let alias = this.allAliases[i];
+            //if (!alias.enabled || (alias.class && !this.classManager.isEnabled(alias.class))) continue;
+
+            const re = this.precompiledRegex.get(alias);
+            const match = cmd.match(re);
+            if (!match || match == undefined) {
+                continue;
+            }
+            return alias;
+        }
+        return  null;
+    } 
+
     // return the result of the alias if any (string with embedded lines)
     // return true if matched and script ran
     // return null if no match

@@ -1,7 +1,8 @@
 import { OutWinBase } from "./outWinBase";
 import { ConfigIf, stripHtml } from "./util";
+import { IBaseWindow } from "./windowManager";
 
-export class CustomWin extends OutWinBase {
+export class CustomWin extends OutWinBase implements IBaseWindow {
     constructor(elementName:string, config: ConfigIf) {
         const parent = $("#"+elementName);
         super(parent, config);

@@ -5,6 +5,7 @@ import { UserConfig } from "./userConfig";
 export class NumpadWin {
     private $win: JQuery;
     private okButton: HTMLButtonElement;
+    private revertButton: HTMLButtonElement;
     private cancelButton: HTMLButtonElement;
     comando: HTMLInputElement;
     cells: JQuery;
@@ -59,10 +60,11 @@ export class NumpadWin {
                 </div>
             </div>     
             <div style="display:table-row;">
-                <div style="display:table-cell;vertical-align: middle;">
-                    <div class="messageboxbuttons" style="margin-top: 3px;display: inline-block;float:right;">
-                        <button tabindex="6" title="Applica" class="acceptbutton greenbutton">Accetta</button>
-                        <button tabindex="7" title="Annulla" class="cancelbutton redbutton">Annulla</button>
+                <div style="display:table-cell;vertical-align: middle;text-align:center;">
+                    <div class="messageboxbuttons" style="margin-top: 3px;display: inline-block;">
+                        <button tabindex="6" title="Ripristina" class="acceptbutton yellowbutton" style="width:auto;min-width:0;">⎌</button>
+                        <button tabindex="7" title="Applica" class="acceptbutton greenbutton">Accetta</button>
+                        <button tabindex="8" title="Annulla" class="cancelbutton redbutton">Annulla</button>
                     </div>
                 </div>
             </div>              
@@ -70,7 +72,8 @@ export class NumpadWin {
         `;
 
         this.$win = $(win);
-        this.okButton = win.getElementsByClassName("acceptbutton")[0] as HTMLButtonElement;
+        this.okButton = win.getElementsByClassName("greenbutton")[0] as HTMLButtonElement;
+        this.revertButton = win.getElementsByClassName("yellowbutton")[0] as HTMLButtonElement;
         this.cancelButton = win.getElementsByClassName("cancelbutton")[0] as HTMLButtonElement;
         this.comando = $("#numcomando",win)[0] as HTMLInputElement;
         this.cells = $(".numpad > .key",win);
@@ -93,13 +96,20 @@ export class NumpadWin {
             (<any>this.$win).jqxWindow("close");
         });
 
+        this.revertButton.addEventListener("click", (b) => {
+            this.NumPad = { ... defNumpad};
+            this.save();
+            this.init();
+            $(this.comando).val("");
+        });
+
         this.$win.on("open", ()=>{
             setTimeout(() => {
                 this.comando.focus()                
             }, 300);
         });
 
-        (<any>this.$win).jqxWindow({width: 230, height: 365, showCollapseButton: false, isModal: true});
+        (<any>this.$win).jqxWindow({width: 280, height: 365, showCollapseButton: false, isModal: true});
         (<any>this.$win).jqxWindow("close");
 
         this.cancelButton.addEventListener("click", (b) => {

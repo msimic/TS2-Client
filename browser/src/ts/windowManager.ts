@@ -7,6 +7,15 @@ import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { waitForVariableValue } from "./util";
 
+export interface IBaseWindow {
+    destroy():void;
+    write(text:string, buffer:string):void;
+    getLines(): string[];
+    writeLine(text:string, buffer:string):void;
+    cls():void;
+
+}
+
 export interface WindowData {
     name: string;
     x:number;
@@ -25,10 +34,11 @@ export interface WindowData {
 export interface WindowDefinition {
     window: JQuery; //jqxWindow
     custom:boolean;
-    output: CustomWin;
+    output: IBaseWindow;
     data: WindowData;
     created:boolean;
     initialized:boolean;
+    dispose?: Function;
 }
 
 export class WindowManager {
@@ -64,7 +74,7 @@ export class WindowManager {
         this.loading = true;
         try {
             let cp:string;
-            this.profileDisconnected();
+            await this.profileDisconnected();
             if (!(cp = this.profileManager.getCurrent())) {
                 console.log("LOAD no profile")
                 await this.deleteWindows();
@@ -88,26 +98,28 @@ export class WindowManager {
                 });
             }
             (this.windows as any).loadedFrom = cp;
-            for (let w of this.layoutManager.getCurrent().items) {
-                if (w.type == ControlType.Window) {
-                    if (!this.windows.has(w.content)) {
-                        this.windows.set(w.content, {
-                            window: null,
-                            output: null,
-                            custom: null,
-                            data: {
-                                collapsed: false,
-                                docked: true,
-                                name: w.content,
-                                visible: true,
-                                x: 100,
-                                y: 100,
-                                w: 450,
-                                h: 250
-                            },
-                            created:false,
-                            initialized: false
-                        });
+            if (this.layoutManager.getCurrent()?.items) {
+                for (let w of this.layoutManager.getCurrent().items) {
+                    if (w.type == ControlType.Window) {
+                        if (!this.windows.has(w.content)) {
+                            this.windows.set(w.content, {
+                                window: null,
+                                output: null,
+                                custom: null,
+                                data: {
+                                    collapsed: false,
+                                    docked: true,
+                                    name: w.content,
+                                    visible: true,
+                                    x: 100,
+                                    y: 100,
+                                    w: 450,
+                                    h: 250
+                                },
+                                created:false,
+                                initialized: false
+                            });
+                        }
                     }
                 }
             }
@@ -128,7 +140,7 @@ export class WindowManager {
         for (const w of this.windows) {
             if (w[1].window) {
                 const wasVisible = w[1].data.visible;
-                this.hide(w[1].data.name);
+                //this.hide(w[1].data.name);
                 (<any>w[1].window).jqxWindow("close");
                 w[1].data.visible = wasVisible;
             }
@@ -145,17 +157,17 @@ export class WindowManager {
     private async showWindows() {
         let resolve:Function = null;
         let toShow:string[] = [];
-        var p = new Promise((rs,rj) => {
+        /*var p = new Promise((rs,rj) => {
             resolve = rs;
-        })
+        })*/
         for (const w of this.windows) {
             if (w[1].data.visible) {
-                let wnd = this.createWindow(w[1].data.name);
+                let wnd = this.createWindow(w[1].data.name, null, false);
                 await this.show(w[0]);
                 toShow.push(w[0])
             }
         }
-        let int:number = null;
+        /*let int:number = null;
         int = <number><any>setInterval(()=>{
             for (const tw of toShow) {
                 if (!$(".win-"+tw.replace(" ","-")).length) {
@@ -165,18 +177,23 @@ export class WindowManager {
             clearInterval(int);
             resolve();
         },100);
-        return p;
+        return p;*/
     }
 
     private async deleteWindows() {
         let resolve:Function = null;
-        var p = new Promise((rs,rj) => {
+        /*var p = new Promise((rs,rj) => {
             resolve = rs;
-        })
+        })*/
 
         let toDestroy:string[] = [];
         this.windows.forEach((v, k) => {
             console.log("DEL " + v.data.name)
+            if (v.output) {
+                v.output.destroy()
+                delete v.output;
+                v.output = null;
+            }
             if (v.window) {
                 toDestroy.push(k);
                 const wasVisible = v.data.visible;
@@ -186,15 +203,10 @@ export class WindowManager {
                 v.window = null;
                 v.data.visible = wasVisible;
             }
-            if (v.output) {
-                v.output.destroy()
-                delete v.output;
-                v.output = null;
-            }
         });
         //this.save()
 
-        let int:number = null;
+        /*let int:number = null;
         int = <number><any>setInterval(()=>{
             for (const tw of toDestroy) {
                 if ($(".win-"+tw.replace(" ","-")).length) {
@@ -205,7 +217,7 @@ export class WindowManager {
             toDestroy.map(v => this.windows.delete(v))
             resolve();
         },100);
-        return p;
+        return p;*/
     }
 
     public isDocked(window:string, ui:JQuery) {
@@ -226,7 +238,7 @@ export class WindowManager {
         if (!witm) {
             windowDef.data.docked = false;
             this.save();
-            Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout e rimarra' staccata.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
+            //Messagebox.Show("Info", "Questa finestra non ha una posizione definita nel layout e rimarra' staccata.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
         }
         if (!dockPos.length) {
@@ -246,9 +258,11 @@ export class WindowManager {
             (<any>$(w)).jqxWindow({ draggable: false });
 
             this.applyDockSizes(windowDef)
-            $(".jqx-resize", w).css({
-                "width": "100%",
+            if (!windowDef.data.anchorHeight) $(".jqx-resize", w).css({
                 "height": "unset",
+            });
+            $(".jqx-resize", w).css({
+                "width": "100%"
             });
             $(".jqx-window-header", w).css({
                 "width": "unset",
@@ -278,7 +292,7 @@ export class WindowManager {
         var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
         let wnd = this.windows.get(window);
         wnd.data.docked = false;
-        const prevContent:string[] = wnd.output.getLines();
+        const prevContent:string[] = wnd.output ? wnd.output.getLines() : [];
         if (wnd.output || wnd.custom) {
             if (wnd.output) wnd.output.destroy()
             delete wnd.output
@@ -352,6 +366,10 @@ export class WindowManager {
         if (wnd.window) {
             this.applyDockSizes(wnd);
         }
+        if ((<any>$(wnd.window))[0].sizeChanged) {
+            var duration = (<any>$(wnd.window)).jqxWindow('collapseAnimationDuration');
+            setTimeout(() => (<any>$(wnd.window))[0].sizeChanged(), (duration || 150));
+        }
         if (wnd.data.fontSize) {
             let s = null;
             s = $(".jqx-window-content", parent).attr('style');
@@ -384,11 +402,11 @@ export class WindowManager {
         } else {
             let s = null;
             s = $(".jqx-window-content", parent).attr('style');
-            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: auto;'; 
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: inherit;'; 
             $(".jqx-window-content", parent).attr('style', s)
 
             s = $(".outputText", parent).attr('style');
-            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: auto;'; 
+            s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: inherit;'; 
             $(".outputText", parent).attr('style', s)
         }
         this.EvtEmitWindowsChanged.fire([wnd.data.name])
@@ -408,8 +426,16 @@ export class WindowManager {
             wnd.window.css({
                 "height": `${wnd.data.anchorHeight}px`
             });
+            $(".jqx-resize", wnd.window).css({
+                "height": `${wnd.data.anchorHeight}px`
+            });
             ((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important");
-        } else { wnd.window.css({ "height": "unset", "display": "unset" }); }
+        } else { 
+            wnd.window.css({ "height": "unset", "display": "unset" });
+            $(".jqx-resize", wnd.window).css({
+                "height": "unset"
+            });
+        }
     }
 
     public async destroyWindow(name:string, permanent:boolean) {
@@ -457,7 +483,7 @@ export class WindowManager {
         }
         return p;
     }
-    public createWindow(name:string,createData?:WindowData):WindowDefinition {
+    public createWindow(name:string,createData?:WindowData, autoOpen?:boolean):WindowDefinition {
 
         //console.log("createWindow " + name);
 
@@ -465,6 +491,21 @@ export class WindowManager {
             const def = this.windows.get(name);
             //console.log("OLD " + name);
             //console.log(def);
+            if (def.data && createData && def.window) {
+                let different = false;
+                for (const key in createData) {
+                    if (Object.prototype.hasOwnProperty.call(createData, key)) {
+                        if ((<any>def.data)[key] != (<any>createData)[key]) {
+                            different = true;
+                            break;
+                        }
+                    }
+                }
+                if (different) {
+                    def.data = Object.assign(def.data, createData);
+                    this.applySettings(def, def.window)
+                }
+            }
             return def;
         }
 
@@ -536,20 +577,16 @@ export class WindowManager {
         wWidth = Math.min($(window).width()-20, wWidth)
         let wHeight = (defaults&&defaults.data?defaults.data.h:250)
         wHeight = Math.min($(window).height()-20, wHeight)
+        if (isNaN(wWidth)) {
+            wWidth = 420
+        }
+        if (isNaN(wHeight)) {
+            wHeight = 250
+        }
         const w = (<any>$win).jqxWindow({width: wWidth, height: wHeight, showCollapseButton: true, autoOpen: false});
 
         let inresize=false;
-        new ResizeObserver(()=>{
-            if (inresize) return;
-            inresize = true;
-            window.requestAnimationFrame(() => {
-                const size = $(".jqx-window-content",w).height();
-                if (size) $(".outputText",w).css({
-                    "maxHeight": size + "px"
-                });
-                inresize = false;
-            });
-        }).observe(w[0]);
+        let observer:ResizeObserver = null;
 
         if (defaults && defaults.data) {
             (<any>$win).jqxWindow('move', defaults.data.x, defaults.data.y);
@@ -566,6 +603,7 @@ export class WindowManager {
         });
 
         w.on('resized', function (event:any) {
+            if (event.args.width == 0 && event.args.height == 0) return;
             if (!self.windows || !self.windows.get || !self.windows.get(name)) return;
             let data = self.windows.get(name).data;
             data.w = event.args.width;
@@ -580,13 +618,30 @@ export class WindowManager {
                 (<any>$(event.target)).jqxWindow("destroy");
                 return;
             }
+            observer = new ResizeObserver(()=>{
+                if (inresize) return;
+                inresize = true;
+                window.requestAnimationFrame(() => {
+                    const size = $(".jqx-window-content",w).height();
+                    if (size) $(".outputText",w).css({
+                        "maxHeight": size + "px"
+                    });
+                    inresize = false;
+                });
+            });
+            observer.observe(w[0])
             if (!wd.initialized) {
                 wd.initialized = true;
                 setTimeout(() => {
                     self.addDockButton($(".win-"+name.replace(" ","-")),name);
                     self.addSettingsButton($(".win-"+name.replace(" ","-")),name);
                     $(".jqx-resize", $win).height('unset')
-                    if (collapse) (<any>w).jqxWindow('collapse'); 
+                    if (collapse) {
+                         (<any>w).jqxWindow('collapse');
+                        let padding = $(".jqx-window-content",(w)).css("padding")
+                        $(".jqx-window-content",(w)).css("padding", "0")
+                        setTimeout(() => {$(".jqx-window-content",(w)).css("padding", padding)}, 150)
+                    } 
                     if (dock) self.dock(name,$(".jqx-window-header", $win));
                     $("#cmdInput").focus();
                 }, 500);
@@ -599,6 +654,9 @@ export class WindowManager {
         w.on('close', function (event:any) {
             if (!self.windows || !self.windows.get || !self.windows.get(name)) return;
             let data = self.windows.get(name).data;
+            if (observer) {
+                observer.disconnect()
+            }
             data.visible = false;
             self.save();
         });
@@ -626,7 +684,7 @@ export class WindowManager {
         const def: WindowDefinition = {
             window: w,
             custom: customOutput ? true : false,
-            output: customOutput ? null : new CustomWin("win-"+name.replace(" ","-"), this.profileManager.activeConfig),
+            output: customOutput ? customOutput : new CustomWin("win-"+name.replace(" ","-"), this.profileManager.activeConfig),
             created: true,
             initialized: false,
             data: {
@@ -664,7 +722,7 @@ export class WindowManager {
         def.data.anchorHeight = ((defaults && defaults.data) ? defaults.data.anchorHeight : undefined);
 
         if ((defaults && defaults.data.visible)||!defaults) {
-            (async () => {await this.show(name);})()
+            if (autoOpen === undefined || autoOpen!=false) (async () => {await this.show(name);})()
         }
         this.save();
 

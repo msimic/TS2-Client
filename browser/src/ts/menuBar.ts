@@ -471,6 +471,63 @@ export class MenuBar {
             }
         }
 
+        let showNeve = () => {
+            $(".snowflakes", $("#row-center")).remove();
+            $("#row-center").append(`
+            <div class="snowflakes">
+                <div class="snowflake">
+            ❅
+            </div>
+            <div class="snowflake">
+            ❅
+            </div>
+            <div class="snowflake">
+            ❆
+            </div>
+            <div class="snowflake">
+            ❄
+            </div>
+            <div class="snowflake">
+            ❅
+            </div>
+            <div class="snowflake">
+            ❆
+            </div>
+            <div class="snowflake">
+            ❄
+            </div>
+            <div class="snowflake">
+            ❅
+            </div>
+            <div class="snowflake">
+            ❆
+            </div>
+            <div class="snowflake">
+            ❄
+            </div></div>`);
+        };
+        this.clickFuncs["snow"] = () => {
+            let neve = localStorage.getItem("snow") != "false";
+            neve = !neve;
+            localStorage.setItem("snow", neve.toString())
+            if (!neve) {
+                $(".snowflakes", $("#row-center")).remove();
+            } else {
+                showNeve()
+            }
+        }
+
+        let neve = localStorage.getItem("snow") != "false";
+        if (neve) {
+            let data = (new Date());
+            if ((data.getUTCMonth() == 11 && data.getDate() >= 22) ||
+                (data.getUTCMonth() == 0 && data.getDate() <= 5)) {
+                showNeve()
+            } else {
+                $("[data-option-name=snow]").remove();
+            }
+        }
+
         this.clickFuncs["mapper"] = () => {
             this.windowManager.createWindow("Mapper");
             this.windowManager.show("Mapper");

@@ -324,6 +324,25 @@ export class TriggerManager {
         return this.buffer;
     }
 
+    public findTrigger(line:string) {
+        for (let i = 0; i < this.allTriggers.length; i++) {
+            let trig = this.allTriggers[i];
+            //if (!trig.enabled || (trig.class && !this.classManager.isEnabled(trig.class))) continue;
+            
+            if (trig.regex) {
+                if (line.endsWith("\n") && trig.pattern.endsWith("$")) {
+                    line = line.substring(0, line.length-1);
+                }
+            }
+    
+            let match = line.match(this.precompiledRegex.get(trig));
+            if (match) {
+                return trig;
+            }
+        }
+        return null;
+    }
+    
     public handleLine(line: string, raw:string): string {
         this.line = null;
         this.buffer = null;

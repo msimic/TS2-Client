@@ -276,7 +276,7 @@ function copyToPublic() {
         },
         {
             path: './static/public',
-            regex: /^.*\.json$|^.*\.webmanifest$/i,
+            regex: /^.*\.json$|^.*\.webmanifest|^.*\.png$/i,
             outputFolder: './dist/public'
         },
         {

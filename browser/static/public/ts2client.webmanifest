@@ -8,14 +8,38 @@
       "sizes": "32x32",
       "type": "image/png"
     },
-    {
+	{
       "src": "images/favicon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "images/favicon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
+  "screenshots": [
+    {
+     "src": "screenshot_desktop.png",
+      "sizes": "1920x986",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop client"
+    },
+	{
+     "src": "screenshot_mobile.png",
+      "sizes": "600x1333",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile client"
+    }
+  ],
+  "id": "/index.html",
   "start_url": "./index.html",
-  "display": "fullscreen",
+  "display-override": ["fullscreen"],
+  "display_override": ["fullscreen"],
+  "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#C60300"
 }

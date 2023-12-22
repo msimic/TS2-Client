@@ -7,3 +7,9 @@
 - corretto un bug del manager finestre che poteva dimenticare di salvare lo stato delle finestre
 - bottone per mostrare la history dei comandi
 - registrazione/log piu performante
+- rework comandi per tastierino numerico
+- aggiunte findAlias e findTrigger allo scripting
+- inizia a nevicare??
+- risolto un memory leak del mapper
+- migliorato il pwa manifest per installazione come app
+- da linea comando si puo eseguire una script se si prefissa con >

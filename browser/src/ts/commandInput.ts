@@ -52,10 +52,10 @@ export const NumPadMap = {
 };
 
 export const defNumpad:typeof NumPadConfigDef = {
-    NumpadSubtract: "immufire",
+    NumpadSubtract: "cambiascudo",
     NumpadAdd: "cambiaarma",
-    NumpadMultiply: "immuele",
-    NumpadDivide: "immucold",
+    NumpadMultiply: "",
+    NumpadDivide: "",
     NumpadEnter: "",
     NumpadDecimal: "porte",
     Numpad0: "cura",

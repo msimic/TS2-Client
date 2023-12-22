@@ -244,6 +244,16 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             }
         });
 
+        this.$win.on("open", () => {
+            let w = this.$win;
+            if ((<any>this.$win).jqxWindow("collapsed")) {
+                let padding = $(".jqx-window-content",(w)).css("padding")
+                $(".jqx-window-content",(w)).css("padding", "0")
+                setTimeout(() => {$(".jqx-window-content",(w)).css("padding", padding)}, 150)
+            }
+        });
+
+
         (<any>this.$mainSplit).jqxSplitter({
             width: "100%",
             height: "100%",

@@ -32,6 +32,7 @@ export interface DockPane {
     background?:string;
     width?:string;
     autoexpand?:boolean;
+    items?: Control[];
 }
 
 export enum ControlType {
@@ -77,6 +78,7 @@ export interface Control {
     gauge?:string,
     is_script?:boolean;
     tooltip?:string;
+    items?: Control[];
 }
 
 export class LayoutManager {
@@ -419,6 +421,14 @@ export class LayoutManager {
         this.layout = layout;
 
         for (const p of layout.panes) {
+
+            // todo hacks
+            if (p.id == "column-right-top" || p.id == "column-right-bottom") {
+                p.width = "280px"
+            } else if (p.id == "column-left-top" || p.id == "column-left-bottom") {
+                p.width = "261px"
+            }
+
             let cssObj:any = {
                 background: (p.background || "transparent")
             };
@@ -734,7 +744,10 @@ export class LayoutManager {
             style+= "top:"+ctrl.y+"px !important;";
         }
         if (ctrl.w) {
-            style+= "width:"+ctrl.w+"px !important;";
+            if (ctrl.w != 160) {
+                // hack todo
+                style+= "width:"+ctrl.w+"px !important;";
+            }
         }
         if (ctrl.h) {
             style+= "height:"+ctrl.h+"px !important;";

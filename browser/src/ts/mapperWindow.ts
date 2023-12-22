@@ -1,7 +1,7 @@
 import { Favorite, MapDatabase, Mapper, MapVersion, Room, Zone } from "./mapper";
 import { Messagebox, MessageboxResult, messagebox, Button } from "./messagebox";
 import { isNumeric } from "jquery";
-import { WindowManager } from "./windowManager";
+import { IBaseWindow, WindowManager } from "./windowManager";
 import { EvtScriptEmitPrint } from "./jsScript";
 import { MapperDrawing } from "./mapperDrawing";
 import { ResizeSensor } from 'css-element-queries'
@@ -25,7 +25,7 @@ interface ClipboardItem {
     new (itemData: ClipboardItemData): ClipboardItem;
   };
 
-export class MapperWindow {
+export class MapperWindow implements IBaseWindow {
     setMapFont() {
         const mdef = this.windowManager.windows.get("Mapper")
         if (!mdef || !mdef.data) return;
@@ -37,6 +37,7 @@ export class MapperWindow {
     private ctx: CanvasRenderingContext2D;
     private $bottomMessage:JQuery;
     private $zoneList:JQuery;
+    private $menu:JQuery;
     canvas: JQuery;
     drawing: MapperDrawing;
     private zones:Zone[] = []
@@ -194,8 +195,8 @@ export class MapperWindow {
         }
 
         const mnu:any = <JQuery>(<any>$("#mapperMenubar",this.$win)).jqxMenu({autoOpen: false, clickToOpen: true});
-
-        $("#mapperMenubar").on('itemclick', (event: any) => {
+        this.$menu = mnu;
+        $("#mapperMenubar", this.$win).on('itemclick', (event: any) => {
             document.getSelection().removeAllRanges();
             if ($((<any>event).args).find(".jqx-icon-arrow-left").length || $((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).target).closest(".jqx-menu-popup").length==0)
                 return;
@@ -234,8 +235,9 @@ export class MapperWindow {
         const ww = Math.min($(window).width()-20, 400);
         const wh = Math.min($(window).height()-20, 300);
 
-        var w = (<any>this.$win).jqxWindow({width: ww, height: wh, showCollapseButton: true, isModal: false});
-        this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu"))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
+        (<any>this.$win).jqxWindow({width: ww, height: wh, showCollapseButton: true, isModal: false});
+        const w = (<any>this.$win);
+        this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu", this.$win))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
         
         this.refreshFavorites();
 
@@ -273,27 +275,7 @@ export class MapperWindow {
                 self.drawing = null;
             }
         });
-        w.on('destroy', function() {
-            self.detachHandlers(self.mapper, self.windowManager)
-            self.detachMenu()
-            if (self.drawing) {
-                self.drawing.destroy()
-                delete self.drawing;  
-                self.drawing = null;
-            }
-            delete self.ctx;
-            delete self.canvas;
-        });
-/*
-        var ce = (self.canvas[0] as HTMLCanvasElement);
-        w.on('resized', function (evt:any) {
-            ce.height = self.canvas.height();
-            ce.width = self.canvas.width();
-            ce.style.width = self.canvas.width()+"px";
-            ce.style.height = self.canvas.height()+"px";
 
-        });*/
-        var ce = (self.canvas[0] as HTMLCanvasElement);
         var setSize = function () {
             if (self.drawing) self.drawing.setSize()
         }
@@ -307,6 +289,35 @@ export class MapperWindow {
         
         this.attachMenu();
         this.setMapFont()
+    }
+    write(text: string, buffer: string): void {
+        this.$bottomMessage.text(text);
+    }
+    writeLine(text: string, buffer: string): void {
+        this.$bottomMessage.text(text);
+    }
+    getLines(): string[] {
+        return [this.$bottomMessage.text()];
+    }
+    cls() {
+        this.$bottomMessage.text("")
+    }
+
+    private destroyMenu(mnu:any) {
+        try {
+            mnu.jqxMenu('destroy')
+        } catch {
+            console.log("Cannto destroy mapper menu")
+        }
+        try {
+            (<any>$("#mapperContextMenu")).jqxMenu('destroy')
+        } catch {
+            console.log("Cannto destroy mapper context menu")
+        }
+        $("[data-option-type=mapper]").parents(".jqx-menu-popup").remove()
+        if ($("#favorites").length > 0) {
+            console.log("jqxMenu.destroy() failed")
+        }
     }
 
     private closeMenues(mnu: any) {
@@ -782,6 +793,16 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
     }
 
     public destroy() {
+        this.detachHandlers(this.mapper, this.windowManager)
+        this.detachMenu();
+        this.destroyMenu(this.$menu);
+        if (this.drawing) {
+            this.drawing.destroy()
+            delete this.drawing;  
+            this.drawing = null;
+        }
+        delete this.ctx;
+        delete this.canvas;
         this.resizeSensor.detach();
         (<any>this.$win).jqxWindow("destroy");
     }

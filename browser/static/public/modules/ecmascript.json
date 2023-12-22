@@ -670,6 +670,22 @@
     "!type": "fn(command: string)",
     "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati."
   },
+  "showWindow": {
+    "!type": "fn(window: string)",
+    "!doc": "Mostra la finestra window, ma non la crea se non esiste gia'"
+  },
+  "hideWindow": {
+    "!type": "fn(window: string)",
+    "!doc": "Nasconde la finestra window. Si puo accedere ad essa dal menu finestre"
+  },
+  "createWindow": {
+    "!type": "fn(window: string, windowData?: ?)",
+    "!doc": "Crea la finestra window, opzionalmente con dati per la creazione windowData"
+  },
+  "destroyWindow": {
+    "!type": "fn(window: string)",
+    "!doc": "Distrugge/cancella la finestra window. Scomparira' dal menu finestre."
+  },
   "toggleTrigger": {
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita un trigger (id e l'id del trigger e state e' il nuovo stato)."
@@ -822,6 +838,14 @@
   "getAlias": {
     "!type": "fn(id: string) -> trigger_o_alias",
     "!doc": "Accede al aliasManager e cerca l'alias con l'id provveduto e lo ritorna."
+  },
+  "findTrigger": {
+    "!type": "fn(line: string) -> trigger_o_alias",
+    "!doc": "Accede al triggerManager e cerca il trigger che matcha il line e lo ritorna."
+  },
+  "findAlias": {
+    "!type": "fn(input: string) -> trigger_o_alias",
+    "!doc": "Accede al aliasManager e cerca l'alias che matcha l'input e lo ritorna."
   },
   "triggerEnabled": {
     "!type": "fn(id: string) -> bool",
