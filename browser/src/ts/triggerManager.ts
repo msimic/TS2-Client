@@ -5,6 +5,7 @@ import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, JsScrip
 import { ProfileManager } from "./profileManager";
 import { Mudslinger } from "./client";
 import { ConfigIf, escapeRegExp, escapeRegexReplacement, stripHtml } from "./util";
+import { Notification } from "./messagebox";
 
 /*export interface ConfigIf {
     set(key: string, val: TrigAlItem[]): void;
@@ -22,6 +23,7 @@ export class TriggerManager {
     public EvtEmitTriggerOutputChanged = new EventHook<{line: string, buffer: string}>();
     private triggerLog = new Array<{key:string, time:number}>();
     public triggers: Array<TrigAlItem> = null;
+    public tempTriggers: Array<TrigAlItem> = null;
     public allTriggers: Array<TrigAlItem> = null;
     public changed = new EventHook()
     private precompiledRegex = new Map<TrigAlItem, RegExp>()
@@ -105,6 +107,103 @@ export class TriggerManager {
         return false;
     }
 
+    public createTrigger(trg:TrigAlItem):boolean {
+        if (!trg) return false;
+        let id = trg.id;
+        if (!id && trg.temporary) {
+            Notification.Show("Un trigger temporaneo deve avere un ID")
+            return false
+        }
+        
+        if (trg.enabled === undefined) {
+            trg.enabled = true
+        }
+
+        if (trg.temporary) {
+            return this.createTempTrigger(trg)
+        }
+
+        this.triggers.push(trg)
+
+        this.saveTriggers();
+        return true
+    }
+
+    public setTrigger(index:number, trg:TrigAlItem):boolean {
+        if (!trg) return false;
+
+        if (trg.temporary) {
+            Notification.Show("Questa operazione non funziona su trigger temporanei")
+            return false
+        }
+
+        this.triggers[index] = trg
+
+        this.saveTriggers();
+        return true
+    }
+
+    public createTempTrigger(trg:TrigAlItem):boolean {
+        if (!trg) return false;
+        let id = trg.id;
+        if (!id) {
+            Notification.Show("Un trigger temporaneo deve avere un ID")
+            return false
+        }
+        let idx = this.tempTriggers.findIndex(v => v.id == id)
+        if (idx>=0) {
+            this.tempTriggers.splice(idx, 1)
+        }
+
+        if (trg.enabled === undefined) {
+            trg.enabled = true
+        }
+
+        trg.temporary = true;
+
+        this.tempTriggers.push(trg)
+        this.mergeTriggers()
+        return true
+    }
+
+    public deleteTempTrigger(trg:TrigAlItem) {
+        if (!trg) return false;
+        let id = trg.id;
+        if (!id) {
+            Notification.Show("Un trigger temporaneo deve avere un ID")
+            return false
+        }
+        let idx = this.tempTriggers.findIndex(v => v.id == id)
+        if (idx>=0) {
+            this.tempTriggers.splice(idx, 1)
+            this.mergeTriggers()
+            return true
+        }
+        return false
+    }
+
+    public deleteTrigger(trg:TrigAlItem):boolean {
+        if (!trg) return false;
+
+        let id = trg.id;
+        if (!id && trg.temporary) {
+            Notification.Show("Un trigger temporaneo deve avere un ID")
+            return false
+        }
+
+        if (trg.temporary) {
+            return this.deleteTempTrigger(trg)
+        }
+
+        let index = this.triggers.indexOf(trg)
+        if (index < 0)
+            return false;
+
+        this.triggers.splice(index, 1);
+        this.saveTriggers();
+        return true
+    }
+
     public precompileTriggers() {
         //console.log("precompile triggers")
         this.precompiledRegex.clear()
@@ -133,6 +232,7 @@ export class TriggerManager {
         }
 
         var triggers = $.merge([], this.config.get("triggers") || []);
+        triggers = $.merge(triggers, this.tempTriggers || []);
         triggers = $.merge(triggers, this.baseConfig.get("triggers") || []);
         this.allTriggers = triggers;
         for (let index = 0; index < this.allTriggers.length; index++) {
@@ -150,7 +250,8 @@ export class TriggerManager {
     public saveTriggers() {
         if (this.saving) return;
         try {
-            this.triggers.forEach(a => a.script = null);
+            console.log("Saving triggers")
+            this.triggers.forEach(a => delete a.script);
             this.config.set("triggers", this.triggers);
             this.mergeTriggers();
             if (!this.baseConfig) {
@@ -168,6 +269,7 @@ export class TriggerManager {
 
     private loadTriggers(config:ConfigIf) {
         this.triggers = config.get("triggers") || [];
+        this.tempTriggers = [];
         this.mergeTriggers();
     }
 

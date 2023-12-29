@@ -84,19 +84,14 @@ export class TriggerEditor extends TrigAlEditBase {
         let ind = this.triggerManager.triggers.indexOf(trigger)
         if (ind < 0) {
             // New trigger
-            this.triggerManager.triggers.push(trigger);
+            this.triggerManager.createTrigger(trigger);
         } else {
             // Update trigger
-            this.triggerManager.triggers[ind] = trigger;
+            this.triggerManager.setTrigger(ind, trigger);
         }
-        this.triggerManager.saveTriggers();
     }
 
     protected deleteItem(item:TrigAlItem) {
-        let index = this.triggerManager.triggers.indexOf(item)
-        if (index < 0)
-            return;
-        this.triggerManager.triggers.splice(index, 1);
-        this.triggerManager.saveTriggers();
+        this.triggerManager.deleteTrigger(item);
     }
 }

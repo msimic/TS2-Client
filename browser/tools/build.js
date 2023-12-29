@@ -54,7 +54,12 @@ function minifyJqWidgets(next) {
         compressor: terser,
         input: ['./dist/jqwidgets_module.js'],
         output: './dist/jqwidgets_module.min.js',
-        callback: function(err, min) { if (!err && next) next();}
+        callback: function(err, min) {
+            if (!err) {
+                fs.copyFileSync('./dist/jqwidgets_module.min.js', './static/public/modules/jqwidgets_module.min.js');
+                if (next) next();
+            }
+        }
       });
 }
 
@@ -101,6 +106,8 @@ function mergeJqwidgets(next) {
     input: [
         './static/public/jqwidgets/jqxcore.js',
         './static/public/jqwidgets/jqxcheckbox.js',
+        './static/public/jqwidgets/jqxcolorpicker.js',
+        './static/public/jqwidgets/jqxdropdownbutton.js',
         './static/public/jqwidgets/jqxtree.js',
         './static/public/jqwidgets/jqxdata.js',
         './static/public/jqwidgets/jqxmenu.js',

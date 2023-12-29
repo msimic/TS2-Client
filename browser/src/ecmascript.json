@@ -829,6 +829,10 @@
     "is_prompt": {
       "!type": "bool",
       "!doc": "Se prompt o meno. Se e' prompt puo' scattare anche se una linea di output non e' finita."
+    },
+    "temporary": {
+      "!type": "bool",
+      "!doc": "Un trigger temporary non verra salvato nel profilo"
     }
   },
   "getTrigger": {
@@ -847,6 +851,22 @@
     "!type": "fn(input: string) -> trigger_o_alias",
     "!doc": "Accede al aliasManager e cerca l'alias che matcha l'input e lo ritorna."
   },
+  "createTrigger": {
+    "!type": "fn(trg: trigger_o_alias) -> bool",
+    "!doc": "Crea un trigger e lo salva nel profilo. Ritorna true se creato con successo."
+  },
+  "createTempTrigger": {
+    "!type": "fn(trg: trigger_o_alias) -> bool",
+    "!doc": "Crea un trigger temporaneo che non viene salvato nel profilo. Ritorna true se creato con successo."
+  },
+  "deleteTrigger": {
+    "!type": "fn(trg: trigger_o_alias) -> bool",
+    "!doc": "Cancella un trigger del profilo. Usa getTrigger o findTrigger per trovarlo. Ritorna true se cancellato con successo."
+  },
+  "deleteTempTrigger": {
+    "!type": "fn(trg: trigger_o_alias) -> bool",
+    "!doc": "Cancella un trigger temporaneo. Ritorna true se cancellato con successo."
+  },
   "triggerEnabled": {
     "!type": "fn(id: string) -> bool",
     "!doc": "Ritorna lo stato del trigger con ID 'id': true se abilitato, false altrimenti."
@@ -862,6 +882,10 @@
   "match": {
     "!type": "[string]",
     "!doc": "I risultati della regex del trigger o alias."
+  },
+  "escapeRegex": {
+    "!type": "fn(id: string) -> string",
+    "!doc": "Normalizza una stringa per renderla un valido regex."
   },
   "String": {
     "!type": "fn(value: ?) -> string",

@@ -9,11 +9,13 @@
 - bottone per mostrare la history dei comandi
 - registrazione/log piu performante
 - rework comandi per tastierino numerico
-- aggiunte findAlias e findTrigger allo scripting
+- aggiunte findAlias, findTrigger, createTrigger, createTempTrigger, deleteTrigger, deleteTempTrigger, escapeRegex,  allo scripting
 - inizia a nevicare??
 - risolto un memory leak del mapper
 - migliorato il pwa manifest per installazione come app
 - da linea comando si puo eseguire una script se si prefissa con >
+- trigger temporanei aggiunti
+- versione iniziale della finestra per la disposizione schermo
 ____________________________________________________________
 1.5.2
 - il prompt ora manda a caporiga anche se ci sono immagini allineate sullo schermo che interferirebbero

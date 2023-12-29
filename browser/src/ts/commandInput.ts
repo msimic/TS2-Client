@@ -3,7 +3,7 @@ import { EventHook } from "./event";
 import {AliasManager} from "./aliasManager";
 import { UserConfig } from "./userConfig";
 import { createPath, isTrue, throttle } from "./util";
-import { JsScript } from "./jsScript";
+import { EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 
 export enum ScrollType {
     Bottom,
@@ -193,6 +193,7 @@ export class CommandInput {
     public execCommand(cmd: string, ocmd:string, fromScript:boolean) {
         if (cmd && cmd.charAt(0) == '~') {
             this.EvtEmitCmd.fire({command:cmd.slice(1),fromScript:fromScript});
+            EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
             return;
         }
         let result = this.aliasManager.checkAlias(cmd, fromScript);
@@ -203,10 +204,16 @@ export class CommandInput {
                 cmds = cmds.concat(lines[i].split(";"));
             }
             this.EvtEmitAliasCmds.fire({orig: ocmd, commands: cmds});
+            EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
+            
         } else if (!result) {
             this.EvtEmitCmd.fire({command:cmd,fromScript:fromScript});
+            EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
+            
         } else if (result === true) {
             this.EvtEmitAliasCmds.fire({orig:cmd,commands:[]});
+            EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
+            
         }
 
     }
@@ -237,7 +244,7 @@ export class CommandInput {
 
         if (cmd==undefined) cmd = this.$cmdInput.val();
 
-        if (cmd[0] == ">" && cmd.length > 1) {
+        if (!script && cmd[0] == ">" && cmd.length > 1) {
             cmd = cmd.slice(1)
             let script = this.jsScript.makeScript("Script", cmd, "");
             if (script) { script(); };

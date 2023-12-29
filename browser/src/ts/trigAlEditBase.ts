@@ -24,6 +24,7 @@ export interface TrigAlItem {
     script?: any;
     is_prompt: boolean;
     shortcut?:string;
+    temporary?: boolean;
 }
 
 export interface copyData {
@@ -533,7 +534,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         let items: object[] = []
 
         for (let i = 0; i < lst.length; i++) {
-            this.addToClassTree(itemMap, lst[i].class.split("|"), { label: lst[i].id || Util.rawToHtml(lst[i].pattern) }, lst[i])
+            this.addToClassTree(itemMap, (lst[i].class||"").split("|"), { label: lst[i].id || Util.rawToHtml(lst[i].pattern) }, lst[i])
         }
 
         for (const [key, value] of itemMap) {

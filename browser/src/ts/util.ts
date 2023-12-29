@@ -154,6 +154,74 @@ export function Acknowledge(ack:string, str:string) {
     }, "OK", "", false, [""], w, null, false, "");
 }
 
+export interface Color {
+    r:number;
+    g:number;
+    b:number;
+    a:number;
+}
+
+export function colorToHex(color:Color, withAlpha:boolean):string {
+
+    if (!color) {
+        return "transparent";
+    }
+    let rHex = color.r.toString(16);
+    let gHex = color.g.toString(16);
+    let bHex = color.b.toString(16);
+    let aHex = (color.a+255).toString(16);
+
+    // Add a leading zero if the hex value is less than 10
+    if (rHex.length == 1) rHex = "0" + rHex;
+    if (gHex.length == 1) gHex = "0" + gHex;
+    if (bHex.length == 1) bHex = "0" + bHex;
+    if (aHex.length == 1) aHex = "0" + bHex;
+
+    // Concatenate the hex values with a # symbol
+    let hexColor = "#" + rHex + gHex + bHex;
+
+    if (withAlpha) {
+        if (color.a) {
+            hexColor += aHex;
+        } else {
+            hexColor += "00"
+        }
+    }
+
+    // Return the hex color
+    return hexColor;
+}
+export function colorCssToRGB(colorKeyword:string):Color {
+    
+    function parseColor (input:string) {
+        var m = input.match (/^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*(\d+(\.\d+)?)\s*)?\)$/i);
+        if (m) {
+          return {
+            r: parseInt (m [1]),
+            g: parseInt (m [2]),
+            b: parseInt (m [3]),
+            a: m [5] ? parseFloat (m [5]) : 1
+          };
+        }
+        return null;
+      }
+
+    if (colorKeyword.endsWith(";")) {
+        colorKeyword = colorKeyword.slice(0, colorKeyword.length - 1)
+    }
+    let el = document.createElement('div');
+
+    el.style.color = colorKeyword;
+
+    document.body.appendChild(el);
+
+    let rgbValue = window.getComputedStyle(el).color;
+
+    document.body.removeChild(el);
+
+    return parseColor(rgbValue);
+}
+
 export function waitForVariableValue(obj: any, varName:string, expectedValue:any, timeout?:number) {
     return new Promise<boolean>(resolve => {
       var tmo = timeout || 1000;

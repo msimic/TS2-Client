@@ -388,7 +388,7 @@ export class EventsEditor {
         for (let i = 0; i < lst.length; i++) {
             let arr = itemMap.get(lst[i].type).items;
             arr.push({
-                label: lst[i].id || (lst[i].condition),
+                label: lst[i].id || (lst[i].condition) || "[senza id o condizione]",
                 value: <any>lst[i]
             });
         }

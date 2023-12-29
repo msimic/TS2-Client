@@ -264,7 +264,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     border: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    max-width: 300px;
+    max-width: 350px;
   }
 
   #column-left-top {
@@ -297,7 +297,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     border: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    max-width: 300px;
+    max-width: 350px;
   }
 
   #column-right-top {
@@ -362,7 +362,6 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
     padding: 0 !important;
     flex-direction: row;
     align-items: center;
-    z-index: 2;
   }
   #row-bottom-right {
     /*flex:1; */
@@ -1463,6 +1462,27 @@ input:focus,button:focus {
 input[type=checkbox] {
     margin-right: 10px;
     vertical-align: middle;
+}
+
+input[type=color] {
+    border: 0;
+    padding: 0;
+    height: 16px;
+    width: 16px;
+}
+
+.winLayout-mainSplit {
+    display: flex;
+}
+
+.winLayout-mainSplit input {
+    max-width: 40px;
+}
+
+.winLayout-mainSplit .right-pane {
+    padding: 0;
+    margin: 0;
+    color: white;
 }
 
 .left-pane {

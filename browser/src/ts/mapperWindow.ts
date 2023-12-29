@@ -102,7 +102,7 @@ export class MapperWindow implements IBaseWindow {
         (this.$contextMenu as any).jqxMenu('open', (data.x) + 5 + scrollLeft, (data.y) + 5 + scrollTop);
         return false;
     }
-    resizeSensor: ResizeSensor;
+    resizeSensor: ResizeObserver;
 
     constructor(private mapper:Mapper,private windowManager: WindowManager) {
 
@@ -280,9 +280,14 @@ export class MapperWindow implements IBaseWindow {
             if (self.drawing) self.drawing.setSize()
         }
 
-        this.resizeSensor = new ResizeSensor(jQuery('.midrow', w)[0], function(){ 
+        /*this.resizeSensor = new ResizeSensor(jQuery('.midrow', w)[0], function(){ 
+            setSize()
+        });*/
+
+        this.resizeSensor = new ResizeObserver(function(){ 
             setSize()
         });
+        this.resizeSensor.observe(jQuery('.midrow', w)[0]);
 
         (<any>this.$win).jqxWindow("close");
         (<any>$(w))[0].sizeChanged = setSize;
@@ -803,7 +808,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         }
         delete this.ctx;
         delete this.canvas;
-        this.resizeSensor.detach();
+        this.resizeSensor.disconnect();
         (<any>this.$win).jqxWindow("destroy");
     }
 

@@ -3,9 +3,12 @@ import { CommandInput } from "./commandInput";
 import { CustomWin } from "./customWindow";
 import { EventHook } from "./event";
 import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "./jsScript";
-import { Messagebox, messagebox } from "./messagebox";
+import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { isTrue, rawToHtml, throttle } from "./util";
+import { WindowManager } from "./windowManager";
+
+export let LayoutVersion = 1;
 
 export enum PanelPosition {
     Floating = 0,
@@ -20,6 +23,10 @@ export enum PanelPosition {
 }
 
 export interface LayoutDefinition {
+    version: number;
+    customized: boolean;
+    color?: string;
+    background?: string;
     panes: DockPane[];
     items: Control[];
 }
@@ -31,6 +38,7 @@ export interface DockPane {
     h?:number;
     background?:string;
     width?:string;
+    height?:string;
     autoexpand?:boolean;
     items?: Control[];
 }
@@ -38,7 +46,8 @@ export interface DockPane {
 export enum ControlType {
     Button,
     Panel,
-    Window
+    Window,
+    DropDownButton
 }
 
 export enum Position {
@@ -84,6 +93,7 @@ export interface Control {
 export class LayoutManager {
 
     public EvtEmitLayoutChanged = new EventHook<LayoutDefinition>();
+    public onlineBaseLayout:LayoutDefinition;
     public layout:LayoutDefinition;
     public scripts = new Map<number, Function>();
     public controls = new Map<number, JQuery>();
@@ -104,7 +114,10 @@ export class LayoutManager {
         {position: PanelPosition.PaneLeftBottom, id: "column-left-bottom"},
     ];
 
-    constructor(private profileManager:ProfileManager, private scripting:JsScript, private cmdInput:CommandInput) {
+    constructor(private profileManager:ProfileManager, private windowManager:WindowManager, private scripting:JsScript, private cmdInput:CommandInput) {
+        
+        (async () => this.onlineBaseLayout = await $.ajax("./baseLayout.json?rnd="+Math.random()))();
+        
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.load();
         });
@@ -175,6 +188,8 @@ export class LayoutManager {
 
     emptyLayout():LayoutDefinition  {
         const ret = {
+            "version": LayoutVersion,
+            "customized": false,
             "panes": [
               {
                 "position": 6,
@@ -339,15 +354,76 @@ export class LayoutManager {
             return;
         }
 
-        this.deleteLayout();
         let prof = this.profileManager.getProfile(cp);
         if (prof && prof.useLayout && prof.layout) {
              this.loadLayout(prof.layout);
+             this.checkNewerLayoutExists(prof);
         } else if (prof && !prof.useLayout) {
             this.loadLayout(this.emptyLayout());
         }
 
         this.triggerChanged();
+    }
+
+    async checkNewerLayoutExists(prof: Profile) {
+        if (!prof || !prof.layout || !this.onlineBaseLayout) return;
+
+        const skipped = this.scripting.getScriptThis()["skipLayoutVersion"];
+
+        if ((prof.layout.version||0) < this.onlineBaseLayout.version && skipped < this.onlineBaseLayout.version) {
+            if (prof.layout.customized) {
+                const r = await Messagebox.Question(`Questo personaggio sta usando una predisposizione schermo propria\n
+creata quando esisteva una versione precedente di quello preimpostato.\n
+Scegli No per continuare a usare la corrente.\n
+Se invece vuoi aggiornare su quella nuova scegli Si\n\n
+N.b. Se scegli Si perderai tutte le proprie modifiche al layout.`);
+                if (r.button == Button.Ok) {
+                    this.updateLayout(prof, this.onlineBaseLayout)
+                } else {
+                    this.scripting.getScriptThis()["skipLayoutVersion"] = this.onlineBaseLayout.version;
+                }
+            } else {
+                const r = await Messagebox.Question(`C'e' una nuova versione della predisposizione schermo.\n
+Vuoi aggiornarla per questo profilo?\n
+Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione schermo.`);
+                if (r.button == Button.Ok) {
+                    this.updateLayout(prof, this.onlineBaseLayout)
+                } else {
+                    this.scripting.getScriptThis()["skipLayoutVersion"] = this.onlineBaseLayout.version;
+                }
+            }
+        }
+    }
+
+    public async updateLayoutOfCurrentProfile() {
+        let cp:string;
+        cp = this.profileManager.getCurrent();
+
+        if (!cp) {
+            Messagebox.Show("Errore", "Non e' possibile aggiornare il layout al profilo base.")
+            return;
+        }
+
+        if (!this.onlineBaseLayout) {
+            Messagebox.Show("Errore", "Non c'e' un layout base.")
+            return;
+        }
+
+        let prof = this.profileManager.getProfile(cp);
+        if (prof) {
+            this.updateLayout(prof, this.onlineBaseLayout)
+        }        
+    }
+
+    async updateLayout(prof: Profile, newLayout: LayoutDefinition) {
+        prof.layout = newLayout;
+        this.profileManager.saveProfiles();
+        const r = await Messagebox.Question(`Disposizione schermo aggiornata.\n
+Ora e' molto consigliabile riavviare il client per poterla caricare.\n
+Vuoi farlo ora?`);
+        if (r.button == Button.Ok) {
+            window.location.reload()
+        }
     }
 
     public unload() {
@@ -420,14 +496,20 @@ export class LayoutManager {
 
         this.layout = layout;
 
-        for (const p of layout.panes) {
+        const cmdBack = layout.panes.find(p => p.position == PanelPosition.PaneBottomLeft)?.background || "";
+        $("#row-input").css("background-color", cmdBack);
+        if (layout.color) {
+            $("#content-wrapper").css("color", layout.color);
+        } else {
+            $("#content-wrapper").css("color", "");
+        }
+        if (layout.background) {
+            $("#content-wrapper").css("background-color", layout.background);
+        } else {    
+            $("#content-wrapper").css("background-color", "");
+        }
 
-            // todo hacks
-            if (p.id == "column-right-top" || p.id == "column-right-bottom") {
-                p.width = "280px"
-            } else if (p.id == "column-left-top" || p.id == "column-left-bottom") {
-                p.width = "261px"
-            }
+        for (const p of layout.panes) {
 
             let cssObj:any = {
                 background: (p.background || "transparent")
@@ -445,6 +527,11 @@ export class LayoutManager {
             let control:JQuery;
             if (c.type == ControlType.Button) {
                 control = this.createButton(c);
+                if (c.id)
+                    this.parents.set(c.id, control);                
+            }
+            else if (c.type == ControlType.DropDownButton) {
+                control = this.createDropDownButton(c);
                 if (c.id)
                     this.parents.set(c.id, control);                
             }
@@ -781,6 +868,134 @@ export class LayoutManager {
                     this.cmdInput.sendCmd(ctrl.commands,true, false);
                 });
             }
+        }
+        return b;
+    }
+
+    public createDropDownButton(ctrl:Control):JQuery {
+        let style = "";
+        let cls = "";
+        if (ctrl.style) {
+            switch (ctrl.style) {
+                case "blue":
+                    cls += "bluebutton ";                    
+                    break;
+                case "red":
+                    cls += "redbutton ";
+                    break;
+                case "green":
+                    cls += "greenbutton ";
+                    break;
+                case "yellow":
+                    cls += "yellowbutton ";
+                    break;
+                case "":
+                    break;
+                default:
+                    EvtScriptEmitPrint.fire({owner:"Layout", message: "Bottone con stile invalido: " + ctrl.content})
+                    break;
+            }
+        }
+        if (ctrl.stack) {
+            if (ctrl.stack == Direction.Fill) {
+                style+= "flex: 1;";
+            }
+        }
+        if (ctrl.color) {
+            style+= "color:"+ctrl.color+";";
+        }
+        if (ctrl.background) {
+            style+= "background-color:"+ctrl.background+";";
+        }
+        if (ctrl.x) {
+            style+= "left:"+ctrl.x+"px !important;";
+        }
+        if (ctrl.y) {
+            style+= "top:"+ctrl.y+"px !important;";
+        }
+        if (ctrl.w) {
+            if (ctrl.w != 160) {
+                // hack todo
+                style+= "width:"+ctrl.w+"px !important;";
+            }
+        }
+        if (ctrl.h) {
+            style+= "height:"+ctrl.h+"px !important;";
+        }
+        if (ctrl.position) {
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+        }
+
+        if ((ctrl.stack == Direction.None) || !ctrl.stack) {
+            style+= "clear:both !important;";
+        }/* else {
+            style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
+        }*/
+
+        if (ctrl.css) {
+            style+= ctrl.css + ";";
+        }
+
+        const btn = `<button tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
+        const b = $(btn);
+        if (ctrl.commands) {
+            b.click((e)=>{
+                const cmdIndex = this.layout.items.indexOf(ctrl);
+                var offset = b.offset();
+                var posY = offset.top - $(window).scrollTop();
+                var posX = offset.left - $(window).scrollLeft();
+                
+                let btnCnt = 0;
+                let cmds = ctrl.commands.split("|");
+
+                let col = ctrl.color ? ctrl.color : this.layout.color ? this.layout.color : "white"
+                let bckc = ctrl.background ? ctrl.background : this.layout.background ? this.layout.background : "#00000077";
+                let cmdBtns = cmds.map(v => {
+                    return `<button id="ctrl-${cmdIndex}-btn${btnCnt++}" style="display:block;width:100%;"><div class="ui-control-content"><span>&nbsp;${v}&nbsp;</span></div></button>`;
+                })
+                let popup = $(`<div tabindex='0' class="ui-control-content" style='${ctrl.css};padding:1px;border-radius: 3px;box-shadow: 0 0 3px #00000077;z-index:1999;background-color:${bckc};color:${col};display:none;white-space:normal;'>${cmdBtns.join("\n")}</div>`);
+                popup.on("blur", () => {
+                    setTimeout(() => popup.remove(), 100);
+                })
+                for (let I = 0; I < btnCnt; I++) {
+                    let index = I;
+                    $(`#ctrl-${cmdIndex}-btn${I}`, popup).click(() => {
+                        this.cmdInput.sendCmd(cmds[index],true, false);
+                        popup.remove()
+                    })
+                }
+                popup.insertAfter(b);
+                popup.css("position", "fixed");
+                popup.css("min-width", b.width()+"px");
+                popup.show(0, () => {
+                    if (posX < 2) posX = 2;
+                    if (posY < 2) posY = 2;
+
+                    let top = posY;
+                    let left = posX;
+
+                    let h = popup.height();
+                    let w = popup.width();
+
+                    if (posX + w > window.visualViewport.width) {
+                        left = posX - w
+                    }
+
+                    if (posY + h + b.outerHeight() > window.visualViewport.height) {
+                        top = posY - h
+                    } else {
+                        top += b.outerHeight()
+                    }
+
+                    var o = {
+                        left: left,
+                        top: top
+                    };
+
+                    popup.offset(o);
+                    popup.focus();
+                });
+            });
         }
         return b;
     }
@@ -1725,6 +1940,8 @@ export class LayoutManager {
 
     public createLayout(prof:Profile) {
         prof.layout = {
+            "version": LayoutVersion,
+            "customized": false,
             panes: [...this.defaultPanes],
             items: []
         }
@@ -1735,7 +1952,11 @@ export class LayoutManager {
     }
 
     public save() {
+        const cp = this.profileManager.getCurrent()
         this.profileManager.saveProfiles();
+        if (cp) {
+            this.layout = this.profileManager.getProfile(cp).layout;
+        }
     }
 
 }

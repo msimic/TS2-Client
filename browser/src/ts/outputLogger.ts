@@ -59,11 +59,11 @@ export class OutputLogger {
             await this.db.add("lines", buffer);
         }
         this.numLines = await this.db.count("lines");
-        //console.log("Logger lines: " + this.numLines)
+
         if (this.lineCount() > 50000) {
             EvtLogExceeded.fire({
                 owner: "outputLogger",
-                message: "Lunghezza Log superata (100000 linee). Verra' azzerato. Vuoi scaricarlo ora?",
+                message: "Lunghezza Log superata (50000 linee). Verra' azzerato. Vuoi scaricarlo ora?",
                 silent: false
             })
         }

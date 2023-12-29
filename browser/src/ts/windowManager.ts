@@ -136,13 +136,21 @@ export class WindowManager {
     }
 
     async profileDisconnected() {
-        console.log("profileDisconnected: " + this.profileManager.getCurrent())
+        console.log("windowsmanager profileDisconnected: " + this.profileManager.getCurrent())
         for (const w of this.windows) {
             if (w[1].window) {
                 const wasVisible = w[1].data.visible;
+                const wasDocked = w[1].data.docked;
                 //this.hide(w[1].data.name);
-                (<any>w[1].window).jqxWindow("close");
+                let name = w[1].data.name;
+                let wnd = <any>w[1].window;
+                /*if (this.isDocked(name, wnd)) {
+                    await this.unDock(name, wnd)
+                };*/
+                (wnd).jqxWindow("close");
+
                 w[1].data.visible = wasVisible;
+                w[1].data.docked = wasDocked;
             }
         }
         //this.save()
@@ -221,8 +229,11 @@ export class WindowManager {
     }
 
     public isDocked(window:string, ui:JQuery) {
-        let w = ui.parents(".jqx-window");
-        return w.data("docked");
+        const w = ui.hasClass("jqx-window") ? ui : ui.parents(".jqx-window");
+        
+        let windowDef = this.windows.get(window);
+        if (!windowDef) return false;
+        return windowDef.data.docked || w.data("docked");
     }
 
     public dock(window:string, ui:JQuery) { 
@@ -245,7 +256,7 @@ export class WindowManager {
             //Messagebox.Show("Info", "Non trovo la posizione definita nel layout.\nPer poter ancorarla devi definire nel layout in che pannello va\nancorata aggiungendo un elemento di tipo 'finestra'\ncon il contenuto '" + window + "'");
             return;
         }
-        let w = ui.parents(".jqx-window");
+        let w = ui.hasClass("jqx-window") ? ui : ui.parents(".jqx-window");
         (<any>$(w)).jqxWindow("expand");
         w.hide()
         var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
@@ -285,7 +296,7 @@ export class WindowManager {
     }
 
     public async unDock(window:string, ui:JQuery) {
-        let w = ui.parents(".jqx-window");
+        let w = ui.hasClass("jqx-window") ? ui : ui.parents(".jqx-window");
         $(".jqx-window-pin-button",w).removeClass("jqx-window-pin-button-pinned");
         w.data("docked", false);
         (<any>$(w)).jqxWindow({ draggable: true }); 
@@ -363,10 +374,11 @@ export class WindowManager {
     }
 
     private applySettings(wnd: WindowDefinition, parent: JQuery) {
-        if (wnd.window) {
+        if (!parent.length) return;
+        if (wnd.window.length) {
             this.applyDockSizes(wnd);
         }
-        if ((<any>$(wnd.window))[0].sizeChanged) {
+        if (wnd.window.length && (<any>$(wnd.window))[0].sizeChanged) {
             var duration = (<any>$(wnd.window)).jqxWindow('collapseAnimationDuration');
             setTimeout(() => (<any>$(wnd.window))[0].sizeChanged(), (duration || 150));
         }
@@ -752,7 +764,7 @@ export class WindowManager {
     public async show(window:string) {
         var w = this.windows.get(window);
         //console.log("SHOW " + w.data.name) 
-        if (!w.output && !w.custom && !this.loading) {
+        if (!w.output && !this.loading) {
             const data = w.data;
             data.visible = false
             await this.destroyWindow(window, true);

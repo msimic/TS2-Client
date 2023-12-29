@@ -89,7 +89,7 @@ export class AliasManager {
     public saveAliases() {
         if (this.saving) return;
         try {
-            this.aliases.forEach(a => a.script = null);
+            this.aliases.forEach(a => delete a.script);
             this.config.set("aliases", this.aliases);
             this.mergeAliases();
             if (!this.baseConfig) {

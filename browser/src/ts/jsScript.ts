@@ -7,7 +7,7 @@ import { OutputManager } from "./outputManager";
 import { ProfileManager } from "./profileManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
-import { ConfigIf, throttle } from "./util";
+import { ConfigIf, escapeRegExp, throttle } from "./util";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string, silent:boolean}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
@@ -112,7 +112,7 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
     }
 }
 
-export function colorize(sText: string, sColor:string, sBackground:string, bold:boolean, underline:boolean, blink:boolean) {
+export function colorize(sText: string, sColor:string, sBackground?:string, bold?:boolean, underline?:boolean, blink?:boolean) {
     if (typeof bold == "string") bold=(bold=="true");
     if (typeof underline == "string") underline=(underline=="true");
     if (typeof blink == "string") blink=(blink=="true");
@@ -166,7 +166,8 @@ export enum ScripEventTypes {
     ConnectionState,
     SettingChanged,
     ClassChanged,
-    TriggerFired
+    TriggerFired,
+    CommandExecuted
 }
 
 export class ScriptEventsIta {
@@ -176,7 +177,8 @@ export class ScriptEventsIta {
             'Stato conessione cambiato',
             'Impostazione cambiata',
             'Stato classe cambiato',
-            'Trigger scattato'
+            'Trigger scattato',
+            "Comando eseguito"
         ];
         return itaNames[Number(index)];
     }
@@ -287,7 +289,7 @@ export class JsScript {
     }
 
     checkEventCondition(ev:ScriptEvent, condition:string):boolean {
-        return ev.condition == condition || (ev.type == ScripEventTypes[ScripEventTypes.VariableChanged] && ev.condition.split(",").indexOf(condition)!=-1);
+        return (!ev.condition) || ev.condition == condition || (ev.type == ScripEventTypes[ScripEventTypes.VariableChanged] && ev.condition.split(",").indexOf(condition)!=-1);
     }
 
     triggerEvent(ev:ScriptEvent, param:any) {
@@ -729,7 +731,19 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
     const print = function(message: string, window?:string) {
-        EvtScriptEmitPrint.fire({owner: own, message: (message||"<null>").toString(), window: window});
+        if (typeof message == "function") {
+            message = colorize("&lt;funzione" + ((<Function>message).name ? ": " + ((<Function>message).name) : "") + "&gt;", "#ba6bb4")
+        }
+        if (typeof message == "boolean") {
+            message = colorize("" + (<any>message).toString() + "", "#73e260")
+        }
+        if (typeof message == "object" && message != null) {
+            message = colorize(JSON.stringify(message, null, 2), "#cccccc")
+        }
+        if (!message) {
+            message = colorize("null", "#5e7fd4")
+        }
+        EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
     };
     const cls = function(window?:string) {
         EvtScriptEmitCls.fire({owner: own, window: window});
@@ -809,6 +823,12 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         destroyWindow: deleteWindow,
         findAlias: (l:string) => aliasManager.findAlias(l),
         findTrigger: (l:string) => triggerManager.findTrigger(l),
+        createTrigger: (l:TrigAlItem) => triggerManager.createTrigger(l),
+        deleteTrigger: (l:TrigAlItem) => triggerManager.deleteTrigger(l),
+        createTempTrigger: (l:TrigAlItem) => triggerManager.createTempTrigger(l),
+        deleteTempTrigger: (l:TrigAlItem) => triggerManager.deleteTempTrigger(l),
+        "console": console,
+        escapeRegex: escapeRegExp,
         cap: cap,
         gag: gag,
         delay: delay,

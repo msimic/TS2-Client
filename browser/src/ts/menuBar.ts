@@ -25,6 +25,7 @@ import { HelpWin } from "./helpWindow";
 import { Mapper } from "./mapper";
 import { VersionsWin } from "./versionsWindow";
 import { OutputLogger } from "./outputLogger";
+import { LayoutWindow } from "./layoutWindow";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -119,11 +120,13 @@ export class MenuBar {
                 if (!clickable) {
                     Notification.Show(`${name}: ${val?"abilitato":"disabilitato"}`, true)
                 }
+                this.closeMenues()
                 //if (clickable) this.clickFuncs[name]((<any>event.target).checked);
             });
         } else if (checkbox && !storageKey) {
             $(checkbox).change((event: JQueryEventObject) => {
                 if (clickable) this.clickFuncs[name](!(<any>event.target).checked);
+                this.closeMenues()
             });
         } else if (storageKey) {
             if (clickable) this.clickFuncs[name](this.config.get(storageKey));
@@ -142,6 +145,7 @@ export class MenuBar {
                     this.clickFuncs[name](checked);
                     //Notification.Show(`${name}: ${checked}`, true)
                 }
+                this.closeMenues()
             });
         } else if (value && name && storageKey) {
             $(element).click((event: JQueryEventObject) => {
@@ -149,6 +153,7 @@ export class MenuBar {
                 
                 this.config.set(storageKey, value);
                 Notification.Show(`${name}: ${value}`, true)
+                this.closeMenues()
             });
         } /*else if (name && storageKey) {
             $(element).click((event: JQueryEventObject) => {
@@ -187,6 +192,8 @@ export class MenuBar {
         });
     }
 
+    private closeMenues:Function;
+
     constructor(
         private aliasEditor: AliasEditor,
         private triggerEditor: TriggerEditor,
@@ -206,6 +213,7 @@ export class MenuBar {
         private baseConfig: UserConfig,
         private helpWin: HelpWin,
         private mapper: Mapper,
+        private layoutWindowr: LayoutWindow,
         private changelog: VersionsWin
         ) 
     {
@@ -255,6 +263,14 @@ export class MenuBar {
 
         circleNavigate($("#connessione",$("#menuBar")), $("#altro",$("#menuBar")), null, null);
         
+        this.closeMenues = () => {
+            mnu.jqxMenu('closeItem',"connessione")
+            mnu.jqxMenu('closeItem',"impostazioni")
+            mnu.jqxMenu('closeItem',"scripting")
+            mnu.jqxMenu('closeItem',"finestre")
+            mnu.jqxMenu('closeItem',"altro")
+        }
+
         $("#menuBar").on('itemclick', (event) =>
         {
             document.getSelection().removeAllRanges();
@@ -263,11 +279,7 @@ export class MenuBar {
                 return;
             }
             if ($((<any>event).args).find(".jqx-icon-arrow-right").length || $((<any>event).args).closest(".jqx-menu-popup").length==0) return;
-            mnu.jqxMenu('closeItem',"connessione")
-            mnu.jqxMenu('closeItem',"impostazioni")
-            mnu.jqxMenu('closeItem',"scripting")
-            mnu.jqxMenu('closeItem',"finestre")
-            mnu.jqxMenu('closeItem',"altro")
+            this.closeMenues()
         });
 
         $("#menuBar").on('keyup', (event) =>
@@ -275,11 +287,7 @@ export class MenuBar {
             if (event.key == "Escape") {
                 event.preventDefault()
                 event.stopPropagation()
-                mnu.jqxMenu('closeItem',"connessione")
-                mnu.jqxMenu('closeItem',"impostazioni")
-                mnu.jqxMenu('closeItem',"scripting")
-                mnu.jqxMenu('closeItem',"finestre")
-                mnu.jqxMenu('closeItem',"altro")
+                this.closeMenues()
                 $("#cmdInput").focus()
             }
         });
@@ -353,6 +361,7 @@ export class MenuBar {
             let self = this;
             li.on("click", () => {
                 self.windowManager.show(iterator);
+                (<any>$("#menuBar")).jqxMenu('closeItem',"finestre")
             });
             $("#windowList").append(li);
         }
@@ -378,8 +387,8 @@ export class MenuBar {
     }
 
     private onImport = ()=> {
-        //this.detachMenu();
-        //this.attachMenu();
+        this.detachMenu();
+        this.attachMenu();
     }
 
     private handleNewConfig() {
@@ -531,6 +540,10 @@ export class MenuBar {
         this.clickFuncs["mapper"] = () => {
             this.windowManager.createWindow("Mapper");
             this.windowManager.show("Mapper");
+        };
+
+        this.clickFuncs["layoutEditor"] = () => {
+            this.layoutWindowr.show();
         };
 
         this.clickFuncs["wrap-lines"] = (val) => {
