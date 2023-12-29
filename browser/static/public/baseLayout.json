@@ -1,6 +1,8 @@
 {
   "version": 1,
   "customized": false,
+  "color": "#bbbbbb",
+  "background": "#000000",
   "panes": [
     {
       "position": 1,

@@ -1205,6 +1205,7 @@ Vuoi farlo ora?`);
             return;
         }
         this.createLayout(prof);
+        prof.layout.color = "#bbbbbb"
         for (const p of prof.layout.panes) {
             p.background = "rgb(21 106 167 / 77%);";
         }
