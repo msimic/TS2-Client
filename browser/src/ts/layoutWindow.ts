@@ -357,8 +357,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         
         modified = modified || (this.$topLeftHeight.val() != (this.getPaneWidth(PanelPosition.PaneTopLeft)||""));
         modified = modified || (this.$topRightHeight.val() != (this.getPaneWidth(PanelPosition.PaneTopRight)||""));
-        modified = modified || (this.$bottomLeftHeight.val() != (this.getPaneWidth(PanelPosition.PaneBottomLeft)||""));
-        modified = modified || (this.$bottomRightHeight.val() != (this.getPaneWidth(PanelPosition.PaneBottomRight)||""));
+        modified = modified || (this.$bottomLeftHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomLeft)||""));
+        modified = modified || (this.$bottomRightHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomRight)||""));
         
         modified = modified || (this.$leftTopColor.val() != (this.getPaneColor(PanelPosition.PaneLeftTop)||""));
         modified = modified || (this.$rightTopColor.val() != (this.getPaneColor(PanelPosition.PaneRightTop)||""));

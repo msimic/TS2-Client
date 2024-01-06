@@ -8,10 +8,13 @@
 - bottone per mostrare la history dei comandi
 - registrazione/log piu performante
 - rework comandi per tastierino numerico
-- aggiunte findAlias, findTrigger, createTrigger, createTempTrigger, deleteTrigger, deleteTempTrigger, escapeRegex,  allo scripting
-- inizia a nevicare??
-- risolto un memory leak del mapper
+- aggiunte findAlias, findTrigger, createTrigger, createTempTrigger, deleteTrigger, deleteTempTrigger allo scripting
+- aggiunte showWindow, hideWindow, escapeRegex  allo scripting
+- durante natale e capodanno il client puo essere decorato da fiocchi di neve
+- risolto un memory leak del mapper a riapertura continuata della finestra
 - migliorato il pwa manifest per installazione come app
 - da linea comando si puo eseguire una script se si prefissa con >
-- trigger temporanei aggiunti
+- trigger temporanei e variabili temporanee aggiunte
 - versione iniziale della finestra per la disposizione schermo
+- aggiunto evento scripting per "comando dato"
+- supporto per bottone dropdown nel layout (type: 3), non supporta is_scripting, comandi delimitati da pipe (|)

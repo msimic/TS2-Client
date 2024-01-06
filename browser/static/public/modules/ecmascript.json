@@ -708,11 +708,19 @@
   },
   "variable": {
     "!type": "fn(name: string)",
+    "!doc": "Ritorna il valore della variabile con il nome richiesto. Come getvar."
+  },
+  "getvar": {
+    "!type": "fn(name: string)",
     "!doc": "Ritorna il valore della variabile con il nome richiesto."
   },
-  "var": {
-    "!type": "?",
-    "!doc": "Accede alle variabili."
+  "delvar": {
+    "!type": "fn(name: string)",
+    "!doc": "Cancella una variabile."
+  },
+  "setvar": {
+    "!type": "fn(name: string, value: ?, class: string, temporary: bool)",
+    "!doc": "Crea / assegna o altera una variabile. Ritorna il valore."
   },
   "playAudio": {
     "!type": "fn(url: string)",

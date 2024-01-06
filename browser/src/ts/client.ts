@@ -307,14 +307,16 @@ export class Client {
             return "";
         };
 
-        this.socket.EvtTelnetConnect.handle((val: [string, number]) => {
+        this.socket.EvtTelnetConnect.handle(async (val: [string, number]) => {
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
                 new Audio("./sounds/connect.ogg").play()
             }
             this.jsScript.load();
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
             this.layoutManager.profileConnected();
-            this.windowManager.profileConnected();
+            console.log("Telnet connected for profile: " + profileManager.getCurrent())
+            await this.windowManager.load();
+            await this.windowManager.showWindows();
             // Prevent navigating away accidentally
             this.connected = true;
             window.addEventListener("beforeunload", preventNavigate);
@@ -644,9 +646,9 @@ export class Client {
 
     public save():void {
         this.jsScript.save();
-        this.profileManager.saveProfiles();
         this.windowManager.save();
         this.layoutManager.save();
+        this.profileManager.saveProfiles();
     }
     public readonly UserConfig = UserConfig;
     public readonly AppInfo = AppInfo;
@@ -688,7 +690,7 @@ export async function setupWorkers() {
     if ((<any>window).ipcRenderer || window.location.host.indexOf("localhost")!=-1) return Promise.resolve(null);
 
     if ('serviceWorker' in navigator) {
-        return navigator.serviceWorker.register('./serviceWorker.js', {scope: './'}).then(function() {
+        return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
           // Registration was successful. Now, check to see whether the service worker is controlling the page.
           if (navigator.serviceWorker.controller) {
             // If .controller is set, then this page is being actively controlled by the service worker.

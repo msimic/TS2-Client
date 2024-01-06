@@ -23,7 +23,7 @@ export class VersionsWin {
 
         this.$win = $(win);
         this.$div = $("#versionsDiv", this.$win);
-        fetch("./versions.txt").then(async r => this.$div.html((await r.text()).split('\n').join("<br/>")));
+        fetch("./versions.txt?v=" + AppInfo.Version).then(async r => this.$div.html((await r.text()).split('\n').join("<br/>")));
 
         const w = Math.min($(window).width()-20, 480);
         const h = Math.min($(window).height()-20, 290);

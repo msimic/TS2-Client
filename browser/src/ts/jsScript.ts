@@ -151,6 +151,7 @@ export interface Variable {
     name: string;
     class: string;
     value: any;
+    temp?: boolean;
 }
 /*
 export interface ConfigIf {
@@ -524,12 +525,13 @@ export class JsScript {
     }
 
     private saveVariablesAndEventsToConfig:any;
-    private saveVariablesAndEventsToConfigInternal(ev:any, vars:any) {
+    private saveVariablesAndEventsToConfigInternal(ev:Map<string, ScriptEvent[]>, vars:Map<string, Variable>) {
         this.config.set("script_events", [...ev]);
-        this.config.set("variables", [...vars]);
+        const variableArray = [...vars].filter(v => !v[1].temp)
+        this.config.set("variables", variableArray);
     }
 
-    private saveBaseVariablesAndEventsToConfig(ev:any, vars:any) {
+    private saveBaseVariablesAndEventsToConfig(ev:Map<string, ScriptEvent[]>, vars:Map<string, Variable>) {
         this.baseConfig.set("script_events", [...ev]);
         this.baseConfig.set("variables", [...vars]);
     }
@@ -595,7 +597,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     /* Scripting API section */
     const mapper = map;
     const color = colorize;
-    const variable = function(vr: string, val?:string, cls?:string):any {
+    const variable = function(vr: string, val?:string, cls?:string, temp?:boolean):any {
 
         let v = scriptManager.getVariables(cls).filter(v => v.name == vr)[0];
         if (!(val === undefined)) {
@@ -603,23 +605,34 @@ function makeScript(owner:string, userScript: string, argSignature: string,
                 v = {
                     class: cls,
                     name: vr,
-                    value: val
+                    value: val,
                 };
+                if (temp) {
+                    v.temp = true;
+                }
                 scriptManager.setVariable(v)
             } else {
                 if (!(cls === undefined)) v.class = cls;
+                if (temp && !v.temp) {
+                    throw "Errore: La variabile " + vr + " esiste gia' e non e' temporanea."
+                }
                 v.value = val;
             }
         }
         return v.value;
     };
     
-    const setvar = function(vr: string, val?:string, cls?:string):any {
-        return variable(vr, val, cls);
+    const setvar = function(vr: string, val?:string, cls?:string, temp?:boolean):any {
+        return variable(vr, val, cls, temp);
     };
 
     const getvar = function(vr: string):any {
         return variable(vr);
+    };
+
+    const delvar = function(vr: string):any {
+        let v = scriptManager.getVariables(null).filter(v => v.name == vr)[0];
+        if (v) scriptManager.delVariable(v);
     };
 
     const sub = function(sWhat: string, sWith:string) {
@@ -842,6 +855,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         variable: variable,
         getvar: getvar,
         setvar: setvar,
+        delvar: delvar,
         showWindow: showWindow,
         hideWindow: hideWindow,
         mapper: mapper,

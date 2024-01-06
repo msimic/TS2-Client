@@ -44,12 +44,18 @@ export class ProfileManager {
         return v;
     }
 
-    public saveWindows(windows:WindowData[]) {
-        if (!this._current) return;
+    public saveWindows(profile:string, windows:WindowData[]) {
+        if (!profile) return;
 
-        var p = this.getProfile(this.getCurrent());
-        p.windows = windows;
-        this.saveProfiles();
+        var p = this.getProfile(profile);
+        if (p) {
+            if ((windows as any).loadedFrom && (windows as any).loadedFrom != profile) {
+                console.log("BUG: Saving windows of " + (windows as any).loadedFrom + " into " + profile)
+                debugger;
+            }
+            p.windows = windows;
+            this.saveProfiles();
+        }
     }
 
     public get activeConfig():UserConfig {

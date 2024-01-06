@@ -5,6 +5,8 @@ import { Button, messagebox, Messagebox, Notification } from "./messagebox";
 import * as Util from "./util";
 import { circleNavigate } from "./util";
 import { Mudslinger } from "./client";
+import { debounce } from "lodash";
+
 declare let CodeMirror: any;
 
 interface ClassTreeItem {
@@ -77,7 +79,8 @@ export abstract class TrigAlEditBase {
     protected abstract defaultValue: string;
     protected abstract defaultScript: string;
 
-    protected Filter(str:string) {
+    protected Filter:Function = null;
+    protected FilterImpl(str:string) {
         if (str && str.length < 2) {
             str = "";
         }
@@ -113,6 +116,7 @@ export abstract class TrigAlEditBase {
     }
 
     constructor(title: string, protected isBase:boolean) {
+        this.Filter = debounce(this.FilterImpl, 500)
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);

@@ -5,7 +5,7 @@ import { Mapper } from "./mapper";
 import { MapperWindow } from "./mapperWindow";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
-import { waitForVariableValue } from "./util";
+import { throttle, waitForVariableValue } from "./util";
 
 export interface IBaseWindow {
     destroy():void;
@@ -43,17 +43,24 @@ export interface WindowDefinition {
 
 export class WindowManager {
     
+    private loading:boolean = false;
+    private saving:boolean = false;
+    private profileName:string = null;
+    
     public windows: Map<string, WindowDefinition> = new Map<string, WindowDefinition>();
     public EvtEmitWindowsChanged = new EventHook<string[]>();
     private layoutManager:LayoutManager
     private mapper:Mapper
-    
+    public triggerChanged:Function = null;
+
     constructor(private profileManager:ProfileManager) {
+        this.triggerChanged = throttle(this.triggerChangedImpl, 500);
+
         profileManager.evtProfileChanged.handle(async (ev:{[k: string]: any})=>{
-            //await this.deleteWindows()
-            await this.load();
+            console.log("Windowsmanager got new config")
+            await this.profileConnected(ev.current);
         });
-        this.load();
+        this.profileConnected(profileManager.getCurrent());
     }
 
     public setMapper(mapper: Mapper) {
@@ -68,20 +75,20 @@ export class WindowManager {
         return this.layoutManager;
     }
 
-    private loading:boolean = false;
     public async load() {
         if (this.loading) return;
         this.loading = true;
         try {
             let cp:string;
-            await this.profileDisconnected();
-            if (!(cp = this.profileManager.getCurrent())) {
-                console.log("LOAD no profile")
+            await this.cleanupWindows();
+            if (!(cp = this.profileName)) {
+                console.log("wm: LOAD no profile")
                 await this.deleteWindows();
                 return;
             }
-            //console.log("LOAD profile " + cp)
-            let wnds = [...this.profileManager.getProfile(cp).windows||[]];
+            console.log("wm: LOAD profile " + cp)
+            const prof = this.profileManager.getProfile(cp)
+            let wnds = [...prof.windows||[]];
             //console.log("LOAD")
             //console.log(wnds)
             await this.deleteWindows();
@@ -98,7 +105,7 @@ export class WindowManager {
                 });
             }
             (this.windows as any).loadedFrom = cp;
-            if (this.layoutManager.getCurrent()?.items) {
+            if (prof.useLayout && this.layoutManager.getCurrent()?.items) {
                 for (let w of this.layoutManager.getCurrent().items) {
                     if (w.type == ControlType.Window) {
                         if (!this.windows.has(w.content)) {
@@ -123,22 +130,35 @@ export class WindowManager {
                     }
                 }
             }
-            this.loading = false;
             await this.showWindows();
             this.triggerChanged();
+            this.loading = false;
         } finally {
             this.loading = false;
         }
     }
 
-    public triggerChanged() {
+    public triggerChangedImpl() {
         this.EvtEmitWindowsChanged.fire([...this.windows.keys()]);
     }
 
     async profileDisconnected() {
-        console.log("windowsmanager profileDisconnected: " + this.profileManager.getCurrent())
+        this.loading = true
+        try {
+            console.log("windowsmanager profileDisconnected: " + this.profileManager.getCurrent())
+            await this.cleanupWindows();
+            this.windows.clear()
+        } finally {
+            this.loading = false
+        }
+        //this.save()
+    }
+
+    private async cleanupWindows() {
+        console.log("Cleaning up existing windows")
         for (const w of this.windows) {
             if (w[1].window) {
+                console.log("Cleaning up "+w[0])
                 const wasVisible = w[1].data.visible;
                 const wasDocked = w[1].data.docked;
                 //this.hide(w[1].data.name);
@@ -153,16 +173,18 @@ export class WindowManager {
                 w[1].data.docked = wasDocked;
             }
         }
-        //this.save()
+        await this.deleteWindows()
     }
 
-    async profileConnected() {
-        console.log("profileConnected: " + this.profileManager.getCurrent())
+    async profileConnected(profileName:string) {
+        await this.cleanupWindows()
+        this.profileName = profileName;
+        console.log("windowsmanager profileConnected: " + profileName)
         //await this.deleteWindows();
-        this.load();
+        await this.load();
     }
 
-    private async showWindows() {
+    public async showWindows() {
         let resolve:Function = null;
         let toShow:string[] = [];
         /*var p = new Promise((rs,rj) => {
@@ -196,7 +218,7 @@ export class WindowManager {
 
         let toDestroy:string[] = [];
         this.windows.forEach((v, k) => {
-            console.log("DEL " + v.data.name)
+            console.log("deleteWindows " + v.data.name)
             if (v.output) {
                 v.output.destroy()
                 delete v.output;
@@ -421,7 +443,7 @@ export class WindowManager {
             s = (s || '').replace(/font-family\:[^\;]+\;/g, '') + 'font-family: inherit;'; 
             $(".outputText", parent).attr('style', s)
         }
-        this.EvtEmitWindowsChanged.fire([wnd.data.name])
+        this.triggerChanged();
     }
 
     private applyDockSizes(wnd: WindowDefinition) {
@@ -459,7 +481,7 @@ export class WindowManager {
         let wdef = this.windows.get(name);
         if (wdef) {
             
-            //console.log("DESTROY " + wdef.data.name)
+            console.log("destroyWindow " + wdef.data.name)
             wdef.initialized = false;
             wdef.created = false;
             if (wdef.output) {
@@ -498,7 +520,11 @@ export class WindowManager {
     public createWindow(name:string,createData?:WindowData, autoOpen?:boolean):WindowDefinition {
 
         //console.log("createWindow " + name);
-
+        if ((this.windows as any).loadedFrom && this.profileName != (this.windows as any).loadedFrom) {
+            console.log("BUG: creating window in swrong profile")
+            debugger;
+        }
+        console.log("Creating window " + name)
         if (this.windows.has(name)) {
             const def = this.windows.get(name);
             //console.log("OLD " + name);
@@ -714,6 +740,7 @@ export class WindowManager {
                 anchorHeight: (createData?createData.anchorHeight:undefined)||(defaults?defaults.data.anchorHeight:undefined),
             }
         }
+
         this.windows.set(name, def);
 
         this.applySettings(def, w)
@@ -742,27 +769,41 @@ export class WindowManager {
             (<any>$win).jqxWindow('collapse');
         }
 
-        this.EvtEmitWindowsChanged.fire([...this.windows.keys()]);
+        this.triggerChanged();
         return def;
     }
 
     public save() {
-         var wnds = [...this.windows.values()].map(v => v.data);
-         const usr = this.profileManager.getCurrent()
-         let loadedFrom = (this.windows as any).loadedFrom
-        if (loadedFrom === undefined) {
-            (this.windows as any).loadedFrom = usr
-            loadedFrom = usr;
-        }
-        // console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
-        if (loadedFrom != usr) {
+        if (this.loading) {
             return;
         }
-        this.profileManager.saveWindows(wnds);
+        if (this.saving) {
+            console.log("Problem in saving windows. Double save.")
+            debugger;
+        }
+        this.saving = true
+        try {
+            var wnds = [...this.windows.values()].map(v => v.data);
+            const usr = this.profileName
+            let loadedFrom = (this.windows as any).loadedFrom
+            if (loadedFrom === undefined) {
+                (this.windows as any).loadedFrom = usr
+                loadedFrom = usr;
+            }
+            // console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
+            if (loadedFrom != usr) {
+                debugger;
+                return;
+            }
+            this.profileManager.saveWindows(this.profileName, wnds);
+        } finally {
+            this.saving = false
+        }
     }
 
     public async show(window:string) {
         var w = this.windows.get(window);
+        console.log("Showing window " + window)
         //console.log("SHOW " + w.data.name) 
         if (!w.output && !this.loading) {
             const data = w.data;
@@ -788,6 +829,7 @@ export class WindowManager {
         const oldVis = w.data.visible;
         (<any>w.window).jqxWindow("close");
         w.data.visible = oldVis;
+        console.log("Hiding window " + window)
         this.save();
     }
 }

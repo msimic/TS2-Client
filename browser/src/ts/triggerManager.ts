@@ -36,13 +36,13 @@ export class TriggerManager {
             localStorage.removeItem("triggers");
         }
 
-        this.loadTriggers(config);
+        this.loadTriggers(config, true);
         config.evtConfigImport.handle((d) => {
             if (d.owner.name != config.name) return;
             if (!baseConfig) {
                 config.set("triggers", d.data["triggers"])
             }
-            this.loadTriggers(config);
+            this.loadTriggers(config, true);
             this.saveTriggers();
         }, this);
         if (baseConfig) baseConfig.evtConfigImport.handle((d) => {
@@ -51,7 +51,7 @@ export class TriggerManager {
             if (config.name == baseConfig.name) {
                 config.cfgVals = baseConfig.cfgVals
             }
-            this.loadTriggers(config.name==baseConfig.name ? baseConfig : config);
+            this.loadTriggers(config.name==baseConfig.name ? baseConfig : config, false);
             this.saveTriggers();
         }, this);
         EvtScriptEmitToggleTrigger.handle(this.onToggle, this);
@@ -79,7 +79,7 @@ export class TriggerManager {
         }
         const changed = t.enabled != val;
         t.enabled = val;
-        if (changed) this.saveTriggers()
+        if (changed) this.saveTriggers(true)
     }
 
     public getById(id:string):TrigAlItem {
@@ -247,7 +247,7 @@ export class TriggerManager {
     }
 
     private saving = false;
-    public saveTriggers() {
+    public saveTriggers(noChangeNotification?: boolean) {
         if (this.saving) return;
         try {
             console.log("Saving triggers")
@@ -261,15 +261,17 @@ export class TriggerManager {
                 this.saving = true;
                 this.baseConfig.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
             }
-            this.changed.fire(null)
+            if (!noChangeNotification) this.changed.fire(null)
         } finally {
             this.saving = false;
         }
     }
 
-    private loadTriggers(config:ConfigIf) {
-        this.triggers = config.get("triggers") || [];
-        this.tempTriggers = [];
+    private loadTriggers(config:ConfigIf, reload:boolean) {
+        if (!this.saving && this.config == config && reload) {
+            this.triggers = config.get("triggers") || [];
+            this.tempTriggers = [];
+        }
         this.mergeTriggers();
     }
 

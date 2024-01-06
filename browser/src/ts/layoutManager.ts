@@ -5,7 +5,7 @@ import { EventHook } from "./event";
 import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
-import { isTrue, rawToHtml, throttle } from "./util";
+import { isAlphaNumeric, isTrue, rawToHtml, throttle } from "./util";
 import { WindowManager } from "./windowManager";
 
 export let LayoutVersion = 1;
@@ -119,7 +119,7 @@ export class LayoutManager {
         (async () => this.onlineBaseLayout = await $.ajax("./baseLayout.json?rnd="+Math.random()))();
         
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
-            this.load();
+            this.profileConnected()
         });
         this.deleteLayout();
         this.load();
@@ -519,6 +519,11 @@ Vuoi farlo ora?`);
             } else {
                 cssObj.width = (p.width || "auto")
             }
+            if (p.autoexpand && p.height) {
+                cssObj.maxHeight = (p.height)
+            } else {
+                cssObj.height = (p.height || "auto")
+            }
             $("#"+p.id).css(cssObj);
         }
 
@@ -601,26 +606,9 @@ Vuoi farlo ora?`);
         }
     }
 
-    isAlphaNumeric(str:string) {
-        var code, i, len;
-      
-        for (i = 0, len = str.length; i < len; i++) {
-          code = str.charCodeAt(i);
-          if (!(code > 47 && code < 58) && // numeric (0-9)
-              !(code > 64 && code < 91) && // upper alpha (A-Z)
-              !(code > 96 && code < 123) &&
-              !(code == 40 || code == 41) &&
-              !(code == 91 || code == 93) &&
-              !(code == 46)) { // lower alpha (a-z)
-            return false;
-          }
-        }
-        return true;
-      };
-
     parseVariables(v: string):string[] {
         let ret = v.split(/==|!=|<=|>=|<|>|\/|\*|\+|-/);
-        ret = ret.filter(v => v.length && !isNumeric(v) && this.isAlphaNumeric(v));
+        ret = ret.filter(v => v.length && !isNumeric(v) && isAlphaNumeric(v));
         return ret;
     }
 
