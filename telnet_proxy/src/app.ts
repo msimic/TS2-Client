@@ -542,24 +542,22 @@ function approveUser(user:string, token:string) {
 }
 
 adminApp.get('/approve', (req:any, res:any) => {
-    let status = "Errore di convalidazione Email";
+    let status = "";
     let message = "Richiesta di convalidazione Email non valida, inesistente oppure scaduta.<br/>Puoi richiederla al menu iniziale del gioco modificando l'email."
     if (!ValidateEmail(<string>req.query.email)) {
-        // tolgo per non mandare informazioni extra
-        //message = "Email non valida!"
+        status = "Errore di convalidazione Email"
     }
     if (!ValidateToken(<string>req.query.approveToken)) {
-        // tolgo per non mandare informazioni extra
-        //message = "Token non valido!"
+        status = "Errore di convalidazione Email"
     }
     if (!ValidateChar(<string>req.query.character)) {
-        // tolgo per non mandare informazioni extra
-        //message = "Nome personaggio non valido!"
+        status = "Errore di convalidazione Email"
     }
-    if (requestExists(<string>req.query.character, <string>req.query.approveToken)) {
+    if (status == "" && requestExists(<string>req.query.character, <string>req.query.approveToken)) {
         approveUser(<string>req.query.character, <string>req.query.approveToken)
         status = "ok"
-        //message = "Email approvata!"
+    } else {
+        status = "Errore di convalidazione Email"
     }
     if (status != "ok") {
         res.status(404).send(`
