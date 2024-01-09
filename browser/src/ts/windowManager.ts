@@ -524,7 +524,7 @@ export class WindowManager {
             console.log("BUG: creating window in swrong profile")
             debugger;
         }
-        console.log("Creating window " + name)
+        //console.log("Creating window " + name)
         if (this.windows.has(name)) {
             const def = this.windows.get(name);
             //console.log("OLD " + name);

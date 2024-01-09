@@ -102,6 +102,7 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
                 }
             }
             for (const key in oldKeys.keys()) {
+                if (key == "_oldValues") continue;
                 var oldValue = self._oldValues ? self._oldValues[key] : undefined;
                 if (oldValue) {
                     onWatch({ obj: self, propName: key, oldValue: oldValue, newValue: undefined });
@@ -436,6 +437,12 @@ export class JsScript {
     delVariable(variable:Variable) {
         this.variables.delete(variable.name);
         delete this.scriptThis[variable.name];
+        EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: variable.name, value: <PropertyChanged>{
+            propName: variable.name,
+            newValue: undefined,
+            oldValue: undefined,
+            obj: this.getScriptThis()
+        }})
     }
 
     setVariables(variables:Variable[]) {
@@ -744,7 +751,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     const send = function(cmd: string, silent = false) {
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
-    const print = function(message: string, window?:string) {
+    const print = function(message: any, window?:string) {
         if (typeof message == "function") {
             message = colorize("&lt;funzione" + ((<Function>message).name ? ": " + ((<Function>message).name) : "") + "&gt;", "#ba6bb4")
         }
@@ -754,8 +761,13 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         if (typeof message == "object" && message != null) {
             message = colorize(JSON.stringify(message, null, 2), "#cccccc")
         }
-        if (!message) {
+        if (message != null && message != undefined && typeof message == "number") {
+            message = colorize(message.toString(), "#6e5ff4")
+        } else if (message === null || message === undefined) {
             message = colorize("null", "#5e7fd4")
+        } else {
+            // string
+            message = colorize(message.toString(), "orange")
         }
         EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
     };
@@ -815,6 +827,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     
 
     const api = {
+        clone: clone,
         getAlias: getAlias,
         getTrigger: getTrigger,
         print: print,

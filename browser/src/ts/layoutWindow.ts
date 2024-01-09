@@ -350,24 +350,24 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
 
         let modified:boolean = false;
-        modified = modified || (this.$leftTopWidth.val() != (this.getPaneWidth(PanelPosition.PaneLeftTop)||""));
-        modified = modified || (this.$rightTopWidth.val() != (this.getPaneWidth(PanelPosition.PaneRightTop)||""));
-        modified = modified || (this.$rightBottomWidth.val() != (this.getPaneWidth(PanelPosition.PaneRightBottom)||""));
-        modified = modified || (this.$leftBottomWidth.val() != (this.getPaneWidth(PanelPosition.PaneLeftBottom)||""));
+        modified = modified || (this.$leftTopWidth.val() != (this.getPaneWidth(PanelPosition.PaneLeftTop).toString()||""));
+        modified = modified || (this.$rightTopWidth.val() != (this.getPaneWidth(PanelPosition.PaneRightTop).toString()||""));
+        modified = modified || (this.$rightBottomWidth.val() != (this.getPaneWidth(PanelPosition.PaneRightBottom).toString()||""));
+        modified = modified || (this.$leftBottomWidth.val() != (this.getPaneWidth(PanelPosition.PaneLeftBottom).toString()||""));
         
-        modified = modified || (this.$topLeftHeight.val() != (this.getPaneWidth(PanelPosition.PaneTopLeft)||""));
-        modified = modified || (this.$topRightHeight.val() != (this.getPaneWidth(PanelPosition.PaneTopRight)||""));
-        modified = modified || (this.$bottomLeftHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomLeft)||""));
-        modified = modified || (this.$bottomRightHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomRight)||""));
+        modified = modified || (this.$topLeftHeight.val() != (this.getPaneHeight(PanelPosition.PaneTopLeft).toString()||""));
+        modified = modified || (this.$topRightHeight.val() != (this.getPaneHeight(PanelPosition.PaneTopRight).toString()||""));
+        modified = modified || (this.$bottomLeftHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomLeft).toString()||""));
+        modified = modified || (this.$bottomRightHeight.val() != (this.getPaneHeight(PanelPosition.PaneBottomRight).toString()||""));
         
-        modified = modified || (this.$leftTopColor.val() != (this.getPaneColor(PanelPosition.PaneLeftTop)||""));
-        modified = modified || (this.$rightTopColor.val() != (this.getPaneColor(PanelPosition.PaneRightTop)||""));
-        modified = modified || (this.$rightBottomColor.val() != (this.getPaneColor(PanelPosition.PaneRightBottom)||""));
-        modified = modified || (this.$leftBottomColor.val() != (this.getPaneColor(PanelPosition.PaneLeftBottom)||""));
-        modified = modified || (this.$topLeftColor.val() != (this.getPaneColor(PanelPosition.PaneTopLeft)||""));
-        modified = modified || (this.$topRightColor.val() != (this.getPaneColor(PanelPosition.PaneTopRight)||""));
-        modified = modified || (this.$bottomLeftColor.val() != (this.getPaneColor(PanelPosition.PaneBottomLeft)||""));
-        modified = modified || (this.$bottomRightColor.val() != (this.getPaneColor(PanelPosition.PaneBottomRight)||""));
+        modified = modified || (this.$leftTopColor.val() != (this.getPaneColor(PanelPosition.PaneLeftTop).toString()||""));
+        modified = modified || (this.$rightTopColor.val() != (this.getPaneColor(PanelPosition.PaneRightTop).toString()||""));
+        modified = modified || (this.$rightBottomColor.val() != (this.getPaneColor(PanelPosition.PaneRightBottom).toString()||""));
+        modified = modified || (this.$leftBottomColor.val() != (this.getPaneColor(PanelPosition.PaneLeftBottom).toString()||""));
+        modified = modified || (this.$topLeftColor.val() != (this.getPaneColor(PanelPosition.PaneTopLeft).toString()||""));
+        modified = modified || (this.$topRightColor.val() != (this.getPaneColor(PanelPosition.PaneTopRight).toString()||""));
+        modified = modified || (this.$bottomLeftColor.val() != (this.getPaneColor(PanelPosition.PaneBottomLeft).toString()||""));
+        modified = modified || (this.$bottomRightColor.val() != (this.getPaneColor(PanelPosition.PaneBottomRight).toString()||""));
         
         modified = modified || (this.$leftTopExpand.prop("checked") != (this.getPaneExpand(PanelPosition.PaneLeftTop)||false));
         modified = modified || (this.$rightTopExpand.prop("checked") != (this.getPaneExpand(PanelPosition.PaneRightTop)||false));

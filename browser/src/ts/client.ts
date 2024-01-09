@@ -240,7 +240,7 @@ export class Client {
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
         this.jsScript.setOutputManager(this.outputManager);
         this.layoutManager = new LayoutManager(this.profileManager, this.windowManager, this.jsScript, this.commandInput);
-        this.profilesWin = new ProfilesWindow(this.profileManager,this.layoutManager, this.profileWin, this);
+        this.profilesWin = new ProfilesWindow(this.profileManager, this.windowManager,this.layoutManager, this.profileWin, this);
 
         this.windowManager.setLayoutManager(this.layoutManager);
         this.windowManager.setMapper(this.mapper);

@@ -1918,7 +1918,10 @@ ul.select {
 #mapmessage {
     padding: 2px;
     font-size: 10px;
-    /*color: black;*/
+    text-overflow: ellipsis;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
 }
 #mapcanvas {
     position: absolute;

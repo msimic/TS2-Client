@@ -6,6 +6,7 @@ import { Acknowledge, AskReload, circleNavigate } from "./util";
 import { Mudslinger } from "./client";
 import { EventHook } from "./event";
 import { LayoutManager } from "./layoutManager";
+import { WindowManager } from "./windowManager";
 
 const connectText = "Connessione";
 
@@ -22,7 +23,7 @@ export class ProfilesWindow {
     autologinInterval: number;
     manualClose: boolean = true;
 
-    constructor(private manager:ProfileManager, private layoutManager:LayoutManager, private profileWin:ProfileWindow, private client:Client) {
+    constructor(private manager:ProfileManager, private windowManager:WindowManager, private layoutManager:LayoutManager, private profileWin:ProfileWindow, private client:Client) {
         let win = document.createElement("div");
         win.style.display = "none";
         win.className = "winProfiles";
@@ -160,8 +161,13 @@ export class ProfilesWindow {
         }
         if (this.profileList.val() != "-1") {
             this.manager.setCurrent(this.profileList.val());
+            this.layoutManager.profileConnected();
+            await this.windowManager.load();
+            await this.windowManager.showWindows();
         } else {
             this.manager.setCurrent("");
+            this.layoutManager.profileDisconnected();
+            await this.windowManager.profileDisconnected();
         }
         this.hide(true);
     }
