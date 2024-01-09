@@ -2,7 +2,7 @@ import { UserConfig } from "./userConfig";
 import { AppInfo } from "./appInfo";
 // @ts-ignore
 import * as Fingerprint2 from "@fingerprintjs/fingerprintjs";
-import {Md5} from 'ts-md5/dist/md5';
+import {Md5} from 'ts-md5';
 import * as aesjs from "aes-js";
 import { AliasEditor, EvtCopyAliasToBase } from "./aliasEditor";
 import { AliasManager } from "./aliasManager";
@@ -307,18 +307,18 @@ export class Client {
             return "";
         };
 
-        this.socket.EvtTelnetConnect.handle(async (val: [string, number]) => {
+        this.socket.EvtTelnetConnect.handle((val: [string, number]) => {
+            this.connected = true;
+            console.log("Telnet connected for profile: " + profileManager.getCurrent())
+
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
                 new Audio("./sounds/connect.ogg").play()
             }
             this.jsScript.load();
             EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
-            this.layoutManager.profileConnected();
-            console.log("Telnet connected for profile: " + profileManager.getCurrent())
-            await this.windowManager.load();
-            await this.windowManager.showWindows();
+
             // Prevent navigating away accidentally
-            this.connected = true;
+
             window.addEventListener("beforeunload", preventNavigate);
             this.serverEcho = false;
             this.menuBar.handleTelnetConnect();
@@ -327,6 +327,12 @@ export class Client {
             apiUtil.clientInfo.telnetPort = val[1];
 
             apiUtil.apiPostClientConn();
+
+            (async () => {
+                this.layoutManager.profileConnected();
+                await this.windowManager.load();
+                await this.windowManager.showWindows();
+            })();
         });
 
         this.socket.EvtTelnetDisconnect.handle(() => {
@@ -936,17 +942,17 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
                 if (inputs.length) return  {
                     focus: () => {
                         setTimeout(()=>{
-                            this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()[0].focus()
+                            (this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()[0] as HTMLElement).focus()
                         }, 150)
                     }
                 };
                 const codemirror = this.find('.CodeMirror').first()
-                if (codemirror.length && codemirror[0].CodeMirror) {
+                if (codemirror.length && (codemirror[0] as any).CodeMirror) {
                     return {
                         focus: () => {
                             setTimeout(()=>{
-                                this.find('.CodeMirror').first()[0].CodeMirror.focus()
-                                this.find('.CodeMirror').first()[0].CodeMirror.setCursor({line: 1, ch: 0})
+                                (this.find('.CodeMirror').first()[0] as any).CodeMirror.focus()
+                                (this.find('.CodeMirror').first()[0] as any).CodeMirror.setCursor({line: 1, ch: 0})
                             }, 150)
                         }
                     }

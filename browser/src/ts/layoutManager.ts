@@ -926,29 +926,94 @@ Vuoi farlo ora?`);
 
         const btn = `<button tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
         const b = $(btn);
+        
         if (ctrl.commands) {
+
             b.click((e)=>{
+                let controlCommands:string[] = [];
+                let controlCommandsValues:string[]  = [];
+                
+                if (ctrl.is_script) {
+                    const realName = this.getVariableName(ctrl.commands);
+                    if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
+                    if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
+                        this.variableChangedMap.get(realName).push(ctrl);
+    
+                    const optionsVar = ctrl.commands
+                    if (!optionsVar) {
+                        EvtScriptEmitPrint.fire({owner:"Layout", message: "Bottone multiopzione script manca la variabile per le opzioni in commands: " + ctrl.content})
+                    }
+                    const cOptVar = this.scripting.getVariableValue(optionsVar)
+                    if (cOptVar) {
+                        if (typeof cOptVar == "object" && cOptVar.constructor === Array) {
+                            for (const iterator of cOptVar) {
+                                controlCommands.push(iterator.toString())
+                                controlCommandsValues.push(iterator.toString())
+                            }
+                        } else if (typeof cOptVar == "object" && cOptVar.constructor != Array) {
+                            for (const key in cOptVar) {
+                                if (Object.prototype.hasOwnProperty.call(cOptVar, key)) {
+                                    const element = cOptVar[key];
+                                    controlCommands.push(key.toString())
+                                    controlCommandsValues.push(element.toString())
+                                }
+                            }
+                        } else if (typeof cOptVar != "string" && Symbol.iterator in Object(cOptVar)) {
+                            for (const it of cOptVar) {
+                                controlCommands.push(it.toString())
+                                controlCommandsValues.push(it.toString())
+                            }
+                        } else {
+                            controlCommands.push(ctrl.commands)
+                            controlCommandsValues.push(cOptVar.toString())
+                        }
+                    } else {
+                        controlCommands.push(ctrl.commands)
+                        controlCommandsValues.push("???")
+                    }
+                } else {
+                    controlCommands = ctrl.commands.split("|")
+                    controlCommandsValues = ctrl.commands.split("|")
+                }
+
+                if (!controlCommands.length) {
+                    EvtScriptEmitPrint.fire({owner:"Layout", message: "Bottone multiopzione senza valori da mostrare: " + ctrl.content})
+                }
+
                 const cmdIndex = this.layout.items.indexOf(ctrl);
                 var offset = b.offset();
                 var posY = offset.top - $(window).scrollTop();
                 var posX = offset.left - $(window).scrollLeft();
                 
                 let btnCnt = 0;
-                let cmds = ctrl.commands.split("|");
+                let cmds = controlCommands;
+                let cmdsval = controlCommandsValues;
 
                 let col = ctrl.color ? ctrl.color : this.layout.color ? this.layout.color : "white"
                 let bckc = ctrl.background ? ctrl.background : this.layout.background ? this.layout.background : "#00000077";
+                
+                let dropdownStyle = ""
+                if (ctrl.color) {
+                    dropdownStyle+= "color:"+ctrl.color+";";
+                }
+                if (ctrl.background) {
+                    dropdownStyle+= "background-color:"+ctrl.background+";";
+                }
+
                 let cmdBtns = cmds.map(v => {
-                    return `<button id="ctrl-${cmdIndex}-btn${btnCnt++}" style="display:block;width:100%;"><div class="ui-control-content"><span>&nbsp;${v}&nbsp;</span></div></button>`;
+                    return `<button id="ctrl-${cmdIndex}-btn${btnCnt++}" style="display:block;width:100%;${dropdownStyle}"><div class="ui-control-content"><span>&nbsp;${v}&nbsp;</span></div></button>`;
                 })
                 let popup = $(`<div tabindex='0' class="ui-control-content" style='${ctrl.css};padding:1px;border-radius: 3px;box-shadow: 0 0 3px #00000077;z-index:1999;background-color:${bckc};color:${col};display:none;white-space:normal;'>${cmdBtns.join("\n")}</div>`);
-                popup.on("blur", () => {
+                popup.on("blur", (ev) => {
+                    if ((ev.originalEvent as FocusEvent).relatedTarget && popup.find((ev.originalEvent as FocusEvent).relatedTarget as Element).length) {
+                        return;
+                    }
                     setTimeout(() => popup.remove(), 100);
                 })
                 for (let I = 0; I < btnCnt; I++) {
                     let index = I;
                     $(`#ctrl-${cmdIndex}-btn${I}`, popup).click(() => {
-                        this.cmdInput.sendCmd(cmds[index],true, false);
+                        this.cmdInput.sendCmd(cmdsval[index],true, false);
                         popup.remove()
                     })
                 }
@@ -1087,7 +1152,7 @@ Vuoi farlo ora?`);
 
     createContent(ctrl: Control, parseVariable:boolean) {
         let index = this.layout.items.indexOf(ctrl);
-        let content = ctrl.content;
+        let content = ctrl.content || "";
         content=rawToHtml(content);
         let sthis = this.scripting.getScriptThis()
         if (content.indexOf("%color(")!=-1) {

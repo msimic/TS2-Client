@@ -38,7 +38,7 @@ export const NumPadMap = {
     "7": NumPadConfigDef.Numpad7,
     "8": NumPadConfigDef.Numpad8,
     "9": NumPadConfigDef.Numpad9,
-    "+": NumPadConfigDef.NumpadMultiply,
+    "+": NumPadConfigDef.NumpadAdd,
     "4": NumPadConfigDef.Numpad4,
     "5": NumPadConfigDef.Numpad5,
     "6": NumPadConfigDef.Numpad6,

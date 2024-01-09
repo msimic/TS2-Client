@@ -617,9 +617,10 @@ function makeScript(owner:string, userScript: string, argSignature: string,
                     throw "Errore: La variabile " + vr + " esiste gia' e non e' temporanea."
                 }
                 v.value = val;
+                scriptManager.setVariable(v)
             }
         }
-        return v.value;
+        return v?.value;
     };
     
     const setvar = function(vr: string, val?:string, cls?:string, temp?:boolean):any {

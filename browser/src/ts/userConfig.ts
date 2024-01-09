@@ -1,7 +1,7 @@
 import { EventHook } from "./event";
 import { denyClientVersion, throttle } from "./util";
 import { AppInfo } from './appInfo'
-import { ButtonOK, Messagebox } from "./messagebox";
+import { Button, ButtonOK, Messagebox } from "./messagebox";
 import { Favorite, Mapper } from "./mapper";
 
 export class UserConfig {
@@ -193,7 +193,21 @@ export class UserConfig {
         let vals = typeof text == "string" ? JSON.parse(text) : text;
         let denyReason = "";
         if ((denyReason = denyClientVersion(vals))) {
-            Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.`)
+            (async ()=> {
+                const ret = await Messagebox.Question(`E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.\n\nSe credi che questo sia un errore puoi provare a rilanciare il client senza caching premendo Si.`)
+                if (ret.button == Button.Ok) {
+                    $.ajax({
+                        url: window.location.href,
+                        headers: {
+                            "Pragma": "no-cache",
+                            "Expires": -1,
+                            "Cache-Control": "no-cache"
+                        }
+                    }).done(function () {
+                        window.location.reload();
+                    });
+                }
+            })();
             return false;
         }
         this.cfgVals = vals;
