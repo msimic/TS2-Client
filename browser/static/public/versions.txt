@@ -1,3 +1,8 @@
+1.6.1
+- fix a un problema del tastierino numerico
+- upgrade di versioni di alcuni pacchetti
+- bottone multiopzione corretto nel layout
+____________________________________________________________
 1.6.0
 - redesign interfaccia
 - tema interfaccia chiaro e scuro
