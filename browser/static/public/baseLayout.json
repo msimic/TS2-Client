@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "customized": false,
   "color": "#bbbbbb",
   "background": "#000000",
@@ -780,6 +780,36 @@
       "stack": 0,
       "content": "",
       "commands": "down"
+    },
+    {
+      "id": "pannello_staffe_altodestra",
+      "h": 20,
+      "paneId": "row-top-right",
+      "type": 1,
+      "visible": "staffa",
+      "css": "z-index:2;margin:0;border:0;padding:0;position:absolute;top:5px;right:20px"
+    },
+    {
+      "paneId": "row-top-right",
+      "parent": "pannello_staffe_altodestra",
+      "color": "white",
+      "background": "darkgreen",
+      "type": 0,
+      "stack": 2,
+      "content": " Usa ",
+      "commands": "usastaffa",
+      "is_script": false
+    },
+    {
+      "paneId": "row-top-right",
+      "parent": "pannello_staffe_altodestra",
+      "color": "white",
+      "background": "darkred",
+      "type": 3,
+      "stack": 2,
+      "content": " Staffa: %var(staffa) ",
+      "commands": "staffe",
+      "is_script": true
     }
   ]
 }
