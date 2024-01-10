@@ -1,7 +1,9 @@
 1.6.1
-- fix a un problema del tastierino numerico
+- fix: a un problema del tastierino numerico
 - upgrade di versioni di alcuni pacchetti
-- bottone multiopzione corretto nel layout
+- bottone multiopzione nel layout ora funziona meglio
+- fix: se una variabile veniva cancellata tramite delete non faceva scattare eventi
+- fix: il nome della stanza del mapper e' ora limitata a una riga e non dovrebbe creare problemi per il layout
 ____________________________________________________________
 1.6.0
 - redesign interfaccia
