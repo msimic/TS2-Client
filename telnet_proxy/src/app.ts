@@ -131,7 +131,7 @@ let serverConfigImported = require("../../../configServer.js");
 let serverConfig : typeof serverConfigImported;
 
 // Or 'w' to truncate the file every time the process starts.
-const logFile = fs.createWriteStream('./telnet_proxy.log', { flags: 'a' });
+const logFile = fs.createWriteStream(__filename + '.log', { flags: 'a' });
 
 if (localConfig) try {
     const configPath = path.isAbsolute(localConfig) || localConfig.startsWith(".")? localConfig : path.join( __dirname, localConfig);
