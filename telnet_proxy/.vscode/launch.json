@@ -7,7 +7,7 @@
             "name": "Launch Proxy",
             "preLaunchTask": "build proxy",
             "program": "${workspaceFolder}/src/app.ts",
-            "args": ["../dist/telnet_proxy/bundle/config.json"]
+            "args": ["-v","2","../dist/telnet_proxy/bundle/config.json"]
         }
     ]
   }

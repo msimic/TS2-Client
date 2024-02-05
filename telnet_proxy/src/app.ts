@@ -6,6 +6,7 @@ import * as readline from "readline";
 import axios, { AxiosInstance } from "axios";
 import * as express from "express";
 import * as fs from "fs";
+import * as util from "util";
 import path = require("path");
 import * as yargs from "yargs";
 import { IoEvent } from "../../common/src/ts/ioevent";
@@ -129,6 +130,9 @@ const localConfig = argv.config || argv._[0];
 let serverConfigImported = require("../../../configServer.js");
 let serverConfig : typeof serverConfigImported;
 
+// Or 'w' to truncate the file every time the process starts.
+const logFile = fs.createWriteStream('./telnet_proxy.log', { flags: 'a' });
+
 if (localConfig) try {
     const configPath = path.isAbsolute(localConfig) || localConfig.startsWith(".")? localConfig : path.join( __dirname, localConfig);
     DEBUG("Loading local configuration from: " + configPath);
@@ -165,7 +169,7 @@ serverConfig.mudLibPath = argv.mudLibPath || serverConfig.mudLibPath;
 
 const isHttps = (serverConfig.privateKey && serverConfig.certificate);
 
-console.log(serverConfig);
+DEBUG(serverConfig);
 
 let telnetIdNext: number = 0;
 
@@ -390,6 +394,16 @@ actualServer.listen(serverConfig.serverPort, serverConfig.serverHost, () => {
 
 function tlog(...args: any[]) {
     console.log("[[", new Date().toLocaleString(), "]]", ...args);
+    if (VERBOSE_LEVEL >= 2) {
+        const logLine = "[["+ new Date().toLocaleString()+ "]] " + args.map(l => {
+            if (l instanceof Object) {
+                return JSON.stringify(l, null, 2)
+            } else {
+                return l
+            }
+        }).join(" ") + '\n';
+        logFile.write(logLine);
+    }
 }
 
 let axinst : AxiosInstance;
@@ -544,21 +558,35 @@ function approveUser(user:string, token:string) {
 adminApp.get('/approve', (req:any, res:any) => {
     let status = "";
     let message = "Richiesta di convalidazione Email non valida, inesistente oppure scaduta.<br/>Puoi richiederla al menu iniziale del gioco modificando l'email."
-    if (!ValidateEmail(<string>req.query.email)) {
-        status = "Errore di convalidazione Email"
+    try {
+        if (!ValidateEmail(<string>req.query.email)) {
+            status = "Errore di convalidazione Email"
+        }
+        if (!ValidateToken(<string>req.query.approveToken)) {
+            status = "Errore di convalidazione Email"
+        }
+        if (!ValidateChar(<string>req.query.character)) {
+            status = "Errore di convalidazione Email"
+        }
+        if (status == "" && requestExists(<string>req.query.character, <string>req.query.approveToken)) {
+            approveUser(<string>req.query.character, <string>req.query.approveToken)
+            status = "ok"
+        } else {
+            status = "Errore di convalidazione Email"
+        }
+    } catch (ex) {
+        WARN("Errore parametri per /approve. Exception: " + ex)
+        res.send(`
+        <html><head><title>Convalidazione Email su Tempora Sanguinis</title></head><body style="background-color:black;color:red;text-align: center;">
+            <h3 style="color:red;">Errore</h3>
+            <p>E' successo un errore mentre si convalidava l'email.</p>
+            <p>Riprova piu' tardi o rivolgiti ad un amministratore del server.</p>
+            <p>Per giocare puoi usare il <a style="color:white;" href="https://www.temporasanguinis.it/client/">client web di Tempora Sanguinis</a>.</p>
+        </body></html>
+        `)
+        return;
     }
-    if (!ValidateToken(<string>req.query.approveToken)) {
-        status = "Errore di convalidazione Email"
-    }
-    if (!ValidateChar(<string>req.query.character)) {
-        status = "Errore di convalidazione Email"
-    }
-    if (status == "" && requestExists(<string>req.query.character, <string>req.query.approveToken)) {
-        approveUser(<string>req.query.character, <string>req.query.approveToken)
-        status = "ok"
-    } else {
-        status = "Errore di convalidazione Email"
-    }
+
     if (status != "ok") {
         res.status(404).send(`
         <html><head><title>Convalidazione Email su Tempora Sanguinis</title></head><body style="background-color:orangered;color:black;text-align: center;">
