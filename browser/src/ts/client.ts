@@ -114,6 +114,7 @@ export class Client {
     }
 
     public connect(ct?:ConnectionTarget) {
+        this.commandInput.SplitScroll(false)
         if (ct) {
             this.connectionTarget = ct;
             if (!this.connectionTarget.host) {
@@ -208,8 +209,9 @@ export class Client {
         this.jsScript.setClassManager(this.classManager);
         this.jsScript.setTriggerManager(this.triggerManager);
         this.jsScript.setAliasManager(this.aliasManager);
+        this.outputWin = new OutputWin(this.profileManager.activeConfig, this.triggerManager);
 
-        this.commandInput = new CommandInput(this.aliasManager, this.jsScript, this.profileManager.activeConfig);
+        this.commandInput = new CommandInput(this.aliasManager, this.jsScript, this.profileManager.activeConfig, this.outputWin);
         this.commandInput.EvtEmitCommandsAboutToArrive.handle(v=>{
             //this.mapper.clearManualSteps()
         })
@@ -217,7 +219,6 @@ export class Client {
             d.callback(this.mapper.parseCommandsForDirection(d.commands))
         })
 
-        this.outputWin = new OutputWin(this.profileManager.activeConfig, this.triggerManager);
 
         this.classEditor = new ClassEditor(this.classManager);
         this.aliasEditor = new AliasEditor(this.aliasManager, false);
@@ -346,6 +347,7 @@ export class Client {
 
                 this.windowManager.profileDisconnected();
                 this.layoutManager.profileDisconnected();
+                this.commandInput.SplitScroll(false);
 
                 if (!this.manualDisconnect) this.profilesWin.show(true);
                 

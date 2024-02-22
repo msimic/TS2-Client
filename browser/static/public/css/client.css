@@ -1143,6 +1143,14 @@ input:focus,button:focus {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
     cursor: row-resize;
 }
+.search-hit {
+    outline:  yellowgreen dashed 1px;
+    font-weight: bolder;
+    animation: blink 0.3s;
+    animation-iteration-count: 3;
+}
+
+@keyframes blink { 50% { outline:  yellowgreen dashed 2px; }  }
 
 #chkCmdStack {
     display: none;

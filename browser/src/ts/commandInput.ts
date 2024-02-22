@@ -3,8 +3,9 @@ import { EventHook } from "./event";
 import {AliasManager} from "./aliasManager";
 import { UserConfig } from "./userConfig";
 import { createPath, isTrue, throttle } from "./util";
-import { EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
+import { EvtScriptEmitPrint, EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import Split from "split.js";
+import { OutputWin } from "./outputWin";
 
 export enum ScrollType {
     Bottom,
@@ -88,13 +89,19 @@ export class CommandInput {
     private chkCmdAliases: JQuery;
     private chkCmdTriggers: JQuery;
     private chkCmdSplit: JQuery;
-    public splitScrolling = false;
+    private _splitScrolling = false;
+    public get splitScrolling() {
+        return this._splitScrolling;
+    }
+    public set splitScrolling(value) {
+        this._splitScrolling = value;
+    }
 
     isSplitScrolling() {
         return this.splitScrolling && this.splitter;
     }
 
-    constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig) {
+    constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig, private outputWin:OutputWin) {
         this.$cmdInput = $("#cmdInput");
 
         this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
@@ -224,6 +231,11 @@ export class CommandInput {
             $("#scrollBack").hide()
             elms.forEach(e => e.scrollTop = e.scrollHeight)
         } else {
+            if (this.splitter) {
+                this.splitter.collapse(0)
+                this.splitter.destroy()
+                this.splitter = null;
+            }
             $("#scrollBack").html($("#winOutput").html())
             $("#scrollBack").show()
             const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
@@ -324,7 +336,7 @@ export class CommandInput {
             this.execCommand(cmds[i], ocmds[i], fromScript)
         }
     }
-
+    private searchLine = -1;
     public sendCmd(cmd: string = undefined, nohistory:boolean=false, script:boolean=false): void {
 
         if (cmd==undefined) cmd = this.$cmdInput.val();
@@ -334,6 +346,35 @@ export class CommandInput {
             let script = this.jsScript.makeScript("Script", cmd, "");
             if (script) { script(); };
             this.$cmdInput.select();
+            return;
+        }
+        if (!script && cmd.length >= 4 && cmd[0] == "?" && cmd[1] == "?") {
+            cmd = cmd.slice(2)
+            if (!this.splitter) {
+                this.SplitScroll(true)
+                this.searchLine = -1
+            }
+            const lines = $(".fill-parent.scrollBack .outputText").children().toArray().reverse()
+            $(lines).removeClass("search-hit")
+            const line = lines.find((v,i) => {
+                return i > this.searchLine && $(v).text().toLowerCase().includes(cmd.toLowerCase())
+            })
+            if (line) {
+                this.searchLine = lines.indexOf(line)
+                setTimeout(() => {
+                    $(line).addClass("search-hit")
+                    line.scrollIntoView()
+                }, 100)
+            } else {
+                this.searchLine = -1
+            }
+            this.$cmdInput.select();
+            return;
+        } else if (!script && cmd.length >= 2 && cmd.length < 4 && cmd[0] == "?" && cmd[1] == "?") {
+            EvtScriptEmitPrint.fire({
+                owner: "commandInput",
+                message: "La ricerca deve avere almeno due lettere",
+            })
             return;
         }
 
@@ -371,7 +412,8 @@ export class CommandInput {
 
         this.execCommands(cmds, ocmds, script);
         if (!script) {
-            this.EvtEmitScroll.fire(ScrollType.Bottom);
+            this.outputWin.scrollBottom(true)
+            //this.EvtEmitScroll.fire(ScrollType.Bottom);
             this.$cmdInput.select();
         }
 
@@ -460,6 +502,9 @@ export class CommandInput {
                     return false;
                 }
                 return true
+            case "Escape": // esc
+                this.SplitScroll(false)
+                return true;
             case "Enter": // enter
                 if (event.shiftKey) {
                     return true;
