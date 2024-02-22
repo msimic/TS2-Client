@@ -1,6 +1,6 @@
 {
-  "version": 36,
-  "versionMessage": "Aggiunte nuove funzionalita per monk, trappole e altri cose nuove, alias staffe, correzioni a alcuni problemi",
+  "version": 37,
+  "versionMessage": "Correzioni a alcuni problemi",
   "requiresClientMajor": 1,
   "requiresClientMinor": 6,
   "requiresClientRevision": 1,
