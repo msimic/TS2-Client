@@ -443,6 +443,13 @@ export class CommandInput {
                 line.scrollIntoView();
             }, 100);
         } else {
+            if (this.searchLine == -1) {
+                EvtScriptEmitPrint.fire({
+                    owner: "commandInput",
+                    message: "Termine non trovato nel scroll buffer."
+                })
+                this.SplitScroll(false);
+            }
             this.searchLine = -1;
         }
         this.$cmdInput.select();
@@ -524,8 +531,9 @@ export class CommandInput {
                     this.searchScrollBuffer(this.$cmdInput.val());
                     event.preventDefault()
                     event.stopPropagation()
-                    return true;
+                    return false;
                 }
+                return true;
                 break;
             case "Enter": // enter
                 if (event.shiftKey) {
