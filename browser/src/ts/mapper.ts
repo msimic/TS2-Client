@@ -707,8 +707,8 @@ export class Mapper {
         EvtScriptEvent.handle(d => {
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.vnumVariable) {
                 if (d.value) {
-                    //this.roomName = null;
-                    //this.roomDesc = null;
+                    // questo non va bene, nelle illogichge non cambia vnum al movimento
+                    //
                     const newVnum = (<any>d.value).newValue;
 
                     setTimeout(() => {

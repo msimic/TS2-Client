@@ -469,6 +469,14 @@ input:disabled::placeholder {
     clear: both;
 }
 
+.light.prompt {
+    opacity: 0.5;
+}
+
+.hidden.prompt {
+    display: none;
+}
+
 .scrollable {
     overflow: auto;
     -webkit-overflow-scrolling: auto;
@@ -571,9 +579,17 @@ input:disabled::placeholder {
     width: 100%;
 }
 
+#scrollBack {
+    margin:0;
+    box-sizing: border-box;
+    width: 100%;
+    display: none;
+}
+
 .customWindow .outputText {
     box-sizing: border-box;
     padding: 5px !important;
+    border: 2px solid transparent;
 }
 
 .output-prewrap {
@@ -1090,6 +1106,7 @@ input:focus,button:focus {
 
 .clickable {
     cursor: pointer;
+    pointer-events: all;
 }
 
 .label-filter {
@@ -1110,7 +1127,27 @@ input:focus,button:focus {
 .winEdit-scriptArea{}
 */
 
+.gutter {
+    background-color: #918b8bc3;
+
+    background-repeat: no-repeat;
+    background-position: 50%;
+}
+
+.gutter.gutter-horizontal {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+    cursor: col-resize;
+}
+
+.gutter.gutter-vertical {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    cursor: row-resize;
+}
+
 #chkCmdStack {
+    display: none;
+}
+#chkCmdSplit {
     display: none;
 }
 #chkCmdAliases {
@@ -1121,6 +1158,9 @@ input:focus,button:focus {
 }
 .checkerStack {
     background-image: url(images/stacking-icon.png);
+}
+.checkerSplit {
+    background-image: url(images/split-icon.png);
 }
 .checkerTriggers {
     background-image: url(images/triggers_checkbox.png);
@@ -1138,15 +1178,17 @@ input:focus,button:focus {
     height: 20px;
     background-repeat: no-repeat;
   }
-  
+  #chkCmdSplit:checked + .checker {
+    opacity: 0.6;
+  }  
   #chkCmdStack:checked + .checker {
-    opacity: 0.7;
+    opacity: 0.6;
   }
   #chkCmdTriggers:checked + .checker {
-    opacity: 0.7;
+    opacity: 0.6;
   }
   #chkCmdAliases:checked + .checker {
-    opacity: 0.7;
+    opacity: 0.6;
   }
   .jqx-notification a {
     color: yellow;
@@ -1180,8 +1222,23 @@ input:focus,button:focus {
 }
 .jqx-notification-info {
     background-color: rgb(21 106 167 / 77%) !important;
-    border-color: rgb(21 106 167 / 77%) !important;
-    padding: 0px !important;
+    border-color: rgba(18, 88, 138, 0.77) !important;
+    border-radius: 5px;
+    padding: 3px !important;
+    margin-right: 15px !important;
+}
+.jqx-notification-warning {
+    background-color: rgba(150, 195, 15, 0.77) !important;
+    border-color: rgba(115, 150, 13, 0.77) !important;
+    border-radius: 5px;
+    padding: 3px !important;
+    margin-right: 15px !important;
+}
+.jqx-notification-close-button-ltr {
+    right: -7px;
+}
+.jqx-notification-close-button {
+    top: -7px;
 }
 .jqx-window {
     border: 1px solid rgb(21 106 167 / 25%) !important;

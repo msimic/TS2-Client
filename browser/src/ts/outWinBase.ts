@@ -333,9 +333,10 @@ export class OutWinBase {
         }
     }
 
-    public markCurrentTargetAsPrompt() {
+    public markCurrentTargetAsPrompt(promptClass:string) {
         if (this.$target != this.$rootElem) {
             this.$target.addClass("prompt")
+            if (promptClass) this.$target.addClass(promptClass)
         }
     }
 

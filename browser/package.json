@@ -2,7 +2,7 @@
   "name": "ts2-client",
   "description": "Tempora Sanguinis 2 Client",
   "main": "electron_main.js",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/temporasanguinis/TS2-Client"
@@ -73,6 +73,7 @@
     "qunit": "^2.17.2",
     "simplebar": "^5.3.6",
     "socket.io-client": "^4.5.3",
+    "split.js": "^1.6.5",
     "strip-ansi": "^6.0.1",
     "ts-loader": "^8.3.0",
     "ts-md5": "^1.3.1"

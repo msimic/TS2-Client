@@ -600,6 +600,7 @@ Se i [Trigger](#triggers) scattano quando il MUD manda la sequenza di testo impo
 | **Impostazione cambiata** | Lo script scatta quando avviene un cambiamento delle impostazioni di *userConfig*. Indicare in *Condizione* di quale impostazione si vuole tracciare il cambiamento (text-color, wrap-lines, utf8Enabled, mxpEnabled, enable-aliases, enable-triggers, font-size, font, colorsEnabled, logTime, debugScripts) |
 | **Stato classe cambiato** | Lo script scatta quando la classe impostata nel campo *Condizione* cambia il suo stato di attivazione. Nello script *args* prenderà il valore true, false |
 | **Trigger scattato** | Lo script scatta quando il trigger il cui ID è impostato nel campo *Condizione* scatta. Nello script *args* prenderà il valore true, false. L'evento scatterà dopo il trigger.|
+| **Comando eseguito** | Viene eseguito ogni volta che viene dato un comando. La *Condizione* è true se il comando è da script, false se manuale da linea di comando. *args.command* conterrà il comando lanciato.|
 
 
 ## 4.6 Funzioni disponibili <a name="funzioni"></a>
@@ -1078,10 +1079,10 @@ repeat(id: string, milliseconds: number, function: fn())
 ```js
 repeat('test_repeat', 3000, ()=>{send('smile')})
 ```
-per fermarlo si passa null a function:
+per fermarlo usare repeat passando il solo id.
 **Esempio d'uso**:
 ```js
-repeat('test_repeat', 0, null)
+repeat('test_repeat')
 ```
 
 ### send <a name="f_send"></a>
@@ -1097,13 +1098,14 @@ send(command: string)
 
 ### setvar <a name="f_setvar"></a>
 
-Analogo a ```this.varname = value```
+Analogo a ```this.varname = value``` nel caso di temporary=false.
+In caso di temporary=true la variabile rimarrà temporanea e non verrà mantenuta all'uscita.
 
-Imposta il valore di una variabile
+Imposta il valore di una variabile.
 
 **Sintassi**
 ```js
-setvar(varname:string, value:any))
+setvar(varname:string, value:any, class:string, temporary:bool))
 ```
 
 ### stopAudio <a name="f_stopAudio"></a>

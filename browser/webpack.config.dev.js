@@ -53,7 +53,7 @@ module.exports = {
     host: 'mars.local',
     key: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.key"),
     cert: fs.readFileSync("file:///C://openssl-1.1//x64//bin//mars.local.crt"),*/
-    port: 8080,
+    port: 6060,
     static: {
       directory: path.resolve(__dirname, "static/public/"),
       serveIndex: true,

@@ -1,5 +1,7 @@
 import { EventHook } from "./event";
 import { openDB, IDBPDatabase, DBSchema } from 'idb';
+import { downloadString } from "./util";
+import { JsScript } from "./jsScript";
 
 export interface OutputLogDBSchema extends DBSchema {
     lines: {
@@ -8,13 +10,16 @@ export interface OutputLogDBSchema extends DBSchema {
     };
   }
 
-export let EvtLogExceeded = new EventHook<{owner:string, message:string, silent:boolean}>();
+export let EvtLogExceeded = new EventHook<{owner:string, message:string, silent:boolean, callb: Function}>();
+export let EvtLogWarning = new EventHook<{owner:string, message:string, silent:boolean, callb: Function}>();
 
 export class OutputLogger {
     private static instance: OutputLogger;
     private dbName = 'TsOutputLog';
     private dbVersion = 1;
     private numLines = 0;
+    private maxLines = 50000;
+    private jsScript:JsScript = null;
 
     private db:IDBPDatabase<OutputLogDBSchema> = null;
 
@@ -24,6 +29,10 @@ export class OutputLogger {
         }
         OutputLogger.instance = this;
         this.init()
+    }
+
+    setScript(jsScript:JsScript) {
+        this.jsScript = jsScript
     }
 
     async init() {
@@ -58,14 +67,54 @@ export class OutputLogger {
         } else {
             await this.db.add("lines", buffer);
         }
-        this.numLines = await this.db.count("lines");
+        const numLines = await this.db.count("lines");
 
-        if (this.lineCount() > 50000) {
+        let logWarning = 0
+        if (numLines > 0.9 * this.maxLines && this.numLines <= 0.9 * this.maxLines) {
+            logWarning = 90
+        }
+        else if (numLines > 0.95 * this.maxLines && this.numLines <= 0.95 * this.maxLines) {
+            logWarning = 95
+        }
+
+        this.numLines = numLines
+
+        if (logWarning) {
+            EvtLogWarning.fire({
+                owner: "outputLogger",
+                message: "Log al " + logWarning + "%. Se vuoi scaricarlo premi qui'. Quando si riempie perderai le righe vecchie.",
+                silent: false,
+                callb: async () => {
+                    downloadString(await this.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+                    this.clear()
+                }
+            })
+        }
+
+        if (this.lineCount() > this.maxLines) {
             EvtLogExceeded.fire({
                 owner: "outputLogger",
-                message: "Lunghezza Log superata (50000 linee). Verra' azzerato. Vuoi scaricarlo ora?",
-                silent: false
+                message: "Lunghezza Log superata (" + this.maxLines + " linee). 20% delle righe vecchie verranno troncate.",
+                silent: false,
+                callb: async () => {
+                    downloadString(await this.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+                    this.clear()
+                }
             })
+        }
+    }
+
+    async rollLog() {
+        if (!this.db || !this.isEnabled()) {
+            return;
+        }
+        const keys = await this.db.getAllKeys("lines", null, Math.trunc(this.lineCount() * 0.2));
+        if (keys.length) {
+            const maxKey = keys[keys.length-1]
+            console.log("RollLog on " + maxKey)
+            const tx = this.db.transaction("lines", "readwrite")
+            await tx.store.delete(IDBKeyRange.upperBound(maxKey))
+            this.numLines = await this.db.count("lines");
         }
     }
 

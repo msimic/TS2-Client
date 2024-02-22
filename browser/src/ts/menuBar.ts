@@ -76,9 +76,11 @@ export class MenuBar {
         ["reset-settings", ""],
         ["import-settings", ""],
         ["export-settings", ""],
+        ["splitScrolling", "splitScrolling"],
         ["import-layout", ""],
         ["export-layout", ""],
         ["log-time", "logTime"],
+        ["prompt-style", "prompt-style"],
         ["debug-scripts", "debugScripts"],
         ["about", ""],
         ["docs", ""],
@@ -427,6 +429,19 @@ export class MenuBar {
 
         this.clickFuncs["help"] = (val) => {
             this.helpWin.show();            
+        };
+
+        this.clickFuncs["keepawake"] = (val) => {
+            val = false;
+            if (localStorage.getItem("keepawake")) {
+                localStorage.removeItem("keepawake")
+                val = false;
+            } else {
+                localStorage.setItem("keepawake", "true")
+                val = true;
+            }
+            Notification.Show("Prevenzione Sleep della finestra quando in sfondo: " + (val ? "ABILITATA" : "DISABILITATA"))
+            Notification.Show("Affinche' funzioni il client produrra' rumori inaudibili. Serve rilancio client.")
         };
 
         this.clickFuncs["changelog"] = (val) => {

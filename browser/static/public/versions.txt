@@ -1,3 +1,21 @@
+1.6.2
+- feature: implementata una funzionalita' per mantenere il client attivo anche dopo molto tempo in background
+- feature: tabbing di piu linee selezionate e' ora supportato nelle script
+- feature: aggiunto evento di tipo MXP_Variable e MXP_Entity che scatta quando il client vede una variabile o entity MXP
+- feature: il logger ora andra come "rolling", quando arriva al massimo di lunghezza tronchera' da sopra, con avviso a utente al 90%
+- feature: supporto variabili mxp per liste migliorato (ora supporta remove da lista)
+- feature: Notification in script ora ha click callback, e c'e' il metodo Warning
+- feature: stile prompt in impostazioni
+- feature: scorrimento diviso implementato: abilitare nel menu per pageUp, oppure bottone a destra linea della comando
+- fix: risolto un problema nel salvataggio finestre se si cambiava profilo alla disconessione
+- fix: risolto un bug che non rifrescava il menu alla disconessione del telnet
+- fix: risolto un bug che nel menu il bottone Connetti conetteva sempre al server live anche se si aveva un profilo caricato
+- fix: l'altezza ancorata delle finestre ora funziona corettamente
+- fix: il repeat nelle script una volta lanciato non si poteva spegnere
+- ui: per le finestre fluttuanti il scrollbar non interferira' con il ridimensionare
+- ui: il nome del profilo e' ora la prima cosa nel titolo della finestra
+- ui: nuove opzioni per la grandezza dello scroll
+____________________________________________________________
 1.6.1
 - fix: a un problema del tastierino numerico
 - upgrade di versioni di alcuni pacchetti

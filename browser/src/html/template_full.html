@@ -136,8 +136,12 @@
               <li data-option-name="scrollbuffer" data-option-value="500">500 linee</li>
               <li data-option-name="scrollbuffer" data-option-value="2500">2500 linee</li>
               <li data-option-name="scrollbuffer" data-option-value="5000">5000 linee</li>
+              <li data-option-name="scrollbuffer" data-option-value="10000">10000 linee</li>
+              <li data-option-name="scrollbuffer" data-option-value="15000">15000 linee</li>
+              <li data-option-name="scrollbuffer" data-option-value="50000" title="Attenzione alle performance!">50000 linee</li>
               <li type="separator"></li>
               <li data-option-name="animatescroll"><label for="menuBar-chkEnableScroll"><input id="menuBar-chkEnableScroll" type="checkbox" checked>Animato</label></li>
+              <li data-option-name="splitScrolling"><label for="menuBar-splitScrolling"><input id="menuBar-splitScrolling" type="checkbox">Diviso con PageUp</label></li>
             </ul>
           </li>
           
@@ -150,11 +154,22 @@
           <li type="separator"></li>
           <li data-option-name="numpadconfig">Tastierino Numerico</li>
           <li type="separator"></li>
-          <li>Tema interfaccia
+          <li>Stile / Interfaccia
             <ul>
-              <li data-option-name="theme-default" data-option-value="">Predefinito</li>
-              <li data-option-name="theme-light" data-option-value="light">Chiaro</li>
-              <li data-option-name="theme-dark" data-option-value="dark">Scuro</li>
+              <li>Tema
+                <ul>
+                  <li data-option-name="theme-default" data-option-value="">Predefinito</li>
+                  <li data-option-name="theme-light" data-option-value="light">Chiaro</li>
+                  <li data-option-name="theme-dark" data-option-value="dark">Scuro</li>
+                </ul>
+              </li>
+              <li>Prompt
+                <ul>
+                  <li data-option-name="prompt-style" data-option-value="-">Normale</li>
+                  <li data-option-name="prompt-style" data-option-value="light">Semitrasparente</li>
+                  <li data-option-name="prompt-style" data-option-value="hidden">Nascosto</li>
+                </ul>
+              </li>
             </ul>
           </li>
           <li type="separator"></li>
@@ -170,6 +185,8 @@
               <li data-option-name="export-settings">Esporta Configurazione</li>
               <li data-option-name="import-layout">Importa Layout</li>
               <li data-option-name="export-layout">Esporta Layout</li>
+              <li type="separator"></li>
+              <li data-option-name="keepawake">Prevenzione Sleep</li>
             </ul>
           </li>
         </ul>
@@ -245,7 +262,10 @@
             </div>
           </div>
           <div id="row-center">
-            <div class="fill-parent">
+            <div class="fill-parent scrollBack">
+              <pre tabindex="500" id="scrollBack" role="text" aria-label="Scrollback MUD" aria-live="off" class="outputText"></pre>
+            </div>
+            <div class="fill-parent winOutput">
               <pre tabindex="500" id="winOutput" role="alert" aria-label="Testo MUD" aria-live="assertive" aria-relevant="additions text" class="outputText"></pre>
             </div>
             <div id="notificationTop">
@@ -285,6 +305,10 @@
               <div class="chkCmdInputCmdStackCont">
                 <input id="chkCmdStack" type="checkbox" checked>
                 <label for="chkCmdStack" class="checker checkerStack" aria-live="assertive" title="Comandi multipli con ;"></label>
+              </div>
+              <div class="chkCmdInputCmdStackCont">
+                <input id="chkCmdSplit" type="checkbox">
+                <label for="chkCmdSplit" class="checker checkerSplit" aria-live="assertive" title="Dividi scorrimento"></label>
               </div>
             </div> 
           </div>

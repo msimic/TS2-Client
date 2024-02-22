@@ -3,8 +3,9 @@ import stripAnsi from 'strip-ansi';
 import { OutputManager } from "./outputManager";
 import { OutWinBase } from "./outWinBase";
 import { CommandInput } from "./commandInput";
-import { JsScript } from "./jsScript";
+import { EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import { UserConfig } from "./userConfig";
+import { htmlEscape } from "./util";
 
 
 // class DestWin extends OutWinBase {
@@ -181,8 +182,10 @@ export class Mxp {
                         this.script.getScriptThis()[(<any>m).groups.name]+=unescape(def.replace(/\\"/g, '"'));
                     }
                     else if ((<any>m).groups.remove) {
-                        // todo remove from list instead of deleting
-                        delete this.script.getScriptThis()[(<any>m).groups.name];
+                        const prev = (this.script.getScriptThis()[(<any>m).groups.name] || "") as string;
+                        const remove = unescape(def.replace(/\\"/g, '"'));
+                        const newVal = prev.split("|").filter(v => v != remove).join("|");
+                        this.script.getScriptThis()[(<any>m).groups.name] = newVal;
                     }
                     else {
                         this.script.getScriptThis()[(<any>m).groups.name] = unescape(def.replace(/\\"/g, '"'));
@@ -190,6 +193,14 @@ export class Mxp {
                     if ((<any>m).groups.name == "STARTPROMPT") {
                         this.outputManager.markCurrentTargetAsPrompt()
                     }
+                    EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: m.groups.name, value: 
+                        {
+                            type: htmlEscape((<any>m).groups.name),
+                            element: null,
+                            value: htmlEscape(this.script.getScriptThis()[(<any>m).groups.name])
+                        }
+                    });
+                
                     return true;
                 }
             };
@@ -204,6 +215,14 @@ export class Mxp {
                     value: "\x1b[1z<VERSION CLIENT=TS2 Client MXP=0.01>", // using closing line tag makes it print twice...
                     noPrint: true});
                     //console.debug("MXP Version");
+                EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: "version", value:
+                    {
+                        type: "version",
+                        element: null,
+                        value: htmlEscape(match[0])
+                    }
+                });
+                
                 return true;
             }
             return false;
@@ -225,6 +244,14 @@ export class Mxp {
                     let elem = $(`<img style="width:${mw};height:${mh};float:${va};clear:both;${va=="unset"?"margin:10px;display:block;":"display:inline;margin-left:1px;margin-right:4px;vertical-align:middle;"}" src='${url}'/>`)
                     this.outputManager.pushMxpElem(elem);
                     this.outputManager.popMxpElem();
+                    EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: match[1], value:
+                        {
+                            type: htmlEscape(match[1]),
+                            element: elem,
+                            value: htmlEscape(match[0])
+                        }
+                    });
+                
                     //console.debug("MXP Image: ", match[2] + match[1]);
                 }
                 return true;
@@ -272,6 +299,14 @@ export class Mxp {
                 elem.addClass("underline");
 
                 this.outputManager.pushMxpElem(elem);
+                EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: "a", value:
+                    {
+                        type: "a",
+                        element: elem,
+                        value: htmlEscape(match[0])
+                    }
+                });
+                
                 return true;
             }
 
@@ -313,6 +348,14 @@ export class Mxp {
                 let elem = $(tag);
                 this.outputManager.pushMxpElem(elem);
                 checkClosing(/<\/([bius])>$/i)
+                EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: match[1], value:
+                    {
+                        type: htmlEscape(match[1]),
+                        element: elem,
+                        value: htmlEscape(match[0])
+                    }
+                });
+                    
                 return true;
             }
 
@@ -391,6 +434,13 @@ export class Mxp {
                     this.outputManager.handleTelnetData(this.str2ab(content));
                     this.openTags.pop();
                     this.outputManager.popMxpElem();
+                    EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: "send", value: 
+                        {
+                            type: "send",
+                            element: elem,
+                            value: htmlEscape(tag)
+                        }
+                    });
                     return true;
                 }
             }
@@ -469,6 +519,14 @@ export class Mxp {
                     const varName = this.elements[i].flag.replace(/^set /i, "");
                     tmp[1] = stripAnsi(tmp[1]);
                     this.script.getScriptThis()[varName] = tmp[1];
+                    EvtScriptEvent.fire({event: ScripEventTypes.MXP_VariableArrived, condition: varName, value:
+                        {
+                            type: htmlEscape(varName),
+                            element: null,
+                            value: htmlEscape(tmp[1])
+                        }
+                    });
+            
                     //console.debug("MXP set var: ", varName, tmp[1]);
                 }
                 //console.debug("MXP Parse Element: ", this.elements[i].name, data);

@@ -2083,8 +2083,12 @@
   "Notification": {
     "!doc": "Notificazione / Toast popup",
     "Show": {
-      "!type": "fn(text: string, top?: bool, ripeti?: bool, delay?: number, html?: bool, trasparenza?: number, blink?: bool) -> void",
-      "!doc": "Mostra notificazione con <text>. Se <top> e' true, in alto, altrimenti in basso. <ripeti> cancella la notificazione precedente e la ripete con nuovo testo. <delay> e' il tempo di chiusura, <html> se vuoi usare html. <trasparenza> e' da 0.0 a 1.0 e <blink> lampeggia."
+      "!type": "fn(text: string, top?: bool, ripeti?: bool, delay?: number, html?: bool, trasparenza?: number, blink?: bool, callback?: Function) -> void",
+      "!doc": "Mostra avviso con <text>. Se <top> e' true, in alto, altrimenti in basso. <ripeti> cancella la notificazione precedente e la ripete con nuovo testo. <delay> e' il tempo di chiusura, <html> se vuoi usare html. <trasparenza> e' da 0.0 a 1.0 e <blink> lampeggia."
+    },
+    "Warning": {
+      "!type": "fn(text: string, top?: bool, ripeti?: bool, delay?: number, html?: bool, trasparenza?: number, blink?: bool, callback?: Function) -> void",
+      "!doc": "Mostra avvertimento con <text>. Se <top> e' true, in alto, altrimenti in basso. <ripeti> cancella la notificazione precedente e la ripete con nuovo testo. <delay> e' il tempo di chiusura, <html> se vuoi usare html. <trasparenza> e' da 0.0 a 1.0 e <blink> lampeggia."
     }
   },
   "Proxy": {

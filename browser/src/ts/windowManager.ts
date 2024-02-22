@@ -145,6 +145,7 @@ export class WindowManager {
     async profileDisconnected() {
         this.loading = true
         try {
+            (this.windows as any).loadedFrom = "-"
             console.log("windowsmanager profileDisconnected: " + this.profileManager.getCurrent())
             await this.cleanupWindows();
             this.windows.clear()
@@ -155,6 +156,7 @@ export class WindowManager {
     }
 
     private async cleanupWindows() {
+        (this.windows as any).loadedFrom = "-"
         console.log("Cleaning up existing windows")
         for (const w of this.windows) {
             if (w[1].window) {
@@ -458,7 +460,8 @@ export class WindowManager {
 
         if (wnd.data.anchorHeight) {
             wnd.window.css({
-                "height": `${wnd.data.anchorHeight}px`
+                "flex-grow:": "0 !important",
+                "flex-basis": `${wnd.data.anchorHeight}px !important`
             });
             $(".jqx-resize", wnd.window).css({
                 "height": `${wnd.data.anchorHeight}px`

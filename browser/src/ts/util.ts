@@ -10,17 +10,17 @@ export function htmlEscape(text:string) {
 }
 
 export function replaceLtGt(text: string): string {
-    return text.replace(/</g, "&lt;")
+    return (text||"").replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 }
 
 export function replaceAmp(text: string): string {
-    return text.replace(/&/g, "&amp;");
+    return (text||"").replace(/&/g, "&amp;");
 }
 
 export function replaceLf(text: string): string {
     // We are presumably already stripping out CRs before this
-    return text.replace(/\n/g, "<br>");
+    return (text||"").replace(/\n/g, "<br>");
 }
 
 export function raw(text: string): string {
@@ -413,7 +413,8 @@ export function addIntellisense(editor:any) {
             "F2": function(cm:any) { server.rename(cm); },
             "Ctrl-.": function(cm:any) { server.selectName(cm); },
             "Tab": function(cm:any){
-                cm.replaceSelection("  " , "end");
+                if (cm.somethingSelected()) cm.indentSelection("add");
+                else cm.replaceSelection("  ", "end");
               }
         })
         editor.on("keydown", function(cm:any, event:any) {

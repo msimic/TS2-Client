@@ -140,7 +140,7 @@ export class OutputManager {
 
     public markCurrentTargetAsPrompt() {
         if (this.target) {
-            this.target.markCurrentTargetAsPrompt();
+            this.target.markCurrentTargetAsPrompt(this.config.getDef("prompt-style", ""));
         }
     }
 

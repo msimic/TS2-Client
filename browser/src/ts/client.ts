@@ -41,8 +41,9 @@ import { NumpadWin } from "./numpadWin";
 import { HelpWin } from "./helpWindow";
 import { MapperStorage } from "./mapperStorage";
 import { VersionsWin } from "./versionsWindow";
-import { EvtLogExceeded, OutputLogger } from "./outputLogger";
+import { EvtLogExceeded, EvtLogWarning, OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./layoutWindow";
+import { KeepAwake } from "./keepAwake";
 
 declare global {
     interface JQuery {
@@ -113,17 +114,6 @@ export class Client {
     }
 
     public connect(ct?:ConnectionTarget) {
-        let logger = new OutputLogger();
-        /*if (!logger.empty()) {
-            (async () => {
-                const content = await logger.content()
-                logger.clear()
-                const ret = await Messagebox.Question("Autologging attivo (menu Connessione).\nSta per partire una nuova registrazione!\n\nAvevi una registrazione precedente in corso.\nPuoi scaricarla ora se rispondi Si, altrimenti verra' persa.\nPer interrompere la registrazione usa il menu Connessione")
-                if (ret.button == 1) {
-                    this.menuBar.triggerAction("downloadlog", content)
-                }
-            })();
-        }*/
         if (ct) {
             this.connectionTarget = ct;
             if (!this.connectionTarget.host) {
@@ -151,6 +141,13 @@ export class Client {
     private manualDisconnect:boolean = false;
 
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
+        let attachKeepawake = (ms:MouseEvent) => {
+            KeepAwake.On();
+            document.removeEventListener("click", attachKeepawake)
+        }
+        if (localStorage.getItem("keepawake"))
+            document.addEventListener("click", attachKeepawake);
+        
         (<any>window)["Messagebox"] = Messagebox;
         (<any>window)["Notification"] = Notification;
         this.outputLogger = new OutputLogger();
@@ -278,7 +275,15 @@ export class Client {
 
         this.menuBar.EvtConnectClicked.handle(() => {
             this.manualDisconnect = false;
-            this.connect();
+            if (this.profileManager.getCurrent()) {
+                const cp = this.profileManager.getProfile(this.profileManager.getCurrent());
+                if (cp)
+                    this.connect({host: cp.host, port: Number(cp.port)});
+                else
+                    this.connect();
+            } else {
+                this.connect();
+            }
         });
 
         this.menuBar.EvtDisconnectClicked.handle(() => {
@@ -307,22 +312,58 @@ export class Client {
             return "";
         };
 
+        let handleConnectionState = (connected: boolean, type: string) => {
+            if (connected) {
+                if (type == "telnet") {
+                    this.connected = true;
+                    this.jsScript.load();
+                    EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
+                    window.addEventListener("beforeunload", preventNavigate);
+                    this.menuBar.handleTelnetConnect();
+                    this.outputWin.handleTelnetConnect();
+                } else if (type == "ws") {
+                    this.socketConnected = true;
+                    this.outputWin.handleWsConnect();
+                    EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: true});
+                }
+            } else {
+                this.save();
+                const socketWasConnected = this.socketConnected;
+                const telnetWasConnected = this.connected;
+
+                this.connected = false;
+                window.removeEventListener("beforeunload", preventNavigate);
+                if (telnetWasConnected) this.menuBar.handleTelnetDisconnect();
+                if (telnetWasConnected) this.outputWin.handleTelnetDisconnect();
+
+                if (type == "telnet") {
+                    EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: false});
+                } else if (type == "ws") {
+                    this.socketConnected = false;
+                    if (socketWasConnected) this.outputWin.handleWsDisconnect();
+                    EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: false});
+                }
+
+                this.windowManager.profileDisconnected();
+                this.layoutManager.profileDisconnected();
+
+                if (!this.manualDisconnect) this.profilesWin.show(true);
+                
+            }
+        }
+
         this.socket.EvtTelnetConnect.handle((val: [string, number]) => {
-            this.connected = true;
+            
+            handleConnectionState(true, "telnet");
+
             console.log("Telnet connected for profile: " + profileManager.getCurrent())
 
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
                 new Audio("./sounds/connect.ogg").play()
             }
-            this.jsScript.load();
-            EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: true});
 
-            // Prevent navigating away accidentally
-
-            window.addEventListener("beforeunload", preventNavigate);
             this.serverEcho = false;
-            this.menuBar.handleTelnetConnect();
-            this.outputWin.handleTelnetConnect();
+            
             apiUtil.clientInfo.telnetHost = val[0];
             apiUtil.clientInfo.telnetPort = val[1];
 
@@ -336,19 +377,13 @@ export class Client {
         });
 
         this.socket.EvtTelnetDisconnect.handle(() => {
+
+            handleConnectionState(false, "telnet");
+
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
                 new Audio("./sounds/disconnect.ogg").play()
             }
-            EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'telnet', value: false});
-            this.save();
-            this.windowManager.profileDisconnected();
-            this.layoutManager.profileDisconnected();
-            if (!this.manualDisconnect) this.profilesWin.show(true);
-            // allow navigating away
-            this.connected = false;
-            window.removeEventListener("beforeunload", preventNavigate);
-            this.menuBar.handleTelnetDisconnect();
-            this.outputWin.handleTelnetDisconnect();
+
             apiUtil.clientInfo.telnetHost = null;
             apiUtil.clientInfo.telnetPort = null;
             if (!this.outputLogger.empty()) {
@@ -365,30 +400,23 @@ export class Client {
         });
 
         this.socket.EvtTelnetError.handle((data: string) => {
+            handleConnectionState(false, "telnet");
             this.outputWin.handleTelnetError(data);
         });
 
         this.socket.EvtWsError.handle((data) => {
-            this.socketConnected = false;
-            this.connected = false;
+            handleConnectionState(false, "ws");
             this.outputWin.handleWsError();
         });
 
         this.socket.EvtWsConnect.handle((val: {sid: string}) => {
-            this.socketConnected = true;
-            EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: true});
+            handleConnectionState(true, "ws");
             apiUtil.clientInfo.sid = val.sid;
-            this.outputWin.handleWsConnect();
         });
 
         this.socket.EvtWsDisconnect.handle(() => {
-            EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: false});
+            handleConnectionState(false, "ws");
             apiUtil.clientInfo.sid = null;
-            this.socketConnected = false;
-            this.connected = false;
-            if (!this.manualDisconnect) this.profilesWin.show(true);
-            this.menuBar.handleTelnetDisconnect();
-            this.outputWin.handleWsDisconnect();
         });
 
         this.socket.EvtSetClientIp.handle((ip: string) => {
@@ -421,16 +449,33 @@ export class Client {
         this.commandInput.EvtEmitScroll.handle((type:ScrollType) => {
             switch (type) {
                 case ScrollType.Bottom:
-                this.outputWin.scrollBottom(true);
+                    if (this.commandInput.isSplitScrolling())
+                        this.commandInput.SplitScrolBottom()    
+                    else
+                        this.outputWin.scrollBottom(true);
                 break;
                 case ScrollType.PageUp:
-                this.outputWin.ScrollPageUp();
+                    if (this.commandInput.isSplitScrolling())
+                        this.commandInput.SplitScrollPageUp()    
+                    else {
+                        if (this.commandInput.splitScrolling) {
+                            this.commandInput.SplitScroll(true)
+                        } else {
+                            this.outputWin.ScrollPageUp();
+                        }
+                    }
                 break;
                 case ScrollType.PageDown:
-                this.outputWin.ScrollPageDown();
+                    if (this.commandInput.isSplitScrolling())
+                        this.commandInput.SplitScrollPageDown()    
+                    else
+                        this.outputWin.ScrollPageDown();
                 break;
                 case ScrollType.Top:
-                this.outputWin.ScrollTop();
+                    if (this.commandInput.isSplitScrolling())
+                        this.commandInput.SplitScrollTop()    
+                    else
+                        this.outputWin.ScrollTop();
                 break;
             }
             
@@ -456,20 +501,31 @@ export class Client {
             }
         });
 
+        this.outputLogger.setScript(this.jsScript)
         let awaitingLogResponse = false;
-        EvtLogExceeded.handle((data:{owner:string, message:string, silent:boolean}) => {
+        EvtLogExceeded.handle((data:{owner:string, message:string, silent:boolean, callb: Function}) => {
             if (!data.silent) {
                 if (!this.outputLogger.empty() && !awaitingLogResponse) {
                     awaitingLogResponse = true;
-                    (async (log) => {
-                        if (((await Messagebox.Question(data.message)).button == 1)) {
-                            this.menuBar.triggerAction("downloadlog", await log)
-                        }
+                    (async () => {
+                        Notification.Show(data.message, true, false, 3000, true, 1.0, false, data.callb)
+                        await this.outputLogger.rollLog()
                         awaitingLogResponse = false;
-                    })(this.outputLogger.content());
+                    })();
                 }
             }
-            this.outputLogger.clear()
+        });
+
+        EvtLogWarning.handle((data:{owner:string, message:string, silent:boolean, callb: Function}) => {
+            if (!data.silent) {
+                if (!this.outputLogger.empty() && !awaitingLogResponse) {
+                    awaitingLogResponse = true;
+                    (async () => {
+                        Notification.Warning(data.message, true, false, 7000, true, 1.0, true, data.callb)
+                        awaitingLogResponse = false;
+                    })();
+                }
+            }
         });
 
         // JsScript events

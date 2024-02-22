@@ -169,7 +169,9 @@ export enum ScripEventTypes {
     SettingChanged,
     ClassChanged,
     TriggerFired,
-    CommandExecuted
+    CommandExecuted,
+    MXP_VariableArrived,
+    MXP_EntityArrived
 }
 
 export class ScriptEventsIta {
@@ -180,7 +182,9 @@ export class ScriptEventsIta {
             'Impostazione cambiata',
             'Stato classe cambiato',
             'Trigger scattato',
-            "Comando eseguito"
+            "Comando eseguito",
+            "Variabile MXP arrivata",
+            "Entita' MXP arrivata"
         ];
         return itaNames[Number(index)];
     }
@@ -440,7 +444,7 @@ export class JsScript {
         EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: variable.name, value: <PropertyChanged>{
             propName: variable.name,
             newValue: undefined,
-            oldValue: undefined,
+            oldValue: variable.value,
             obj: this.getScriptThis()
         }})
     }
@@ -699,13 +703,12 @@ function makeScript(owner:string, userScript: string, argSignature: string,
             throw "Devi specificare l'ID del repeat";
         }
         if (window.repeats[id]) {
-            clearTimeout(window.repeats[id]);
+            clearInterval(window.repeats[id]);
             delete window.repeats[id];
         }
         if (func) {
             window.repeats[id] = setInterval(() => {
                 func();
-                delete window.repeats[id];
             }, time);
         }
     };

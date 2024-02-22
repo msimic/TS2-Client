@@ -116,7 +116,17 @@ export class LayoutManager {
 
     constructor(private profileManager:ProfileManager, private windowManager:WindowManager, private scripting:JsScript, private cmdInput:CommandInput) {
         
-        (async () => this.onlineBaseLayout = await $.ajax("./baseLayout.json?rnd="+Math.random()))();
+        (async () => {this.onlineBaseLayout = await $.ajax(
+            {
+                url: "./baseLayout.json?rnd="+Math.random(),
+                headers: {
+                    "Pragma": "no-cache",
+                    "Expires": -1,
+                    "Cache-Control": "no-cache"
+                }
+            })
+            console.log("New base layout: " + this.onlineBaseLayout.version + " items: " + this.onlineBaseLayout.items?.length)
+        })();
         
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.profileConnected()
@@ -932,7 +942,7 @@ Vuoi farlo ora?`);
             b.click((e)=>{
                 let controlCommands:string[] = [];
                 let controlCommandsValues:string[]  = [];
-                
+
                 if (ctrl.is_script) {
                     const realName = this.getVariableName(ctrl.commands);
                     if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);

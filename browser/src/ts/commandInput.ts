@@ -4,6 +4,7 @@ import {AliasManager} from "./aliasManager";
 import { UserConfig } from "./userConfig";
 import { createPath, isTrue, throttle } from "./util";
 import { EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
+import Split from "split.js";
 
 export enum ScrollType {
     Bottom,
@@ -86,6 +87,12 @@ export class CommandInput {
     private chkCmdStack: HTMLInputElement;
     private chkCmdAliases: JQuery;
     private chkCmdTriggers: JQuery;
+    private chkCmdSplit: JQuery;
+    public splitScrolling = false;
+
+    isSplitScrolling() {
+        return this.splitScrolling && this.splitter;
+    }
 
     constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig) {
         this.$cmdInput = $("#cmdInput");
@@ -93,9 +100,31 @@ export class CommandInput {
         this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
         this.chkCmdAliases = $("#chkCmdAliases");
         this.chkCmdTriggers = $("#chkCmdTriggers");
-
+        this.chkCmdSplit = $("#chkCmdSplit");
+        this.splitScrolling = this.config.getDef("splitScrolling",false);
+        this.chkCmdSplit.prop('checked', isTrue(this.config.getDef("splitScrolling",false)))
         this.chkCmdAliases.prop('checked', isTrue(this.config.getDef("aliasesEnabled",true)));
         this.chkCmdTriggers.prop('checked', isTrue(this.config.getDef("triggersEnabled",true)));
+
+        config.evtConfigImport.handle((data) => {
+            setTimeout(()=>{
+                this.config.onSet("triggersEnabled", (v)=>{
+                    this.chkCmdTriggers.prop('checked', isTrue(v))
+                });
+        
+                this.config.onSet("splitScrolling", (v)=>{
+                    this.splitScrolling = isTrue(v)
+                });
+        
+                this.config.onSet("numpad", (v)=>{
+                    readNumpad();
+                });
+        
+                this.config.onSet("aliasesEnabled", (v)=>{
+                    this.chkCmdAliases.prop('checked', isTrue(v))
+                });
+            }, 500)
+        })
 
         const readNumpad = ()=> {
             if (this.config.getDef("numpad",false)!=false) {
@@ -105,6 +134,10 @@ export class CommandInput {
         }
         this.config.onSet("triggersEnabled", (v)=>{
             this.chkCmdTriggers.prop('checked', isTrue(v))
+        });
+
+        this.config.onSet("splitScrolling", (v)=>{
+            this.splitScrolling = isTrue(v)
         });
 
         this.config.onSet("numpad", (v)=>{
@@ -117,6 +150,10 @@ export class CommandInput {
 
         this.chkCmdAliases.on('change', () => {
             this.config.set("aliasesEnabled", this.chkCmdAliases.is(":checked"));
+        })
+
+        this.chkCmdSplit.on('change', () => {
+            this.SplitScroll(this.chkCmdSplit.is(":checked"));
         })
 
         this.chkCmdTriggers.on('change', () => {
@@ -168,6 +205,54 @@ export class CommandInput {
             this.loadHistory();
             this.inputChange(); // Force a resize
         });
+    }
+
+    private splitter:Split.Instance = null;
+
+    SplitScroll(enabled: boolean) {
+        if (!enabled) {
+            const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
+            elms.forEach(e => $(e).css({
+                "position": "absolute"
+            }))
+            if (this.splitter) {
+                this.splitter.collapse(0)
+                this.splitter.destroy()
+                this.splitter = null;
+            }
+            $("#scrollBack").html("")
+            $("#scrollBack").hide()
+            elms.forEach(e => e.scrollTop = e.scrollHeight)
+        } else {
+            $("#scrollBack").html($("#winOutput").html())
+            $("#scrollBack").show()
+            const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
+            elms.forEach(e => $(e).css({
+                "position": "relative"
+            }))
+            let sizes:any = localStorage.getItem('split-sizes')
+
+            if (sizes) {
+                sizes = JSON.parse(sizes)
+            } else {
+                sizes = [40, 60] // default sizes
+            }
+            this.splitter = Split(elms, {
+                direction: "vertical",
+                cursor: "row-resize",
+                sizes: sizes,
+                gutterSize: 3,
+                dragInterval: 3,
+                onDragEnd: function (sizes) {
+                    localStorage.setItem('split-sizes', JSON.stringify(sizes))
+                    elms[1].scrollTop = elms[1].scrollHeight
+                },
+                onDrag: function (sizes) {
+                    elms[1].scrollTop = elms[1].scrollHeight
+                },
+            })
+            elms.forEach(e => e.scrollTop = e.scrollHeight)
+        }
     }
 
     private getHistoryMenuSource() {
@@ -248,6 +333,7 @@ export class CommandInput {
             cmd = cmd.slice(1)
             let script = this.jsScript.makeScript("Script", cmd, "");
             if (script) { script(); };
+            this.$cmdInput.select();
             return;
         }
 
@@ -314,6 +400,31 @@ export class CommandInput {
             return true;
         }
         return false;
+    }
+
+    public SplitScrolBottom() {
+        let elem = $(".fill-parent.scrollBack");
+        elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 150);
+        this.SplitScroll(false)
+    };
+
+    public SplitScrollPageUp() {
+        let elem = $(".fill-parent.scrollBack");
+        const scrollH = parseInt(elem.prop('scrollTop'))-elem.height()
+        elem.stop().animate({scrollTop:scrollH}, 150);
+    }
+    public SplitScrollPageDown() {
+        let elem = $(".fill-parent.scrollBack");
+        if (elem.prop("scrollTop")+elem.height() >= elem.prop("scrollHeight")) {
+            this.SplitScroll(false)
+            return
+        }
+        const scrollH = parseInt(elem.prop('scrollTop'))+elem.height()
+        elem.stop().animate({scrollTop:scrollH}, 150);
+    }
+    public SplitScrollTop() {
+        let elem = $(".fill-parent.scrollBack");
+        elem.stop().animate({scrollTop:0}, 250);
     }
 
     private keydown(event: JQueryEventObject): boolean {

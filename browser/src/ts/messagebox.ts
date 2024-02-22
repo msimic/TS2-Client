@@ -18,7 +18,13 @@ export interface MessageboxResult {
 export class Notification {
     public static lastNotificationTop: any;
     public static lastNotificationBottom: any;
-    public static Show(text: string, top?:boolean, continueLast?:boolean, delay?:number, html?:boolean, opacity?:number, blink?:boolean) {
+    public static Show(text: string, top?:boolean, continueLast?:boolean, delay?:number, html?:boolean, opacity?:number, blink?:boolean, callb?:Function) {
+        Notification.Notify("info", text, top, continueLast, delay, html, opacity, blink, callb)
+    }
+    public static Warning(text: string, top?:boolean, continueLast?:boolean, delay?:number, html?:boolean, opacity?:number, blink?:boolean, callb?:Function) {
+        Notification.Notify("warning", text, top, continueLast, delay, html, opacity, blink, callb)
+    }
+    public static Notify(type:string, text: string, top?:boolean, continueLast?:boolean, delay?:number, html?:boolean, opacity?:number, blink?:boolean, callb?:Function) {
         delay = delay || 3000;
         let centralPanel = $(top ? "#notificationTop" : "#notificationBottom");
         let content = $(top ? "#notificationTopContent" : "#notificationBottomContent");
@@ -30,7 +36,7 @@ export class Notification {
             appendContainer: top ? "#notification-top" : "#notification-bottom",
             width: "auto", position: top ? "top-right" : "bottom-right", opacity: opacity || 0.9,
             autoOpen: false, animationOpenDelay: 500, autoClose: true, autoCloseDelay: delay, blink: blink,
-            height: "auto"
+            height: "auto", template: type
         };
         if (top && this.lastNotificationTop && continueLast) {
             (<any>centralPanel).jqxNotification("closeAll")
@@ -44,6 +50,13 @@ export class Notification {
             (<any>centralPanel).jqxNotification(lastSetting);
         }
         (<any>centralPanel).jqxNotification("open");
+        centralPanel.off("click")
+        if (callb) {
+            centralPanel.on("click", callb as any)
+            centralPanel.css({"cursor": "pointer"})
+        } else {
+            centralPanel.css({"cursor": "inherit"})
+        }
     }
 }
 
