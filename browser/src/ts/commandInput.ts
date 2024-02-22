@@ -350,25 +350,7 @@ export class CommandInput {
         }
         if (!script && cmd.length >= 4 && cmd[0] == "?" && cmd[1] == "?") {
             cmd = cmd.slice(2)
-            if (!this.splitter) {
-                this.SplitScroll(true)
-                this.searchLine = -1
-            }
-            const lines = $(".fill-parent.scrollBack .outputText").children().toArray().reverse()
-            $(lines).removeClass("search-hit")
-            const line = lines.find((v,i) => {
-                return i > this.searchLine && $(v).text().toLowerCase().includes(cmd.toLowerCase())
-            })
-            if (line) {
-                this.searchLine = lines.indexOf(line)
-                setTimeout(() => {
-                    $(line).addClass("search-hit")
-                    line.scrollIntoView()
-                }, 100)
-            } else {
-                this.searchLine = -1
-            }
-            this.$cmdInput.select();
+            this.searchScrollBuffer(cmd);
             return;
         } else if (!script && cmd.length >= 2 && cmd.length < 4 && cmd[0] == "?" && cmd[1] == "?") {
             EvtScriptEmitPrint.fire({
@@ -434,6 +416,37 @@ export class CommandInput {
             }
         }
     };
+
+    private searchScrollBuffer(cmd: string) {
+
+        if (cmd.length < 2) {
+            EvtScriptEmitPrint.fire({
+                owner: "commandInput",
+                message: "La ricerca deve avere almeno due lettere",
+            })
+            return;
+        }
+
+        if (!this.splitter) {
+            this.SplitScroll(true);
+            this.searchLine = -1;
+        }
+        const lines = $(".fill-parent.scrollBack .outputText").children().toArray().reverse();
+        $(lines).removeClass("search-hit");
+        const line = lines.find((v, i) => {
+            return i > this.searchLine && $(v).text().toLowerCase().includes(cmd.toLowerCase());
+        });
+        if (line) {
+            this.searchLine = lines.indexOf(line);
+            setTimeout(() => {
+                $(line).addClass("search-hit");
+                line.scrollIntoView();
+            }, 100);
+        } else {
+            this.searchLine = -1;
+        }
+        this.$cmdInput.select();
+    }
 
     private onNumpad(key:string):boolean {
         const cmd = (<any>this.NumPad)[<any>key]
@@ -505,6 +518,15 @@ export class CommandInput {
             case "Escape": // esc
                 this.SplitScroll(false)
                 return true;
+            case "F":
+            case "f":
+                if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+                    this.searchScrollBuffer(this.$cmdInput.val());
+                    event.preventDefault()
+                    event.stopPropagation()
+                    return true;
+                }
+                break;
             case "Enter": // enter
                 if (event.shiftKey) {
                     return true;
