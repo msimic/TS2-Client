@@ -7,7 +7,7 @@
 - feature: Notification in script ora ha click callback, e c'e' il metodo Warning
 - feature: stile prompt in impostazioni
 - feature: scorrimento diviso implementato: abilitare nel menu per pageUp, oppure bottone a destra linea della comando
-- feature: ricerca termine nello scroll con "??termine" nella linea comandi
+- feature: ricerca termine nello scroll con "??termine" nella linea comandi o CTRL-F
 - fix: risolto un problema nel salvataggio finestre se si cambiava profilo alla disconessione
 - fix: risolto un bug che non rifrescava il menu alla disconessione del telnet
 - fix: risolto un bug che nel menu il bottone Connetti conetteva sempre al server live anche se si aveva un profilo caricato

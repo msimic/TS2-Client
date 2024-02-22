@@ -218,6 +218,7 @@ export class CommandInput {
 
     SplitScroll(enabled: boolean) {
         if (!enabled) {
+            this.searchLine = -1;
             const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
             elms.forEach(e => $(e).css({
                 "position": "absolute"
@@ -227,16 +228,17 @@ export class CommandInput {
                 this.splitter.destroy()
                 this.splitter = null;
             }
-            $("#scrollBack").html("")
+            $("#scrollBack")[0].innerHTML = ""
             $("#scrollBack").hide()
             elms.forEach(e => e.scrollTop = e.scrollHeight)
         } else {
+            
             if (this.splitter) {
                 this.splitter.collapse(0)
                 this.splitter.destroy()
                 this.splitter = null;
             }
-            $("#scrollBack").html($("#winOutput").html())
+            $("#scrollBack")[0].innerHTML = $("#winOutput")[0].innerHTML
             $("#scrollBack").show()
             const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
             elms.forEach(e => $(e).css({
@@ -418,7 +420,7 @@ export class CommandInput {
     };
 
     private searchScrollBuffer(cmd: string) {
-
+        cmd = cmd.trim()
         if (cmd.length < 2) {
             EvtScriptEmitPrint.fire({
                 owner: "commandInput",
