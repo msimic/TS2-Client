@@ -7,7 +7,7 @@ import { OutputManager } from "./outputManager";
 import { ProfileManager } from "./profileManager";
 import { TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
-import { ConfigIf, escapeRegExp, throttle } from "./util";
+import { ConfigIf, escapeRegExp, htmlEscape, throttle } from "./util";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string, silent:boolean}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
@@ -828,6 +828,9 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     /* end Scripting API section */
     const _errEmit = EvtScriptEmitError;
     
+    let throtle = (func:Function, freq:number) => {
+        return throttle(func, freq, this.scriptThis)
+    }
 
     const api = {
         clone: clone,
@@ -835,6 +838,8 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         getTrigger: getTrigger,
         print: print,
         send: send,
+        throttle: throtle,
+        escapeHTML: htmlEscape,
         _errEmit: _errEmit,
         owner: owner,
         aliasEnabled: aliasEnabled,

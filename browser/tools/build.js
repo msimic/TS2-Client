@@ -109,7 +109,9 @@ function mergeJqwidgets(next) {
         './static/public/jqwidgets/jqxcolorpicker.js',
         './static/public/jqwidgets/jqxdropdownbutton.js',
         './static/public/jqwidgets/jqxtree.js',
+        './static/public/jqwidgets/jqxtabs.js',
         './static/public/jqwidgets/jqxdata.js',
+        './static/public/jqwidgets/jqxdata.export.js',
         './static/public/jqwidgets/jqxmenu.js',
         './static/public/jqwidgets/jqxwindow.js',
         './static/public/jqwidgets/jqxscrollbar.js',
@@ -117,7 +119,9 @@ function mergeJqwidgets(next) {
         './static/public/jqwidgets/jqxlistbox.js',
         './static/public/jqwidgets/jqxdropdownlist.js',
         './static/public/jqwidgets/jqxnotification.js',
-        './static/public/jqwidgets/jqxsplitter.js'],
+        './static/public/jqwidgets/jqxsplitter.js',
+        './static/public/jqwidgets/jqxdatatable.js'
+    ],
     output: './dist/jqwidgets_module.js',
     callback: function(err, min) { 
         if (!err) {

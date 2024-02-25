@@ -425,6 +425,9 @@ input:disabled::placeholder {
     opacity: 0;
 }
 
+.dark .jqx-datatable input {
+    background-color: rgb(52 52 52);
+}
 .dark input {
     background-color: rgb(62, 62, 66);
     color: #ececec;
@@ -610,12 +613,12 @@ input:disabled::placeholder {
 }
 
 .jqx-window .jqx-dropdownlist {
-    margin-top: 3px;
-    margin-left: 3px;
-    margin-bottom: 3px;
-    margin-right: 7px;
     border-radius: 3px;
-    min-width: 170px;
+    /*margin-top: 1px;
+    margin-left: 3px;
+    margin-bottom: 1px;
+    margin-right: 3px;
+    min-width: 170px;*/
 }
 .numpad {
     margin-left: auto;
@@ -662,6 +665,9 @@ input:disabled::placeholder {
     background-color: yellow;
 }
 
+.winEvents-type, .winEvents-condition {
+    min-width: 200px;
+}
 .winEvents-type .jqx-dropdownlist {
     font-size: 12px !important;
     border-radius: 3px;
@@ -811,31 +817,36 @@ label {
     box-shadow: 0px 0px 2px 0px rgb(21 106 167 / 77%), -1px -1px 2px 0px rgb(21 106 167 / 77%) inset;
 }
 
-.jqx-window input[type=text] {
-    border: 1px solid transparent;
-    border-radius: 3px;
-    box-shadow: 0px 0px 1px 0px rgb(21 106 167 / 77%), 0px 0px 1px 0px rgb(21 106 167 / 77%) inset;
+.jqx-window input[type=text],
+.jqx-window input[type=password] {
+    border: 1px solid #cecece;
+    /*box-shadow: 0px 0px 1px 0px rgb(21 106 167 / 77%), 0px 0px 1px 0px rgb(21 106 167 / 77%) inset;*/
     border-radius: 3px;
     padding: 3px;
-    outline: none !important;
+    /*outline: none !important;*/
     transition: all 0.2s ease-in-out;
-    margin-top: 3px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-left: 3px;
+    margin-bottom: 3px;
+}
+
+.dark .jqx-window input[type=text],
+.dark .jqx-window input[type=password],
+.dark .jqx-window input[type=text] {
+    border: 1px solid #292929;
+}
+
+.jqx-window .jqx-dropdownlist {
+    transition: all 0.2s ease-in-out;
+    margin-top: 1px;
+    margin-bottom: 1px;
     margin-left: 3px;
     margin-bottom: 3px;
 }
 
 .jqx-dropdownlist .jqx-input-label {
     visibility: hidden;
-}
-
-.jqx-window input[type=password] {
-    border: 1px solid transparent;
-    border-radius: 3px;
-    box-shadow: 0px 0px 1px 0px rgb(21 106 167 / 77%), 0px 0px 1px 0px rgb(21 106 167 / 77%) inset;
-    border-radius: 3px;
-    padding: 3px;
-    outline: none !important;
-    transition: all 0.2s ease-in-out;
 }
 
 .jqx-window input[type=text]:hover {
@@ -1081,7 +1092,6 @@ input,textarea,button {
 }
 input:focus,button:focus {
     outline: 1px solid gray;
-    filter: drop-shadow(0 0 1px black);
 }
 #menuBar {
 	background: black !important;
@@ -1490,8 +1500,12 @@ input:focus,button:focus {
     font-family: 'Lato', 'Lucida Grande', 'Lucida Sans Unicode', Tahoma, Sans-Serif;
     position: relative !important;
 }
-.jqx-window .jqx-widget-content {
+.light .jqx-window .jqx-widget-content {
     background: transparent !important;
+}
+
+.jqx-fill-state-hover-metrodark {
+    line-height: unset;
 }
 
 .winProfiles-profiles {
@@ -1632,7 +1646,7 @@ input[type=color] {
     flex-grow: 1;
     display: flex;
     align-items: center;
-    margin-right: 7px;
+    /*margin-right: 3px;*/
 }
 
 .left-pane .buttons button {
@@ -1722,10 +1736,10 @@ input[type=color] {
     border-color: #222222;
 }
 
-.jqx-fill-state-hover, .jqx-fill-state-pressed, .jqx-fill-state-normal {
+/*.jqx-fill-state-hover, .jqx-fill-state-pressed, .jqx-fill-state-normal {
     font-size: 12px !important;
     line-height: unset !important;
-}
+}*/
 
 .vertical-center {
     margin: 0;

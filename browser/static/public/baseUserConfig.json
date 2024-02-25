@@ -1620,6 +1620,42 @@
       "value": "//disrm riuscito, tolgo il primo elemento dalla lista.\ntoggleTrigger(\"disarm-rigavuota\", false);\ntoggleTrigger(\"disarm-ko\", false);\ntoggleTrigger(\"disarm-click\", false);\n\nthis.roomTraps.shift()\nif (this.autodisarm && (this.roomTraps.length > 0)) {\n  send(\"detrap\");\n}\n",
       "shortcut": "",
       "script": null
+    },
+    {
+      "class": "track",
+      "enabled": false,
+      "id": "track-cerca",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "^Vedi orme della tua preda che vanno verso ([^\\.]*)|^### Vedi delle tracce che vanno verso ([^\\.]*)",
+      "regex": true,
+      "value": "//Normalmente non abilitato. Viene abilitato dall'alias track\n\nif (this.isCapogruppo(this.TSPersonaggio)) return;\n\ndelay(\"delay_track\",200, () => {\n\nlet gruppo = JSON.parse(this.Gruppo);\nlet k = Object.keys(gruppo).slice(2);\nlet capogruppo=k[0]\nif (gruppo[capogruppo]?.inroom!=1) return;\n\nlet dir = (match[1] || match[2]).toUpperCase();\nif (dir == \"IL BASSO\") dir = \"BASSO\";\nif (dir == \"L'ALTO\") dir = \"ALTO\";\nconst mob = getvar(\"trackmob\") || \"\";\nsend(\"gtTrigger Tracce di \" + mob + \" verso: \" + dir);\n\n});",
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "class": "track",
+      "enabled": false,
+      "id": "track-fine",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "^Non riesci a vedere nessuna traccia di quella creatura.$|^### Hai trovato la tua preda!",
+      "regex": true,
+      "value": "//Normalmente non abilitato. Viene abilitato dall'alias track\n\nif (this.isCapogruppo(this.TSPersonaggio)) return;\n\ndelay(\"delay_track\",200, () => {\n\nlet gruppo = JSON.parse(this.Gruppo);\nlet k = Object.keys(gruppo).slice(2);\nlet capogruppo=k[0]\nif (gruppo[capogruppo]?.inroom!=1) return;\n  \nconst mob = getvar(\"trackmob\") || \"\";\n  \nif (match[0].includes(\"trovato\")) {\n  send(\"gtTrigger Ecco \" + mob + \" !!!\");  \n} else {\n  send(\"gtTrigger Non vedo tracce di \" + mob);  \n}\n  \n});\n\ntoggleTrigger(\"track-cerca\",false);\ntoggleTrigger(\"track-fine\",false);       \n",
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "class": "",
+      "enabled": true,
+      "id": "where",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "^\\[ 1\\] .+- (.+)$",
+      "regex": true,
+      "value": "if (match[1].trim() == \"Qui intorno...\") return;\nconst roomname = match[1].trim();\nvar zona_attuale = mapper.current.zone_id\n\n//const res = mapper.searchRooms(match[1].trim())\nlet res = mapper.searchRoomsByNameAndDesc(roomname)\nres = res.filter(r => r.name === roomname)\nres = res.filter(r => mapper.getRoomZone(r.id).id === zona_attuale)\nthis.searchRooms = () => res\nprint(\"Locazioni mapper per: \" + roomname)\nsend(\"ricercaPrecedente\")\n\n/*var rooms = \"\"\nres.forEach( (item)=>{\n  if (item.zone_id == zona_attuale) {\n  \trooms += link(item.id, ()=>{send(\"vai \" + item.id)}) + \" \";\n  }\n})\nprint(rooms)            \nsend(\"log \" + \"Locazioni mapper per: \" + res[0].name + \": \" + rooms)\n*/",
+      "shortcut": "",
+      "script": null
     }
   ],
   "aliases": [
@@ -3982,6 +4018,18 @@
       "pattern": "^tool costotrain ?(\\d+)? ?(\\d+)?",
       "regex": true,
       "value": "let tend = 0;\nlet tstart = 0;\n\nconst askNumTrain = async () => {\n  let colori = (this.colori instanceof Array) ? this.colori.join(\",\") : (this.colori || \"$c0009\");\n\n  const results = (await Messagebox.ShowMultiInput(\"Personale\",\n                   [\"Da che livello di train\",\"A che livello di train\"],\n                   [0,\"\"])).results;\n  tstart = Number(results[0]);\n  tend = Number(results[1]);\n  \n  return results\n};\n\n\nif (!match[1]) {\n  //aprire inputbox\n  await askNumTrain();\n} else {\n  if (!match[2]) {\n\t  tend = Number(match[1]);\n  \ttstart = 0;\n  } else {\n  \ttend = Number(match[2]);\n  \ttstart = Number(match[1]);\n  }\n}\n\nif (tend<=tstart) {\n  print(\"Il numero di train finale deve essere maggiore di quello iniziale\");\n  return;\n}\nconst costo_train = 400 * tend\nconst costo_cum = 400 * ( tend*(tend+1)/2 - tstart*(tstart+1)/2)\nprint(\"Il costo del train numero \" + tend + \" e' di \" + costo_train + \" divini\")\nprint(\"Il costo per andare dal train \" + tstart + \" al train \" + tend + \" e' di \" + costo_cum + \" divini\");\n\n\n",
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "class": "util",
+      "enabled": true,
+      "id": "",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "^track (.+)",
+      "regex": true,
+      "value": "const mob = match[1];\nsetvar(\"trackmob\",mob,true);\nsend(\"~track \" + mob);\nif (this.isCapogruppo(this.TSPersonaggio)) return;\n\nlet gruppo = JSON.parse(this.Gruppo);\nlet k = Object.keys(gruppo).slice(2);\nlet capogruppo=k[0]\nif (gruppo[capogruppo]?.inroom!=1) return;\n\nsend(\"gtTrigger Cerco le tracce di: \" + mob);\ntoggleTrigger(\"track-cerca\",true);\ntoggleTrigger(\"track-fine\",true);       \n",
       "shortcut": "",
       "script": null
     }

@@ -784,7 +784,7 @@ Vuoi farlo ora?`);
     }
 
     public createWindow(ctrl:Control):JQuery {
-        return $(`<div id="window-dock-${ctrl.content.replace(" ","-")}" style="display:none;"></div>`)
+        return $(`<div id="window-dock-${ctrl.content.replace(/ /g,"-")}" style="display:none;"></div>`)
     }
 
     public createButton(ctrl:Control):JQuery {

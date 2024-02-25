@@ -202,7 +202,7 @@ export class WindowManager {
         /*let int:number = null;
         int = <number><any>setInterval(()=>{
             for (const tw of toShow) {
-                if (!$(".win-"+tw.replace(" ","-")).length) {
+                if (!$(".win-"+tw.replace(/ /g,"-")).length) {
                     return;
                 }
             }
@@ -241,7 +241,7 @@ export class WindowManager {
         /*let int:number = null;
         int = <number><any>setInterval(()=>{
             for (const tw of toDestroy) {
-                if ($(".win-"+tw.replace(" ","-")).length) {
+                if ($(".win-"+tw.replace(/ /g,"-")).length) {
                     return;
                 }
             }
@@ -269,7 +269,7 @@ export class WindowManager {
         let windowDef = this.windows.get(window);
         if (!windowDef) return;
         const witm = this.layoutManager.getCurrent().items.find(i => i.type == ControlType.Window && i.content == window);
-        let dockPos = $("#window-dock-"+window.replace(" ","-"));
+        let dockPos = $("#window-dock-"+window.replace(/ /g,"-"));
         if (!witm) {
             windowDef.data.docked = false;
             this.save();
@@ -507,7 +507,7 @@ export class WindowManager {
             let int:number = null;
             int = <number><any>setInterval(()=>{
                 let tw = wdef.data.name;
-                if ($(".win-"+tw.replace(" ","-")).length) {
+                if ($(".win-"+tw.replace(/ /g,"-")).length) {
                     return;
                 }
                 clearInterval(int);
@@ -561,7 +561,7 @@ export class WindowManager {
 
             win = document.createElement("div");
             win.style.display = "none";
-            win.className = "win-"+name.replace(" ","-") + " customWindow";
+            win.className = "win-"+name.replace(/ /g,"-") + " customWindow";
             document.body.appendChild(win);
 
             win.innerHTML = `
@@ -569,7 +569,7 @@ export class WindowManager {
             <div>${name}</div>
             <!--content-->
             <div>
-                <div class="${$("#winOutput")[0].classList} full scrollable" id="win-${name.replace(" ","-")}"></div>
+                <div class="${$("#winOutput")[0].classList} full scrollable" id="win-${name.replace(/ /g,"-")}"></div>
             </div>
             `;
 
@@ -674,8 +674,8 @@ export class WindowManager {
             if (!wd.initialized) {
                 wd.initialized = true;
                 setTimeout(() => {
-                    self.addDockButton($(".win-"+name.replace(" ","-")),name);
-                    self.addSettingsButton($(".win-"+name.replace(" ","-")),name);
+                    self.addDockButton($(".win-"+name.replace(/ /g,"-")),name);
+                    self.addSettingsButton($(".win-"+name.replace(/ /g,"-")),name);
                     $(".jqx-resize", $win).height('unset')
                     if (collapse) {
                          (<any>w).jqxWindow('collapse');
@@ -725,7 +725,7 @@ export class WindowManager {
         const def: WindowDefinition = {
             window: w,
             custom: customOutput ? true : false,
-            output: customOutput ? customOutput : new CustomWin("win-"+name.replace(" ","-"), this.profileManager.activeConfig),
+            output: customOutput ? customOutput : new CustomWin("win-"+name.replace(/ /g,"-"), this.profileManager.activeConfig),
             created: true,
             initialized: false,
             data: {

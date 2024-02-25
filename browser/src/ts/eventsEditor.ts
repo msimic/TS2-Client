@@ -145,7 +145,7 @@ export class EventsEditor {
                     <div class="pane-header">
                         <div class="pane-optional">
                             <label>Tipo: <select placeholder="Seleziona tipo evento" id="win-events${isBase?'1':'2'}" size=1" class="winEvents-type"></select></label>
-                            <label>Condizione: <input autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" type="text" class="winEvents-condition fill-width" disabled placeholder="(condizione)" title="La condizione richiesta affinche l'evento scatti (dipende dal tipo evento)."></label>
+                            <label>Condizione: <input autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" type="text" class="winEvents-condition" disabled placeholder="(condizione)" title="La condizione richiesta affinche l'evento scatti (dipende dal tipo evento)."></label>
                             <label>ID: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winEvents-id" disabled placeholder="(opzionale)" title="L'ID per riferire in script. (toggleEvent)"></label>
                             <label>Classe: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winEvents-className" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
                         </div>
