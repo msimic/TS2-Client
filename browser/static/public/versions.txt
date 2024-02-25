@@ -16,6 +16,8 @@
 - ui: per le finestre fluttuanti il scrollbar non interferira' con il ridimensionare
 - ui: il nome del profilo e' ora la prima cosa nel titolo della finestra
 - ui: nuove opzioni per la grandezza dello scroll
+- ui: corretti certi stili css per rendere un po piu' consistente l'UI
+- scripting: aggiunte funzioni "escapeHTML" e "throttle" al scripting
 ____________________________________________________________
 1.6.1
 - fix: a un problema del tastierino numerico
