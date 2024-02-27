@@ -16,4 +16,5 @@
 - ui: il nome del profilo e' ora la prima cosa nel titolo della finestra
 - ui: nuove opzioni per la grandezza dello scroll
 - ui: corretti certi stili css per rendere un po piu' consistente l'UI
+- ui: al salvataggio la finestra di alias e trigger rimarra' sul elemento salvato
 - scripting: aggiunte funzioni "escapeHTML" e "throttle" al scripting

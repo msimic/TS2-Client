@@ -83,16 +83,18 @@ export class AliasEditor extends TrigAlEditBase {
         }
     }
 
-    protected saveItem(alias: TrigAlItem) {
+    protected saveItem(alias: TrigAlItem):number {
         let ind = this.aliasManager.aliases.indexOf(alias)
         if (ind < 0) {
             // New alias
             this.aliasManager.aliases.push(alias);
+            ind = this.aliasManager.aliases.length - 1
         } else {
             // Update alias
             this.aliasManager.aliases[ind] = alias;
         }
         this.aliasManager.saveAliases();
+        return ind;
     }
 
     protected deleteItem(item:TrigAlItem) {

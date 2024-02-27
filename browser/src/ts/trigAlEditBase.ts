@@ -70,7 +70,7 @@ export abstract class TrigAlEditBase {
     protected abstract getList(): Array<string>;
     protected abstract getListItems(): Array<TrigAlItem>;
     protected abstract getItem(ind: number): TrigAlItem;
-    protected abstract saveItem(item:TrigAlItem): void;
+    protected abstract saveItem(item:TrigAlItem): number;
     protected abstract deleteItem(item:TrigAlItem): void;
     protected abstract copyToOther(item: TrigAlItem): void;
     protected abstract supportsMacro(): boolean;
@@ -530,7 +530,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         return item;
     }
 
-    private updateListBox() {
+    private updateListBox(nofilter = false) {
         let lst = this.getListItems();
 
         this.jqList.clear();
@@ -547,9 +547,11 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.treeOptions.source = items;
         this.jqList.setOptions(this.treeOptions);
 
-        this.ApplyFilter();
+        if (!nofilter) this.ApplyFilter();
+        return items
     };
 
+    private saving = false;
     private handleSaveButtonClick() {
         let trg:TrigAlItem = this.$listBox.data("selected");
         if (!trg)
@@ -591,14 +593,30 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         trg.shortcut = this.$macroLabel.text()
         trg.script = null;
 
-        this.saveItem(
-            trg
-        );
+        let newItem:any = null;
+        try {
+            this.saving = true
+            let newIndex = this.saveItem(
+                trg
+            );
+ 
+            if (newIndex>-1) {
+                newItem = this.getItem(newIndex)
+            }
+        } finally {
+            this.saving = false
+        }
 
         this.selectNone();
         this.clearEditor();
         this.setEditorDisabled(true);
-        this.updateListBox();
+        this.updateListBox(true);
+
+        if (newItem) {
+            let items = this.jqList.getItems();
+            let newVal = items.find(i => (i.value as any) == newItem)
+            if (newVal) this.jqList.selectItem( newVal.element )
+        }
     }
 
     private handleCancelButtonClick() {
@@ -766,7 +784,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     public refresh() {
         this.clearEditor();
         this.setEditorDisabled(true);
-        this.updateListBox();
+        this.updateListBox(this.saving);
     }
 }
 

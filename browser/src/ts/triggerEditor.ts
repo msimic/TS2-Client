@@ -80,14 +80,16 @@ export class TriggerEditor extends TrigAlEditBase {
         }
     }
 
-    protected saveItem(trigger:TrigAlItem) {
+    protected saveItem(trigger:TrigAlItem): number {
         let ind = this.triggerManager.triggers.indexOf(trigger)
         if (ind < 0) {
             // New trigger
             this.triggerManager.createTrigger(trigger);
+            return this.triggerManager.triggers.length-1
         } else {
             // Update trigger
             this.triggerManager.setTrigger(ind, trigger);
+            return ind
         }
     }
 

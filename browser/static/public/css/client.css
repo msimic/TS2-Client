@@ -832,7 +832,7 @@ label {
 }
 
 div:focus-visible {
-    outline: #80808066 auto 1px;
+    outline: #80808066 solid 1px;
 }
 
 .dark .jqx-window input[type=text],
