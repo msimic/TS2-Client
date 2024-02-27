@@ -831,6 +831,10 @@ label {
     margin-bottom: 3px;
 }
 
+div:focus-visible {
+    outline: #80808066 auto 1px;
+}
+
 .dark .jqx-window input[type=text],
 .dark .jqx-window input[type=password],
 .dark .jqx-window input[type=text] {
@@ -843,6 +847,11 @@ label {
     margin-bottom: 1px;
     margin-left: 3px;
     margin-bottom: 3px;
+}
+
+.jqx-dropdownlist.filterconditions {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .jqx-dropdownlist .jqx-input-label {

@@ -1000,7 +1000,8 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
                 if (inputs.length) return  {
                     focus: () => {
                         setTimeout(()=>{
-                            (this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()[0] as HTMLElement).focus()
+                            let el = this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()[0]
+                            if (el) (el as HTMLElement).focus()
                         }, 150)
                     }
                 };
@@ -1009,8 +1010,11 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
                     return {
                         focus: () => {
                             setTimeout(()=>{
-                                (this.find('.CodeMirror').first()[0] as any).CodeMirror.focus()
-                                (this.find('.CodeMirror').first()[0] as any).CodeMirror.setCursor({line: 1, ch: 0})
+                                let cm = (this.find('.CodeMirror').first()[0] as any)?.CodeMirror
+                                if (cm) {
+                                    cm.focus()
+                                    cm.setCursor({line: 1, ch: 0})
+                                }
                             }, 150)
                         }
                     }
