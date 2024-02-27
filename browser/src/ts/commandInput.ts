@@ -472,12 +472,20 @@ export class CommandInput {
         this.SplitScroll(false)
     };
 
-    public SplitScrollPageUp() {
+    private _thrSplitScrollPageUp:Function = null;
+    private _SplitScrollPageUp() {
         let elem = $(".fill-parent.scrollBack");
         const scrollH = parseInt(elem.prop('scrollTop'))-elem.height()
         elem.stop().animate({scrollTop:scrollH}, 150);
     }
-    public SplitScrollPageDown() {
+    public SplitScrollPageUp() {
+        if (!this._thrSplitScrollPageUp) {
+            this._thrSplitScrollPageUp = throttle(this._SplitScrollPageUp, 150)
+        }
+        this._thrSplitScrollPageUp();
+    }
+    private _thrSplitScrollPageDown:Function = null;
+    public _SplitScrollPageDown() {
         let elem = $(".fill-parent.scrollBack");
         if (elem.prop("scrollTop")+elem.height() >= elem.prop("scrollHeight")) {
             this.SplitScroll(false)
@@ -485,6 +493,12 @@ export class CommandInput {
         }
         const scrollH = parseInt(elem.prop('scrollTop'))+elem.height()
         elem.stop().animate({scrollTop:scrollH}, 150);
+    }
+    public SplitScrollPageDown() {
+        if (!this._thrSplitScrollPageDown) {
+            this._thrSplitScrollPageDown = throttle(this._SplitScrollPageDown, 150)
+        }
+        this._thrSplitScrollPageDown();
     }
     public SplitScrollTop() {
         let elem = $(".fill-parent.scrollBack");
