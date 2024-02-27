@@ -22,6 +22,11 @@ export class OutputLogger {
     private jsScript:JsScript = null;
 
     private db:IDBPDatabase<OutputLogDBSchema> = null;
+    private alerts: string;
+
+    public setAlerts(alerts:string) {
+        this.alerts = alerts
+    }
 
     constructor() {
         if (OutputLogger.instance) {
@@ -36,6 +41,7 @@ export class OutputLogger {
     }
 
     async init() {
+        this.alerts = localStorage.getItem("log-alerts")||"normal";
         this.db = await openDB<OutputLogDBSchema>(this.dbName, this.dbVersion, {
             upgrade(db, oldVersion, newVersion) {
                 db.createObjectStore('lines', {autoIncrement:true});
@@ -71,10 +77,10 @@ export class OutputLogger {
 
         let logWarning = 0
         if (numLines > 0.9 * this.maxLines && this.numLines <= 0.9 * this.maxLines) {
-            logWarning = 90
+            if (this.alerts == "normal" || this.alerts == "minimal") logWarning = 90
         }
         else if (numLines > 0.95 * this.maxLines && this.numLines <= 0.95 * this.maxLines) {
-            logWarning = 95
+            if (this.alerts != "none") logWarning = 95
         }
 
         this.numLines = numLines
@@ -95,7 +101,7 @@ export class OutputLogger {
             EvtLogExceeded.fire({
                 owner: "outputLogger",
                 message: "Lunghezza Log superata (" + this.maxLines + " linee). 20% delle righe vecchie verranno troncate.",
-                silent: false,
+                silent: this.alerts != "normal",
                 callb: async () => {
                     downloadString(await this.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
                     this.clear()

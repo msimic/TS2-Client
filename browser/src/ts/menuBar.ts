@@ -488,6 +488,17 @@ export class MenuBar {
             this.layout.importFromFile();
         };
 
+        this.clickFuncs["log-alerts"] = () => {
+            let opts = ["normal", "minimal", "none"]
+            let la = localStorage.getItem("log-alerts")||opts[0]
+            let i = opts.indexOf(la);
+            i++;
+            if (i>=opts.length) { i = 0 }
+            localStorage.setItem("log-alerts",opts[i])
+            Notification.Show("Avvisi log: " + opts[i])
+            new OutputLogger().setAlerts(opts[i])
+        };
+
         this.clickFuncs["update-triggers"] = async () => {
             if ((await Messagebox.Question("Sei sicuro di voler aggiornare i script preimpostati?")).button == Button.Ok) {
                 localStorage.setItem("old_UserConfig", localStorage.getItem("userConfig"))

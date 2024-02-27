@@ -506,11 +506,11 @@ export class Client {
         this.outputLogger.setScript(this.jsScript)
         let awaitingLogResponse = false;
         EvtLogExceeded.handle((data:{owner:string, message:string, silent:boolean, callb: Function}) => {
-            if (!data.silent) {
+            if (true) {
                 if (!this.outputLogger.empty() && !awaitingLogResponse) {
                     awaitingLogResponse = true;
                     (async () => {
-                        Notification.Show(data.message, true, false, 3000, true, 1.0, false, data.callb)
+                        if (!data.silent) Notification.Show(data.message, true, false, 3000, true, 1.0, false, data.callb)
                         await this.outputLogger.rollLog()
                         awaitingLogResponse = false;
                     })();
