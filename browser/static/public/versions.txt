@@ -20,6 +20,7 @@
 - ui: corretti certi stili css per rendere un po piu' consistente l'UI
 - ui: al salvataggio la finestra di alias e trigger rimarra' sul elemento salvato
 - scripting: aggiunte funzioni "escapeHTML" e "throttle" al scripting
+- scripting: l'editor ora supporta code folding su [] e {}, ed ha il context menu
 ____________________________________________________________
 1.6.1
 - fix: a un problema del tastierino numerico
