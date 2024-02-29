@@ -266,22 +266,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             panels: [{size: "30%"}, {size: "70%"}]
         });
 
-        this.codeMirror = CodeMirror.fromTextArea(
-            this.$scriptArea[0], {
-                mode: {name: "javascript", globalVars: true},
-                theme: Mudslinger.GetCodeMirrorTheme(),
-                autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
-                matchBrackets: true,
-                lineNumbers: true,
-                scrollbarStyle: "overlay",
-                tabSize: 2,
-                autoCloseBrackets: true,
-                styleActiveLine: true,
-                search: { bottom:true},
-                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
-            }
-        );
-        Util.addIntellisense(this.codeMirror);
+        this.codeMirror = Util.CreateCodeMirror(this.$scriptArea[0] as HTMLTextAreaElement)
+        
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
         this.$codeMirrorWrapper.css("height","100%");
         this.$codeMirrorWrapper.hide();

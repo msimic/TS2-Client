@@ -1,7 +1,7 @@
 import * as Util from "./util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "./jsScript";
 import { Messagebox } from "./messagebox";
-import { circleNavigate } from "./util";
+import { CreateCodeMirror, circleNavigate } from "./util";
 import { Mudslinger } from "./client";
 declare let CodeMirror: any;
 
@@ -207,22 +207,8 @@ export class EventsEditor {
             panels: [{size: "30%"}, {size: "70%"}]
         });
 
-        this.codeMirror = CodeMirror.fromTextArea(
-            this.$value[0], {
-                mode: {name: "javascript", globalVars: true},
-                theme: Mudslinger.GetCodeMirrorTheme(),
-                autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
-                matchBrackets: true,
-                lineNumbers: true,
-                scrollbarStyle: "overlay",
-                tabSize: 2,
-                autoCloseBrackets: true,
-                styleActiveLine: true,
-                search: { bottom:true},
-                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
-            }
-        );
-        Util.addIntellisense(this.codeMirror);
+        this.codeMirror = CreateCodeMirror(this.$value[0] as HTMLTextAreaElement)
+         
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
         this.$codeMirrorWrapper.css("height","100%");
         

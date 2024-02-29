@@ -1,6 +1,6 @@
 import { Mudslinger } from "./client";
 import {JsScript} from "./jsScript";
-import { addIntellisense } from "./util";
+import { CreateCodeMirror } from "./util";
 
 declare let CodeMirror: any;
 
@@ -40,29 +40,14 @@ export class JsScriptWin {
         const win_h = $(window).innerHeight()-20;
         (<any>this.$win).jqxWindow({keyboardCloseKey :'none',width: Math.min(550, win_w), height: Math.min(400, win_h), showCollapseButton: true});
 
-        this.codeMirror = CodeMirror.fromTextArea(
-            win.getElementsByClassName("winJsScript-code")[0], {
-                mode: "javascript",
-                theme: Mudslinger.GetCodeMirrorTheme(),
-                autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
-                matchBrackets: true,
-                lineNumbers: true,
-                scrollbarStyle: "overlay",
-                tabSize: 2,
-                autoCloseBrackets: true,
-                styleActiveLine: true,
-                search: { bottom:true},
-                extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
-            }
-        );
+        this.codeMirror = CreateCodeMirror(win.getElementsByClassName("winJsScript-code")[0] as HTMLTextAreaElement)
 
         $(this.codeMirror.getWrapperElement()).css("height","100%");
 
         this.$runButton.on("blur", () => {
             if ((<any>this.$win).jqxWindow("isOpen")) this.codeMirror.focus()
         })
-        
-        addIntellisense(this.codeMirror);
+
         this.$win.on('open', (event) => {
             this.$win.focusable().focus()
         })

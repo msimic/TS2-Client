@@ -2,6 +2,7 @@ import { AppInfo } from "./appInfo";
 import { EventHook } from "./event";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { TrigAlItem } from "./trigAlEditBase";
+import { Mudslinger } from "./client";
 
 export function htmlEscape(text:string) {
     return replaceLf(
@@ -399,23 +400,292 @@ export function utf8decode(array: Uint8Array): { result: string; partial: Uint8A
     return { result: out, partial: null };
 }
 
-declare let CodeMirror: any;
+export function CreateCodeMirror(element:HTMLTextAreaElement) {
+    function bracketFolding(pairs:any) {
+        return function(cm:any, start:any) {
+          var line = start.line, lineText:string = cm.getLine(line);
+      
+          function findOpening(pair:any) {
+            var tokenType;
+            for (let ln = line; ln >= 0; ln--) {
+                let lnText:string = cm.getLine(ln)
+                let startCh:number = ln == line ? start.ch : lnText.length
+                for (let at = startCh, pass = 0;;) {
+                    var found = at <= 0 ? -1 : lnText.lastIndexOf(pair[0], at - 1);
+                    if (found == -1) {
+                        if (pass == 1) break;
+                        pass = 1;
+                        at = lineText.length;
+                        continue;
+                    }
+                    if (pass == 1 && ln == line && found < start.ch) break;
+                    let tk = cm.getTokenAt((window.CodeMirror as any).Pos(ln, found + 1))
+                    tokenType = cm.getTokenTypeAt((window.CodeMirror as any).Pos(ln, found + 1));
+                    if (!/^(comment|string)/.test(tokenType)) return {ch: found + 1, line:ln, tokenType: tokenType, pair: pair};
+                    at = found - 1;
+                }
+            }
+            return null
+          }
+      
+          function findRange(found:any) {
+            let foundLine = found.line;
+            var count = 1, lastLine = cm.lastLine(), end, startCh = found.ch, endCh
+            outer: for (var i = line; i <= lastLine; ++i) {
+              var text = cm.getLine(i), pos = i == line ? startCh : 0;
+              for (;;) {
+                var nextOpen = text.indexOf(found.pair[0], pos), nextClose = text.indexOf(found.pair[1], pos);
+                if (nextOpen < 0) nextOpen = text.length;
+                if (nextClose < 0) nextClose = text.length;
+                pos = Math.min(nextOpen, nextClose);
+                if (pos == text.length) break;
+                if (cm.getTokenTypeAt((window.CodeMirror as any).Pos(i, pos + 1)) == found.tokenType) {
+                  if (pos == nextOpen) ++count;
+                  else if (!--count) { end = i; endCh = pos; break outer; }
+                }
+                ++pos;
+              }
+            }
+      
+            if (end == null || line == end) return null
+            return {from: (window.CodeMirror as any).Pos(foundLine, startCh),
+                    to: (window.CodeMirror as any).Pos(end, endCh)};
+          }
+      
+          var found = []
+          for (var i = 0; i < pairs.length; i++) {
+            var open = findOpening(pairs[i])
+            if (open) found.push(open)
+          }
+          found.sort(function(a, b) { return a.ch - b.ch })
+          for (var i = 0; i < found.length; i++) {
+            var range = findRange(found[i])
+            if (range) return range
+          }
+          return null
+        }
+      }
 
-export function addIntellisense(editor:any) {
+      function findBraceBlockRange(editor:any, start:any) {
+        const doc = editor.getDoc();
+        const cursorPos = start//doc.getCursor();
+      
+        // Initialize stack to track nested braces
+        const stack = [];
+        let startPos = null;
+        let endPos = null;
+        outerStart: for (let line = cursorPos.line; line >= 0; line--) {
+          const lineContent = doc.getLine(line);
+          for (let ch = (line == cursorPos.line ? cursorPos.ch : lineContent.length - 1); ch >= 0; ch--) {
+            const char = lineContent[ch];
+            if (char === '{' || char === '[') {
+              // Check if it's part of a comment
+              const token = editor.getTokenAt({ line, ch });
+              if (!token.type || !token.type.includes('comment')) {
+                if (stack.length === 0) {
+                  // Found outermost opening brace
+                  startPos = { line, ch };
+                  startPos.ch++
+                  break outerStart
+                }
+                stack.pop();
+              }
+            } else if (char === '}' || char === ']') {
+              // Check if it's part of a comment
+              const token = editor.getTokenAt({ line, ch });
+              if (!token.type || !token.type.includes('comment')) {
+                stack.push(char);
+              }
+            }
+          }
+        }
+
+        outerEnd: if (startPos) for (let line = cursorPos.line; line < editor.lastLine(); line++) {
+            const lineContent = doc.getLine(line);
+            for (let ch = (line == cursorPos.line ? cursorPos.ch : 0); ch < lineContent.length; ch++) {
+              const char = lineContent[ch];
+              if (char === '}' || char === ']') {
+                // Check if it's part of a comment
+                const token = editor.getTokenAt({ line, ch });
+                if (!token.type || !token.type.includes('comment')) {
+                  if (stack.length === 0) {
+                    // Found outermost opening brace
+                    endPos = { line, ch };
+                    break outerEnd
+                  }
+                  stack.pop();
+                }
+              } else if (char === '{' || char === '[') {
+                // Check if it's part of a comment
+                const token = editor.getTokenAt({ line, ch });
+                if (!token.type || !token.type.includes('comment')) {
+                  stack.push(char);
+                }
+              }
+            }
+          }
+      
+        if (startPos && endPos) {
+            editor.setCursor(startPos)
+            return {from: (window.CodeMirror as any).Pos(startPos.line, startPos.ch),
+                to: (window.CodeMirror as any).Pos(endPos.line, endPos.ch)};
+        }
+        console.log('No opening brace found outside comments.');
+        return null;
+      }
+
+    (window.CodeMirror as any).braceRangeFinder = function(cm:any, start:any) {
+        return findBraceBlockRange(cm, start)
+        //return bracketFolding([["{", "}"], ["[", "]"]])(cm, start)
+    };
+
+    let mode = {
+        name: "javascript",
+        globalVars: true,
+    };
+    let config = {
+        mode: mode,
+        lineWiseCopyCut: false,
+        theme: Mudslinger.GetCodeMirrorTheme(),
+        autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
+        matchBrackets: true,
+        lineNumbers: true,
+        scrollbarStyle: "overlay",
+        tabSize: 2,
+        keyMap: "sublime",
+        autoCloseBrackets: true,
+        foldGutter: true,
+        styleActiveLine: true,
+        search: { bottom:true},
+        foldOptions: {
+            rangeFinder: (window.CodeMirror as any).braceRangeFinder
+        },
+        onGutterClick: (cm:any) => { (cm as any).execCommand("toggleFold") },
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
+    };
+    let cm = (window.CodeMirror as any).fromTextArea(
+        element, <any>config
+    );
+    addIntellisense(cm)
+    return cm
+}
+            
+export function addIntellisense(editor:CodeMirror.Editor) {
+    if (!$("#editorContextMenu").length) {
+        $("<div id='editorContextMenu' style='display:none'>").appendTo(document.body)
+    }
     $.ajax("./modules/ecmascript.json?rng="+AppInfo.Version).done(function(code:any) {
-        let server = new CodeMirror.TernServer({ecmaVersion: 10, allowAwaitOutsideFunction: true, defs: [code]});
+        let server = new (window.CodeMirror as any).TernServer({ecmaVersion: 10, hintDelay: 4000, allowAwaitOutsideFunction: true, defs: [code]});
+        editor.on("contextmenu", (cm:CodeMirror.Editor, e:MouseEvent) => {
+            setTimeout(() => {
+                let editorMenu:any = null;
+                let menuData:any = {
+                    "goDef": ["Vai a definizione","Alt+D"],
+                    "findRef": ["Cerca","Ctrl+F / Alt+F"],
+                    "highlight": ["Evidenzia","Ctrl+."],
+                    "collapse": ["Collassa","Ctrl+Q /Shift+Ctrl+Q"],
+                    "rename": ["Rinomina","F2"],
+                    "info": ["Docs","Ctrl+O"],
+                    "complete": ["Completa", "Ctrl-Space"]
+                }
+                let lis = Object.getOwnPropertyNames(menuData).map(n => {
+                    const str = menuData[n];
+                    return `<li data-value="${n}">${str[0]} <span style='float:right;opacity:0.5;'>${str[1]}</span></li>`
+                }).join("")
+                $("#editorContextMenu").html("")
+                editorMenu = ($("<div><ul>" + lis + "</ul><div>") as any)
+                editorMenu.appendTo($("#editorContextMenu"))
+                editorMenu.jqxMenu({ animationShowDelay: 0, popupZIndex: 999999, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
+                const token = cm.getTokenAt(cm.getCursor());
+                var scrollTop = e.clientY + $(window).scrollTop();
+                var scrollLeft = e.clientX + $(window).scrollLeft();
+                editorMenu.on('closed', function () {
+                    setTimeout(()=>{
+                        editorMenu.jqxMenu('destroy')
+                        editorMenu.remove()
+                    }, 100)
+                });
+                editorMenu.on('itemclick', function (event:any)
+                {
+                    var val = $(event.args).data("value");
+                    
+                    editorMenu.jqxMenu('close')
+                    switch (val) {
+                        case "goDef": {
+                            server.jumpToDef(cm)
+                            break;
+                        }
+                        case "findRef": {
+                            let cursor = (cm as any).getSearchCursor(token.string);
+                            cursor.findNext();
+                            if (cursor.from() && cursor.to()) cm.setSelection(cursor.from(), cursor.to());
+                            (cm as any).execCommand("findPersistent")
+                            break;
+                        }
+                        case "highlight": {
+                            server.selectName(cm);
+                            break;
+                        }
+                        case "rename": {
+                            server.rename(cm);
+                            break;
+                        }
+                        case "info": {
+                            server.showDocs(cm);
+                            break;
+                        }
+                        case "complete": {
+                            (cm as any).showHint({hint: server.getHint, completeSingle:true});
+                            break;
+                        }
+                        case "collapse": {
+                            let c:any = cm.getCursor();
+                            var isFolded = (cm as any).isFolded(c);
+                            if (isFolded) {
+                                (cm as any).execCommand("unfold")
+                            }
+                            else {
+                                (cm as any).foldCode(c);
+                            }
+                            break;
+                        }
+                    }
+                });
+                editorMenu.jqxMenu('open', scrollLeft, scrollTop);
+            }, 50)
+            e.stopPropagation()
+            e.preventDefault()
+            return true
+        });
         editor.setOption("extraKeys", {
             "Ctrl-Space": function(cm:any) { /*server.complete(cm);*/ cm.showHint({hint: server.getHint, completeSingle:true}); },
             "Ctrl-I": function(cm:any) { server.showType(cm); },
             "Ctrl-O": function(cm:any) { server.showDocs(cm); },
-            "Alt-.": function(cm:any) { server.jumpToDef(cm); },
-            "Alt-,": function(cm:any) { server.jumpBack(cm); },
+            "Alt-D": function(cm:any) { server.jumpToDef(cm); },
+            "Alt-.": function(cm:any) { server.jumpBack(cm); },
             "F2": function(cm:any) { server.rename(cm); },
             "Ctrl-.": function(cm:any) { server.selectName(cm); },
             "Tab": function(cm:any){
                 if (cm.somethingSelected()) cm.indentSelection("add");
                 else cm.replaceSelection("  ", "end");
-              }
+              },
+            "Ctrl-Q": function(cm:any) {
+                let c:any = cm.getCursor();
+                var isFolded = (cm as any).isFolded(c);
+                if (isFolded) {
+                    //(cm as any).execCommand("unfold")
+                    (cm as any).foldCode(c);
+                }
+                else {
+                    (cm as any).foldCode(c);
+                }
+                return;
+            },
+            "Shift-Ctrl-Q": function(cm:any) {
+                (cm as any).execCommand("foldAll")
+            },
+            "Alt-F": "findPersistent"
         })
         editor.on("keydown", function(cm:any, event:any) {
             if (event.code == "Escape") {
