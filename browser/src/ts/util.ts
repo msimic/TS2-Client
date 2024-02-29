@@ -581,7 +581,7 @@ export function addIntellisense(editor:CodeMirror.Editor) {
                 let editorMenu:any = null;
                 let menuData:any = {
                     "goDef": ["Vai a definizione","Alt+D"],
-                    "findRef": ["Cerca","Ctrl+F / Alt+F"],
+                    "findRef": ["Cerca","Ctrl+F / Alt+F / F3"],
                     "highlight": ["Evidenzia","Ctrl+."],
                     "collapse": ["Collassa","Ctrl+Q /Shift+Ctrl+Q"],
                     "rename": ["Rinomina","F2"],

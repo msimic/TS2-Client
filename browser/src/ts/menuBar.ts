@@ -408,6 +408,14 @@ export class MenuBar {
             Mudslinger.setTheme("metro", "light", "neat")
         }
 
+        this.clickFuncs["log-time"] = (val) => {
+            this.outWin.onLogTime(val)
+        }
+
+        this.clickFuncs["debug-scripts"] = (val) => {
+            this.outWin.onDebugScripts(val)
+        }
+
         this.clickFuncs["theme-light"] = (val) => {
             Mudslinger.setTheme("metro", "light", "neat")
         }
