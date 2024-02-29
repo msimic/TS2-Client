@@ -98,7 +98,7 @@ export class CommandInput {
     }
 
     isSplitScrolling() {
-        return this.splitScrolling && this.splitter;
+        return this.splitScrolling && $(".scrollBackContainer").is(":visible");
     }
 
     constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig, private outputWin:OutputWin) {
@@ -170,6 +170,7 @@ export class CommandInput {
         this.$cmdInput.keydown((event: JQueryEventObject) => { return this.keydown(event); });
         const thrInputChange = throttle(this.inputChange, 200, this)
         this.$cmdInput.bind("keyup", v => <any>thrInputChange(v));
+        this.$cmdInput.on("focus", v => this.SplitScroll(false));
 
         var contextMenu = (<any>$("#menuHistory")).jqxMenu({ animationShowDuration: 0, width: '120px', height: 'auto', source: [], autoOpenPopup: false, autoCloseOnClick: true, mode: 'popup'});
         
@@ -214,58 +215,51 @@ export class CommandInput {
         });
     }
 
-    private splitter:Split.Instance = null;
-
     SplitScroll(enabled: boolean) {
+        let m_pos:number; // Store initial mouse position
+            
+        function resize(e:MouseEvent) {
+            var parent = $(".scrollBackContainer")[0] as HTMLElement; // Get the parent div
+            var dx = m_pos - e.y; // Calculate mouse movement
+            m_pos = e.y; // Update mouse position
+            parent.style.height = ($(parent).height() - dx) + "px"; // Resize parent width
+            e.preventDefault()
+            e.stopPropagation()
+        }
         if (!enabled) {
             this.searchLine = -1;
-            const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
-            elms.forEach(e => $(e).css({
-                "position": "absolute"
-            }))
-            if (this.splitter) {
-                this.splitter.collapse(0)
-                this.splitter.destroy()
-                this.splitter = null;
-            }
+            const elms = [$(".scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
             $("#scrollBack")[0].innerHTML = ""
-            $("#scrollBack").hide()
-            elms.forEach(e => e.scrollTop = e.scrollHeight)
+            $($(".scrollBackContainer")).hide()
+            $(".scrollBack")[0].scrollTop = $(".scrollBack")[0].scrollHeight
         } else {
-            
-            if (this.splitter) {
-                this.splitter.collapse(0)
-                this.splitter.destroy()
-                this.splitter = null;
-            }
             $("#scrollBack")[0].innerHTML = $("#winOutput")[0].innerHTML
-            $("#scrollBack").show()
-            const elms = [$(".fill-parent.scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
-            elms.forEach(e => $(e).css({
-                "position": "relative"
-            }))
             let sizes:any = localStorage.getItem('split-sizes')
-
             if (sizes) {
-                sizes = JSON.parse(sizes)
-            } else {
-                sizes = [40, 60] // default sizes
+                $(".scrollBackContainer").height(parseInt(sizes))
             }
-            this.splitter = Split(elms, {
-                direction: "vertical",
-                cursor: "row-resize",
-                sizes: sizes,
-                gutterSize: 3,
-                dragInterval: 3,
-                onDragEnd: function (sizes) {
-                    localStorage.setItem('split-sizes', JSON.stringify(sizes))
-                    elms[1].scrollTop = elms[1].scrollHeight
-                },
-                onDrag: function (sizes) {
-                    elms[1].scrollTop = elms[1].scrollHeight
-                },
-            })
+            $(".scrollBackContainer").show()
+            const elms = [$(".scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
+            
             elms.forEach(e => e.scrollTop = e.scrollHeight)
+            
+            var gutter = $(".scrollBackContainer>.gutter")[0];
+            gutter.addEventListener('mousedown', function (e:MouseEvent) {
+                let gutterClicked = true
+                m_pos = e.y; // Store initial mouse position
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', function (ev) {
+                    if (gutterClicked) {
+                        $(".scrollBack")[0].scrollTop = $(".scrollBack")[0].scrollHeight
+                        localStorage.setItem('split-sizes', parseInt($(".scrollBackContainer").height().toString()).toString())    
+                    }
+                    gutterClicked = false
+                    document.removeEventListener('mousemove', resize);
+                });
+                e.preventDefault()
+                e.stopPropagation()
+            });
+            
         }
     }
 
@@ -428,22 +422,47 @@ export class CommandInput {
             })
             return;
         }
+        function isInViewport(obj:JQuery, parent:JQuery) {
 
-        if (!this.splitter) {
+            var elementTop = $(obj).offset().top;
+        
+            var elementBottom = elementTop + $(obj).outerHeight() / 2;
+        
+            var viewportTop = $(parent).scrollTop();
+        
+            var viewportHalf = viewportTop + $(parent).height() / 2;
+        
+            return elementBottom > viewportTop && elementTop < viewportHalf;
+        
+        };
+
+        if (!$(".scrollBackContainer").is(":visible")) {
             this.SplitScroll(true);
             this.searchLine = -1;
         }
-        const lines = $(".fill-parent.scrollBack .outputText").children().toArray().reverse();
+        const lines = $("#scrollBack.outputText").children().toArray().reverse();
         $(lines).removeClass("search-hit");
-        const line = lines.find((v, i) => {
+        const lineIndex = lines.findIndex((v, i) => {
             return i > this.searchLine && $(v).text().toLowerCase().includes(cmd.toLowerCase());
         });
-        if (line) {
-            this.searchLine = lines.indexOf(line);
+        if (lineIndex>=0) {
+            this.searchLine = lineIndex
+            lines[lineIndex].scrollIntoView({
+                behavior: "auto",
+                block: "start",
+                inline: "start"
+            });
+            $(lines[lineIndex]).addClass("search-hit");
+                
             setTimeout(() => {
-                $(line).addClass("search-hit");
-                line.scrollIntoView();
-            }, 100);
+                if (!isInViewport($(lines[lineIndex]),$('.scrollBack'))) {
+                    lines[lineIndex].scrollIntoView({
+                        behavior: "auto",
+                        block: "start",
+                        inline: "start"
+                    });
+                }
+           },100);
         } else {
             if (this.searchLine == -1) {
                 EvtScriptEmitPrint.fire({
@@ -467,14 +486,14 @@ export class CommandInput {
     }
 
     public SplitScrolBottom() {
-        let elem = $(".fill-parent.scrollBack");
+        let elem = $(".scrollBack");
         elem.stop().animate({scrollTop:elem.prop("scrollHeight")}, 150);
         this.SplitScroll(false)
     };
 
     private _thrSplitScrollPageUp:Function = null;
     private _SplitScrollPageUp() {
-        let elem = $(".fill-parent.scrollBack");
+        let elem = $(".scrollBack");
         const scrollH = parseInt(elem.prop('scrollTop'))-elem.height()
         elem.stop().animate({scrollTop:scrollH}, 150);
     }
@@ -486,8 +505,8 @@ export class CommandInput {
     }
     private _thrSplitScrollPageDown:Function = null;
     public _SplitScrollPageDown() {
-        let elem = $(".fill-parent.scrollBack");
-        if (elem.prop("scrollTop")+elem.height() >= elem.prop("scrollHeight")) {
+        let elem = $(".scrollBack");
+        if (elem.prop("scrollTop")+elem.innerHeight()+2 >= elem.prop("scrollHeight")) {
             this.SplitScroll(false)
             return
         }
@@ -501,7 +520,7 @@ export class CommandInput {
         this._thrSplitScrollPageDown();
     }
     public SplitScrollTop() {
-        let elem = $(".fill-parent.scrollBack");
+        let elem = $(".scrollBack");
         elem.stop().animate({scrollTop:0}, 250);
     }
 

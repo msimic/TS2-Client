@@ -581,12 +581,28 @@ input:disabled::placeholder {
     box-sizing: border-box;
     width: 100%;
 }
-
+.scrollBackContainer {
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    position: absolute;
+    height: 50%;
+    display: none;
+}
+.scrollBack {
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: auto;
+}
 #scrollBack {
     margin:0;
     box-sizing: border-box;
     width: 100%;
-    display: none;
+    position: relative;
 }
 
 .customWindow .outputText {
@@ -1148,7 +1164,7 @@ input:focus,button:focus {
 
 .gutter {
     background-color: #918b8bc3;
-
+    position: absolute;
     background-repeat: no-repeat;
     background-position: 50%;
 }
@@ -1156,11 +1172,18 @@ input:focus,button:focus {
 .gutter.gutter-horizontal {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
     cursor: col-resize;
+    cursor: row-resize;
+    width: 3px;
+    right: 0;
+    height: 100%;
 }
 
 .gutter.gutter-vertical {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
     cursor: row-resize;
+    height: 3px;
+    bottom: 0;
+    width: 100%;
 }
 .search-hit {
     outline:  yellowgreen dashed 1px;

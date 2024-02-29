@@ -560,7 +560,6 @@ export function CreateCodeMirror(element:HTMLTextAreaElement) {
         foldOptions: {
             rangeFinder: (window.CodeMirror as any).braceRangeFinder
         },
-        onGutterClick: (cm:any) => { (cm as any).execCommand("toggleFold") },
         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
         extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
     };
