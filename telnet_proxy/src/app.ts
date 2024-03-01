@@ -102,10 +102,10 @@ const argv = yargs
     })
     .option('verbosity', {
         alias: 'v',
-        description: 'Verbose level (0=WARN, 1=INFO, 2=DEBUG)',
+        description: 'Verbose level (0=NOLOG, 1=WARN, 2=INFO, 3=DEBUG)',
         type: 'number',
         requiresArg: true,
-        choices: [0, 1, 2]
+        choices: [0, 1, 2, 3]
     })
     .help()
     .default('verbosity', 1)
@@ -121,17 +121,45 @@ if (argv._.length>1) {
 
 let VERBOSE_LEVEL = argv.verbosity;
 
-function WARN(...args: any[])  { VERBOSE_LEVEL >= 0 && tlog.apply(console, args); }
-function INFO(...args: any[])  { VERBOSE_LEVEL >= 1 && tlog.apply(console, args); }
-function DEBUG(...args: any[]) { VERBOSE_LEVEL >= 2 && tlog.apply(console, args); }
+function WARN(...args: any[])  { (VERBOSE_LEVEL == 0 || VERBOSE_LEVEL >= 1) && tlog.apply(console, args); }
+function INFO(...args: any[])  { (VERBOSE_LEVEL == 0 || VERBOSE_LEVEL >= 2) && tlog.apply(console, args); }
+function DEBUG(...args: any[]) { (VERBOSE_LEVEL == 0 || VERBOSE_LEVEL >= 3) && tlog.apply(console, args); }
 
 const localConfig = argv.config || argv._[0];
 
 let serverConfigImported = require("../../../configServer.js");
 let serverConfig : typeof serverConfigImported;
 
+function isElectron() {
+    // Renderer process
+    if (typeof window !== 'undefined' && typeof window.process === 'object' && (window.process as any).type === 'renderer') {
+        return true;
+    }
+    // Main process
+    if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!(process.versions as any).electron) {
+        return true;
+    }
+    // Detect the user agent when the `nodeIntegration` option is set to true
+    if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
+        return true;
+    }
+    return false;
+}
+
 // Or 'w' to truncate the file every time the process starts.
-const logFile = fs.createWriteStream(__filename + '.log', { flags: 'a' });
+let logFile:fs.WriteStream = null;
+function enableLogFile() {
+    let logFilePath = ""
+    if (VERBOSE_LEVEL > 0  && isElectron()) {
+        logFilePath = './telnet_proxy.log'
+    } else if (VERBOSE_LEVEL > 0  && !isElectron()) {
+        logFilePath = __filename + '.log'
+    }
+    if (logFilePath) {
+        fs.createWriteStream(logFilePath, { flags: 'a' });
+    }
+}
+enableLogFile()
 
 if (localConfig) try {
     const configPath = path.isAbsolute(localConfig) || localConfig.startsWith(".")? localConfig : path.join( __dirname, localConfig);
@@ -394,7 +422,7 @@ actualServer.listen(serverConfig.serverPort, serverConfig.serverHost, () => {
 
 function tlog(...args: any[]) {
     console.log("[[", new Date().toLocaleString(), "]]", ...args);
-    if (VERBOSE_LEVEL >= 2) {
+    if (VERBOSE_LEVEL > 0) {
         const logLine = "[["+ new Date().toLocaleString()+ "]] " + args.map(l => {
             if (l instanceof Object) {
                 return JSON.stringify(l, null, 2)
@@ -402,7 +430,7 @@ function tlog(...args: any[]) {
                 return l
             }
         }).join(" ") + '\n';
-        logFile.write(logLine);
+        if (logFile) logFile.write(logLine);
     }
 }
 
