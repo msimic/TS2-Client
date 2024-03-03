@@ -10,6 +10,7 @@ import * as util from "util";
 import path = require("path");
 import * as yargs from "yargs";
 import { IoEvent } from "../../common/src/ts/ioevent";
+import * as os from "os"
 
 const argv = yargs
     .option('config', {
@@ -108,7 +109,7 @@ const argv = yargs
         choices: [0, 1, 2, 3]
     })
     .help()
-    .default('verbosity', 1)
+    .default('verbosity', 0)
     .epilog('Copyright Tempora Sanguinis 2022')
     .strict()
     .argv;
@@ -151,12 +152,26 @@ let logFile:fs.WriteStream = null;
 function enableLogFile() {
     let logFilePath = ""
     if (VERBOSE_LEVEL > 0  && isElectron()) {
-        logFilePath = './telnet_proxy.log'
+        let ts2PkgName = "ts2-client";
+      let type = os.type();
+      switch (type) {
+          case "Darwin":
+              logFilePath = path.join(process.env.HOME, '/Library/Application Support/', ts2PkgName, '/telnet_proxy.log');
+          break;
+          case "Linux":
+              logFilePath = path.join(process.env.HOME, '/.config/', ts2PkgName, '/telnet_proxy.log');
+          break;
+          case "Windows_NT":
+              logFilePath = path.join(process.env.APPDATA, ts2PkgName, '/telnet_proxy.log');
+          break;
+          default:
+              logFilePath = "./telnet_proxy.log";
+      }
     } else if (VERBOSE_LEVEL > 0  && !isElectron()) {
         logFilePath = __filename + '.log'
     }
     if (logFilePath) {
-        fs.createWriteStream(logFilePath, { flags: 'a' });
+        logFile = fs.createWriteStream(logFilePath, { flags: 'a' });
     }
 }
 enableLogFile()

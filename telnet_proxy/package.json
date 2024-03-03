@@ -1,5 +1,5 @@
 {
-  "name": "mudslinger-telnet-proxy",
+  "name": "ts2-telnet-proxy",
   "version": "0.5.0",
   "scripts": {
     "start": "set DEBUG=* && node dist/telnet_proxy/src/app.js -c ./dist/telnet_proxy/bundle/config.json",
