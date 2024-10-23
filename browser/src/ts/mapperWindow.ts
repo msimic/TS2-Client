@@ -7,8 +7,8 @@ import { EditMode, MapperDrawing } from "./mapperDrawing";
 import { ResizeSensor } from 'css-element-queries'
 import { downloadJsonToFile, importFromFile, padStart } from './util'
 import { NewLineKind } from "typescript";
-import { EditRoomWin } from './mapper/windows/editRoomWin'
-import { MapperOptionsWin } from './mapper/windows/mapperOptionsWin'
+import { EditRoomWin } from './Mapper/windows/editRoomWin'
+import { MapperOptionsWin } from './Mapper/windows/mapperOptionsWin'
 import { off } from "process";
 import { Point } from "./mapperDrawing"
 import { MapperMoveToZoneWin } from "./Mapper/windows/mapperMoveToZoneWin"
