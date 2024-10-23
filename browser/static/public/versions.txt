@@ -1,3 +1,10 @@
+2.0.0
+Rewrite del client per renderlo piu performante
+
+- feature: salvataggio profilo in IndexedDB per piu performance
+- feature: mapper molto ampliato e con modalita mapping
+- feature: aggiunta funzione printText()
+____________________________________________________________
 1.6.2
 - feature: implementata una funzionalita' per mantenere il client attivo anche dopo molto tempo in background
 - feature: tabbing di piu linee selezionate e' ora supportato nelle script

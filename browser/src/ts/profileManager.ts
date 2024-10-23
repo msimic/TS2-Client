@@ -6,6 +6,7 @@ import { AppInfo } from "./appInfo";
 import { WindowData } from "./windowManager";
 import { LayoutDefinition } from "./layoutManager";
 import { throttle } from "./util";
+import { UserConfigStorage } from './Storage/configStorage'
 
 export class Profile {
     public name:string;
@@ -28,9 +29,11 @@ export class ProfileManager {
     private profiles:Map<string,Profile> = new Map<string,Profile>();
     private configs:Map<string,UserConfig> = new Map<string,UserConfig>();
     public lastProfile: string;
+    private storage: UserConfigStorage;
+    private changingActive = false;
 
     public constructor(private baseConfig:UserConfig) {
-        this.load();
+        //this.load();
     }
 
     public getBaseConfig():UserConfig {
@@ -42,6 +45,19 @@ export class ProfileManager {
         ac.copy(v);
         //console.log("active changed " + this._current)
         return v;
+    }
+
+    private activeConfigChanged = (cfg:UserConfig):UserConfig => {
+        if (this.changingActive) return cfg;
+        try {
+            this.changingActive = true;
+            const ac = this.getCurrentConfig();
+            ac.copyConfig(cfg);
+            //console.log("active changed " + this._current)
+            return cfg;
+        } finally {
+            this.changingActive = false;
+        }
     }
 
     public saveWindows(profile:string, windows:WindowData[]) {
@@ -62,14 +78,28 @@ export class ProfileManager {
         return this._activeConfig;
     }
 
-    public load() {
+    public async load() {
+        if (!this.storage) {
+            this.storage = new UserConfigStorage()
+            await this.storage.init()
+        }
         const pstr = localStorage.getItem("profiles");
         let last = localStorage.getItem("lastProfile");
         if (pstr) {
             try {
                 this.profiles = new Map(JSON.parse(pstr));
                 for (const profKvp of this.profiles) {
-                    this.configs.set(profKvp[0], this.createConfig(localStorage.getItem("config_" + profKvp[0]), profKvp[0]));
+                    let cfgData = await this.storage.getConfig(profKvp[0])
+                    if (!cfgData) {
+                        let cfg = this.createConfigFromString(localStorage.getItem("config_" + profKvp[0]), profKvp[0])
+                        cfg = this.loadConfigFromStorage(cfg)
+                        this.configs.set(profKvp[0], cfg);
+                    } else {
+                        const tmp = new UserConfig();
+                        tmp.data = cfgData;
+                        const cfg = this.loadConfigFromStorage(tmp)
+                        this.configs.set(profKvp[0], cfg);
+                    }
                 }
             } catch (err) {
                 Messagebox.Show("Errore", "Non riesco a leggere i profili");
@@ -84,11 +114,31 @@ export class ProfileManager {
         localStorage.setItem("lastProfile", this.lastProfile);
     }
 
-    private saveConfigToStorage(key:string): (val: string) => string {
+    private saveConfigToStorage(key:string): (config: UserConfig) => UserConfig {
+        return (config: UserConfig):UserConfig => {
+            if (this.changingActive) return config;
+            try {
+                this.changingActive = true;
+                this.storage.setConfig(key, config);
+                this.saveProfiles();
+                return config;
+            } finally {
+                this.changingActive = false;
+            }
+        }
+    }
+
+    private saveConfigStringToStorage(key:string): (val: string) => string {
         return /*<any>throttle(*/(val: string):string => {
-            localStorage.setItem("config_" + key, val);
-            this.saveProfiles();
-            return val;
+            if (this.changingActive) return val;
+            try {
+                this.changingActive = true;
+                localStorage.setItem("config_" + key, val);
+                this.saveProfiles();
+                return val;
+            } finally {
+                this.changingActive = false;
+            }
         }/*, 1000);*/
     }
 
@@ -106,12 +156,18 @@ export class ProfileManager {
 
     public setCurrent(name:string, force?:boolean) {
         if (this._current != name || force) {
-            this._current = name;
-            this.lastProfile = name;
-            this.saveProfiles();
-            this.activeConfig.init(name, this.getCurrentConfig().saveConfig(), this.activeChanged);
-            this.evtProfileChanged.fire({current: name});
-            this.setTitle();
+            this.changingActive = true
+            try {
+                this._current = name;
+                this.lastProfile = name;
+                this.saveProfiles();
+                //this.activeConfig.init(name, this.getCurrentConfig().saveConfig(), this.activeChanged);
+                this.activeConfig.clone(name, this.getCurrentConfig(), this.activeConfigChanged);
+                this.evtProfileChanged.fire({current: name});
+                this.setTitle();
+            } finally {
+                this.changingActive = false
+            }
         }
     }
 
@@ -129,16 +185,31 @@ export class ProfileManager {
         return this._current;
     }
     
-    private createConfig(str:string, val:string):UserConfig {
+    private loadConfigFromStorage(config:UserConfig):UserConfig {
         const cfg = new UserConfig();
-        cfg.init(val, str,this.saveConfigToStorage(val));
+        cfg.clone(config.data.name, config, this.saveConfigToStorage(config.data.name));
+        Mudslinger.setDefaults(cfg);
+        return cfg;
+    }
+
+    private newConfigFromStorage(name: string):UserConfig {
+        const cfg = new UserConfig();
+        cfg.clone(name, null, this.saveConfigToStorage(name));
+        Mudslinger.setDefaults(cfg);
+        return cfg;
+    }
+
+    private createConfigFromString(str:string, name:string):UserConfig {
+        const cfg = new UserConfig();
+        cfg.init(name, str,this.saveConfigStringToStorage(name));
         Mudslinger.setDefaults(cfg);
         return cfg;
     }
 
     public create(profile:Profile) {
         this.profiles.set(profile.name, profile);
-        const cfg = this.createConfig(null, profile.name);
+        //const cfg = this.createConfig(null, profile.name);
+        const cfg = this.newConfigFromStorage(profile.name);
         this.configs.set(profile.name, cfg);
         this.setCurrent(profile.name);
         this.saveProfiles();
@@ -147,12 +218,17 @@ export class ProfileManager {
     public rename(profile:Profile, oldname:string) {
         var cfg = this.getConfigFor(oldname);
         if (cfg) {
-            const cfgValues = cfg.saveConfig();
-            cfg.init(profile.name, cfgValues,this.saveConfigToStorage(profile.name));
+            const cfgValues = cfg.saveConfigToString();
+            const config = new UserConfig();
+            config.data.name = profile.name
+            config.copy(cfgValues);
+            //cfg.init(profile.name, cfgValues,this.saveConfigStringToStorage(profile.name));
+            cfg.clone(profile.name, config, this.saveConfigToStorage(profile.name));
         } else  {
-            cfg = this.createConfig(null, profile.name);
+            cfg = this.newConfigFromStorage(profile.name);
         }
         this.configs.delete(oldname);
+        this.storage.delConfigs(profile.name)
         localStorage.removeItem("config_" + oldname);
         this.profiles.delete(oldname);
         this.profiles.set(profile.name, profile);
@@ -167,6 +243,7 @@ export class ProfileManager {
     public delete(profile:Profile) {
         this.configs.delete(profile.name);
         this.profiles.delete(profile.name);
+        this.storage.delConfigs(profile.name)
         localStorage.removeItem("config_" + profile.name);
         if (this._current == profile.name)
             this.setCurrent("");

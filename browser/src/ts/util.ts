@@ -3,6 +3,7 @@ import { EventHook } from "./event";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { TrigAlItem } from "./trigAlEditBase";
 import { Mudslinger } from "./client";
+import { UserConfigData } from "./userConfig";
 
 export function htmlEscape(text:string) {
     return replaceLf(
@@ -35,9 +36,8 @@ export function raw(text: string): string {
 }
 
 export interface ConfigIf {
-    name:string;
-    cfgVals: {[k: string]: any};
-    set(key: string, val: any): void;
+    data: UserConfigData;
+    set(key: string, val: any, nosave?:boolean): void;
     get(key:string): any;
     onSet(key: string, cb: (val: any) => void): void;
     onSetRelease(key: string, cb: (val: any) => void): void;
@@ -212,6 +212,15 @@ export function colorToHex(color:Color, withAlpha:boolean):string {
 }
 export function colorCssToRGB(colorKeyword:string):Color {
     
+    if (!colorKeyword) {
+        return {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1
+          };
+    }
+
     function parseColor (input:string) {
         var m = input.match (/^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*(\d+(\.\d+)?)\s*)?\)$/i);
         if (m) {
@@ -770,7 +779,7 @@ export function addIntellisense(editor:CodeMirror.Editor) {
     });
 }
 
-export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement, fallback:JQuery|HTMLElement, win:JQuery) {
+export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement, fallback:JQuery|HTMLElement = null, win:JQuery) {
     if (win) (<any>win).jqxWindow("close");
     $(last).on("keydown", (ev) => {
         if (ev.keyCode == 9 && !ev.shiftKey) {

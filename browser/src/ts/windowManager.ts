@@ -281,6 +281,7 @@ export class WindowManager {
             return;
         }
         let w = ui.hasClass("jqx-window") ? ui : ui.parents(".jqx-window");
+        if (!w) return;
         (<any>$(w)).jqxWindow("expand");
         w.hide()
         var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
@@ -312,10 +313,11 @@ export class WindowManager {
             w.show();
             w.data("docked", true);
             windowDef.data.docked = true;
-            if ((<any>$(w))[0].sizeChanged) {
+            if ((<any>$(w))[0] && (<any>$(w))[0].sizeChanged) {
                 setTimeout(() => (<any>$(w))[0].sizeChanged(), (duration||150));
             }
             this.save();
+            w.trigger("docked", true);
         }, duration);
     }
 
@@ -336,7 +338,7 @@ export class WindowManager {
         }
 
         wnd = await this.show(window);
-        if ((<any>$(w))[0].sizeChanged) {
+        if ((<any>$(w))[0] && (<any>$(w))[0].sizeChanged) {
             setTimeout(() => (<any>$(w))[0].sizeChanged(), (duration || 150));
         }
         if (wnd?.output && prevContent.length) {
@@ -345,6 +347,7 @@ export class WindowManager {
             }
         }
         this.save();
+        w.trigger("undocked", true);
     }
     
     public addDockButton(parent:JQuery, window:string) {
@@ -402,7 +405,7 @@ export class WindowManager {
         if (wnd.window.length) {
             this.applyDockSizes(wnd);
         }
-        if (wnd.window.length && (<any>$(wnd.window))[0].sizeChanged) {
+        if (wnd.window.length && (<any>$(wnd.window))[0] && (<any>$(wnd.window))[0].sizeChanged) {
             var duration = (<any>$(wnd.window)).jqxWindow('collapseAnimationDuration');
             setTimeout(() => (<any>$(wnd.window))[0].sizeChanged(), (duration || 150));
         }
@@ -451,26 +454,26 @@ export class WindowManager {
     private applyDockSizes(wnd: WindowDefinition) {
         if (!wnd || !wnd.data) return;
 
-        if (wnd.data.anchorWidth) {
+        if (wnd.data.anchorWidth && wnd.window) {
             wnd.window.css({
-                "width": `${wnd.data.anchorWidth}px`
+                "width": `${wnd.data.anchorWidth}px !important`
             });
             //((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important")
-        } else { wnd.window.css({ "width": "unset", "display": "unset" }); }
+        } else { if (wnd.window) wnd.window.css({ "width": "unset", "display": "unset" }); }
 
-        if (wnd.data.anchorHeight) {
+        if (wnd.data.anchorHeight && wnd.window) {
             wnd.window.css({
                 "flex-grow:": "0 !important",
                 "flex-basis": `${wnd.data.anchorHeight}px !important`
             });
             $(".jqx-resize", wnd.window).css({
-                "height": `${wnd.data.anchorHeight}px`
+                "height": `${wnd.data.anchorHeight}px !important`
             });
             ((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important");
-        } else { 
-            wnd.window.css({ "height": "unset", "display": "unset" });
+        } else if (wnd.window) { 
+            wnd.window.css({ "height": "unset !important", "display": "unset" });
             $(".jqx-resize", wnd.window).css({
-                "height": "unset"
+                "height": "unset !important"
             });
         }
     }
@@ -525,7 +528,7 @@ export class WindowManager {
         //console.log("createWindow " + name);
         if ((this.windows as any).loadedFrom && this.profileName != (this.windows as any).loadedFrom) {
             console.log("BUG: creating window in swrong profile")
-            debugger;
+            //debugger;
         }
         //console.log("Creating window " + name)
         if (this.windows.has(name)) {
@@ -782,7 +785,7 @@ export class WindowManager {
         }
         if (this.saving) {
             console.log("Problem in saving windows. Double save.")
-            debugger;
+            //debugger;
         }
         this.saving = true
         try {
@@ -795,7 +798,7 @@ export class WindowManager {
             }
             // console.log("Save windows " + usr + "/" + loadedFrom  + ": " + wnds.map(v => v.name).join(","))
             if (loadedFrom != usr) {
-                debugger;
+                //debugger;
                 return;
             }
             this.profileManager.saveWindows(this.profileName, wnds);
@@ -817,7 +820,7 @@ export class WindowManager {
             if (w && w.data) {
                 w.data.visible = true
             } else {
-                debugger;
+                //debugger;
             }
         }
         if ((w && w.window) && !this.loading) {

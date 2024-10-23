@@ -649,19 +649,24 @@ export class Client {
                     owner: "keyboard"
                 })
               }*/
-            const mapOnline = await this.mapper.loadVersion(true);
-            const mapOffline = await this.mapper.loadVersion(false);
-            const mapOnlineIsNewer = mapOnline.version > mapOffline.version;
-            let vn = Math.random();
-            if (mapOnlineIsNewer && mapOnline.version != 0) {
-                vn = mapOnline.version;
-            } else if (!mapOnlineIsNewer && mapOffline.version != 0) {
-                vn = mapOffline.version;
+            if (this.mapper.getOptions().preferLocalMap) {
+                this.mapper.useLocal = true;
+                console.log("Carico mappe da locale")
+                await this.mapper.loadLocalDb()
+            } else {
+                const mapOnline = await this.mapper.loadVersion(true);
+                const mapOffline = await this.mapper.loadVersion(false);
+                const mapOnlineIsNewer = mapOnline.version > mapOffline.version;
+                let vn = Math.random();
+                if (mapOnlineIsNewer && mapOnline.version != 0) {
+                    vn = mapOnline.version;
+                } else if (!mapOnlineIsNewer && mapOffline.version != 0) {
+                    vn = mapOffline.version;
+                }
+                let prefix  = mapOnlineIsNewer ? "https://temporasanguinis.it/client/" : "";
+                console.log("Carico mappe da " + (prefix || "locale"))
+                this.mapper.load(prefix + 'mapperData.json?v=' + vn, mapOnlineIsNewer ? mapOnline : mapOffline)
             }
-            let prefix  = mapOnlineIsNewer ? "https://temporasanguinis.it/client/" : "";
-            console.log("Carico mappe da " + (prefix || "locale"))
-            this.mapper.load(prefix + 'mapperData.json?v=' + vn, mapOnlineIsNewer ? mapOnline : mapOffline)
-            
 
             let remVer: number = await this.profilesWin.checkNewTriggerVersion(true);
             let localVer: number = await this.profilesWin.checkNewTriggerVersion(false);
@@ -875,13 +880,14 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
         }, "Si", "No", false, [""], 400, null, false, "");
     }
 
-    export function runClient() {
+    export async function runClient() {
         let connectionTarget: ConnectionTarget;
         let params = new URLSearchParams(location.search);
 
         baseConfig.init("", localStorage.getItem("userConfig"), makeCbLocalConfigSave());
         setDefaults(baseConfig);
         profileManager = new ProfileManager(baseConfig);
+        await profileManager.load();
         
         if (params.has('host') && params.get('host').trim()=="auto") {
             connectionTarget = {

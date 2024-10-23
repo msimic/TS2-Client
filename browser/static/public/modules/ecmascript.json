@@ -650,6 +650,10 @@
     "!type": "fn(testo: string, finestra?: string)",
     "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
   },
+  "printText": {
+    "!type": "fn(testo: string, finestra?: string)",
+    "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale.\n\rIl testo verra mandato puro senza html."
+  },
   "highlight": {
     "!type": "fn(foreground: string, background: string, blink?: bool)",
     "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink."

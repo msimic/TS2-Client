@@ -4,7 +4,7 @@
     1. [Menu Connessione](#MenuConnessione)
         1. Personaggi
         2. Connetti/Disconnetti
-        3. Nuova registrazione (Log)
+        3. Registrazione (Log)
         4. Interrompi registrazione
         5. Scarica registrazione
     2. [Menu Impostazioni](#MenuImpostazioni)
@@ -13,6 +13,7 @@
         3. Flag capolinea
         4. Flag Triggers, Aliases, Suoni
         5. Tasterino numerico
+        6. Stile/Interfaccia
         6. Avanzate
     3. [Menu Scripting](#MenuScripting)
         1. Aliases, Triggers, Variabili, Classi, Eventi
@@ -117,7 +118,7 @@ Avvia la connessione al server con il profilo precedentemente selezionato oppure
 
 In caso di disconnessione comparirà automaticamente il menu di scelta del profilo con un timer automatico che ritenterà periodicamente la connessione.
 
-### 2.1.3 Nuova registrazione (Log)
+### 2.1.3 Registrazione (Log)
 
 Avvia la registrazione in memoria di tutto quanto passa nel [riquadro dell'output del mud](#AreaCX).
 
@@ -139,6 +140,8 @@ Permette di salvare su file la registrazione raccolta fino a quel momento.
 ### 2.2.1 Testo
 
 Permette di cambiare colore, font e grandezza del carattere usato nel [riquadro dell'output del mud](#AreaCX). Per gli altri riquadri può essere impostato un font separato.
+Permette di utilizzare il set di caratteri UTF-8.
+Permette di abilitare la copia automatica negli appunti del testo selezionato.
 
 ### 2.2.2 Scorrimento
 
@@ -157,19 +160,33 @@ Abilita o disabilita il funzionamento dei Trigger, Alias e dei suoni.
 
 Permette di cambiare i comandi associati ai tasti del tasterino numerico.
 
-### 2.2.6 Avanzate
+### 2.2.6 Stile / Interfaccia
+
+Permette di impostare il tema dell'interfaccia tra predefinito, chiaro e scuro.
+Permette di definire se la riga del prompt debba essere visibile, semitrasparente o nascosta.
+Nota: il promp puo' essere rimosso anche da setup ma se nascosto comparira' nei log.
+
+### 2.2.7 Avanzate
 
 #### Flag MXP
 
 Abilita l'interpretazione dei dati ricevuti dal MUD per permettere le funzioni avanzate e una migliore esperienza di gioco. Si consiglia di lasciarlo abilitato
 
+#### Flag Immagini MXP
+
+Abilita l'aggiunta delle immagini al gioco.
+
 #### Flag Marca tempo nell'output
 
 Se abilitato aggiunge ad ogni riga del [riquadro dell'rioutput del mud](#AreaCX) l'orario esatto.
 
-#### Flag Informazioni scripting (debug)
+#### Flag Informazioni (debug)
 
 Se abilitato aggiugnge nel [riquadro dell'output del mud](#AreaCX) indicazioni legate al debug. E' utile nella fase di verifica sul funzionamento dei trigger e alias più complessi ma se ne sconsiglia l'uso nel gioco tipico.
+
+#### Avvertimenti log
+
+Alterna la verbosita' dei messaggi al riempimento del log tra: normali, minimal e nessuno.
 
 #### Ripristina
 
@@ -192,6 +209,10 @@ Le esportazioni sono consigliate per:
 - far fronte a possibili perdite del profilo visto che il salvataggio dello stesso è demandato al browser.
 - spostare il profilo su altri dispositivi
 
+#### Importazioni ed esportazioni
+
+La pressione abilita/disabilita una funzione che permette al client di restare attivo anche quando la finestra viene ridotta a icona.
+
 ## 2.3 Menu Scripting <a name="MenuScripting"></a>
 
 ### 2.3.1 Aliases, Triggers, Variabili, Classi, Eventi
@@ -206,25 +227,25 @@ Consultare la voce [Scripting](#scripting) per i dettagli sul loro uso.
 
 Viene aperta una finestra per impartire comandi JavaScript al WebClient. Quanto riportato non viene salvato nel profilo del giocatore.
 
-### 2.3.3 Esporta scipts
+### 2.3.3 Avanzate
+
+Da questo menu è possibile operare su Alias, Triggers ed Eventi preimpostati. Tipicamente non è necessario operare su questi script e ogni modifica fatta verrà persa quando verranno scaricati o aggiornati gli script preimpostati.
+
+### 2.3.3.1 Esporta scipts
 
 Apre una maschera che permette l'esportazione su file JSON degli script (alias, trigger, classi, eventi, variabili) la cui classe corrisponde al criterio impostato (da scrivere in formato RegEx). 
 
 E' una funziona avanzata pensata per esportare solo parte degli script. Per il salvataggio di backup si consiglia di usare l'esportazione della configurazione presente nel menu [Impostazioni->Avanzate](#MenuImpostazioni)
 
-### 2.3.4 Importa scripts
+### 2.3.3.2 Importa scripts
 
 Permette di importare un file generato con esporta scripts. A differenza dell'importazione della configurazione presente nel menu [Impostazioni->Avanzate](#MenuImpostazioni), questa importazione non sostituisce tutta la configurazione ma aggiunge agli script già presenti, quelli importati da file.
 
-### 2.3.5 Aggiorna preimpostati
+### 2.3.3.3 Aggiorna preimpostati
 
 Scarica da server l'ultima versione degli script preimpostati. 
 
 Poichè il WebClient notifica automaticamente all'avvio la disponibilità di un aggiornamento, questa funzione è pensata per riottenere la versione disponibile su server in conseguenza di modifiche non volute sugli script preimpostati.
-
-### 2.3.6 Avanzate
-
-Da questo menu è possibile operare su Alias, Triggers ed Eventi preimpostati. Tipicamente non è necessario operare su questi script e ogni modifica fatta verrà persa quando verranno scaricati o aggiornati gli script preimpostati.
 
 ## 2.4 Menu Finestre <a name="MenuFinestre"></a>
 
@@ -701,6 +722,32 @@ color(testo: string, foreground: string, background?: string, bold?: bool, under
 print("Questo help e' " + color('bellissimo', 'red', 'Gold', true, false, true));
 ```
 
+### createTempTrigger <a name="f_createTempTrigger"></a>
+
+Funzione per creare un trigger temporaneo che rimarra' disponibile fino al riavvio del client.
+Il vantaggio e' di poter creare il trigger con un patter e uno script definito a runtime e non prefissato.
+[vedi deleteTempTrigger](#f_deleteTempTrigger) per come cancellarlo.
+[vedi escapeRegex](#f_escapeRegex) per aggiungere gli escape ai caratteri di una stringa non regex
+
+**Sintassi**: 
+```js
+createTempTrigger(trg: alias o trigger) -> bool
+```
+
+**Esempio d'uso**:
+```js
+let pattern = "^Rosetta e' qui, sempre intenta a gestire la sua Locanda\.";
+let script = "send('smile')"
+
+createTempTrigger({
+  id: "trg_test",
+  is_script: true,
+  pattern: pattern,
+  regex: true,
+  value: script
+})
+```
+
 ### createWindow <a name="f_createWindow"></a>
 
 Funzione per apire una finestra con i parametri specificati. Ritorna un riferimento alla definizione della finestra per una manipolazione successiva tramite windowManager.
@@ -761,6 +808,21 @@ print(ts() + ': avvio');
 delay('d_smile', 2500, ()=>{print(ts() + ': dopo delay');});
 ```
 
+### deleteTempTrigger <a name="f_deleteTempTrigger"></a>
+
+Funzione per cancellare un trigger temporaneo creato con [createTempTrigger](#f_createTempTrigger).
+Passare un oggetto in cui si definisce la key id con il nome del trigger da cancellare
+
+**Sintassi**: 
+```js
+deleteTempTrigger(trg: alias o trigger) -> bool
+```
+
+**Esempio d'uso**:
+```js
+deleteTempTrigger({id: "trg_test"})
+```
+
 ### deleteWindow <a name="f_deleteWindow"></a>
 
 Cancella la finestra con quel nome e la rimuove dalla lista di finestra nel menu finestre.
@@ -768,6 +830,38 @@ Cancella la finestra con quel nome e la rimuove dalla lista di finestra nel menu
 **Sintassi**: 
 ```js
 deleteWindow(windowName:string)
+```
+
+### escapeHTML <a name="f_escapeHTML"></a>
+
+Rimpiazza < > e & con sequenze escape per renderli stampabili direttamente e non interpretarli come sequenze html.
+
+**Sintassi**: 
+```js
+escapeHTML(id:string) -> string
+```
+
+**Esempio d'uso**:
+```js
+const test = "&gt"
+print(test)
+print(escapeHTML(test))
+```
+
+### escapeRegex <a name="f_escapeRegex"></a>
+
+Normalizza una stringa aggiungendo il carattere di escape \ a quei caratteri che hanno un significato speciale in una stringa regex
+
+**Sintassi**: 
+```js
+escapeRegex(id:string) -> string
+```
+
+**Esempio d'uso**:
+```js
+const test = "(tra parentesi)"
+print(test)
+print(escapeRegex(test))
 ```
 
 ### eventEnabled <a name="f_eventEnabled"></a>
@@ -1129,6 +1223,29 @@ sub(cosa: string, conCosa: string)
 **Esempio d'uso**
 ```js
 sub("lucertola a quattro zampe","paleoscincus")
+```
+
+### throttle <a name="f_throttle"></a>
+
+Restituisce una funzione che scatta al massimo con la frequenza indicata anche se lanciata pi\ frequentemente.
+Nell'esempio fornito la funzione counter viene ridefinita come output della funzione throttle che imposta un tempo minimo di scatto a 1000ms.
+Anche se repeat lancia la funzione ogni 100ms, il print scattera' ogni secondo.
+
+**Sintassi**: 
+```js
+delay(function: fn(), milliseconds: number) -> function
+```
+
+**Esempio d'uso**:
+```js
+let cnt = 0
+let counter = function() {
+  print("Attuale: " + cnt++)
+}
+
+counter = throttle(counter, 1000)
+
+repeat("test", 100, counter)
 ```
 
 ### toggleAlias <a name="f_toggleAlias"></a>

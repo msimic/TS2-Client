@@ -4,29 +4,46 @@ import { AppInfo } from './appInfo'
 import { Button, ButtonOK, Messagebox } from "./messagebox";
 import { Favorite, Mapper } from "./mapper";
 
-export class UserConfig {
+export class UserConfigData {
     name:string;
     cfgVals: {[k: string]: any};
+}
+
+export class UserConfig {
+    public data = new UserConfigData();
     private setHandlers: {[k: string]: EventHook<any>} = {};
     public evtConfigImport = new EventHook<{data: {[k: string]: any}, owner: any}>();
 
     private saveFunc: (v: string) => string;
+    private saveConfigFunc: (cfg: UserConfig) => UserConfig;
 
     public init(name:string, userConfigStr: string, saveFunc_: (v: string) => string) {
-        this.name = name;
+        this.data.name = name;
         this.saveFunc = saveFunc_;
         
         if (userConfigStr) {
-            this.cfgVals = {};
             this.copy(userConfigStr);
         } else {
-            this.cfgVals = {};
+            this.data.cfgVals = {};
         }
 
-        this.evtConfigImport.fire({ data: this.cfgVals, owner: this });
+        this.evtConfigImport.fire({ data: this.data.cfgVals, owner: this });
+    }
+
+    public clone(name:string, config: UserConfig, saveFunc_: (cfg: UserConfig) => UserConfig) {
+        this.data.name = name;
+        this.saveConfigFunc = saveFunc_;
+        
+        if (config) {
+            this.copyConfig(config);
+        } else {
+            this.data.cfgVals = {};
+            this.evtConfigImport.fire({ data: this.data.cfgVals, owner: this });
+        }
     }
 
     public copy(userConfigStr: string) {
+        this.data.cfgVals = {};
         const cfgVals: {[k: string]: any} = JSON.parse(userConfigStr);
         for (const key in cfgVals) {
             if (Object.prototype.hasOwnProperty.call(cfgVals, key)) {
@@ -34,15 +51,28 @@ export class UserConfig {
                 this.set(key, element, true);
             }
         }
+        this.evtConfigImport.fire({ data: this.data.cfgVals, owner: this });
+        this.saveConfig();
+    }
+
+    public copyConfig(config: UserConfig) {
+        this.data.cfgVals = {};
+        for (const key in config.data.cfgVals) {
+            if (Object.prototype.hasOwnProperty.call(config.data.cfgVals, key)) {
+                const element = config.data.cfgVals[key];
+                this.set(key, element, true);
+            }
+        }
+        this.evtConfigImport.fire({ data: this.data.cfgVals, owner: this });
         this.saveConfig();
     }
 
     public remove(nameFilter:RegExp, cb:()=>void) {
-        for (const key in this.cfgVals) {
-            if (Object.prototype.hasOwnProperty.call(this.cfgVals, key)) {
-                const element = this.cfgVals[key];
+        for (const key in this.data.cfgVals) {
+            if (Object.prototype.hasOwnProperty.call(this.data.cfgVals, key)) {
+                const element = this.data.cfgVals[key];
                 if (nameFilter.test(key)) {
-                    delete this.cfgVals[key];
+                    delete this.data.cfgVals[key];
                 }
             }
         }
@@ -78,12 +108,12 @@ export class UserConfig {
     }
 
     public getDef(key: string, def: any): any {
-        let res = this.cfgVals[key];
+        let res = this.data.cfgVals[key];
         return (res === undefined) ? def : res;
     }
 
     public get(key: string): any {
-        return this.cfgVals[key];
+        return this.data.cfgVals[key];
     }
 
     private firing:boolean;
@@ -91,8 +121,8 @@ export class UserConfig {
         if (this.firing) {
             console.log("Setting while firing");
         }
-        const prev = this.cfgVals[key];
-        this.cfgVals[key] = val;
+        const prev = this.data.cfgVals[key];
+        this.data.cfgVals[key] = val;
         if (!nosave) this.saveConfig();
         if (prev != val && key in this.setHandlers) {
             this.firing = true;
@@ -101,27 +131,56 @@ export class UserConfig {
         }
     }
 
-    public saveConfig():string {
+    public saveConfigToString():string {
         let val:string;
         let to_convert:string[] = [];
-        for (const key in this.cfgVals) {
-            if (Object.prototype.hasOwnProperty.call(this.cfgVals, key)) {
-                const element = this.cfgVals[key];
+        for (const key in this.data.cfgVals) {
+            if (Object.prototype.hasOwnProperty.call(this.data.cfgVals, key)) {
+                const element = this.data.cfgVals[key];
                 if (element instanceof Map) {
                     to_convert.push(key);
-                    this.cfgVals[key] = [...this.cfgVals[key]];
+                    // map is not serializable convert to array 
+                    this.data.cfgVals[key] = [...this.data.cfgVals[key]];
                 }
             }
         }
-        val = JSON.stringify(this.cfgVals);
+        val = JSON.stringify(this.data.cfgVals);
         for (const iterator of to_convert) {
-            this.cfgVals[iterator] = new Map<string,any>(this.cfgVals[iterator]);
+            // and back to map
+            this.data.cfgVals[iterator] = new Map<string,any>(this.data.cfgVals[iterator]);
         }
-        return this.saveFunc(val);
+
+        return (val);
+    }
+
+    public saveConfig() {
+        let val:string;
+        if (!this.saveConfigFunc && this.saveFunc) {
+            let to_convert:string[] = [];
+            for (const key in this.data.cfgVals) {
+                if (Object.prototype.hasOwnProperty.call(this.data.cfgVals, key)) {
+                    const element = this.data.cfgVals[key];
+                    if (element instanceof Map) {
+                        to_convert.push(key);
+                        this.data.cfgVals[key] = [...this.data.cfgVals[key]];
+                    }
+                }
+            }
+            val = JSON.stringify(this.data.cfgVals);
+            for (const iterator of to_convert) {
+                this.data.cfgVals[iterator] = new Map<string,any>(this.data.cfgVals[iterator]);
+            }
+            this.saveFunc(val);
+        }
+        else if (this.saveConfigFunc) {
+            this.saveConfigFunc(this)
+        } else {
+            console.log("screwup in saveconfig")
+        }
     }
 
     public async exportToFile(mapper?:Mapper) {
-        let vals = JSON.stringify(this.cfgVals);
+        let vals = JSON.stringify(this.data.cfgVals);
         let jso = JSON.parse(vals);
         
         if (mapper) {
@@ -210,7 +269,7 @@ export class UserConfig {
             })();
             return false;
         }
-        this.cfgVals = vals;
+        this.data.cfgVals = vals;
         this.saveConfig()
         this.evtConfigImport.fire({data: vals, owner: this});
         return true;

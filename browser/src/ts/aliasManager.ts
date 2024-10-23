@@ -28,21 +28,21 @@ export class AliasManager {
     constructor(private jsScript: ScriptIf, private config: ConfigIf, private baseConfig: ConfigIf, private classManager:ClassManager, private profileManager:ProfileManager) {
         this.loadAliases(config);
         config.evtConfigImport.handle((d) => {
-            if (d.owner.name != config.name) return;
+            if (d.owner.data.name != config.data.name) return;
             if (!baseConfig) {
                 config.set("aliases", d.data["aliases"])
             }
             this.loadAliases(config);
-            this.saveAliases();
+            //this.saveAliases();
         }, this);
         if (baseConfig) baseConfig.evtConfigImport.handle((d) => {
-            if (d.owner.name != baseConfig.name) return;
+            if (d.owner.data.name != baseConfig.data.name) return;
             baseConfig.set("aliases", d.data["aliases"])
-            if (config.name == baseConfig.name) {
-                config.cfgVals = baseConfig.cfgVals
+            if (config.data.name == baseConfig.data.name) {
+                config.data.cfgVals = baseConfig.data.cfgVals
             }
-            this.loadAliases(config.name==baseConfig.name ? baseConfig : config);
-            this.saveAliases();
+            this.loadAliases(config.data.name==baseConfig.data.name ? baseConfig : config);
+            //this.saveAliases();
         }, this);
         EvtScriptEmitToggleAlias.handle(this.onToggle, this);
     }
@@ -94,10 +94,10 @@ export class AliasManager {
             this.mergeAliases();
             if (!this.baseConfig) {
                 this.saving = true;
-                this.config.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
-            } else if (this.baseConfig && this.baseConfig.name == this.config.name) {
+                this.config.evtConfigImport.fire({ data: this.config.data.cfgVals, owner: this.config});
+            } else if (this.baseConfig && this.baseConfig.data.name == this.config.data.name) {
                 this.saving = true;
-                this.baseConfig.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
+                this.baseConfig.evtConfigImport.fire({ data: this.config.data.cfgVals, owner: this.config});
             }
             this.changed.fire(null)
         } finally {

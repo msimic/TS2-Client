@@ -241,7 +241,7 @@ export class ProfilesWindow {
 
             baseConfig.evtConfigImport.fire({
                 owner: baseConfig,
-                data: baseConfig.cfgVals
+                data: baseConfig.data.cfgVals
             })
             AskReload()
         });

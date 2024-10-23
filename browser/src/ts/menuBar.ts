@@ -742,7 +742,7 @@ export class MenuBar {
         
             if (response.button != Button.Ok || !response.results[0]) return;
 
-            const cfg = JSON.parse(config.saveConfig())
+            const cfg = JSON.parse(config.saveConfigToString())
 
 
             const cls = [...(new Map<string,Class>(cfg.classes))].filter((tr) => !!tr[0].match(new RegExp("^" + response.result + "$", "i"))).map(v => v[1]);
@@ -834,7 +834,7 @@ export class MenuBar {
                     return;
                 }
 
-                const str = `${config.name?"["+config.name+"]\n":"[preimpostati]\n"}Verranno importati scripts${importObj.description ? " '" + importObj.description + "'": ""}:
+                const str = `${config.data.name?"["+config.data.name+"]\n":"[preimpostati]\n"}Verranno importati scripts${importObj.description ? " '" + importObj.description + "'": ""}:
 
 Alias: ${importObj.aliases.length}
 Triggers: ${importObj.triggers.length}

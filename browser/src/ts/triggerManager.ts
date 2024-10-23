@@ -38,21 +38,21 @@ export class TriggerManager {
 
         this.loadTriggers(config, true);
         config.evtConfigImport.handle((d) => {
-            if (d.owner.name != config.name) return;
+            if (d.owner.data.name != config.data.name) return;
             if (!baseConfig) {
-                config.set("triggers", d.data["triggers"])
+                config.set("triggers", d.data["triggers"], false)
             }
             this.loadTriggers(config, true);
-            this.saveTriggers();
+            //this.saveTriggers();
         }, this);
         if (baseConfig) baseConfig.evtConfigImport.handle((d) => {
-            if (d.owner.name != baseConfig.name) return;
-            baseConfig.set("triggers", d.data["triggers"])
-            if (config.name == baseConfig.name) {
-                config.cfgVals = baseConfig.cfgVals
+            if (d.owner.data.name != baseConfig.data.name) return;
+            baseConfig.set("triggers", d.data["triggers"], false)
+            if (config.data.name == baseConfig.data.name) {
+                config.data.cfgVals = baseConfig.data.cfgVals
             }
-            this.loadTriggers(config.name==baseConfig.name ? baseConfig : config, false);
-            this.saveTriggers();
+            this.loadTriggers(config.data.name==baseConfig.data.name ? baseConfig : config, false);
+            //this.saveTriggers();
         }, this);
         EvtScriptEmitToggleTrigger.handle(this.onToggle, this);
     }
@@ -250,16 +250,16 @@ export class TriggerManager {
     public saveTriggers(noChangeNotification?: boolean) {
         if (this.saving) return;
         try {
-            console.log("Saving triggers")
+            //console.log("Saving triggers")
             this.triggers.forEach(a => delete a.script);
             this.config.set("triggers", this.triggers);
             this.mergeTriggers();
             if (!this.baseConfig) {
                 this.saving = true;
-                this.config.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
-            } else if (this.baseConfig && this.baseConfig.name == this.config.name) {
+                this.config.evtConfigImport.fire({ data: this.config.data.cfgVals, owner: this.config});
+            } else if (this.baseConfig && this.baseConfig.data.name == this.config.data.name) {
                 this.saving = true;
-                this.baseConfig.evtConfigImport.fire({ data: this.config.cfgVals, owner: this.config});
+                this.baseConfig.evtConfigImport.fire({ data: this.config.data.cfgVals, owner: this.config});
             }
             if (!noChangeNotification) this.changed.fire(null)
         } finally {

@@ -120,6 +120,7 @@ function mergeJqwidgets(next) {
         './static/public/jqwidgets/jqxbuttons.js',
         './static/public/jqwidgets/jqxlistbox.js',
         './static/public/jqwidgets/jqxdropdownlist.js',
+        './static/public/jqwidgets/jqxnumberinput.js',
         './static/public/jqwidgets/jqxnotification.js',
         './static/public/jqwidgets/jqxsplitter.js',
         './static/public/jqwidgets/jqxdatatable.js'

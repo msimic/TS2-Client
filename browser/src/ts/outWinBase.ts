@@ -344,11 +344,11 @@ export class OutWinBase {
         if (this.$target == this.$rootElem) {
             this.lineCount++;
         }
-        try {
+        //try {
         (this.$target)[0].appendChild((o instanceof jQuery) ? (<any>o)[0] : (o instanceof Node) ? o : $("<span>"+o+"</span>")[0]);
-        } catch (err) {
-            (this.$target)[0].appendChild($("<span>"+err.toString()+"</span>")[0])
-        }
+        // } catch (err) {
+        //     (this.$target)[0].appendChild($("<span>"+err.toString()+"</span>")[0])
+        // }
     }
 
     protected line() {

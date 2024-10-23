@@ -402,6 +402,11 @@ input {
     color: #222222;
 }
 
+.light .jqx-window input[type=textarea] {
+    background-color: #ffffff;
+    color: #222222;
+}
+
 input:disabled, button:disabled, textarea:disabled {
     opacity: 0.3;
 }
@@ -409,6 +414,12 @@ input:disabled, button:disabled, textarea:disabled {
 textarea {
     background-color: #ffffff;
     color: #222222;
+    border: 1px solid #cecece;
+    border-radius: 3px;
+}
+
+.jqx-window textarea:focus {
+    border: 1px solid rgb(21 106 167 / 77%);
 }
 
 input::placeholder {
@@ -429,6 +440,11 @@ input:disabled::placeholder {
     background-color: rgb(52 52 52);
 }
 .dark input {
+    background-color: rgb(62, 62, 66);
+    color: #ececec;
+}
+
+.jqx-window .dark input[type=textarea] {
     background-color: rgb(62, 62, 66);
     color: #ececec;
 }
@@ -772,6 +788,8 @@ label {
 #content-wrapper .jqx-window-header {
     padding: 2px !important;
     background: transparent;
+    width: unset !important;
+    height: unset !important;
 }
 
 #content-wrapper .jqx-widget-content {
@@ -834,7 +852,9 @@ label {
 }
 
 .jqx-window input[type=text],
-.jqx-window input[type=password] {
+.jqx-window input[type=password],
+.jqx-window input[type=number],
+.jqx-window textarea {
     border: 1px solid #cecece;
     /*box-shadow: 0px 0px 1px 0px rgb(21 106 167 / 77%), 0px 0px 1px 0px rgb(21 106 167 / 77%) inset;*/
     border-radius: 3px;
@@ -853,7 +873,9 @@ div:focus-visible {
 
 .dark .jqx-window input[type=text],
 .dark .jqx-window input[type=password],
-.dark .jqx-window input[type=text] {
+.dark .jqx-window input[type=text],
+.dark .jqx-window input[type=number],
+.dark textarea {
     border: 1px solid #292929;
 }
 
@@ -879,6 +901,14 @@ div:focus-visible {
 }
 
 .jqx-window input[type=text]:focus {
+    border: 1px solid rgb(21 106 167 / 77%);
+}
+
+.jqx-window input[type=number]:hover {
+    border: 1px solid rgb(21 106 167 / 77%);
+}
+
+.jqx-window input[type=number]:focus {
     border: 1px solid rgb(21 106 167 / 77%);
 }
 
@@ -1115,7 +1145,7 @@ select[invalid] {
 input,textarea,button {
     outline:none;
 }
-input:focus,button:focus {
+input:focus,button:focus,textarea:focus {
     outline: 1px solid gray;
 }
 #menuBar {
@@ -1533,7 +1563,10 @@ input:focus,button:focus {
     position: relative !important;
 }
 .light .jqx-window .jqx-widget-content {
-    background: transparent !important;
+    background-color: #ededed;
+}
+.dark .jqx-window .jqx-widget-content {
+    background-color: #272727;
 }
 
 .jqx-fill-state-hover-metrodark {
@@ -1861,21 +1894,29 @@ ul.select {
     box-shadow: none !important;
     max-height: unset !important;
     margin: 0;
+    width: unset !important;
+    height: unset !important;
 }
 
 #content-wrapper .jqx-resize {
     display: flex !important;
     flex-direction: column;
     flex: 1;
+    width: unset !important;
+    height: unset !important;
 }
 
 #content-wrapper .jqx-window-header {
     background-color: transparent !important;
+    width: unset !important;
+    height: unset !important;
 }
 
 #content-wrapper .jqx-window-content {
     flex: 1 !important;
     background: transparent !important;
+    width: unset !important;
+    height: unset !important;
 }
 
 #content-wrapper .jqx-widget-content {
@@ -2033,6 +2074,12 @@ ul.select {
     display: inline-block;
     overflow: hidden;
     white-space: nowrap;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
 #mapcanvas {
     position: absolute;
@@ -2040,7 +2087,8 @@ ul.select {
     right: 0;
     top: 0;
     bottom: 0;
-  image-rendering: crisp-edges;
+    image-rendering: crisp-edges;
+    outline: none !important;
 }
 
 #content-wrapper #mapmessage {
@@ -2097,6 +2145,72 @@ ul.select {
     background-color:  rgb(186 186 194) !important;
 }
 
+.maptoolboxbutton {
+    width: 19px;
+    height: 19px;
+    padding: 0px !important;
+    margin: 0px !important;
+    font: 7pt sans-serif;
+    color: black !important;
+    vertical-align: middle;
+    background-color: #dddddd !important;
+}
+
+.mapperworkarea-toolboxbuttons {
+    text-align: center;
+    padding: 5px;
+    margin: 3px;
+    margin-top: 0;
+}
+.mapperworkarea-toolboxbuttons button {
+    margin: 1px !important;
+}
+.mapperworkarea-toolboxbuttons span {
+    display:block;
+    font-size:xx-small;
+    color: white;
+}
+.mappertoolbox-header {
+    margin: 0;
+    padding: 3px;
+    border: 0;
+    outline: 0;
+    color: lightgray;
+    text-wrap: nowrap;
+    font-size: xx-small;
+    padding-bottom: 1px;
+    cursor: pointer;
+    line-height: normal;
+}
+.mappertoolbox-title {
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 2px;
+}
+
+.mappertoolbox {
+    opacity: 0.85;
+    display: none;
+    width: 46px;
+    position: absolute;
+    left: 25px;
+    top: 25px;
+    z-index: 100;
+    text-align: center;
+    background-color: rgb(21, 106, 167);
+    border-radius: 5px;
+    user-select: none;
+}
+
+.mappertoolbox .selected {
+    outline: dashed 1px #c5c5c5 !important;
+}
+
+.mappertoolbox .enabled {
+    outline: solid 2px #85e300 !important
+}
+
 #content-wrapper .maptoolbarbutton {
     background-color: transparent !important;
     color: lightgray !important;
@@ -2118,6 +2232,115 @@ ul.select {
     vertical-align: middle;
 }
 
+.tab-content {
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.window-buttonbar {
+    flex:none;text-align:right;padding-top:5px;
+}
+
+.flex-window {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-window > div:first-child {
+    flex: auto;
+}
+
+.flex-window .jqx-tabs-title-container {
+    width: auto !important;
+}
+
+.jqx-tabs {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.jqx-tabs-headerWrapper {
+    flex: none;
+}
+.jqx-tabs-content {
+    display: flex;
+    flex: auto;
+}
+.jqx-tabs-content-element {
+    width: 100%;
+}
+
+.roomedit-desc {
+    flex: auto;
+    text-wrap: nowrap;
+    font-size: x-small;
+    font-family: monospace;
+}
+.roomedit-color {
+    margin: 2px;
+}
+
+.coordinate-label {
+    width: 20px;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    margin-right: -26px;
+    z-index: 2;
+    position: relative;
+    padding-left: 0px;
+    margin-left: 6px;
+    pointer-events: none;
+}
+.coordinate-value {
+    width: 50px !important;
+    padding-left: 14px !important;
+    margin-right: 5px !important;
+}
+.dir-table {
+    width: 90px;
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+    border-collapse: collapse;
+}
+.dir-table tr {
+    height:30px;
+}
+.dir-table tr td {
+    height:30px;
+    width:30px;
+    text-align: center;
+    vertical-align: middle;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    cursor: pointer;
+}
+
+.dir-table tr td.active {
+    background-color: greenyellow;
+}
+
+.dir-table tr td.selected {
+    background-color: rgba(134, 86, 254, 0.462);
+}
+
+.dir-table tr td:hover {
+    background-color: rgba(134, 86, 254, 0.462);
+}
+
+.split-horizontally {
+    display: flex;
+    flex-direction: row;
+}
+
+.split-horizontally > div {
+    flex: auto;
+}
+
 /*
 NO TITLE WINDOW
 #content-wrapper .jqx-window-header, #content-wrapper .jqx-widget-header {
@@ -2128,6 +2351,10 @@ NO TITLE WINDOW
  {
      padding:0px;  margin:0px; overflow: hidden; 
  }*/
+
+.win-Mapper, #win-Mapper {
+    overflow: visible !important;
+}
 
 #content-wrapper .win-Mapper #zoom {
     color: lightgray;

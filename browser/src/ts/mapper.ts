@@ -5,6 +5,19 @@ import { aStar, PathFinder } from 'ngraph.path';
 import * as ngraph from 'ngraph.graph';
 import {MapperStorage} from './mapperStorage'
 
+export interface MapperOptions {
+    mapperScale: number;
+    useGrid: boolean;
+    gridSize: number;
+    preferLocalMap: boolean;
+    toolboxX: number;
+    toolboxY: number;
+    backgroundColor: string;
+    foregroundColor: string;
+    drawWalls: boolean,
+    drawRoomType: boolean
+};
+
 export interface Zone {
     id: number;
     name: string;
@@ -46,6 +59,7 @@ ReverseExitDir.set(ExitDir.West, ExitDir.East)
 ReverseExitDir.set(ExitDir.NorthWest, ExitDir.SouthEast)
 ReverseExitDir.set(ExitDir.Up, ExitDir.Down)
 ReverseExitDir.set(ExitDir.Down, ExitDir.Up)
+ReverseExitDir.set(ExitDir.Other, ExitDir.Other)
 
 export interface MapVersion {
     version:number;
@@ -104,7 +118,7 @@ export enum RoomType {
     Underground,
     Street,
     Crossroad,
-    DT,
+    DeathTrap,
     Air,
     Path,
     Hills,
@@ -273,6 +287,109 @@ export interface Favorite {
 };
 
 export class Mapper {
+    deleteRooms(rooms: Room[]) {
+        for (const rm of rooms) {
+            const index = this.db.rooms.findIndex((r,i) => r == rm)
+            if (index>-1) {
+                this.deleteExitsReferencing(rm)
+                this.db.rooms.splice(index, 1)
+            }
+        }
+        this.prepare()
+    }
+    deleteExitsReferencing(rm: Room) {
+        for (const room of this.db.rooms) {
+            if (room.id != rm.id && room.exits) for (const dir of Object.keys(ExitDir).map(k => (ExitDir as any)[k])) {
+                if (room.exits[dir as ExitDir] && room.exits[dir as ExitDir].to_room == rm.id) {
+                    delete room.exits[dir as ExitDir]
+                }
+            }
+        }
+    }
+    deleteRoomExit(room: Room, dir: ExitDir) {
+        delete room.exits[dir]
+        this.prepareRoom(room)
+        this.createGraph()
+        if (this.current) this.zoneChanged.fire({
+            id: this.current.zone_id,
+            zone: null
+        })
+        return room
+    }
+    createRoomAt(zone: number, createRoomPos: {x: number, y: number, z?:number}) {
+        let zn = this.getZoneRooms(zone)
+        if (!zn) {
+            this.emitMessage.fire("Zona inesistente "+ zone)
+            return null;
+        }
+        let starNum = this.getZoneRooms(zone).length ? this.getZoneRooms(zone).map(r => r.id).sort((n,n2) => n - n2)[0] : 0;
+
+        let newId = this.getFreeId(starNum)
+        const room: Room = {
+            name: "Room" + newId,
+            description: "",
+            type: RoomType.Inside,
+            zone_id: zone,
+            color: null,
+            id: newId,
+            x: createRoomPos.x,
+            y: createRoomPos.y,
+            z: createRoomPos.z || 0,
+            exits: {}
+        };
+        this.db.rooms.push(room)
+        this.prepareRoom(room)
+        this.createGraph()
+        this.roomChanged.fire({
+            id: room.id,
+            room: room,
+            vnum: null
+        })
+        return room
+    }
+    getZones():Zone[] {
+        return this.db.zones
+    }
+    options:MapperOptions;
+    loadOptions() {
+        const mop = localStorage.getItem("mapperOptions")
+        if (mop) {
+            this.options = JSON.parse(mop)
+        } else {
+            this.options = {
+                gridSize: 240,
+                mapperScale: 1.33,
+                useGrid: true,
+                preferLocalMap: false,
+                backgroundColor: null,
+                foregroundColor: null,
+                drawWalls: true,
+                toolboxX: 0,
+                toolboxY: 0,
+                drawRoomType: true
+            }
+        }
+        if (this.options.gridSize < 1)
+            this.options.gridSize = 1
+        if (this.options.gridSize > 480)
+            this.options.gridSize = 480
+        
+        if (this.options.mapperScale < .5)
+            this.options.mapperScale = .5
+        if (this.options.mapperScale > 4)
+            this.options.mapperScale = 4
+        
+    }
+    saveOptions() {
+        const mop = JSON.stringify(this.options, null, 2)
+        localStorage.setItem("mapperOptions", mop.toString())
+    }
+    getOptions(): MapperOptions {
+        if (!this.options) {
+            this.loadOptions()
+        }
+        return this.options;
+    }
     getVersion():number {
         return (this.db?.version?.version) || 0;
     }
@@ -306,7 +423,7 @@ export class Mapper {
         this.favorites.delete(id);
         const rm = this.getRoomById(id)
         if (rm) {
-            rm.color = "rgb(255,255,255)"
+            rm.color = null
             rm.shortName = null;
         }
         this.saveFavorites();
@@ -498,14 +615,23 @@ export class Mapper {
     }
     private _current: Room = null;
     private _previous: Room = null;
+    public get previous(): Room {
+        return this._previous;
+    }
+    public set previous(value: Room) {
+        this._previous = value;
+    }
     public get current(): Room {
         return this._current;
     }
-    private _mapmode: Boolean = null;
-    public get mapmode(): Boolean {
+    private _mapmode: boolean = null;
+    public get mapmode(): boolean {
         return this._mapmode;
     }
-    public set mapmode(value: Boolean) {
+    public closeMapModeWithoutSaving() {
+        this._mapmode = false
+    }
+    public set mapmode(value: boolean) {
         const oldV = this._mapmode 
         this._mapmode = value
         if (!value && !!oldV) {
@@ -513,7 +639,7 @@ export class Mapper {
                 this.db.version.version++
                 this.db.version.message = "Modifiche locali"
                 var now = new Date()
-                this.db.version.date = `${now.getDay()}/${now.getMonth()}/${now.getFullYear()}`
+                this.db.version.date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`
             }
 
             this.saveLocal()
@@ -639,6 +765,33 @@ export class Mapper {
         this.scripting = script;
     }
 
+    async getLocalDbVersion() {
+        const firstVersion = await this.storage.versionKeys();
+        return await this.storage.getVersion(firstVersion[0]||0)
+    }
+
+    async saveLocalDbVersion(v:MapVersion) {
+        await this.storage.setVersion(v.version || 1, v)
+    }
+
+    async getOnlineVersion() {
+        let data:MapVersion = null;
+        try {
+            let prefix = ""
+            if ((<any>window).ipcRenderer) {
+                prefix = true ? "https://temporasanguinis.it/client/" : ""
+            }
+            const response = await fetch(prefix + "mapperVersion.json?rnd="+Math.random());
+            data = await response.json();
+        } catch {
+            data = {
+                version: 0,
+                message: "Unknown"
+            }
+        }
+        return data;
+    }
+
     public async loadVersion(online:boolean):Promise<MapVersion> {
         let data:MapVersion = null;
         try {
@@ -683,19 +836,14 @@ export class Mapper {
         await this.storage.setVersion(this.db.version?.version || 1, this.db.version || { version: 1})
         await this.storage.clearZones()
         await this.storage.setZones(this.db.zones)
-        /*for (const zone of this.db.zones) {
-            await this.storage.setZone(zone.id, zone)
-        }*/
         await this.storage.clearRooms()
         await this.storage.setRooms(this.db.rooms)
-        /*for (const room of this.db.rooms) {
-            await this.storage.setRoom(room.id, room)
-        }*/
     }
 
     async loadLocal(onlyVersion:boolean) {
-        this.db = { zones: null, rooms: null}
-        this.db.version = await this.storage.getVersion(1)
+        this.db = { zones: [], rooms: []}
+        const firstVersion = await this.storage.versionKeys();
+        this.db.version = await this.storage.getVersion(firstVersion[0]||0)
         if (!onlyVersion) {
             this.db.zones = await this.storage.allZones()
             this.db.rooms = await this.storage.allRooms()
@@ -704,6 +852,7 @@ export class Mapper {
 
     constructor(private storage:MapperStorage) {
         this.loadFavorites();
+        this.loadOptions();
         EvtScriptEvent.handle(d => {
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.vnumVariable) {
                 if (d.value) {
@@ -712,7 +861,7 @@ export class Mapper {
                     const newVnum = (<any>d.value).newValue;
 
                     setTimeout(() => {
-                        console.log("got vnum " + newVnum)
+                        //console.log("got vnum " + newVnum)
                         if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
                             console.log("discarding " + this.discardWalkStep)
                             this.discardWalkStep = -1;
@@ -794,11 +943,10 @@ export class Mapper {
         }
         const sett = this.scripting.getVariableValue("TSSettore")
         room.name = this.scripting.getVariableValue("RoomName"),
-        room.description = this.scripting.getVariableValue("RoomDesc"),
+        room.description = (this.scripting.getVariableValue("RoomDesc")??"").toString().replace(/\r/g,""),
         room.vnum = this.scripting.getVariableValue("TSRoom")
         if (!room.type) room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
-        if (!room.color) room.color = "rgb(255,255,255)"
-
+        
         this.activeExits.forEach((e)=>{
             if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
                 room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
@@ -828,7 +976,7 @@ export class Mapper {
             description: this.scripting.getVariableValue("RoomDesc"),
             exits: {},
             zone_id: fromRoom.zone_id,
-            color: "rgb(255,255,255)",
+            color: null,
             x: fromRoom.x,
             y: fromRoom.y,
             z: fromRoom.z,
@@ -860,19 +1008,7 @@ export class Mapper {
         // todo check overlap var zoneRooms = this.getZoneRooms(fromRoom.zone_id)
 
         toRoom.vnum = parseInt(newVnum);
-        const occVnums = [...this.idToRoom.keys()].sort((v1, v2) => v1 < v2 ? -1 : 1);
-        let newId = 0;
-        for (let index = occVnums.indexOf(fromRoom.id) + 1; index < occVnums.length - 1; index++) {
-            const e1 = occVnums[index];
-            const e2 = occVnums[index + 1];
-            if (e1 + 1 != e2) {
-                newId = e1 + 1;
-                break;
-            }
-        }
-        if (newId == 0) {
-            newId = occVnums[occVnums.length - 1] + 1;
-        }
+        let newId = this.getFreeId(fromRoom.id);
         toRoom.id = newId;
         toRoom.exits = {}
         this.activeExits.forEach((e)=>{
@@ -907,6 +1043,23 @@ export class Mapper {
         this.prepareRoom(fromRoom)
         this.prepareRoom(toRoom)
         this.createGraph()
+    }
+
+    private getFreeId(fromId: number) {
+        const occVnums = [...this.idToRoom.keys()].sort((v1, v2) => v1 < v2 ? -1 : 1);
+        let newId = 0;
+        for (let index = occVnums.indexOf(fromId) + 1; index < occVnums.length - 1; index++) {
+            const e1 = occVnums[index];
+            const e2 = occVnums[index + 1];
+            if (e1 + 1 != e2) {
+                newId = e1 + 1;
+                break;
+            }
+        }
+        if (newId == 0) {
+            newId = occVnums[occVnums.length - 1] + 1;
+        }
+        return newId;
     }
 
     public setRoomData(id:number, roomData:Room) {
@@ -1006,6 +1159,10 @@ export class Mapper {
                 if (!rm2)
                     continue;
 
+                if (rm.exits[exDir].name && exDir != "other") {
+                    console.log("Exit con commando: ", rm.id, exDir, rm.exits[exDir])
+                }
+                
                 graph.addLink(rm.id, rm.exits[exDir].to_room, {
                     dir: exDir,
                     exit: rm.exits[exDir],
@@ -1143,6 +1300,24 @@ export class Mapper {
         return ret;
     }
 
+    public exportAll():MapDatabase {
+
+        if (!this.db) {
+            this.emitMessage.fire("Mapper non inizializzato: impossibile esportare.")
+            return null
+        }
+
+        const ret:MapDatabase = {
+            rooms: this.db.rooms,
+            zones: this.db.zones,
+            version: {
+                version: this.db.version ? this.db.version.version : 0
+            }
+        }
+        this.emitMessage.fire("Mappa esportata, scaricamento in corso.")
+        return ret;
+    }
+
     public loadDb(mapDb: MapDatabase, ver: MapVersion):MapDatabase {
         try {
             this.loading = true
@@ -1224,7 +1399,7 @@ export class Mapper {
         this.roomVnum = vnum;
         const old = this.current;
         const prev = this._previous;
-        console.log("room by vnum " + vnum)
+        //console.log("room by vnum " + vnum)
         if (vnum == -1) {
             this.roomId = -1;
             this.current = null;
@@ -1675,7 +1850,7 @@ export class Mapper {
             for (const st of path.steps) {
                 const walkQueue:WalkCommand[] = []
                 if (st.dir == "other") {
-                    walkQueue.push({ type: WalkCommandType.Other, command: st.exit.param || st.exit.name})
+                    walkQueue.push({ type: WalkCommandType.Other, command: (st.exit.param || st.exit.name).replace(/\;/g,",").split(",").join("\n")})
                 } else {
                     let alreadyOpen:boolean;
                     if (st.room.id == skipDoorsId) {
@@ -1715,10 +1890,14 @@ export class Mapper {
 
     handleNormalDirection(dir: ExitDir, exit: RoomExit, walkQueue: WalkCommand[]) {
         if (exit.to_dir) {
-            walkQueue.push({
-                command: dir,
-                type: WalkCommandType.Directional
-            })
+            if (exit.name && exit.name.trim()) {
+                this.openSpecialExit(exit.name, walkQueue);
+            } else {
+                walkQueue.push({
+                    command: dir,
+                    type: WalkCommandType.Directional
+                })
+            }
         }
     }
     

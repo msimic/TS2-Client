@@ -537,13 +537,13 @@ export class JsScript {
 
     private saveVariablesAndEventsToConfig:any;
     private saveVariablesAndEventsToConfigInternal(ev:Map<string, ScriptEvent[]>, vars:Map<string, Variable>) {
-        this.config.set("script_events", [...ev]);
+        this.config.set("script_events", [...ev], true);
         const variableArray = [...vars].filter(v => !v[1].temp)
         this.config.set("variables", variableArray);
     }
 
     private saveBaseVariablesAndEventsToConfig(ev:Map<string, ScriptEvent[]>, vars:Map<string, Variable>) {
-        this.baseConfig.set("script_events", [...ev]);
+        this.baseConfig.set("script_events", [...ev], true);
         this.baseConfig.set("variables", [...vars]);
     }
 
@@ -774,6 +774,9 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         }
         EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
     };
+    const printText = function(message: any, window?:string) {
+        EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
+    };
     const cls = function(window?:string) {
         EvtScriptEmitCls.fire({owner: own, window: window});
     };
@@ -837,6 +840,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         getAlias: getAlias,
         getTrigger: getTrigger,
         print: print,
+        printText: printText,
         send: send,
         throttle: throtle,
         escapeHTML: htmlEscape,
