@@ -5,6 +5,7 @@ type AcceptCallback = (z:Zone) => void;
 export class MapperMoveToZoneWin {
     private $win: JQuery;
     private $applyButton: JQuery;
+    private $addButton: JQuery;
     private $cancelButton: JQuery;
 
     private $zoneList: JQuery;
@@ -22,13 +23,21 @@ export class MapperMoveToZoneWin {
         <!--content-->
         <div class="flex-window">
             <div>
-                <table>
+                <table style="width:100%;">
                     <tr style="height:28px;">
-                        <td style="text-align:right;padding-right:10px;">
+                        <td style="text-align:right;padding-right:10px;width: 55px;">
                             Zona:
                         </td>
-                        <td>
+                        <td style="padding-right:10px;">
                             <select id="mmzonelist"></select>
+                        </td>
+                    </tr>
+                    <tr style="height:28px;">
+                        <td style="text-align:right;padding-right:10px;width: 55px;">
+                            
+                        </td>
+                        <td style="text-align:left;padding-right:10px;">
+                            <span>Oppure:</span> <a href="#" class="addbutton"><b>crea nuova zona</b></a>
                         </td>
                     </tr>
                 </table>
@@ -42,26 +51,25 @@ export class MapperMoveToZoneWin {
 
         this.$win = $(win);
         this.$applyButton = $(win.getElementsByClassName("applybutton")[0]);
+        this.$addButton = $(win.getElementsByClassName("addbutton")[0]);
         this.$cancelButton = $(win.getElementsByClassName("exitbutton")[0]);
         
         const w = 320
-        const h = 220
-        const left = ($(window).width()-w)/2;
-        const top = ($(window).height()-h)/2;
-        (<any>this.$win).jqxWindow({width: w, height: h, minHeight: h, minWidth: w, position: { x: left, y: top }});
-        (<any>$('.jqxTabs',this.$win)).jqxTabs({ height: '100%', width: '100%' });
+        const h = 160;
 
-        this.$zoneList = $("#mmzonelist", this.$win);
-        <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
+        (<any>this.$win).jqxWindow({width: w, height: h, minHeight: h, minWidth: w});
         
-        $("#mmzonelist", this.$win).on("select", (ev:any) => {
-            var selection = ev.args.item.value
-            if (selection) {
-                (<any>$("#mmzonelist", this.$win)).jqxDropDownList('clearFilter');
-                if (!this.mapper.loading)
-                    this.mapper.setZoneById(parseInt(selection))
-            }
-        })
+        this.$zoneList = $("#mmzonelist", this.$win);
+        <JQuery>((<any>this.$zoneList)).jqxDropDownList({placeHolder:"Seleziona la zona", autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
+        
+        // $("#mmzonelist", this.$win).on("select", (ev:any) => {
+        //     var selection = ev.args.item.value
+        //     if (selection) {
+        //         (<any>$("#mmzonelist", this.$win)).jqxDropDownList('clearFilter');
+        //         if (!this.mapper.loading)
+        //             this.mapper.setZoneById(parseInt(selection))
+        //     }
+        // })
 
         $("#mmzonelist", this.$win).on("open", (ev:any) => {
             (<any>$("#mmzonelist", this.$win)).jqxDropDownList('clearFilter');

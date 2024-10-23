@@ -478,10 +478,6 @@ export class MapperWindow implements IBaseWindow {
             if (self.drawing) self.drawing.setSize()
         }
 
-        /*this.resizeSensor = new ResizeSensor(jQuery('.midrow', w)[0], function(){ 
-            setSize()
-        });*/
-
         this.resizeSensor = new ResizeObserver(function(){ 
             setSize()
         });
