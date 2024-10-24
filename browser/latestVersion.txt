@@ -3,3 +3,4 @@ Rewrite del client per renderlo piu performante
 - feature: salvataggio profilo in IndexedDB per piu performance
 - feature: mapper molto ampliato e con modalita mapping
 - feature: aggiunta funzione printText()
+- miglioramenti al layout editor

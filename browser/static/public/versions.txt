@@ -4,6 +4,7 @@ Rewrite del client per renderlo piu performante
 - feature: salvataggio profilo in IndexedDB per piu performance
 - feature: mapper molto ampliato e con modalita mapping
 - feature: aggiunta funzione printText()
+- miglioramenti al layout editor
 ____________________________________________________________
 1.6.2
 - feature: implementata una funzionalita' per mantenere il client attivo anche dopo molto tempo in background
