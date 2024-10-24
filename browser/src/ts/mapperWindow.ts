@@ -63,6 +63,9 @@ export class MapperWindow implements IBaseWindow {
             return
         }
         this._zoneId = value >-1 ? value : null;
+        if (this.drawing) {
+            this.drawing.zoneId = this.zoneId
+        }
         console.log("Zone id " + this._zoneId)
         if (this._zoneId >= 0 && this._zoneId != null) {
             const newSelItem = (<any>this.$zoneList).jqxDropDownList('getItemByValue', this._zoneId.toString());
@@ -70,9 +73,7 @@ export class MapperWindow implements IBaseWindow {
                 (<any>this.$zoneList).jqxDropDownList('selectIndex', newSelItem.index );
             }
         }
-        if (this.drawing) {
-            this.drawing.zoneId = this.zoneId
-        }
+        
     }
     $zoom: JQuery;
     $level: JQuery;
@@ -295,7 +296,7 @@ export class MapperWindow implements IBaseWindow {
         this.$level = $("#level", this.$win);
         let selecting = false
         $("#zonelist", this.$win).on("select", (ev:any) => {
-            if (selecting) return;
+            if (selecting || ev.args.type == "api") return;
             selecting = true
             try {
                 var selection = ev.args.item.value

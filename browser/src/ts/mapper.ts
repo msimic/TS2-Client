@@ -655,7 +655,11 @@ export class Mapper {
         if (this.current && this.current.zone_id == zid) return;
         const zr = this.getZoneRooms(zid)
         if (zr && zr.length) {
-            this.setRoomById(zr[0].id)
+            if (this.current && this.current.zone_id == zid) {
+                this.setRoomById(this.current.id)
+            } else {
+                this.setRoomById(zr[0].id)
+            }
         } else {
             this.zoneChanged.fire({
                 id: zid, zone: this.idToZone.get(zid)
