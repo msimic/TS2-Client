@@ -3,6 +3,7 @@ import { EventHook } from "./event";
 import { to_screen_coordinate } from "./isometric";
 import { ExitDir, ExitType, Mapper, Room, RoomExit, LabelPos, RoomType, ExitDir2LabelPos, ReverseExitDir, MapperOptions } from "./mapper";
 import { Button, Messagebox, Notification } from "./messagebox";
+import { colorCssToRGB } from "./util";
 interface MouseData {
     x: number;
     y: number;
@@ -128,14 +129,46 @@ export enum EditMode {
 }
 
 export class MapperDrawing {
+    public zoneId: number;
     mouseLinkData: { room: Room; dir: ExitDir, point:Point };
     mouseLinkDataStart: { room: Room; dir: ExitDir, point:Point };
     mouseLinkDataEnd: { room: Room; dir: ExitDir, point:Point };
     private _selectedExit: RoomExit;
-    public static readonly defaultRoomFillColor = "rgb(220,220,220)";
+    private static readonly _defaultRoomFillColorLight = "rgb(220,220,220)";
+    private static readonly _defaultRoomFillColorDark = "rgb(155,155,155)";
+    public static get defaultRoomFillColor() {
+        return $("body").hasClass("dark") ? MapperDrawing._defaultRoomFillColorDark : MapperDrawing._defaultRoomFillColorLight;
+    }
     drawWalls: boolean;
+    drawAdjacentLevel: boolean;
     drawRoomType: boolean;
-    backColor: string;
+    themeDark: boolean = $("body").hasClass("dark");
+    isDarkBackground: boolean = false;
+    defaultLightBackground: string = "#C5BFB1";
+    defaultDarkBackground: string = "#156aa7";
+    defaultLightForeground: string = "black";
+    defaultDarkForeground: string = "white";
+    isCustomBackground: boolean;
+    isCustomForeground: boolean;
+
+    private _backColor: string;
+    public get backColor(): string {
+        return this._backColor;
+    }
+    public set backColor(value: string) {
+        this._backColor = value;
+        if (value) {
+            const c = colorCssToRGB(this.backColor)
+            if (!c) {
+                this.isDarkBackground = false;
+            } else {
+                let luminance = 0.2126 * c.r/255.0 + 0.7152 * c.g/255.0 + 0.0722 * c.b/255.0
+                this.isDarkBackground = luminance < 0.5
+            }
+        } else {
+            this.isDarkBackground = false
+        }
+    }
     foreColor: string;
 
     public get selectedExit(): RoomExit {
@@ -144,7 +177,7 @@ export class MapperDrawing {
     public set selectedExit(value: RoomExit) {
         this._selectedExit = value;
         this.$drawCache = {};
-        this.selectedRooms = new Map()
+        if (value != null) this.selectedRooms = new Map()
         this.selected = null
     }
     private _selectedReverseExit: RoomExit;
@@ -235,7 +268,7 @@ export class MapperDrawing {
     mouseInside = false;
     lastKey: any;
     refresh() {
-        this.rooms = this.mapper.getZoneRooms((this.active || this.rooms[0])?.zone_id)
+        this.rooms = this.mapper.getZoneRooms(this.zoneId || (this.active || this.rooms[0])?.zone_id)
         this.rooms = this.rooms || []
         this.$drawCache = {}
         this.$wallsCache = {}
@@ -245,11 +278,25 @@ export class MapperDrawing {
     private readOptions() {
         this.backColor = this.mapperOptions.backgroundColor
         this.foreColor = this.mapperOptions.foregroundColor
+        this.isCustomBackground = this.backColor != null
+        this.isCustomForeground = this.foreColor != null
+        
         this.drawWalls = this.mapperOptions.drawWalls
+        this.drawAdjacentLevel = this.mapperOptions.drawAdjacentLevel
         this.drawRoomType = this.mapperOptions.drawRoomType
         this.gridSize = this.mapperOptions.useGrid ? this.mapperOptions.gridSize : 1
         const savedScale = this.mapperOptions.mapperScale;
         this._scale = savedScale ? (savedScale) : 1.5;
+    }
+    clear() {
+        this.active = null;
+        this.current = null;
+        this.selected = null;
+        this.selectedRooms.clear();
+        this.rooms = []
+        this.$drawCache = {}
+        this.$wallsCache = {}
+        this.forcePaint = true
     }
     setActiveRoom(room: Room) {
         const prevZone = this.active ? this.active.zone_id : -1;
@@ -271,11 +318,10 @@ export class MapperDrawing {
         this.focusActiveRoom()
         this.forcePaint = true
     }
-    wallColor = '#B0ABA2'//'#ACADAC';
+    wallColor = '#AAAAAA'//'#ACADAC';
     rendererId: number;
     stop:boolean;
     forcePaint:boolean;
-    private _fillWalls: boolean = true;
     private _showLegend = false;
     public get showLegend() {
         return this._showLegend;
@@ -389,6 +435,16 @@ export class MapperDrawing {
         const x = this.Mouse.x;
         const y = this.Mouse.y;
         const room = this.findActiveRoomByCoords(x, y);
+
+        if (event.ctrlKey && room) {
+            if (this.selectedRooms.get(room.id)) {
+                this.selectedRooms.delete(room.id)
+            } else {
+                this.selectedRooms.set(room.id, room)
+            }
+            return room
+        }
+
         this.selectedExit = null;
         this.selectedReverseExit = null;
         if (!room) return null;
@@ -554,9 +610,7 @@ export class MapperDrawing {
                 point: {x:0, y:0}
             }
             if (this.editMode == EditMode.CreateLink && this.mouseLinkData?.room && this.mouseLinkData?.dir != ExitDir.Other) {
-                //if (!this.mouseLinkData.room.exits[this.mouseLinkData.dir]) {
-                    this.mouseLinkDataStart = this.mouseLinkData
-                //}
+                this.mouseLinkDataStart = this.mouseLinkData
             }
             this.hover = null;
             this.Mouse = this.getMapMousePos(event);
@@ -719,14 +773,20 @@ export class MapperDrawing {
         
     }
     createRoom(createRoomPos: Point) {
-        if (!this.rooms || !this.rooms.length) return;
-        const zone = this.rooms[0].zone_id
+        if (!this.zoneId) return;
+        
+        const zone = this.zoneId
         const p = {x: 0, y: 0, z: 0}
         this.transformCanvasToRoomCoordinate(p, this.x_scroll + createRoomPos.x, this.y_scroll + createRoomPos.y, this.canvas)
         p.x = Math.trunc(this.closestMultiple(p.x, this.gridSize))
         p.y = Math.trunc(this.closestMultiple(p.y, this.gridSize))
         p.z = Math.trunc(this.level)
+        let old = this.active
         this.mapper.createRoomAt(zone, p)
+        if (old) {
+            this.setActive(old)
+            this.focusActiveRoom()
+        }
     }
 
     createLink(mouseLinkDataStart: { room: Room; dir: ExitDir; point: Point; }, mouseLinkDataEnd: { room: Room; dir: ExitDir; point: Point; }, oneway: boolean) {
@@ -767,11 +827,11 @@ export class MapperDrawing {
         }
     }
 
-    moveRooms(rooms: Room[], movedRoomOffset: Point) {
+    moveRooms(rooms: Room[], movedRoomOffset: Point, useGrid:boolean=true) {
         this.movedRoomOffset = movedRoomOffset
         let lastLevel = -1
         for (const room of rooms) {
-            const {x, y} = this.calculateMovedRoomPos(room.x, room.y)
+            const {x, y} = this.calculateMovedRoomPos(room.x, room.y, useGrid)
             room.x = x
             room.y = y
             room.z += movedRoomOffset.z
@@ -820,6 +880,9 @@ export class MapperDrawing {
 
         if (this.stop) return;
         var ctx = this.ctx;
+
+        if (!this.backColor || !this.foreColor)
+            this.assignThemeColors();
 
         if (!this.mouseInside && !this.forcePaint && (time|0) % 16 > 3) {
             window.requestAnimationFrame(this.renderFrame.bind(this));
@@ -1015,6 +1078,12 @@ export class MapperDrawing {
         
         if (!canvas || !context) return;
 
+        let darkTheme = this.themeDark;
+        if (this._drawTime % 100 && darkTheme != (this.themeDark = $("body").hasClass("dark"))) {
+            // theme change
+            this.assignThemeColors();
+        }
+
         context.font = `${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         context.lineWidth = (0.6 * this.scale)|0;
 
@@ -1035,7 +1104,7 @@ export class MapperDrawing {
 
         if (this.rooms) for (let i = 0; i < this.rooms.length; i++) {
             let room = this.rooms[i]
-            if (room.z == this.level-1) {
+            if (this.drawAdjacentLevel && room.z == this.level-1) {
                 let rdr = this.roomInnerDrawRect(room, canvas)
                 drawDataBelow.set(room.id, {
                     room: room,
@@ -1044,7 +1113,7 @@ export class MapperDrawing {
                     exitData: this.createExitData(room, rdr)
                 });
             }
-            else if (room.z == this.level+1) {
+            else if (this.drawAdjacentLevel && room.z == this.level+1) {
                 let rdr = this.roomInnerDrawRect(room, canvas)
                 drawDataAbove.set(room.id, {
                     room: room,
@@ -1065,17 +1134,24 @@ export class MapperDrawing {
             }
         }
 
-        for (const data of drawDataAbove.values()) {
-            this.DrawRect(context, data.rect, data.rect.w/5, -data.rect.h/5, data.room, 'rgba(255, 255, 255, 0.8)', null, this.scale);
+        const prevComposite = context.globalCompositeOperation;
+        context.globalCompositeOperation = !this.isDarkBackground ? 'lighten' : 'darken';
+            
+        const aboveColor = !this.isDarkBackground ? "#EEEEEE" : '#333333'
+        if (this.drawAdjacentLevel) for (const data of drawDataAbove.values()) {
+            this.DrawRect(context, data.rect, data.rect.w/5, -data.rect.h/5, data.room, aboveColor, null, this.scale);
         }
-        for (const data of drawDataBelow.values()) {
-            this.DrawRect(context, data.rect, -data.rect.w/5, data.rect.h/5, data.room, 'rgba(127, 127, 127, 0.8)', 'rgba(127,127,127,0.3)', this.scale);
+        context.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
+        
+        if (this.drawAdjacentLevel) for (const data of drawDataBelow.values()) {
+            this.DrawRect(context, data.rect, -data.rect.w/5, data.rect.h/5, data.room, "#333333", "#888888", this.scale);
         }
+        context.globalCompositeOperation = prevComposite
 
         let strokeColor = 'rgba(127, 127, 127, 0.8)'
         let drawLabels = false;
         
-        for (const data of drawDataBelow.values()) {
+        if (this.drawAdjacentLevel) for (const data of drawDataBelow.values()) {
             this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, -data.rect.w/5, data.rect.h/5)    
         }
 
@@ -1213,12 +1289,33 @@ export class MapperDrawing {
 
         
     }
+    private async assignThemeColors() {
+        const panelback = $("#window-dock-Mapper").parent().css("backgroundColor")
+        const panelFore = $("#window-dock-Mapper").parent().css("color")
+        if (!this.isCustomBackground && panelback) {
+            if (this.themeDark) {
+                this.defaultDarkBackground = panelback
+                this.defaultDarkForeground = "white"
+            } else if (panelFore) {
+                this.defaultLightBackground = panelFore
+                this.defaultLightForeground = "black"
+            }
+        }
+
+        if (!this.isCustomBackground)
+            this.backColor = this.themeDark ? this.defaultDarkBackground : this.defaultLightBackground;
+        if (!this.isCustomForeground)
+            this.foreColor = this.themeDark ? this.defaultDarkForeground : this.defaultLightForeground;
+    }
+
     DrawGrid(context: CanvasRenderingContext2D, forExport: boolean, scale: number) {
         let spacing = this.gridSize
         let canvas = this.canvas
 
         if (this.gridSize < 32) return;
-
+        const prevComposite = context.globalCompositeOperation;
+        context.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
+        
         context.beginPath(); // Start a new path
         const point = {x:0, y:0}
 
@@ -1249,9 +1346,13 @@ export class MapperDrawing {
             context.lineTo(canvas.width, point.y);
         }
 
-        context.strokeStyle = '#ddd'; // Set the line color
+        context.strokeStyle = '#aaa'; // Set the line color
+        const prevlw = context.lineWidth
+        context.lineWidth = Math.max(1, Math.floor(1 * scale))
         context.stroke(); // Apply the lines to the canvas
         context.closePath()
+        context.lineWidth = prevlw
+        context.globalCompositeOperation = prevComposite
     }
 
     private drawHoverInfo(context: CanvasRenderingContext2D) {
@@ -1951,7 +2052,7 @@ export class MapperDrawing {
     }
 
     wallsHash(room:Room) {
-        return this.isIndoor(room) + "," + room.type + ',' + Object.keys(room.exits).filter(e => this.isRealExit(room.exits[<ExitDir>e], room)).join()
+        return this.isIndoor(room) + "," + room.type + ',' + Object.keys(room.exits).filter(e => this.exitLeadsSomewhere(room.exits[<ExitDir>e], room)).join()
     }
 
     public DrawWalls(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, scale?:number) {
@@ -1970,11 +2071,18 @@ export class MapperDrawing {
         this.cacheRoom(roomKey, scale, room);
 
         if (this.drawWalls) {
+            const prevComposite = ctx.globalCompositeOperation;
+            ctx.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
             const wallsKey = this.wallsHash(room);
 
-            this.cacheWalls(wallsKey, scale, room);
+            const wall = this.cacheWalls(wallsKey, scale, room);
 
-            if (this.$wallsCache[wallsKey]) ctx.drawImage(this.$wallsCache[wallsKey], x | 0, y | 0);
+            if (wall) {
+                ctx.drawImage(wall, (x), (y), Math.ceil(32 * scale), Math.ceil(32 * scale));
+
+                //ctx.drawImage(wall, x+.5 | 0, y+.5 | 0 );
+            }
+            ctx.globalCompositeOperation = prevComposite
         }
     }
 
@@ -2006,7 +2114,7 @@ export class MapperDrawing {
 
         if (!scale) scale = this.scale;
 
-        ctx.drawImage(this.$drawCache[key], (x | 0)-1, (y | 0)-1, (32 * scale)+1, (32 * scale)+1);
+        ctx.drawImage(this.$drawCache[key], (x), (y), Math.ceil(32 * scale), Math.ceil(32 * scale));
 
         this.DrawDoor(ctx,  (x + 12 * scale)|0, (y + 1 * scale)|0, (8 * scale)|0, (2 * scale)|0, room.exits.n);
         this.DrawDoor(ctx,  (x + 30 * scale)|0, (y + 12 * scale)|0, (2 * scale)|0, (8 * scale)|0, room.exits.e);
@@ -2103,11 +2211,11 @@ export class MapperDrawing {
         return { x, y };
     }
 
-    private calculateMovedRoomPos(x: number, y: number) {
+    private calculateMovedRoomPos(x: number, y: number, useGrid:boolean = true) {
         x -= 7.5 * this.movedRoomOffset.x;
         y -= 7.5 * this.movedRoomOffset.y;
-        x = this.closestMultiple(x + Math.floor(this.gridSize / 2), this.gridSize);
-        y = this.closestMultiple(y + Math.floor(this.gridSize / 2), this.gridSize);
+        x = this.closestMultiple(x + Math.floor((useGrid ? this.gridSize : 1) / 2), (useGrid ? this.gridSize : 1));
+        y = this.closestMultiple(y + Math.floor((useGrid ? this.gridSize : 1) / 2), (useGrid ? this.gridSize : 1));
         x = Math.floor(x)
         y = Math.floor(y)
         return { x, y };
@@ -2257,8 +2365,8 @@ export class MapperDrawing {
         if (!this.$drawCache[key]) {
             this.$drawCache[key] = document.createElement('canvas');
             this.$drawCache[key].classList.add('map-canvas');
-            this.$drawCache[key].height = (32 * scale)|0;
-            this.$drawCache[key].width = (32 * scale)|0;
+            this.$drawCache[key].height = Math.ceil(32 * scale)|0;
+            this.$drawCache[key].width = Math.ceil(32 * scale)|0;
             const tx = this.$drawCache[key].getContext('2d') as CanvasRenderingContext2D;
             this.translate(tx, 0.5, scale);
             tx.beginPath();
@@ -2589,72 +2697,70 @@ export class MapperDrawing {
         }
     }
 
-    private cacheWalls(key: string, scale: number, room: Room) {
-        if (!this.isIndoor(room)) return;
-
-        if (!this.$wallsCache[key] && this.drawWalls) {
+    private cacheWalls(key: string, scale: number, room: Room) : HTMLCanvasElement {
+        if (!this.isIndoor(room)) return null;
+        let fillWalls = this.drawWalls
+        if (!this.$wallsCache[key] && fillWalls) {
             this.$wallsCache[key] = document.createElement('canvas');
             this.$wallsCache[key].classList.add('map-canvas');
-            this.$wallsCache[key].height = (32 * scale)|0;
-            this.$wallsCache[key].width = (32 * scale)|0;
+            this.$wallsCache[key].height = Math.ceil(32 * scale)|0;
+            this.$wallsCache[key].width = Math.ceil(32 * scale)|0;
             const tx = this.$wallsCache[key].getContext('2d') as CanvasRenderingContext2D;
-            tx.globalAlpha = 0.75
+            tx.globalAlpha = this.isDarkBackground ? .40 : 1.0
             this.translate(tx, 0.5, scale);
             tx.beginPath();
-   
-            let fillWalls = this._fillWalls
             
             tx.strokeStyle = this.foreColor || 'black';
             tx.lineWidth = (0.6 * scale)|0;
             
             tx.fillStyle = this.wallColor;
 
-            if (!this.isRealExit(room.exits.n, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.n, room) &&  fillWalls)
                 tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);
 
-            if (!this.isRealExit(room.exits.nw, room) &&  fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.nw, room) &&  fillWalls) {
                 tx.fillRect(2 * scale, 0 * scale, 2 * scale, 2 * scale);
                 tx.fillRect(0 * scale, 2 * scale, 4 * scale, 2 * scale);
-                if (!this.isRealExit(room.exits.n, room))
+                if (!this.exitLeadsSomewhere(room.exits.n, room))
                     tx.fillRect(4 * scale, 0 * scale, 5 * scale, 4 * scale);
-                if (!this.isRealExit(room.exits.w, room))
+                if (!this.exitLeadsSomewhere(room.exits.w, room))
                     tx.fillRect(0 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.isRealExit(room.exits.ne, room) &&  fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.ne, room) &&  fillWalls) {
                 tx.fillRect(28 * scale, 0 * scale, 2 * scale, 2 * scale);
                 tx.fillRect(28 * scale, 2 * scale, 4 * scale, 2 * scale);
                 tx.clearRect(30 * scale, 0 * scale, 2 * scale, 2 * scale);
-                if (!this.isRealExit(room.exits.n, room))
+                if (!this.exitLeadsSomewhere(room.exits.n, room))
                     tx.fillRect(23 * scale, 0 * scale, 5 * scale, 4 * scale);
-                if (!this.isRealExit(room.exits.e, room))
+                if (!this.exitLeadsSomewhere(room.exits.e, room))
                     tx.fillRect(28 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.isRealExit(room.exits.e, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.e, room) &&  fillWalls)
                 tx.fillRect(28 * scale, 9 * scale, 4 * scale, 14 * scale);
             
-            if (!this.isRealExit(room.exits.w, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.w, room) &&  fillWalls)
                 tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
             
-            if (!this.isRealExit(room.exits.s, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.s, room) &&  fillWalls)
                 tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);
             
-            if (!this.isRealExit(room.exits.se, room) && fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.se, room) && fillWalls) {
                 tx.fillRect(28 * scale, 28 * scale, 4 * scale, 2 * scale);
                 tx.fillRect(28 * scale, 30 * scale, 2 * scale, 2 * scale);
-                if (!this.isRealExit(room.exits.s, room))
+                if (!this.exitLeadsSomewhere(room.exits.s, room))
                     tx.fillRect(23 * scale, 28 * scale, 5 * scale, 4 * scale);
-                if (!this.isRealExit(room.exits.e, room))
+                if (!this.exitLeadsSomewhere(room.exits.e, room))
                     tx.fillRect(28 * scale, 23 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.isRealExit(room.exits.sw, room) && fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.sw, room) && fillWalls) {
                 tx.fillRect(0 * scale, 28 * scale, 4 * scale, 2 * scale);
                 tx.fillRect(2 * scale, 30 * scale, 2 * scale, 2 * scale);
-                if (!this.isRealExit(room.exits.s, room))
+                if (!this.exitLeadsSomewhere(room.exits.s, room))
                     tx.fillRect(4 * scale, 28 * scale, 5 * scale, 4 * scale);
-                if (!this.isRealExit(room.exits.w, room))
+                if (!this.exitLeadsSomewhere(room.exits.w, room))
                     tx.fillRect(0 * scale, 23 * scale, 4 * scale, 5 * scale);
             }
 
@@ -2664,9 +2770,11 @@ export class MapperDrawing {
 
             this.translate(tx, -0.5, scale);
         }
+
+        return this.$wallsCache[key];
     }
 
-    isRealExit(re: RoomExit, room:Room) : boolean {
+    exitLeadsSomewhere(re: RoomExit, room:Room) : boolean {
         return re && re.to_room != room.id;
     }
 

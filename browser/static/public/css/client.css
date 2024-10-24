@@ -1522,12 +1522,31 @@ input:focus,button:focus,textarea:focus {
     }
 }
 
+.text-shadow {
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.75);
+}
+
+.mvMessage {
+    opacity: .75;
+    margin-top: 8px;
+    display: inline-block;
+}
+
+.moveroombutton {
+    margin: 1px !important;
+}
+
+.moveroomupdownbutton {
+    margin: 10px !important;
+    margin-left: 20px !important;
+}
+
 #content-wrapper button {
     position: static;
 	font-family: Consolas, monospace;
     -webkit-transition: color 300ms ease, background-color 300ms ease, opacity 300ms ease;
     color: #959595;
-    background-color: rgb(97,97,117);
+    background-color: rgba(97,97,117,.5);
     display: inline-block;
     z-index: 100;
     text-decoration: none;
@@ -2154,6 +2173,22 @@ ul.select {
     color: black !important;
     vertical-align: middle;
     background-color: #dddddd !important;
+}
+.align-bottom-right {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 3px;
+}
+
+.fill-parent,.winOutput {
+    background-color: black;
+}
+
+.highlighted-pane {
+    min-height: 20px;
+    min-width: 150px;
 }
 
 .mapperworkarea-toolboxbuttons {

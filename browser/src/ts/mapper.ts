@@ -15,7 +15,9 @@ export interface MapperOptions {
     backgroundColor: string;
     foregroundColor: string;
     drawWalls: boolean,
-    drawRoomType: boolean
+    drawRoomType: boolean,
+    preferZoneAbbreviations: boolean;
+    drawAdjacentLevel: boolean
 };
 
 export interface Zone {
@@ -23,6 +25,7 @@ export interface Zone {
     name: string;
     description?: string;
     label?: string;
+    backColor?: string
 }
 
 export enum ExitType {
@@ -287,6 +290,56 @@ export interface Favorite {
 };
 
 export class Mapper {
+    deleteZone(zoneId: number) {
+        let rooms = this.getZoneRooms(zoneId)
+        for (const r of rooms) {
+            let ri = this.db.rooms.findIndex(z => z.id == r.id)
+            if (ri > -1) {
+                this.db.rooms.splice(ri, 1)
+            }
+        }
+        let zi = this.db.zones.findIndex(z => z.id == zoneId)
+        if (zi > -1) {
+            this.db.zones.splice(zi, 1)
+        }
+        this.prepare()
+    }
+    saveZone(zone: Zone) {
+        if (!zone.id) {
+            let maxId = -1
+            for (const z of this.db.zones) {
+                if (maxId < z.id) {
+                    maxId = z.id
+                }
+            }
+            maxId++
+            zone.id = maxId
+        }
+        if (this.db.zones.indexOf(zone) == -1) {
+            this.db.zones.push(zone)
+        }
+        this.prepare()
+        this.zoneChanged.fire({ id: zone.id, zone: zone})
+    }
+    moveRoomsToZone(rooms: Room[], newZone: Zone) {
+        let lastRoom: Room;
+        for (const room of rooms) {
+            let zrooms = this.zoneRooms.get(room.zone_id)
+            let ri = zrooms?.findIndex(z => z.id == room.id)
+            if (ri > -1) {
+                zrooms.splice(ri, 1)
+            }
+            room.zone_id = newZone.id
+            this.prepareRoom(room);
+            lastRoom = room
+        }
+
+        this.createGraph();
+
+        this.zoneChanged.fire({ id: newZone.id, zone: newZone})
+        if (lastRoom) this.roomChanged.fire({ id: lastRoom.id, vnum: lastRoom.vnum, room: lastRoom})
+    
+    }
     deleteRooms(rooms: Room[]) {
         for (const rm of rooms) {
             const index = this.db.rooms.findIndex((r,i) => r == rm)
@@ -366,8 +419,14 @@ export class Mapper {
                 drawWalls: true,
                 toolboxX: 0,
                 toolboxY: 0,
-                drawRoomType: true
+                drawRoomType: true,
+                preferZoneAbbreviations: false,
+                 drawAdjacentLevel: true
             }
+        }
+
+        if (this.options.drawAdjacentLevel == undefined) {
+            this.options.drawAdjacentLevel = true
         }
         if (this.options.gridSize < 1)
             this.options.gridSize = 1
@@ -597,6 +656,10 @@ export class Mapper {
         const zr = this.getZoneRooms(zid)
         if (zr && zr.length) {
             this.setRoomById(zr[0].id)
+        } else {
+            this.zoneChanged.fire({
+                id: zid, zone: this.idToZone.get(zid)
+            })
         }
     }
     
@@ -1138,7 +1201,7 @@ export class Mapper {
         this.createGraph();
         this.roomChanged.fire({id:-1, vnum:-1,room:null})
         this.zoneChanged.fire({id:-1,zone:null})
-        if (oldCurrent) {
+        if (oldCurrent && (this._current = this.getRoomById(oldCurrent.id))) {
             this.zoneChanged.fire({ id: oldCurrent.zone_id, zone: this.getRoomZone(oldCurrent.id)})
             this.roomChanged.fire({id: oldCurrent.id, vnum: oldCurrent.vnum, room: oldCurrent})
         }
@@ -1208,6 +1271,10 @@ export class Mapper {
                 this.shortNameToRoom.set(rm.shortName.toLowerCase().substring(1,rm.shortName.length-1), rm);
             const z = this.zoneRooms.get(rm.zone_id);
             if (z) {
+                const existingId = z.findIndex(r => r.id == rm.id)
+                if (existingId>-1) {
+                    z.splice(existingId, 1)
+                }
                 z.push(rm);
 
                 const zrl = this._zoneRoomsByLevel.get(rm.zone_id);

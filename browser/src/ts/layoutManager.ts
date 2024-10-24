@@ -116,17 +116,22 @@ export class LayoutManager {
 
     constructor(private profileManager:ProfileManager, private windowManager:WindowManager, private scripting:JsScript, private cmdInput:CommandInput) {
         
-        (async () => {this.onlineBaseLayout = await $.ajax(
-            {
-                url: "./baseLayout.json?rnd="+Math.random(),
-                headers: {
-                    "Pragma": "no-cache",
-                    "Expires": -1,
-                    "Cache-Control": "no-cache"
+        (async () => {
+                this.onlineBaseLayout = await $.ajax(
+                {
+                    url: "./baseLayout.json?rnd="+Math.random(),
+                    headers: {
+                        "Pragma": "no-cache",
+                        "Expires": -1,
+                        "Cache-Control": "no-cache"
+                    }
+                })
+                console.log("New base layout: " + this.onlineBaseLayout.version + " items: " + this.onlineBaseLayout.items?.length)
+                if (this.onlineBaseLayout) {
+                    this.onlineBaseLayout.customized = false
                 }
-            })
-            console.log("New base layout: " + this.onlineBaseLayout.version + " items: " + this.onlineBaseLayout.items?.length)
-        })();
+            }
+        )();
         
         profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
             this.profileConnected()
@@ -411,29 +416,30 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
         if (!cp) {
             Messagebox.Show("Errore", "Non e' possibile aggiornare il layout al profilo base.")
-            return;
+            return null;
         }
 
         if (!this.onlineBaseLayout) {
             Messagebox.Show("Errore", "Non c'e' un layout base.")
-            return;
+            return null;
         }
 
         let prof = this.profileManager.getProfile(cp);
         if (prof) {
-            this.updateLayout(prof, this.onlineBaseLayout)
-        }        
+            await this.updateLayout(prof, this.onlineBaseLayout)
+        }
+        return prof 
     }
 
     async updateLayout(prof: Profile, newLayout: LayoutDefinition) {
         prof.layout = newLayout;
         this.profileManager.saveProfiles();
-        const r = await Messagebox.Question(`Disposizione schermo aggiornata.\n
-Ora e' molto consigliabile riavviare il client per poterla caricare.\n
-Vuoi farlo ora?`);
-        if (r.button == Button.Ok) {
-            window.location.reload()
-        }
+//         const r = await Messagebox.Question(`Disposizione schermo aggiornata.\n
+// Ora e' molto consigliabile riavviare il client per poterla caricare.\n
+// Vuoi farlo ora?`);
+//         if (r.button == Button.Ok) {
+//             window.location.reload()
+//         }
     }
 
     public unload() {
@@ -505,20 +511,15 @@ Vuoi farlo ora?`);
         if (!layout) return;
 
         this.layout = layout;
+        const isDarkTheme = $("body").hasClass("dark")
 
-        const cmdBack = layout.panes.find(p => p.position == PanelPosition.PaneBottomLeft)?.background || "";
+        const foreColor = layout.color || isDarkTheme ? "#C5BFB1" : "#C5BFB1"
+        $("#content-wrapper").css("color", foreColor);
+        const backColor = layout.background || isDarkTheme ? "#203C20" : "#156AA7"
+        $("#content-wrapper").css("background-color", backColor);
+        const cmdBack = layout.panes.find(p => p.position == PanelPosition.PaneBottomLeft)?.background || backColor;
         $("#row-input").css("background-color", cmdBack);
-        if (layout.color) {
-            $("#content-wrapper").css("color", layout.color);
-        } else {
-            $("#content-wrapper").css("color", "");
-        }
-        if (layout.background) {
-            $("#content-wrapper").css("background-color", layout.background);
-        } else {    
-            $("#content-wrapper").css("background-color", "");
-        }
-
+        
         for (const p of layout.panes) {
 
             let cssObj:any = {

@@ -1,5 +1,7 @@
-import {ExitDir, Mapper, MapperOptions, Room, RoomExit} from "../../mapper"
+import {ExitDir, Mapper, MapperOptions, Room, RoomExit, Zone} from "../../mapper"
 import { circleNavigate, colorCssToRGB, colorToHex } from "../../util";
+
+export type BooleanFunction = (opt: MapperOptions) => void;
 
 export class MapperOptionsWin {
     private $win: JQuery;
@@ -8,13 +10,14 @@ export class MapperOptionsWin {
     private $useGrid: JQuery;
     private $gridSize: JQuery;
     private $useLocal: JQuery;
-    private $zoom: JQuery;
+    private $adjacent: JQuery;
+    private labelleZona: JQuery;
     private $foreColor: JQuery;
     private $backColor: JQuery;
     private $drawWalls: JQuery;
     private $drawRoomType: JQuery;
 
-    constructor(public mapper:Mapper, private appliedCb: Function) {
+    constructor(public mapper:Mapper, private appliedCb: BooleanFunction) {
 
         let win = document.createElement("div");
         win.style.display = "none";
@@ -29,7 +32,7 @@ export class MapperOptionsWin {
             <div class='jqxTabs'>
                 <ul>
                     <li>Colori</li>
-                    <li>Griglia</li>
+                    <li>Disegno</li>
                     <li>Preferenze</li>
                 </ul>
                 <div>
@@ -67,6 +70,14 @@ export class MapperOptionsWin {
                         <table>
                             <tr style="height:28px;">
                                 <td style="text-align:right;padding-right:10px;">
+                                    Livello sopra(sotto):
+                                </td>
+                                <td>
+                                    <input type="checkbox" title="Se abilitato il mapper disegnera' le silouette dell stanze del livello adiacente" class="mapoptions-adjacent">
+                                </td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td style="text-align:right;padding-right:10px;">
                                     Usa griglia:
                                 </td>
                                 <td>
@@ -88,15 +99,15 @@ export class MapperOptionsWin {
                     <div class="tab-content">
                         <table>
                             <tr style="height:28px;">
-                                <td style="text-align:right;padding-right:10px;">
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
                                     Preferisci locale:
                                 </td>
                                 <td>
-                                    <input type="checkbox" title="Se abilitato il mapper carichera la mappa dai tuoi dati salvati in locale anziche da server" class="mapoptions-uselocal">
+                                    <input type="checkbox" title="Se abilitato il mapper carichera la mappa dai tuoi dati salvati in locale anziche da server\n\r(per chi vuole mappare autonomamente)" class="mapoptions-uselocal">
                                 </td>
                             </tr>
                             <tr style="height:28px;">
-                                <td style="text-align:right;padding-right:10px;">
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
                                     Disegna muri:
                                 </td>
                                 <td>
@@ -104,11 +115,11 @@ export class MapperOptionsWin {
                                 </td>
                             </tr>
                             <tr style="height:28px;">
-                                <td style="text-align:right;padding-right:10px;">
-                                    Zoom:
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
+                                    Nomi zone colloquiali:
                                 </td>
                                 <td>
-                                    <input type="text" placeholder="[240 default]" class="mapotions-zoom">
+                                    <input type="checkbox" title="Se disabilitato il menu a tendina della lista zone conterra' l'esatto nome\n della zona come presente nel gioco. Altrimenti la labella (nome colloquiale)" class="mapoptions-shortzones">
                                 </td>
                             </tr>
                         </table>
@@ -125,10 +136,11 @@ export class MapperOptionsWin {
         this.$win = $(win);
         this.$applyButton = $(win.getElementsByClassName("applybutton")[0]);
         this.$cancelButton = $(win.getElementsByClassName("exitbutton")[0]);
-        this.$zoom = $(win.getElementsByClassName("mapotions-zoom")[0]);
+        this.labelleZona = $(win.getElementsByClassName("mapoptions-shortzones")[0]);
         this.$useGrid = $(win.getElementsByClassName("mapoptions-usegrid")[0]);
         this.$gridSize = $(win.getElementsByClassName("mapotions-gridsize")[0]);
         this.$useLocal = $(win.getElementsByClassName("mapoptions-uselocal")[0]);
+        this.$adjacent = $(win.getElementsByClassName("mapoptions-adjacent")[0]);
         this.$foreColor = $(win.getElementsByClassName("mapoptions-color")[0]);
         this.$backColor = $(win.getElementsByClassName("mapoptions-backcolor")[0]);
         this.$drawWalls = $(win.getElementsByClassName("mapoptions-drawwalls")[0]);
@@ -155,22 +167,25 @@ export class MapperOptionsWin {
     }
 
     load() {
-        this.$zoom.val(this.mapper.getOptions().mapperScale)
+        this.labelleZona.prop("checked", this.mapper.getOptions().preferZoneAbbreviations)
         this.$gridSize.val(this.mapper.getOptions().gridSize)
         this.$useGrid.prop("checked", this.mapper.getOptions().useGrid)
         this.$useLocal.prop("checked", this.mapper.getOptions().preferLocalMap)
         this.$foreColor.val(this.mapper.getOptions().foregroundColor)
         this.$backColor.val(this.mapper.getOptions().backgroundColor)
         this.$drawWalls.prop("checked", this.mapper.getOptions().drawWalls)
+        this.$adjacent.prop("checked", this.mapper.getOptions().drawAdjacentLevel)
         this.$drawRoomType.prop("checked", this.mapper.getOptions().drawRoomType)
     }
     apply() {
-        this.mapper.getOptions().mapperScale = parseFloat(this.$zoom.val())
-        this.mapper.getOptions().gridSize = parseInt(this.$gridSize.val())
-        this.mapper.getOptions().useGrid = this.$useGrid.prop("checked")
-        this.mapper.getOptions().preferLocalMap = this.$useLocal.prop("checked")
-        this.mapper.getOptions().drawWalls = this.$drawWalls.prop("checked")
-        this.mapper.getOptions().drawRoomType = this.$drawRoomType.prop("checked")
+        const opt = this.mapper.getOptions()
+        opt.preferZoneAbbreviations = this.labelleZona.prop("checked")
+        opt.gridSize = parseInt(this.$gridSize.val())
+        opt.useGrid = this.$useGrid.prop("checked")
+        opt.preferLocalMap = this.$useLocal.prop("checked")
+        opt.drawWalls = this.$drawWalls.prop("checked")
+        opt.drawAdjacentLevel = this.$adjacent.prop("checked")
+        opt.drawRoomType = this.$drawRoomType.prop("checked")
         let col = this.$foreColor.val()
         if (col == "black" ||
             col == "rgb(0,0,0)" ||
@@ -178,7 +193,7 @@ export class MapperOptionsWin {
             col == "#000000") {
             col = null;
         };
-        this.mapper.getOptions().foregroundColor = col
+        opt.foregroundColor = col
         col = this.$backColor.val()
         if (col == "black" ||
             col == "rgb(0,0,0)" ||
@@ -186,9 +201,9 @@ export class MapperOptionsWin {
             col == "#000000") {
             col = null;
         };
-        this.mapper.getOptions().backgroundColor = col
+        opt.backgroundColor = col
         this.mapper.saveOptions()
-        this.appliedCb()
+        this.appliedCb(opt)
     }
 
     private handleCancelButtonClick() {

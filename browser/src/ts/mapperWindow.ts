@@ -1,4 +1,4 @@
-import { ExitDir, Favorite, MapDatabase, Mapper, MapVersion, Room, RoomExit, Zone } from "./mapper";
+import { ExitDir, Favorite, MapDatabase, Mapper, MapperOptions, MapVersion, Room, RoomExit, Zone } from "./mapper";
 import { Messagebox, MessageboxResult, messagebox, Button, Notification } from "./messagebox";
 import { isNumeric } from "jquery";
 import { IBaseWindow, WindowManager } from "./windowManager";
@@ -12,8 +12,13 @@ import { MapperOptionsWin } from './Mapper/windows/mapperOptionsWin'
 import { off } from "process";
 import { Point } from "./mapperDrawing"
 import { MapperMoveToZoneWin } from "./Mapper/windows/mapperMoveToZoneWin"
+import { EditZoneWin } from "./Mapper/windows/editZoneWin"
+import { MoveRoomsWin } from "./Mapper/windows/moveRoomsWin"
 
 export enum UpdateType { none = 0, draw = 1 }
+export function createZoneLabel(useLabels: boolean, useId: boolean, item: Zone) {
+    return (useLabels ? (item.label || item.name) : item.name) + (useId ? " (" + (item.id ? "#"+item.id.toString() : "nuova") + ")" : "");
+}
 
 interface ClipboardItem {
     readonly types: string[];
@@ -54,39 +59,61 @@ export class MapperWindow implements IBaseWindow {
         return this._zoneId;
     }
     public set zoneId(value: number) {
-        this._zoneId = value;
-        const sel = !this.zoneId ? null : (<any>this.$zoneList).jqxDropDownList('getItemByValue', this.zoneId.toString());
-        if (sel && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=sel.index) {
-            (<any>this.$zoneList).jqxDropDownList('selectIndex', sel.index );
+        if (this._zoneId === value) {
+            return
+        }
+        this._zoneId = value >-1 ? value : null;
+        console.log("Zone id " + this._zoneId)
+        if (this._zoneId >= 0 && this._zoneId != null) {
+            const newSelItem = (<any>this.$zoneList).jqxDropDownList('getItemByValue', this._zoneId.toString());
+            if (newSelItem && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=newSelItem.index) {
+                (<any>this.$zoneList).jqxDropDownList('selectIndex', newSelItem.index );
+            }
+        }
+        if (this.drawing) {
+            this.drawing.zoneId = this.zoneId
         }
     }
     $zoom: JQuery;
     $level: JQuery;
     $contextMenu: JQuery;
 
-    onEmitMapperMessage = (d:any) => {
-        return this.message(d)
+    onEmitMapperMessage = (d:string) => {
+        return this.setBottomMessage(d)
     }
 
-    onEmitMapperSearch = (d:any) => {
+    onEmitMapperSearch = (d:string) => {
         //return this.searchNameDesc(d, "")
     }
 
-    onEmitMapperZoneChanged = (d:any) => {
-        this.zoneId = d?.id
+    onEmitMapperZoneChanged = (d:{id:number; zone:Zone}) => {
         this.zones = [...this.mapper.idToZone.values()]
-        this.zoneMessage(d?.zone?.name||"Zona sconosciuta")
-        if (this.drawing) this.drawing.refresh();
+        this.zoneId = d?.id
+        this.loadZonesIfNeeded(!d || !d.zone)
+        if (this.drawing) {
+            const rooms = this.mapper.zoneRooms.get(this.zoneId)
+            if (!rooms || !rooms.length) {
+                 this.drawing.clear()
+                 this.setBottomMessage("La zona non contiene stanze")
+            }
+            this.drawing.refresh();
+        }
     }
 
     onEmitMapperRoomChanged = (d:any) => {
-        this.zoneId = d.room ? d.room.zone_id : -1
-        this.message(this.mapper.getRoomName(d.room))
+        this.zoneId = d.room?.zone_id
         if (!d.room || this.zoneId < 0) {
-            this.zoneMessage("Zona sconosciuta")
-        } else {
-            this.zoneMessage(this.mapper.getRoomZone(d.room.id)?.name||"Zona sconosciuta")
+            this.setBottomMessage("Zona sconosciuta " + d.room?.zone_id)
+        } else if (d.room) {
+            const labels = this.mapper.getOptions().preferZoneAbbreviations
+            const zoneName = createZoneLabel(labels, false, this.mapper.getRoomZone(d.room.id))||"Zona sconosciuta"
+            let message = `[${d.room?.id}] ${d.room?.name}`
+            if (labels) {
+                message += " (" + zoneName + ")"
+            }
+            this.setBottomMessage(message)
         }
+
         if (this.drawing) this.drawing.setActiveRoom(d.room);
     }
 
@@ -122,10 +149,14 @@ export class MapperWindow implements IBaseWindow {
     windowTitle = "Mapper";
 
     constructor(private mapper:Mapper,private windowManager: WindowManager) {
-        this.optionsWindow = new MapperOptionsWin(mapper, () => {
-            if (this.drawing) {
-                this.drawing.refresh()
+        const me = this
+        this.optionsWindow = new MapperOptionsWin(mapper, (op:MapperOptions) => {
+            const currZone = me.zoneId
+            if (me.drawing) {
+                me.drawing.refresh()
             }
+            me.fillZonesDropDown(mapper.getZones())
+            me.zoneId = currZone
         });
         let win = document.createElement("div");
         win.style.display = "none";
@@ -171,10 +202,10 @@ export class MapperWindow implements IBaseWindow {
                                         <li class='custom jqx-item jqx-menu-item jqx-rc-all' role='menuitem'>&lt;nesuno&gt;</li> 
                                     </ul>
                                 </li>
-                                <li  class='custom' data-option-type="mapper" data-option-name="info">Informazioni</li>
                                 <li  class='custom' data-option-type="mapper" data-option-name="legend">Leggenda</li>
                                 <li type='separator'></li>
-                                <li  class='custom' data-option-type="mapper" data-option-name="mapversion">Versione DB</li>
+                                <li  class='custom' data-option-type="mapper" data-option-name="info">Informazioni</li>
+                                <li  class='custom' data-option-type="mapper" data-option-name="mapversion">Versione mappa</li>
                                 <li type='separator'></li>
                                 <li  class='custom' data-option-type="mapper" data-option-name="impostazioni">Impostazioni</li>
                             </ul>
@@ -258,17 +289,25 @@ export class MapperWindow implements IBaseWindow {
         
         this.$bottomMessage = $("#mapmessage", this.$win);
         this.$zoneList = $("#zonelist", this.$win);
-        <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: true,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
+        <JQuery>((<any>this.$zoneList)).jqxDropDownList({autoItemsHeight: false,searchMode:'containsignorecase', width:'100%',filterable:true, itemHeight: 20, filterPlaceHolder:'Filtra per nome:',scrollBarSize:8});
         mnu.jqxMenu('setItemOpenDirection', 'favorites', 'left', 'up');
         this.$zoom = $("#zoom", this.$win);
         this.$level = $("#level", this.$win);
-
+        let selecting = false
         $("#zonelist", this.$win).on("select", (ev:any) => {
-            var selection = ev.args.item.value
-            if (selection) {
-                (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
-                if (!this.mapper.loading)
-                    this.mapper.setZoneById(parseInt(selection))
+            if (selecting) return;
+            selecting = true
+            try {
+                var selection = ev.args.item.value
+                if (selection) {
+                    (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
+                    if (!this.mapper.loading) {
+                        this.mapper.current = null
+                        this.mapper.setZoneById(parseInt(selection))
+                    }
+                }
+            } finally {
+                selecting = false
             }
         })
 
@@ -325,7 +364,7 @@ export class MapperWindow implements IBaseWindow {
                 }
             } else {
                 if (self.mapper.getDB() && self.mapper.getDB().version && self.mapper.useLocal == self.mapper.getOptions().preferLocalMap) {
-                    if (!self.mapper.current) self.onEmitMapperZoneChanged(self.mapper.idToZone.get(0));
+                    self.selectPreviousZoneOrFallbackToFirst();
                     const old = self.mapper.current
                     self.mapper.setRoomById(-1)
                     if (old) self.mapper.setRoomById(old.id || 0)
@@ -489,7 +528,7 @@ export class MapperWindow implements IBaseWindow {
         this.attachMenu();
         this.setMapFont()
     }
-    private moveRoomsOnAxis(axis:string, positive:boolean, useGrid: boolean) {
+    public moveRoomsOnAxis(axis:string, positive:boolean, useGrid: boolean) {
         let offs:Point = {
             x: 0,
             y: 0,
@@ -502,20 +541,20 @@ export class MapperWindow implements IBaseWindow {
             delta *= -1
 
         offs[axis as keyof(Point)] = delta;
-        this.drawing.moveRooms([...this.drawing.selectedRooms.values()], offs);
+        this.drawing.moveRooms([...this.drawing.selectedRooms.values()], offs, useGrid);
     }
 
     write(text: string, buffer: string): void {
-        this.$bottomMessage.text(text);
+        this.setBottomMessage(text);
     }
     writeLine(text: string, buffer: string): void {
-        this.$bottomMessage.text(text);
+        this.setBottomMessage(text);
     }
     getLines(): string[] {
         return [this.$bottomMessage.text()];
     }
     cls() {
-        this.$bottomMessage.text("")
+        this.setBottomMessage("")
     }
     private handleDraggingToolbox(w:JQuery) {
         this.detachToolbox();
@@ -856,7 +895,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             else if (this.drawing.selected)
                 this.editRoom([this.drawing.selected])
             else
-            this.message("Nessuna stanza selezionata")
+            this.setBottomMessage("Nessuna stanza selezionata")
         } else if (name == "toolbox-move") {
             this.allowMove = !this.allowMove
             this.drawing.allowMove = this.allowMove
@@ -864,22 +903,22 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                 this.editMode = EditMode.Drag
             }
             this.drawing.editMode = this.editMode
-            this.message("Spostamento stanze " + (this.drawing.allowMove ? "PERMESSO" : "BLOCCATO"))
+            this.setBottomMessage("Spostamento stanze " + (this.drawing.allowMove ? "PERMESSO" : "BLOCCATO"))
         } else if (name == "toolbox-pan") {
             this.drawing.editMode = this.editMode = EditMode.Drag
-            this.message("Trascinare con il mouse ora spostera' l'origine per la visuale della mappa")
+            this.setBottomMessage("Trascinare con il mouse ora spostera' l'origine per la visuale della mappa")
         } else if (name == "toolbox-select") {
             this.drawing.editMode = this.editMode = EditMode.Select
             this.drawing.allowMove = this.allowMove = false
-            this.message("Trascinare con il mouse ora selezionera' le stanze (shortcut Shift)")
+            this.setBottomMessage("Trascinare con il mouse ora selezionera' le stanze (shortcut Shift)")
         } else if (name == "toolbox-createlink") {
             this.drawing.editMode = this.editMode = EditMode.CreateLink
             this.drawing.allowMove = this.allowMove = false 
-            this.message("Crea l'uscita trascinando con il mouse da stanza a stanza")
+            this.setBottomMessage("Crea l'uscita trascinando con il mouse da stanza a stanza")
         } else if (name == "toolbox-add") {
             this.drawing.editMode = this.editMode = EditMode.CreateRoom
             this.drawing.allowMove = this.allowMove = false 
-            this.message("Seleziona la posizione per creare la stanza")
+            this.setBottomMessage("Seleziona la posizione per creare la stanza")
         } else if (name == "toolbox-delete") {
             this.deleteSelection();
         } else if (name == "toolbox-movewindow") {
@@ -887,30 +926,74 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         } else if (name == "toolbox-movetozone") {
             this.showMoveToZoneWindow()
         } else if (name == "toolbox-newzone") {
-            this.showZoneWindow()
+            this.showZoneWindow(true)
         } else if (name == "toolbox-deletezone") {
             this.deleteZone()
         } else if (name == "toolbox-editzone") {
-            this.showZoneWindow()
+            this.showZoneWindow(false)
         }
 
 
         this.setToolboxButtonStates();
     }
-    deleteZone() {
-        Notification.Show("Todo")
+    async deleteZone() {
+        if (this.zoneId >-1) {
+            let cnt = (this.mapper.getZoneRooms(this.zoneId)||[]).length || 0
+            let r = await Messagebox.Question("Sei sicuro di voler cancellare la zona?\nPerderai le " + cnt + " room che contiene.")
+            if (r.button == Button.Ok) this.mapper.deleteZone(this.zoneId)
+        }
     }
-    showZoneWindow() {
-        Notification.Show("Todo")
+    showZoneWindow(create:boolean) {
+        if (create) {
+            const zw = new EditZoneWin(null, (z) => {
+                if (z && z.name && z.name.length > 2) {
+                    z.id = null
+                    this.mapper.saveZone(z) 
+                } else if (z) {
+                    Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
+                }
+            })
+        } else {
+            const zone = this.mapper.idToZone.get(this.zoneId)
+            if (zone) {
+                const zw = new EditZoneWin(zone, (z) => {
+                    if (z) {
+                        zone.id = parseInt(z.id?.toString())
+                        zone.name = z.name
+                        zone.description = z.description
+                        zone.label = z.label
+                        zone.backColor = z.backColor
+                        this.mapper.saveZone(zone) 
+                    }
+                })
+            }
+        }
     }
     showMoveToZoneWindow() {
+        let rooms:Room[] = [...this.drawing.selectedRooms.values()];
+        if (!rooms || !rooms.length) {
+            Notification.Show("Devi selezionare delle stanze prima.")
+            return
+        }
         let mzw = new MapperMoveToZoneWin(this.mapper, (z) => {
-
+            if (z) {
+                this.mapper.moveRoomsToZone(rooms, z)
+                Notification.Show(`${rooms.length} stanze spostate`)
+            } else {
+                Notification.Show(`Zona non selezionata. Abort, Retry, Fail? :D`)
+            }
         });
         mzw.show()
     }
     showMoveRoomsWindow() {
-        Notification.Show("Todo")
+        let rooms = [...this.drawing.selectedRooms.values()]
+        if (rooms.length < 1) {
+            Notification.Show("Nessuna room selezionata")
+            return
+        }
+        let mw = new MoveRoomsWin(this, rooms, () => {
+            // nothing to do already done
+        })
     }
     private async deleteSelection() {
         if (this.drawing.selectedRooms.size > 1 || this.drawing.selected || this.drawing.selectedExit) {
@@ -1015,7 +1098,7 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
                 )
                 if (r.button != Button.Ok) {
                     this.mapper.mapmode = false
-                    this.message("Modalita Mapping DISABILITATA")
+                    this.setBottomMessage("Modalita Mapping DISABILITATA")
                     this.hideMapToolbar();
                     (<any>this.$win).jqxWindow("setTitle", this.windowTitle + (this.mapper.useLocal ? " (da locale v." + (this.mapper.getDB()?.version?.version||0) + ")" : " (pubblico v." + (this.mapper.getDB()?.version?.version||0) + ")"));        
                     return
@@ -1025,14 +1108,14 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
         this.mapper.mapmode = !this.mapper.mapmode;
         this.drawing.mapmode = this.mapper.mapmode
         if (this.mapper.mapmode) {
-            this.message("Modalita Mapping ABILITATA");
+            this.setBottomMessage("Modalita Mapping ABILITATA");
             (<any>$(this.$win)).jqxWindow('setTitle', 'Mapper (modalita\' mapping)');
             this.handleDraggingToolbox(this.$win);
             this.showMapToolbar();
 
         }
         else {
-            this.message("Modalita Mapping DISABILITATA")
+            this.setBottomMessage("Modalita Mapping DISABILITATA")
             this.hideMapToolbar();
             (<any>this.$win).jqxWindow("setTitle", this.windowTitle + (this.mapper.useLocal ? " (da locale v." + (this.mapper.getDB()?.version?.version||0) + ")" : " (pubblico v." + (this.mapper.getDB()?.version?.version||0) + ")"));
         }
@@ -1161,15 +1244,6 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     editRoom(rooms: Room[]) {
         const w = new EditRoomWin()
         w.editRooms(rooms)
-        return
-        /*Messagebox.ShowInput("Edit Room",
-                   "Modifica la room",
-                   JSON.stringify(room, null, 2), true).then(r=>{
-            if (r.button == 1 && r.result) {
-            const newRoom = JSON.parse(r.result)
-            this.mapper.setRoomData(room.id, newRoom)
-            }
-        })*/
     }
 
     search() {
@@ -1260,11 +1334,11 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
                 version = mDb.version;
             }
             if (!version) {
-                this.message(`Caricato mappe - versione sconosciuta`)
+                this.setBottomMessage(`Caricato mappe - versione sconosciuta`)
             } else 
-                this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
+                this.setBottomMessage(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
             
-            if (!this.mapper.current) this.onEmitMapperZoneChanged(this.mapper.idToZone.get(0));
+            this.selectPreviousZoneOrFallbackToFirst();
             this.refreshFavorites();
             (<any>this.$win).jqxWindow("setTitle", this.windowTitle + (useLocal ? " (da locale v." + (version?.version||0) + ")" : " (pubblico v." + (version?.version||0) + ")"));
         
@@ -1298,48 +1372,72 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
                 version = mDb.version;
             }
             if (!version) {
-                this.message(`Caricato mappe - versione sconosciuta`)
+                this.setBottomMessage(`Caricato mappe - versione sconosciuta`)
             } else 
-                this.message(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
+                this.setBottomMessage(`Caricato mappe v${version.version} ${version.date?"("+version.date+")":''} ${version.message?"["+version.message+"]":''}`)
             
-            if (!this.mapper.current) this.onEmitMapperZoneChanged(this.mapper.idToZone.get(0));
+            this.selectPreviousZoneOrFallbackToFirst();
             this.refreshFavorites();
             (<any>this.$win).jqxWindow("setTitle", this.windowTitle + (" (pubblico v." + (version?.version||0) + ")"));
         
         });
     }
 
-    public message(mess:string) {
-        this.$bottomMessage.text(mess);
-    }
-    public zoneMessage(mess:string) {
-        let items = (<any>this.$zoneList).jqxDropDownList('getItems');
-        let newIndex:number;
-        if (mess == null || !items || !items.length) {
-            (<any>this.$zoneList).jqxDropDownList('clear');
-
-            const zones = this.zones && this.zones.length ? [...this.zones].sort(this.zoneSort) : null
-            if (zones && mess) {
-                newIndex = zones.findIndex((z) => z.name == mess)
-            }
-            if (zones && zones.length) $.each(zones, (i, item) => {
-                (<any>this.$zoneList).jqxDropDownList("addItem", { 
-                    value: item.id.toString(),
-                    label : item.name + " (#" + item.id.toString() + ")"
-                });
-            });
-
-           if (mess && newIndex>-1) (<any>this.$zoneList).jqxDropDownList('selectIndex', newIndex > -1 ? newIndex : 0 ); 
+    private selectPreviousZoneOrFallbackToFirst() {
+        if (this.mapper.current) {
+            const zn = this.mapper.idToZone.get(this.mapper.current.zone_id);
+            const msg = { id: zn?.id, zone: zn };
+            this.onEmitMapperZoneChanged(msg);
+        } else if (this.zoneId) {
+            const zn = this.mapper.idToZone.get(this.zoneId);
+            const msg = { id: zn?.id, zone: zn };
+            this.onEmitMapperZoneChanged(msg);
+        }
+        else {
+            const zn = this.mapper.getZones()[0];
+            const msg = { id: zn?.id, zone: zn };
+            this.onEmitMapperZoneChanged(msg);
         }
     }
 
-    zoneSort(z1:Zone, z2:Zone):number {
-        let a = z1.name
-        let b = z2.name
-        a = a.replace(/^il |lo |la |le |l\' |i /i, "").trim()
-        b = b.replace(/^il |lo |la |le |l\' |i /i, "").trim()
-        return a.localeCompare(b);
+    public fillZonesDropDown(zones:Zone[]) {
+        const useLabels = this.mapper.getOptions().preferZoneAbbreviations;
+        
+        const prevIndex = (<any>this.$zoneList).jqxDropDownList('selectedIndex');
+        (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
+        (<any>this.$zoneList).jqxDropDownList('clear');
+
+        if (zones && zones.length) {
+            $.each(zones, (i, item) => {
+                (<any>this.$zoneList).jqxDropDownList("addItem", { 
+                    value: item.id.toString(),
+                    label: createZoneLabel(useLabels, true, item)
+                });
+            });
+            if (prevIndex>-1) (<any>this.$zoneList).jqxDropDownList('selectIndex', prevIndex);
+        };
     }
+
+    public setBottomMessage(mess:string) {
+        this.$bottomMessage.text(mess||"");
+        this.$bottomMessage.attr("title", mess||"");
+    }
+    public loadZonesIfNeeded(force: boolean) {
+        let items: any;
+        
+        // reread zones when mapper sends empty zone message or we don't have items in dropdown
+        if (force || !(items = (<any>this.$zoneList).jqxDropDownList('getItems')) || !items.length) {
+            this.fillZonesDropDown(this.zones)
+        }
+    }
+
+    // zoneSortByNameWithCleanup(z1:Zone, z2:Zone):number {
+    //     let a = z1.name
+    //     let b = z2.name
+    //     a = a.replace(/^il |lo |la |le |l\' |i /i, "").trim()
+    //     b = b.replace(/^il |lo |la |le |l\' |i /i, "").trim()
+    //     return a.localeCompare(b);
+    // }
 
     public show() {
         (<any>this.$win).jqxWindow("open");
