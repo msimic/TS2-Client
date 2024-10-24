@@ -700,7 +700,8 @@ export class Mapper {
         if (!value && !!oldV) {
             if (this.db.version) {
                 this.db.version.version++
-                this.db.version.message = "Modifiche locali"
+                if (!this.db.version.message)
+                    this.db.version.message = "Modifiche locali"
                 var now = new Date()
                 this.db.version.date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`
             }
@@ -835,6 +836,10 @@ export class Mapper {
 
     async saveLocalDbVersion(v:MapVersion) {
         await this.storage.setVersion(v.version || 1, v)
+        if (this.useLocal && this.db && this.db.version) {
+            this.db.version.message = v.message
+            this.db.version.version = v.version
+        }
     }
 
     async getOnlineVersion() {
@@ -1378,7 +1383,9 @@ export class Mapper {
             rooms: this.db.rooms,
             zones: this.db.zones,
             version: {
-                version: this.db.version ? this.db.version.version : 0
+                version: this.db.version ? this.db.version.version : 0,
+                date: this.db.version ? this.db.version.date : "",
+                message: this.db.version ? this.db.version.message : ""
             }
         }
         this.emitMessage.fire("Mappa esportata, scaricamento in corso.")
