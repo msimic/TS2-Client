@@ -2,7 +2,7 @@ import * as Util from "../../Core/util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "../jsScript";
 import { Messagebox } from "../../App/messagebox";
 import { CreateCodeMirror, circleNavigate } from "../../Core/util";
-import { Mudslinger } from "../../App/client";
+import { TsClient } from "../../App/client";
 declare let CodeMirror: any;
 
 

@@ -6,7 +6,7 @@ import { AliasEditor } from "../Scripting/windows/aliasEditor";
 import { TriggerEditor } from "../Scripting/windows/triggerEditor";
 import { JsScriptWin } from "../Scripting/windows/jsScriptWin";
 import { AboutWin } from "./windows/aboutWin";
-import { Mudslinger, setupWorkers } from "./client";
+import { TsClient, setupWorkers } from "./client";
 import { ProfilesWindow } from "./windows/profilesWindow";
 import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "../Scripting/windows/variablesEditor";
@@ -401,11 +401,11 @@ export class MenuBar {
         let logger = new OutputLogger();
 
         this.clickFuncs["installapp"] = (val) => {
-            Mudslinger.AskForInstall(true);
+            TsClient.AskForInstall(true);
         }
         
         this.clickFuncs["theme-default"] = (val) => {
-            Mudslinger.setTheme("metro", "light", "neat")
+            TsClient.setTheme("metro", "light", "neat")
         }
 
         this.clickFuncs["log-time"] = (val) => {
@@ -417,11 +417,11 @@ export class MenuBar {
         }
 
         this.clickFuncs["theme-light"] = (val) => {
-            Mudslinger.setTheme("metro", "light", "neat")
+            TsClient.setTheme("metro", "light", "neat")
         }
 
         this.clickFuncs["theme-dark"] = (val) => {
-            Mudslinger.setTheme("metrodark", "dark", "material")
+            TsClient.setTheme("metrodark", "dark", "material")
         }
 
         this.clickFuncs["connect"] = (val) => {
@@ -476,7 +476,7 @@ export class MenuBar {
         };
 
         this.clickFuncs["reset-settings"] = (val) => {
-            this.config.remove(new RegExp("^(?!alias)(?!trigger)"), () => {Mudslinger.setDefaults(this.config)});
+            this.config.remove(new RegExp("^(?!alias)(?!trigger)"), () => {TsClient.setDefaults(this.config)});
             location.reload();
         };
 

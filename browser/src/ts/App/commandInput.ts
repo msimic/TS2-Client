@@ -6,6 +6,7 @@ import { createPath, isTrue, throttle } from "../Core/util";
 import { EvtScriptEmitPrint, EvtScriptEvent, JsScript, ScripEventTypes } from "../Scripting/jsScript";
 import Split from "split.js";
 import { OutputWin } from "./windows/outputWin";
+import hotkeys from "hotkeys-js";
 
 export enum ScrollType {
     Bottom,
@@ -103,6 +104,13 @@ export class CommandInput {
 
     constructor(private aliasManager: AliasManager, private jsScript: JsScript,private config:UserConfig, private outputWin:OutputWin) {
         this.$cmdInput = $("#cmdInput");
+        
+        this.$cmdInput.on("focus", () => {
+            hotkeys.setScope('macro');
+        })
+        this.$cmdInput.on("blur", () => {
+            hotkeys.setScope('app');
+        })
 
         this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
         this.chkCmdAliases = $("#chkCmdAliases");

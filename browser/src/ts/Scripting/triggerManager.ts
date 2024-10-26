@@ -3,7 +3,7 @@ import { TrigAlItem } from "./windows/trigAlEditBase";
 import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import { ProfileManager } from "../App/profileManager";
-import { Mudslinger } from "../App/client";
+import { TsClient } from "../App/client";
 import { ConfigIf, escapeRegExp, escapeRegexReplacement, stripHtml } from "../Core/util";
 import { Notification } from "../App/messagebox";
 
@@ -294,7 +294,7 @@ export class TriggerManager {
             if (prof.autologin && prof.pass && !this.passSent) {
                 this.passSent = true;
                 setTimeout(()=>{ this.passSent = false;}, 1000);
-                const pass = Mudslinger.decrypt(prof.pass);
+                const pass = TsClient.decrypt(prof.pass);
                 this.EvtEmitTriggerCmds.fire({orig: 'autologin', cmds: [pass]});
             }
         }

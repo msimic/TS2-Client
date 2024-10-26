@@ -3,7 +3,7 @@ import { EventHook } from "../Core/event";
 import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
 import { ProfileManager } from "../App/profileManager";
-import { ConfigIf, escapeRegExp } from "../Core/util";
+import { ConfigIf, escapeRegExp, parseShortcutString } from "../Core/util";
 import { UserConfig } from "../App/userConfig";
 import hotkeys from 'hotkeys-js';
 
@@ -114,14 +114,16 @@ export class AliasManager {
     }
 
     public setupMacro(alias:TrigAlItem) {
-        hotkeys(alias.shortcut, 'macro',  function(event, handler){
-            event.preventDefault() 
-            alias.script && alias.script({}, alias.pattern);
+        const self = this
+        hotkeys(parseShortcutString(alias.shortcut), 'macro',  function(event, handler){
+            event.preventDefault()
+            self.createAliasScript(alias, [alias.pattern]); 
+            alias.script && alias.script({}, [alias.pattern], "");
           });
     }
 
     public precompileAliases() {
-        hotkeys.deleteScope('macro');
+        hotkeys.deleteScope('macro','macro');
 
         this.precompiledRegex.clear()
         for (const a of this.allAliases) {

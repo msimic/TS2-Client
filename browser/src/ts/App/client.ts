@@ -44,6 +44,7 @@ import { VersionsWin } from "./windows/versionsWindow";
 import { EvtLogExceeded, EvtLogWarning, OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./windows/layoutWindow";
 import { KeepAwake } from "../Core/keepAwake";
+import hotkeys from "hotkeys-js";
 
 declare global {
     interface JQuery {
@@ -779,7 +780,7 @@ export async function setupWorkers() {
       return Promise.resolve(null);
 }
 
-export namespace Mudslinger {
+export namespace TsClient {
     let theme_name: string = "metro";
     let theme_brightness: string = "light";
     let theme_codemirror: string = "neat";
@@ -1004,6 +1005,7 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
     }
 
     export async function init() {
+        hotkeys.filter = function(event) { return true;};
         jQuery.fn.extend({
             focusable: function() {
                 const inputs = this.find('input:visible, div:not(.CodeMirror) textarea:visible').first()
@@ -1066,4 +1068,4 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
     }
 }
 
-(<any>window).Mudslinger = Mudslinger;
+(<any>window).Mudslinger = TsClient;

@@ -3,7 +3,7 @@ import { Button, ButtonOK, Messagebox, messagebox } from "../messagebox";
 import { ProfileWindow } from "./profileWindow";
 import { Client } from "../client";
 import { Acknowledge, AskReload, circleNavigate } from "../../Core/util";
-import { Mudslinger } from "../client";
+import { TsClient } from "../client";
 import { EventHook } from "../../Core/event";
 import { LayoutManager } from "../layoutManager";
 import { WindowManager } from "../windowManager";
@@ -133,7 +133,7 @@ export class ProfilesWindow {
         const prof = new Profile();
         this.load();
         this.profileWin.show(prof, async (p) => {
-            prof.pass = Mudslinger.encrypt(prof.pass);
+            prof.pass = TsClient.encrypt(prof.pass);
             this.manager.create(p);
             if (p.useLayout)
                 await this.setProfileLayout(p.useLayout, p);
@@ -278,7 +278,7 @@ export class ProfilesWindow {
                     await this.setProfileLayout(p.useLayout, p);
 
                 if (oldPass != p.pass) {
-                    p.pass = Mudslinger.encrypt(p.pass);
+                    p.pass = TsClient.encrypt(p.pass);
                 }
                 if (oldName != p.name) {
                     this.manager.rename(p, oldName);

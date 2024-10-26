@@ -2,7 +2,7 @@ import { AppInfo } from "../appInfo";
 import { EventHook } from "./event";
 import { Button, Messagebox, messagebox } from "../App/messagebox";
 import { TrigAlItem } from "../Scripting/windows/trigAlEditBase";
-import { Mudslinger } from "../App/client";
+import { TsClient } from "../App/client";
 import { UserConfigData } from "../App/userConfig";
 
 export function htmlEscape(text:string) {
@@ -555,7 +555,7 @@ export function CreateCodeMirror(element:HTMLTextAreaElement) {
     let config = {
         mode: mode,
         lineWiseCopyCut: false,
-        theme: Mudslinger.GetCodeMirrorTheme(),
+        theme: TsClient.GetCodeMirrorTheme(),
         autoRefresh: true, // https://github.com/codemirror/CodeMirror/issues/3098
         matchBrackets: true,
         lineNumbers: true,
@@ -812,6 +812,40 @@ export function AskReload() {
             window.location.reload()
         }
     });
+}
+
+function reverseObject(obj:{ [key: string]: string }) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [value, key])
+    );
+  }
+
+const shortcutReplacements:{ [key: string]: string } = {
+    "⌃":"ctrl",
+    "⇧":"shift",
+    "⌥":"alt"
+}
+const inverseShortcutRep = reverseObject(shortcutReplacements)
+
+export function parseShortcutString(key:string) {
+    const keys = key.split("+")
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (k in inverseShortcutRep) {
+            keys[i] = inverseShortcutRep[k]
+        }
+    }
+    return keys.join("+")
+}
+
+export function formatShortcutString(keys:string[]) {
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (k in shortcutReplacements) {
+            keys[i] = shortcutReplacements[k]
+        }
+    }
+    return keys.join("+")
 }
 
 export function getVersionNumbers(ver:string):number[] {

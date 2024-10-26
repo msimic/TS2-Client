@@ -1,4 +1,4 @@
-import { Mudslinger } from "../../App/client";
+import { TsClient } from "../../App/client";
 import {JsScript} from "../jsScript";
 import { CreateCodeMirror } from "../../Core/util";
 

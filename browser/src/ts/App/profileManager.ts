@@ -1,4 +1,4 @@
-import { Mudslinger } from "./client";
+import { TsClient } from "./client";
 import { EventHook } from "../Core/event";
 import { UserConfig } from "./userConfig";
 import { Messagebox, messagebox } from "./messagebox";
@@ -188,21 +188,21 @@ export class ProfileManager {
     private loadConfigFromStorage(config:UserConfig):UserConfig {
         const cfg = new UserConfig();
         cfg.clone(config.data.name, config, this.saveConfigToStorage(config.data.name));
-        Mudslinger.setDefaults(cfg);
+        TsClient.setDefaults(cfg);
         return cfg;
     }
 
     private newConfigFromStorage(name: string):UserConfig {
         const cfg = new UserConfig();
         cfg.clone(name, null, this.saveConfigToStorage(name));
-        Mudslinger.setDefaults(cfg);
+        TsClient.setDefaults(cfg);
         return cfg;
     }
 
     private createConfigFromString(str:string, name:string):UserConfig {
         const cfg = new UserConfig();
         cfg.init(name, str,this.saveConfigStringToStorage(name));
-        Mudslinger.setDefaults(cfg);
+        TsClient.setDefaults(cfg);
         return cfg;
     }
 

@@ -3,8 +3,8 @@
 import hotkeys from "hotkeys-js";
 import { Button, messagebox, Messagebox, Notification } from "../../App/messagebox";
 import * as Util from "../../Core/util";
-import { circleNavigate } from "../../Core/util";
-import { Mudslinger } from "../../App/client";
+import { circleNavigate, formatShortcutString } from "../../Core/util";
+import { TsClient } from "../../App/client";
 import { debounce } from "lodash";
 
 declare let CodeMirror: any;
@@ -695,59 +695,25 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     async readShortcut() {
-        function pkeys(keys:any[], key:any) {
-            if (keys.indexOf(key) === -1) keys.push(key);
-            return keys;
-        }
-        function pkeysStr(keysStr:any[], key:any) {
-            if (keysStr.indexOf(key) === -1) keysStr.push(key);
-            return keysStr;
-        }
+
         hotkeys.deleteScope("macroInput");
-        const keys:number[] = [];
-        const keyStr:string[] = [];
-        /*hotkeys.filter = function(event) {
-            var target:any = event.target || event.srcElement;
-            var tagName = target.tagName;
-            return !(target.isContentEditable || tagName == 'INPUT' || tagName == 'SELECT' || tagName == 'TEXTAREA') || target.id == "cmdInput";
-          };*/
-          hotkeys.filter = function(event) { return true;};
-          hotkeys('*', { keyup: true, scope: "macroInput"}, (evn) => {
-              keys.splice(0, keys.length);
-              keyStr.splice(0, keyStr.length);
-          });
+        let keys:string[] = [];
+        let keyStr:string = "";
+
         hotkeys('*', "macroInput", (evn) => {
             evn.preventDefault();
-            if (hotkeys.shift) {
-                pkeys(keys, 16);
-                pkeysStr(keyStr, 'shift');
-            }
-            let special = false;
-            if (hotkeys.ctrl || hotkeys.control) {
-                pkeys(keys, 17);
-                pkeysStr(keyStr, 'ctrl');
-                special = true;
-            }
-            if (hotkeys.alt) {
-                pkeys(keys, 18);
-                pkeysStr(keyStr, 'alt');
-                special = true;
-            }
-            if (hotkeys.command) {
-                pkeys(keys, 91);
-                pkeysStr(keyStr, 'command');
-                special = true;
-            }
-            if (evn.charCode) keyStr.push(String.fromCharCode(evn.charCode));
-            if (keys.indexOf(evn.keyCode) === -1) keys.push(evn.keyCode);
-            $("#message0").text(keyStr.join("+"));
+            keys = hotkeys.getPressedKeyString()
+            keyStr = formatShortcutString(keys)
+            $("#message0").text(keyStr);
         });
+
         hotkeys.setScope("macroInput");
-        const res = await Messagebox.Show("Configurazione Macro", "Premi i tasti per attivare questo alias.");
+        const res = await Messagebox.ShowWithButtons("Configurazione Macro", "Premi i tasti per attivare questo alias.", "Ok", "Annulla");
         hotkeys.deleteScope("macroInput");
         hotkeys.setScope("macro");
+
         if (res.button == Button.Ok && keyStr && keyStr.length) {
-            this.$macroLabel.text(keyStr.join("+"))
+            this.$macroLabel.text(keyStr)
         } else {
             this.$macroLabel.text("");
             this.$macroCheckbox.prop("checked", false);
