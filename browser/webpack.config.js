@@ -4,7 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
-  entry: './build/browser/src/ts/client.js',
+  entry: './build/browser/src/ts/App/client.js',
   output: {
     path: path.resolve(__dirname, "static/public"),
     filename: 'mudslinger-[contenthash].js'

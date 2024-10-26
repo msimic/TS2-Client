@@ -7,6 +7,7 @@
         "**/CVS": true,
         "**/node_modules": true,
         "**/build": true,
+        "**/dist": true,
         "**/.DS_Store": true,
         "**/src/**/*.js": true,
         "**/static/**/*.js": true,

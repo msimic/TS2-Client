@@ -1,5 +1,5 @@
 import { openDB, IDBPDatabase, DBSchema } from 'idb';
-import { UserConfig, UserConfigData } from '../userConfig'
+import { UserConfig, UserConfigData } from '../App/userConfig'
 
 export interface UserConfigDBV1 extends DBSchema {
     configs: {

@@ -1,5 +1,5 @@
-import {ExitDir, Mapper, MapperOptions, Room, RoomExit, Zone} from "../../mapper"
-import { circleNavigate, colorCssToRGB, colorToHex } from "../../util";
+import {ExitDir, Mapper, MapperOptions, Room, RoomExit, Zone} from "../mapper"
+import { circleNavigate, colorCssToRGB, colorToHex } from "../../Core/util";
 
 export type BooleanFunction = (opt: MapperOptions) => void;
 

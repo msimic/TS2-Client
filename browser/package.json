@@ -60,7 +60,7 @@
     "electron-is-dev": "^1.2.0",
     "electron-reload": "^2.0.0-alpha.1",
     "highlight.js": "^11.7.0",
-    "hotkeys-js": "^3.13.3",
+    "hotkeys-js": "^3.13.7",
     "idb": "^7.1.1",
     "jquery": "^3.6.0",
     "jqwidgets-framework": "^9.1.6",

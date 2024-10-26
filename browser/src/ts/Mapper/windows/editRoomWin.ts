@@ -1,8 +1,8 @@
 import { cloneDeep } from "lodash";
-import {ExitDir, Room, RoomExit} from "../../mapper"
-import { circleNavigate, colorCssToRGB, colorToHex } from "../../util";
-import { MapperDrawing } from "../../mapperDrawing";
-import { Messagebox } from "../../messagebox";
+import {ExitDir, Room, RoomExit} from "../mapper"
+import { circleNavigate, colorCssToRGB, colorToHex } from "../../Core/util";
+import { MapperDrawing } from "../mapperDrawing";
+import { Messagebox } from "../../App/messagebox";
 
 export class EditRoomWin {
     private $win: JQuery;

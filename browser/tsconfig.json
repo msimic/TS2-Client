@@ -22,6 +22,6 @@
         "node_modules"
     ],
     "include": [
-        "./src/ts/*", "custom.d.ts"
+        "./src/ts/**/*.ts", "custom.d.ts"
     ]
 }

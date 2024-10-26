@@ -5,7 +5,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-  entry: './src/ts/client',
+  entry: './src/ts/App/client',
   output: {
     path: path.resolve(__dirname, "static/public"),
     filename: 'mudslinger-[contenthash].js',
