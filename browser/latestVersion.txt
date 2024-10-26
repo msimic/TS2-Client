@@ -1,6 +1,15 @@
 Rewrite del client per renderlo piu performante
 
-- feature: salvataggio profilo in IndexedDB per piu performance
-- feature: mapper molto ampliato e con modalita mapping
-- feature: aggiunta funzione printText()
-- miglioramenti al layout editor
+features:
+- mapper molto ampliato e con modalita mapping
+- miglioramenti al layout editor, ora si possono definire i contenuti dei pannelli
+- implementato le macro negli alias
+
+scripting:
+- aggiunta funzione printRaw() e sendRaw()
+- send e sendRaw accettano secondo parametro che definisce se mostrare a schermo i comandi
+- aggiunte funzioni append e prepend per i trigger
+
+performance:
+- salvataggio profilo in IndexedDB
+- alcuni metodi per consumare meno risorse cpu

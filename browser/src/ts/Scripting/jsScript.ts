@@ -595,6 +595,10 @@ function CreateFunction(name:string, args:any[], body:string, scope:any, values:
     }
     return Function(scope, "function "+(name?name:"")+"("+args.join(", ")+") {\n"+body+"\n}\nreturn "+name+";").apply(scope, values);
 };
+export const API: { [key: string]: any} = {
+    functions: {}
+}
+
 function makeScript(owner:string, userScript: string, argSignature: string,
     classManager: ClassManager,
     aliasManager: AliasManager,
@@ -646,7 +650,12 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         let v = scriptManager.getVariables(null).filter(v => v.name == vr)[0];
         if (v) scriptManager.delVariable(v);
     };
-
+    const append = function(sWith: string) {
+        if (triggerManager) triggerManager.append(sWith);
+    }
+    const prepend = function(sWith: string) {
+        if (triggerManager) triggerManager.prepend(sWith);
+    }
     const sub = function(sWhat: string, sWith:string) {
         if (triggerManager) triggerManager.subBuffer(sWhat.split("\n")[0], sWith);
     };
@@ -751,6 +760,19 @@ function makeScript(owner:string, userScript: string, argSignature: string,
             }
         }
     };
+    const sendRaw = function(cmd: string, silent = false) {
+        if (cmd == undefined || cmd == null) return;
+
+        let cmds = cmd.split(';')
+        cmds = cmds.map(cmd => {
+            if (cmd && cmd[0] != "~") {
+                cmd = "~" + cmd
+            }
+            return cmd
+        });
+        cmd = cmds.join("\n")
+        EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
+    };
     const send = function(cmd: string, silent = false) {
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
@@ -836,12 +858,15 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     }
 
     const api = {
+        append: append,
+        prepend: prepend,
         clone: clone,
         getAlias: getAlias,
         getTrigger: getTrigger,
         print: print,
-        printText: printText,
+        printRaw: printText,
         send: send,
+        sendRaw: sendRaw,
         throttle: throtle,
         escapeHTML: htmlEscape,
         _errEmit: _errEmit,
@@ -892,7 +917,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         map:map,
         scriptManager:scriptManager
     }
-
+    API.functions = api;
     const scriptSource = `
         const { ${Object.keys(api).join(', ')} } = api;
         with (this) {

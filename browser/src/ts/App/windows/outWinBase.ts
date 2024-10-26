@@ -310,17 +310,17 @@ export class OutWinBase {
             // cosi per il futuro posso manipulare il buffer
             let data:[string,string] = [this.lineText, this.appendBuffer];
             this.EvtLine.fire(data);
-            if (data[1] != this.appendBuffer) {
+            //if (data[1] != this.appendBuffer) {
                 //this.outputChanged(data);
-            }
+            //}
             this.appendBuffer = "";
             this.newLine();
         } else {
             let data:[string,string] = [this.lineText, this.appendBuffer];
             this.EvtBuffer.fire(data);
-            if (data[1] != this.appendBuffer) {
+            //if (data[1] != this.appendBuffer) {
                 //this.outputChanged(data);
-            }
+            //}
         }
     };
 

@@ -648,11 +648,11 @@
   },
   "print": {
     "!type": "fn(testo: string, finestra?: string)",
-    "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
+    "!doc": "Visualizza nella finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale."
   },
-  "printText": {
+  "printRaw": {
     "!type": "fn(testo: string, finestra?: string)",
-    "!doc": "Visualizza nell finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale.\n\rIl testo verra mandato puro senza html."
+    "!doc": "Visualizza nella finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale.\n\rIl testo verra mandato puro senza parsing e html."
   },
   "highlight": {
     "!type": "fn(foreground: string, background: string, blink?: bool)",
@@ -671,8 +671,12 @@
     "!doc": "Se usato all interno di un trigger la linea che ha scattato il trigger verra' mostrata nell'output della finestra 'window'."
   },
   "send": {
-    "!type": "fn(command: string)",
-    "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati."
+    "!type": "fn(command: string, silent: bool)",
+    "!doc": "Manda uno o piu' comandi separati da ; al mud. Puo contenere alias che verranno parsati. Se silent e' true non manda a schermo"
+  },
+  "sendRaw": {
+    "!type": "fn(command: string, silent?: bool)",
+    "!doc": "Manda uno o piu' comandi separati da ; al mud.\nI comandi non verranno parsati per alias (come prefissare con tilde)\nSe silent e' true non manda a schermo"
   },
   "showWindow": {
     "!type": "fn(window: string)",

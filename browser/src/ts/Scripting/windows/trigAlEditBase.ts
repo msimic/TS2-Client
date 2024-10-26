@@ -156,7 +156,7 @@ export abstract class TrigAlEditBase {
                         <div class="pane-options">
                             <label class="macroContainer">
                                 Macro <span class="lblAliasShortcut"></span>
-                                <input type="checkbox" title="Configura macro per tastiera (solo alias non regex)" class="winEdit-chkMacro" disabled />
+                                <input type="checkbox" title="Configura macro per tastiera (shortcut)" class="winEdit-chkMacro" disabled />
                             </label>
                             <label>
                                 Abilitato
@@ -564,8 +564,8 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
 
         if (this.$regexCheckbox.is(":checked") && this.$macroCheckbox.is(":checked")) {
-            Messagebox.Show("Errore", "Un alias regex non puo' essere usato come una macro.");
-            return;
+            //Messagebox.Show("Errore", "Un alias regex non puo' essere usato come una macro.");
+            //return;
         }
 
         trg.pattern = this.$pattern.val()
@@ -708,7 +708,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         });
 
         hotkeys.setScope("macroInput");
-        const res = await Messagebox.ShowWithButtons("Configurazione Macro", "Premi i tasti per attivare questo alias.", "Ok", "Annulla");
+        const res = await Messagebox.ShowWithButtons("Configurazione Macro", "Premi i tasti per attivare questo alias e poi premi Ok.\nCerte combinazioni potrebbero essere usate dal tuo navigatore.\nNon usare un tasto singolo che e' una lettera, ma usa combinazioni.\nLe macro si possono attivare solo quando ti trovi nella linea comandi.", "Ok", "Annulla");
         hotkeys.deleteScope("macroInput");
         hotkeys.setScope("macro");
 

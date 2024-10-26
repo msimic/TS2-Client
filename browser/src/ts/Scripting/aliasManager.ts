@@ -1,7 +1,7 @@
 import { TrigAlItem } from "./windows/trigAlEditBase";
 import { EventHook } from "../Core/event";
 import { ClassManager } from "./classManager";
-import { EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
+import { API, EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
 import { ProfileManager } from "../App/profileManager";
 import { ConfigIf, escapeRegExp, parseShortcutString } from "../Core/util";
 import { UserConfig } from "../App/userConfig";
@@ -117,8 +117,13 @@ export class AliasManager {
         const self = this
         hotkeys(parseShortcutString(alias.shortcut), 'macro',  function(event, handler){
             event.preventDefault()
-            self.createAliasScript(alias, [alias.pattern]); 
-            alias.script && alias.script({}, [alias.pattern], "");
+            if (!alias.is_script) {
+                let value = self.createSimpleAliasCommands(alias, [alias.pattern], self);
+                API.functions?.send && API.functions.send(value)
+            } else {
+                self.createAliasScript(alias, [alias.pattern]); 
+                alias.script && alias.script({}, [alias.pattern], "");
+            }
           });
     }
 
@@ -200,11 +205,7 @@ export class AliasManager {
             if (!match || match == undefined) {
                 continue;
             }
-            /*if (fromScript && this.checkLoop(re.source)) {
-                EvtScriptEmitPrint.fire({ owner: "AliasManager", message: "Trovato possibile ciclo infinito negli alias: " +alias.pattern})
-                continue;
-            }
-            if (fromScript) this.logScriptAlias(re.source);*/
+
             if (alias.is_script) {
                 this.createAliasScript(alias, match);
                 if (alias.script) {

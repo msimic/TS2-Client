@@ -612,5 +612,17 @@ export class TriggerManager {
         this.line = "";
         this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
     }
+
+    prepend(sWith: string) {
+        this.buffer = "<span>" + sWith + "</span>" + this.buffer;
+        this.line = "<span>" + sWith + "</span>" + this.line;
+        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+    }
+
+    append(sWith: string) {
+        this.buffer = this.buffer.replace("<br>", "<span>" + sWith + "</span><br>");
+        this.line = this.line.endsWith('\n') ? this.line.replace("\n", sWith + "\n") : this.line + sWith;
+        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+    }
 }
 
