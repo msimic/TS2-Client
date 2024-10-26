@@ -1,5 +1,5 @@
 import { Control, LayoutDefinition, LayoutManager, PanelPosition } from "../layoutManager";
-import { Messagebox } from "../messagebox";
+import { Button, Messagebox } from "../messagebox";
 import { ProfileManager } from "../profileManager";
 import * as Util from "../../Core/util";
 import { WindowDefinition, WindowManager } from "../windowManager";
@@ -299,7 +299,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private getTextColor() {
-        let w = this.layout.color;
+        let w = this.layout?.color;
         if (w == undefined || !w) {
             return null
         } else {
@@ -314,7 +314,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private getBackColor() {
-        let w = this.layout.background;
+        let w = this.layout?.background;
         if (w == undefined || !w) {
             return null
         } else {
@@ -543,12 +543,88 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         (<any>this.$win).jqxWindow("close");
     }
 
-    public show() {
+    public async show() {
 
         if (!this.profileManager.getCurrent()) {
             Messagebox.Show("Errore","Impossibile modificare il layout del profilo base.");
             this.hide();
             return;
+        }
+        const prof = this.profileManager.getProfile(this.profileManager.getCurrent())
+
+        if (!prof.useLayout) {
+            const r = await Messagebox.ShowWithButtons("Errore","Hai scelto di non usare il layout per questo profilo.\nSe vuoi partire da un layout vuoto rispondi Si.\nAltrimenti sarebbe meglio abilitare la predisposizione schermo nel profilo.", "Si", "No");
+            if (r.button == Button.Ok) {
+                prof.useLayout = true;
+                if (!prof.layout) {
+                    prof.layout = {
+                        version: 0,
+                        customized: true,
+                        color: "white",
+                        background: "black",
+                        panes: [{
+                            "position": 1,
+                            "id": "row-top-left",
+                            "background": "transparent",
+                            "height": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 2,
+                            "id": "row-top-right",
+                            "background": "transparent",
+                            "height": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 3,
+                            "id": "column-right-top",
+                            "background": "transparent",
+                            "width": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 4,
+                            "id": "column-right-bottom",
+                            "background": "transparent",
+                            "width": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 5,
+                            "id": "row-bottom-left",
+                            "background": "transparent",
+                            "height": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 6,
+                            "id": "row-bottom-right",
+                            "background": "transparent",
+                            "height": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 7,
+                            "id": "column-left-top",
+                            "background": "transparent",
+                            "width": "",
+                            "autoexpand": false
+                          },
+                          {
+                            "position": 8,
+                            "id": "column-left-bottom",
+                            "background": "transparent",
+                            "width": "",
+                            "autoexpand": false
+                          }],
+                        items: []
+                    }
+                }
+            } else {
+                this.hide();
+                return;
+            }
         }
 
         this.layout = this.layoutManager.getCurrent();

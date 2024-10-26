@@ -710,6 +710,14 @@
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita un evento con ID."
   },
+  "append": {
+    "!type": "fn(str: string)",
+    "!doc": "Da usare nei trigger. Aggiunge a fine riga la stringa str."
+  },
+  "prepend": {
+    "!type": "fn(str: string)",
+    "!doc": "Da usare nei trigger. Aggiunge a inizio riga la stringa str."
+  },
   "link": {
     "!type": "fn(text: string, click: fn(), hover?: string)",
     "!doc": "Crea a schermo un link clickabile che esegue la funzione 'click'. Opzionalmente 'hover' viene mostrato quando il mouse e' sopra al link."

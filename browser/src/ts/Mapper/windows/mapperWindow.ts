@@ -148,6 +148,7 @@ export class MapperWindow implements IBaseWindow {
     }
     resizeSensor: ResizeObserver;
     windowTitle = "Mapper";
+    selecting = false
 
     constructor(private mapper:Mapper,private windowManager: WindowManager) {
         const me = this
@@ -294,10 +295,10 @@ export class MapperWindow implements IBaseWindow {
         mnu.jqxMenu('setItemOpenDirection', 'favorites', 'left', 'up');
         this.$zoom = $("#zoom", this.$win);
         this.$level = $("#level", this.$win);
-        let selecting = false
+        
         $("#zonelist", this.$win).on("select", (ev:any) => {
-            if (selecting || ev.args.type == "api") return;
-            selecting = true
+            if (this.selecting || ev.args.type == "api") return;
+            this.selecting = true
             try {
                 var selection = ev.args.item.value
                 if (selection) {
@@ -308,7 +309,7 @@ export class MapperWindow implements IBaseWindow {
                     }
                 }
             } finally {
-                selecting = false
+                this.selecting = false
             }
         })
 
@@ -1428,7 +1429,7 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
         
         // reread zones when mapper sends empty zone message or we don't have items in dropdown
         if (force || !(items = (<any>this.$zoneList).jqxDropDownList('getItems')) || !items.length) {
-            this.fillZonesDropDown(this.zones)
+            if (!this.selecting) this.fillZonesDropDown(this.zones)
         }
     }
 
