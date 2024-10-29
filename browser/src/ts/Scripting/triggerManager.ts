@@ -355,7 +355,7 @@ export class TriggerManager {
             const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
                 if (d == undefined)
                     return m;
-                return d == 0 ? "`" + line + "`" : (match[parseInt(d)] || '');
+                return d == 0 ? "" + line + "" : (match[parseInt(d)] || '');
             })
             resLines.push(rl)  
         }

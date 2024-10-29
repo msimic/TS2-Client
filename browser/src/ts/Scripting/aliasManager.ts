@@ -230,7 +230,7 @@ export class AliasManager {
             const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
                 if (d == undefined)
                     return m;
-                return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
+                return (d == 0 ? match.input : match[parseInt(d)]) || "";
             });
             resLines.push(rl)  
         }
