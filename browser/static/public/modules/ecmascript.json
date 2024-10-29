@@ -1,6 +1,26 @@
 {
   "!name": "ecmascript",
   "!define": {
+    "windowdata": {
+      "name": "string",
+      "x": "number",
+      "y": "number",
+      "w": "number",
+      "h": "number",
+      "visible": "boolean",
+      "collapsed": "boolean",
+      "docked": "boolean",
+      "font": "boolean",
+      "fontSize": "boolean"
+    },
+    "windowdefinition": {
+      "window":"{}",
+      "custom":"boolean",
+      "output":"{}",
+      "data":"windowdata",
+      "created":"boolean",
+      "initialized":"boolean"
+    },
     "Error.prototype": "Error.prototype",
     "propertyDescriptor": {
       "enumerable": "bool",
@@ -687,7 +707,7 @@
     "!doc": "Nasconde la finestra window. Si puo accedere ad essa dal menu finestre"
   },
   "createWindow": {
-    "!type": "fn(window: string, windowData?: ?)",
+    "!type": "fn(window: string, windowData?: windowdata) -> windowdefinition",
     "!doc": "Crea la finestra window, opzionalmente con dati per la creazione windowData"
   },
   "destroyWindow": {
@@ -709,6 +729,14 @@
   "toggleEvent": {
     "!type": "fn(id: string, state: bool)",
     "!doc": "Abilita o disabilita un evento con ID."
+  },
+  "append": {
+    "!type": "fn(str: string)",
+    "!doc": "Da usare nei trigger. Aggiunge a fine riga la stringa str."
+  },
+  "prepend": {
+    "!type": "fn(str: string)",
+    "!doc": "Da usare nei trigger. Aggiunge a inizio riga la stringa str."
   },
   "link": {
     "!type": "fn(text: string, click: fn(), hover?: string)",

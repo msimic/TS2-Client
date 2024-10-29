@@ -1,6 +1,6 @@
 import { TsClient } from "../../App/client";
 import {JsScript} from "../jsScript";
-import { CreateCodeMirror } from "../../Core/util";
+import { CreateCodeMirror, refreshVariablesInTern } from "../../Core/util";
 
 declare let CodeMirror: any;
 
@@ -40,7 +40,7 @@ export class JsScriptWin {
         const win_h = $(window).innerHeight()-20;
         (<any>this.$win).jqxWindow({keyboardCloseKey :'none',width: Math.min(550, win_w), height: Math.min(400, win_h), showCollapseButton: true});
 
-        this.codeMirror = CreateCodeMirror(win.getElementsByClassName("winJsScript-code")[0] as HTMLTextAreaElement)
+        this.codeMirror = CreateCodeMirror(win.getElementsByClassName("winJsScript-code")[0] as HTMLTextAreaElement, this.jsScript)
 
         $(this.codeMirror.getWrapperElement()).css("height","100%");
 
@@ -70,6 +70,10 @@ export class JsScriptWin {
     public show() {
         (<any>this.$win).jqxWindow("open");
         (<any>this.$win).jqxWindow("bringToFront");
+        const script = this.jsScript
+        const cm = this.codeMirror
+        refreshVariablesInTern(cm, script);
     }
+    
 }
 

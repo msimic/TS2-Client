@@ -130,6 +130,12 @@ export enum EditMode {
 
 export class MapperDrawing {
     public zoneId: number;
+    public customZoneColor():string {
+        if (this.zoneId) {
+            return this.mapper.idToZone.get(this.zoneId).backColor||null;
+        }
+        return null
+    }
     mouseLinkData: { room: Room; dir: ExitDir, point:Point };
     mouseLinkDataStart: { room: Room; dir: ExitDir, point:Point };
     mouseLinkDataEnd: { room: Room; dir: ExitDir, point:Point };
@@ -1088,7 +1094,7 @@ export class MapperDrawing {
         context.lineWidth = (0.6 * this.scale)|0;
 
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = (this.backColor || '#C5BFB1');
+        context.fillStyle = (this.customZoneColor() || this.backColor || '#C5BFB1');
         context.fillRect(0, 0, canvas.width, canvas.height);
         
         if (this.mapmode) {

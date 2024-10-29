@@ -61,14 +61,18 @@ export class OutWinBase {
         }
         if (this.mouseWasDown) {
             this.mouseWasDown = false;
+            
             const testo = document.getSelection().toString().trim();
             if (testo) {
-                if (!navigator.clipboard){
-                    document.execCommand('copy');
-                } else {
-                    navigator.clipboard.writeText(testo).then(()=>{
-                        Notification.Show("Selezione copiata automaticamente", true);
-                    });
+                let startNode = document.getSelection().anchorNode
+                if (startNode && this.$rootElem[0].contains(startNode)) {
+                    if (!navigator.clipboard){
+                        document.execCommand('copy');
+                    } else {
+                        navigator.clipboard.writeText(testo).then(()=>{
+                            Notification.Show("Selezione copiata automaticamente", true);
+                        });
+                    }
                 }
             }
             $("#cmdInput").focus();

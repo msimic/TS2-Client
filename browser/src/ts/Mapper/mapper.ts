@@ -290,6 +290,7 @@ export interface Favorite {
 };
 
 export class Mapper {
+    nonotify: boolean;
     deleteZone(zoneId: number) {
         let rooms = this.getZoneRooms(zoneId)
         for (const r of rooms) {
@@ -341,14 +342,23 @@ export class Mapper {
     
     }
     deleteRooms(rooms: Room[]) {
+        let old = (this.current)
         for (const rm of rooms) {
-            const index = this.db.rooms.findIndex((r,i) => r == rm)
+            let index = this.db.rooms.findIndex((r,i) => r == rm)
             if (index>-1) {
+                this.deleteExitsReferencing(rm)
+                this.db.rooms.splice(index, 1)
+            } else if ((index = this.db.rooms.findIndex((r,i) => r.id == rm.id)) > -1) {
                 this.deleteExitsReferencing(rm)
                 this.db.rooms.splice(index, 1)
             }
         }
         this.prepare()
+        if (old) {
+            this.zoneChanged.fire({ id: old.zone_id, zone: this.idToZone.get(old.zone_id)})
+        } else {
+            this.zoneChanged.fire({ id: null, zone: null})
+        }
     }
     deleteExitsReferencing(rm: Room) {
         for (const room of this.db.rooms) {
@@ -536,8 +546,8 @@ export class Mapper {
         this._useItalian = value;
     }
 
-    private lastStep:Step = null;
     private manualSteps:Step[]=[]
+    public lastStep:Step = null;
     public clearManualSteps() {
         this.manualSteps.splice(0, this.manualSteps.length)
     }
@@ -661,7 +671,7 @@ export class Mapper {
                 this.setRoomById(zr[0].id)
             }
         } else {
-            this.zoneChanged.fire({
+            if (!this.nonotify) this.zoneChanged.fire({
                 id: zid, zone: this.idToZone.get(zid)
             })
         }
@@ -726,7 +736,7 @@ export class Mapper {
         this.roomVnum = value?.vnum
         if (this._prevZoneId != this._zoneId) {
             this._prevZoneId = this._zoneId
-            this.zoneChanged.fire({
+            if (!this.nonotify) this.zoneChanged.fire({
                 id: this._zoneId,
                 zone: this.idToZone.get(this._zoneId)
             })
@@ -759,7 +769,7 @@ export class Mapper {
     }
     public pathFinder: PathFinder<Step>;
     private _vnumVariable: string = "TSRoom";
-    private exitsVariable: string = "Exits";
+    public exitsVariable: string = "Exits";
     private _autoSync: boolean = true;
     public get autoSync(): boolean {
         return this._autoSync;
@@ -932,7 +942,7 @@ export class Mapper {
                     //
                     const newVnum = (<any>d.value).newValue;
 
-                    setTimeout(() => {
+                    if (newVnum) setTimeout(() => {
                         //console.log("got vnum " + newVnum)
                         if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
                             console.log("discarding " + this.discardWalkStep)
@@ -991,7 +1001,7 @@ export class Mapper {
         })
     }
 
-    private updateRoomOnMovement(room: Room) {
+    public updateRoomOnMovement(room: Room) {
         const oldExits = room.exits
         room.exits = {}
         console.log("updateRoomOnMovement")
@@ -1016,10 +1026,10 @@ export class Mapper {
         const sett = this.scripting.getVariableValue("TSSettore")
         room.name = this.scripting.getVariableValue("RoomName"),
         room.description = (this.scripting.getVariableValue("RoomDesc")??"").toString().replace(/\r/g,""),
-        room.vnum = this.scripting.getVariableValue("TSRoom")
+        room.vnum = parseInt(this.scripting.getVariableValue("TSRoom")||0)
         if (!room.type) room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
         
-        this.activeExits.forEach((e)=>{
+        if (this.activeExits) this.activeExits.forEach((e)=>{
             if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
                 room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
             } else if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && !oldExits[<ExitDir>Long2ShortExit.get(e)]) {
@@ -1045,7 +1055,7 @@ export class Mapper {
         const toRoom:Room = {
             id: 0,
             name: this.scripting.getVariableValue("RoomName"),
-            description: this.scripting.getVariableValue("RoomDesc"),
+            description: (this.scripting.getVariableValue("RoomDesc")??"").toString().replace(/\r/g,""),
             exits: {},
             zone_id: fromRoom.zone_id,
             color: null,
@@ -1182,34 +1192,39 @@ export class Mapper {
 
     private prepare() {
         const oldCurrent = this.current
-        this.vnumToRoom.clear();
-        this.idToRoom.clear();
-        this.idToZone.clear();
-        this.roomIdToZoneId.clear();
-        this.zoneRooms.clear();
-        this._zoneRoomsByLevel.clear();
-        this.currentWalk = null;
-        this.current = null;
-        this.manualSteps = [];
-        this.walkQueue = [];
-        this.loadFavorites();
-        if (!this.db) return;
+        try {
+            this.nonotify = true
+            this.vnumToRoom.clear();
+            this.idToRoom.clear();
+            this.idToZone.clear();
+            this.roomIdToZoneId.clear();
+            this.zoneRooms.clear();
+            this._zoneRoomsByLevel.clear();
+            this.currentWalk = null;
+            this.current = null;
+            this.manualSteps = [];
+            this.walkQueue = [];
+            this.loadFavorites();
+            if (!this.db) return;
 
-        for (const zn of this.db.zones) {
-            if (zn.id) {
-                this.idToZone.set(zn.id, zn);
-                this.zoneRooms.set(zn.id, []);
-                this._zoneRoomsByLevel.set(zn.id, new Map<number, Room[]>());
+            for (const zn of this.db.zones) {
+                if (zn.id) {
+                    this.idToZone.set(zn.id, zn);
+                    this.zoneRooms.set(zn.id, []);
+                    this._zoneRoomsByLevel.set(zn.id, new Map<number, Room[]>());
+                }
             }
-        }
 
-        for (const rm of this.db.rooms) {
-            this.prepareRoom(rm);
-        }
+            for (const rm of this.db.rooms) {
+                this.prepareRoom(rm);
+            }
 
-        this.createGraph();
-        this.roomChanged.fire({id:-1, vnum:-1,room:null})
-        this.zoneChanged.fire({id:-1,zone:null})
+            this.createGraph();
+            if (!this.nonotify) this.roomChanged.fire({id:-1, vnum:-1,room:null})
+            if (!this.nonotify) this.zoneChanged.fire({id:-1,zone:null})
+        } finally {
+            this.nonotify = false
+        }
         if (oldCurrent && (this._current = this.getRoomById(oldCurrent.id))) {
             this.zoneChanged.fire({ id: oldCurrent.zone_id, zone: this.getRoomZone(oldCurrent.id)})
             this.roomChanged.fire({id: oldCurrent.id, vnum: oldCurrent.vnum, room: oldCurrent})
@@ -1384,8 +1399,8 @@ export class Mapper {
         }
 
         const ret:MapDatabase = {
-            rooms: this.db.rooms,
             zones: this.db.zones,
+            rooms: this.db.rooms,
             version: {
                 version: this.db.version ? this.db.version.version : 0,
                 date: this.db.version ? this.db.version.date : "",
@@ -1470,7 +1485,7 @@ export class Mapper {
     }
 
     public setRoomByVNum(vnum:number) {
-        if (typeof(vnum) != "number") {
+        if (typeof(vnum) != "number" || isNaN(vnum)) {
             console.log("Vnum not numeric");
             return;
         }
@@ -1485,7 +1500,7 @@ export class Mapper {
             this.current = this.vnumToRoom.get(vnum);
             if (this.current) this.roomId = this.current.id;
         }
-        if ((!this.current && this.autoSync) || (this.current && this.autoSync && this.roomName && this.current.name != this.roomName)) {
+        if (!this.mapmode && ((!this.current && this.autoSync) || (this.current && this.autoSync && this.roomName && this.current.name != this.roomName))) {
             let found:Room = null
             if (prev) {
                 for (const k of Object.keys(prev.exits)) {

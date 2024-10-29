@@ -160,14 +160,9 @@ export class ProfilesWindow {
             clearInterval(this.autologinInterval);
         }
         if (this.profileList.val() != "-1") {
-            this.manager.setCurrent(this.profileList.val());
-            this.layoutManager.profileConnected();
-            await this.windowManager.load();
-            await this.windowManager.showWindows();
+            await this.manager.loadOfflineProfile(this.profileList.val())
         } else {
-            this.manager.setCurrent("");
-            this.layoutManager.profileDisconnected();
-            await this.windowManager.profileDisconnected();
+            await this.manager.disconnectProfile()
         }
         this.hide(true);
     }
@@ -176,15 +171,9 @@ export class ProfilesWindow {
         if (this.autologinInterval) {
             clearInterval(this.autologinInterval);
         }
-        let connectProfile = () => {
-            if (!this.manager.getCurrent()) {
-                this.client.connect({host: null, port: null});
-                this.hide(false);
-            } else {
-                const cp = this.manager.getProfile(this.manager.getCurrent());
-                this.client.connect({host: cp.host, port: Number(cp.port)});
-                this.hide(false);
-            }
+        let connectProfile = async () => {
+            this.manager.connectCurrentProfile()
+            this.hide(false);
         };
 
         if (this.client.connected) {
@@ -283,7 +272,7 @@ export class ProfilesWindow {
                 if (oldName != p.name) {
                     this.manager.rename(p, oldName);
                 } else {
-                    this.manager.saveProfiles();
+                    this.manager.saveProfiles(false);
                 }
                 this.manager.setCurrent(p.name, true)
                 this.load();

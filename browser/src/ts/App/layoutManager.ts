@@ -133,7 +133,7 @@ export class LayoutManager {
             }
         )();
         
-        profileManager.evtProfileChanged.handle((ev:{[k: string]: any})=>{
+        profileManager.evtProfileChanged.handle(async (ev:{[k: string]: any})=>{
             this.profileConnected()
         });
         this.deleteLayout();
@@ -433,7 +433,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
     async updateLayout(prof: Profile, newLayout: LayoutDefinition) {
         prof.layout = newLayout;
-        this.profileManager.saveProfiles();
+        this.profileManager.saveProfiles(true);
 //         const r = await Messagebox.Question(`Disposizione schermo aggiornata.\n
 // Ora e' molto consigliabile riavviare il client per poterla caricare.\n
 // Vuoi farlo ora?`);
@@ -2018,7 +2018,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
     public save() {
         const cp = this.profileManager.getCurrent()
-        this.profileManager.saveProfiles();
+        this.profileManager.saveProfiles(true);
         if (cp) {
             this.layout = this.profileManager.getProfile(cp).layout;
         }

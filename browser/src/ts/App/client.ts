@@ -26,7 +26,7 @@ import * as apiUtil from "../Core/apiUtil";
 import { ProfilesWindow } from "./windows/profilesWindow";
 import { ProfileManager } from "./profileManager";
 import { ProfileWindow } from "./windows/profileWindow";
-import { Acknowledge, downloadString, linesToArray, raw, rawToHtml } from "../Core/util";
+import { Acknowledge, downloadString, linesToArray, parseSimpleScriptSyntax, raw, rawToHtml } from "../Core/util";
 import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "../Scripting/windows/variablesEditor";
 import { ClassEditor } from "../Scripting/windows/classEditor";
@@ -202,13 +202,14 @@ export class Client {
         };
 
         this.jsScript = new JsScript(this.profileManager.activeConfig, baseConfig, this.profileManager, this.mapper);
+        this.windowManager = new WindowManager(this.profileManager);
         this.mapper.setScript(this.jsScript)
-        profileManager.evtProfileChanged.handle(p=>{
+        this.profileManager.evtProfileChanged.handle(async p => {
             this.mapper.loadLastPosition()
         });
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
-        this.variableEditor = new VariablesEditor(this.jsScript);
+        this.variableEditor = new VariablesEditor(this.jsScript, this.profileManager);
         this.classManager = new ClassManager(this.profileManager.activeConfig, profileManager);
         this.jsScriptWin = new JsScriptWin(this.jsScript);
         this.triggerManager = new TriggerManager(
@@ -229,19 +230,18 @@ export class Client {
         })
 
 
-        this.classEditor = new ClassEditor(this.classManager);
-        this.aliasEditor = new AliasEditor(this.aliasManager, false);
-        this.eventsEditor = new EventsEditor(this.jsScript, false);
-        this.triggerEditor = new TriggerEditor(this.triggerManager, false);
+        this.classEditor = new ClassEditor(this.classManager, this.profileManager);
+        this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false);
+        this.eventsEditor = new EventsEditor(this.jsScript, false, this.profileManager);
+        this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false);
 
         this.baseAliasManager = new AliasManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseAliasEditor = new AliasEditor(this.baseAliasManager, true, "Alias preimpostati (abbi cautela)");
+        this.baseAliasEditor = new AliasEditor(this.profileManager, this.baseAliasManager, true, "Alias preimpostati (!)");
         this.baseTriggerManager = new TriggerManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseTriggerEditor = new TriggerEditor(this.baseTriggerManager, true, "Trigger preimpostati (abbi cautela)");
+        this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, "Trigger preimpostati (!)");
         
-        this.windowManager = new WindowManager(this.profileManager);
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
@@ -251,10 +251,13 @@ export class Client {
 
         this.windowManager.setLayoutManager(this.layoutManager);
         this.windowManager.setMapper(this.mapper);
-        this.windowManager.triggerChanged();
+
+        this.profileManager.setLayoutManager(this.layoutManager)
+        this.profileManager.setWindowManager(this.windowManager)
+        this.windowManager.updateWindowList();
 
         this.connectWin = new ConnectWin(this.socket);
-        this.baseEventsEditor = new EventsEditor(this.jsScript, true);
+        this.baseEventsEditor = new EventsEditor(this.jsScript, true, this.profileManager);
         this.numpadWin = new NumpadWin(this.profileManager.activeConfig);
         
         this.helpWin = new HelpWin();
@@ -374,9 +377,8 @@ export class Client {
             apiUtil.apiPostClientConn();
 
             (async () => {
-                this.layoutManager.profileConnected();
-                await this.windowManager.load();
-                await this.windowManager.showWindows();
+                await this.profileManager.afterProfileConnected()
+                //await this.windowManager.showWindows(false);
             })();
         });
 
@@ -486,7 +488,7 @@ export class Client {
         });
 
         this.commandInput.EvtEmitAliasCmds.handle((data) => {
-            this.outputWin.handleAliasSendCommands(data.orig, data.commands)
+            this.outputWin.handleAliasSendCommands(data.orig, data.commands, data.fromScript)
             for (let cmd of data.commands) {
                 this.commandInput.execCommand(cmd, cmd, true);
             }
@@ -719,7 +721,7 @@ export class Client {
         this.jsScript.save();
         this.windowManager.save();
         this.layoutManager.save();
-        this.profileManager.saveProfiles();
+        this.profileManager.saveProfiles(false);
     }
     public readonly UserConfig = UserConfig;
     public readonly AppInfo = AppInfo;
@@ -919,6 +921,7 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
         }
         profileManager.setTitle();
         client = new Client(null, baseConfig, profileManager);
+        profileManager.setClient(client)
         onPreloaded();
     }
 

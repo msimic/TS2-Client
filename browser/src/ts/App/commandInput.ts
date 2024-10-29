@@ -78,7 +78,7 @@ export class CommandInput {
     public EvtEmitCommandsAboutToArrive = new EventHook<boolean>();
     public EvtEmitPreparseCommands = new EventHook<{commands:string, callback:(parsed:string[])=>void}>();
     public EvtEmitCmd = new EventHook<{command:string,fromScript:boolean}>();
-    public EvtEmitAliasCmds = new EventHook<{orig: string, commands: string[]}>();
+    public EvtEmitAliasCmds = new EventHook<{orig: string, commands: string[], fromScript: boolean}>();
     public NumPad:typeof NumPadConfigDef = defNumpad;
     private cmd_history: string[] = [];
     private cmd_index: number = -1;
@@ -86,7 +86,7 @@ export class CommandInput {
 
     private $cmdInput: JQuery;
 
-    private chkCmdStack: HTMLInputElement;
+    private chkCmdStack: JQuery;
     private chkCmdAliases: JQuery;
     private chkCmdTriggers: JQuery;
     private chkCmdSplit: JQuery;
@@ -112,7 +112,7 @@ export class CommandInput {
             hotkeys.setScope('app');
         })
 
-        this.chkCmdStack = $("#chkCmdStack")[0] as HTMLInputElement;
+        this.chkCmdStack = $("#chkCmdStack");
         this.chkCmdAliases = $("#chkCmdAliases");
         this.chkCmdTriggers = $("#chkCmdTriggers");
         this.chkCmdSplit = $("#chkCmdSplit");
@@ -163,16 +163,49 @@ export class CommandInput {
             this.chkCmdAliases.prop('checked', isTrue(v))
         });
 
-        this.chkCmdAliases.on('change', () => {
+        $(".checkerTriggers").on('mouseup', () => {
+            this.chkCmdTriggers.prop('checked', !this.chkCmdTriggers.prop('checked'))
+            this.config.set("triggersEnabled", this.chkCmdTriggers.is(":checked"));
+            EvtScriptEmitPrint.fire({
+                owner: "commandLine",
+                message: "TRIGGERS " + (this.chkCmdTriggers.is(":checked") ? "ABILITATI" : "DISABILITATI")
+            })
+        })
+
+        $(".checkerAliases").on('mouseup', () => {
+            this.chkCmdAliases.prop('checked', !this.chkCmdAliases.prop('checked'))
             this.config.set("aliasesEnabled", this.chkCmdAliases.is(":checked"));
+            EvtScriptEmitPrint.fire({
+                owner: "commandLine",
+                message: "ALIASES " + (this.chkCmdAliases.is(":checked") ? "ABILITATI" : "DISABILITATI")
+            })
+        })
+        
+        $(".checkerStack").on('mouseup', () => {
+            this.chkCmdStack.prop('checked', !this.chkCmdStack.prop('checked'))
+            EvtScriptEmitPrint.fire({
+                owner: "commandLine",
+                message: "COMANDI MULTIPLI " + (this.chkCmdStack.is(":checked") ? "ABILITATI" : "DISABILITATI")
+            })
+        })
+        
+        $(".checkerSplit").on('mouseup', () => {
+            this.chkCmdSplit.prop('checked', !this.chkCmdSplit.prop('checked'))
+            this.SplitScroll(this.chkCmdSplit.is(":checked"));
+        })
+        
+        this.chkCmdAliases.on('change', () => {
+            
+            
         })
 
         this.chkCmdSplit.on('change', () => {
-            this.SplitScroll(this.chkCmdSplit.is(":checked"));
+            
         })
 
         this.chkCmdTriggers.on('change', () => {
-            this.config.set("triggersEnabled", this.chkCmdTriggers.is(":checked"));
+            
+            
         })
 
         this.$cmdInput.keydown((event: JQueryEventObject) => { return this.keydown(event); });
@@ -299,12 +332,8 @@ export class CommandInput {
         }
         let result = this.aliasManager.checkAlias(cmd, fromScript);
         if (result !== true && result !== undefined && result !== null) {
-            let cmds: string[] = [];
-            let lines: string[] = (<string>result).replace("\r", "").split("\n");
-            for (let i = 0; i < lines.length; i++) {
-                cmds = cmds.concat(lines[i].split(";"));
-            }
-            this.EvtEmitAliasCmds.fire({orig: ocmd, commands: cmds});
+            
+            this.EvtEmitAliasCmds.fire({orig: ocmd, commands: result as string[], fromScript: fromScript});
             EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
             
         } else if (!result) {
@@ -312,17 +341,17 @@ export class CommandInput {
             EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
             
         } else if (result === true) {
-            this.EvtEmitAliasCmds.fire({orig:cmd,commands:[]});
+            this.EvtEmitAliasCmds.fire({orig:cmd,commands:[], fromScript: fromScript});
             EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
             
         }
 
     }
 
-    public prepareCommands(cmd:string,cmds:string[],ocmds:string[]) {
+    public prepareCommands(cmd:string,cmds:string[],ocmds:string[], script:boolean) {
         cmds.splice(0,cmds.length)
         ocmds.splice(0,cmds.length)
-        if (this.chkCmdStack.checked) {
+        if (script || this.chkCmdStack.prop("checked")) {
             cmd.split(";").map(v1=> v1.split("\n").map(v=> {
                 cmds.push(v)
                 ocmds.push(v)
@@ -367,7 +396,7 @@ export class CommandInput {
         this.EvtEmitCommandsAboutToArrive.fire(true)
         
         let cmds:string[] = [], ocmds:string[] = []
-        this.prepareCommands(cmd, cmds, ocmds)
+        this.prepareCommands(cmd, cmds, ocmds, script)
         
         for (let i = 0; i < cmds.length; i++) {
             const c = cmds[i];

@@ -397,14 +397,19 @@ e sulla destra:
 
 La riga più in basso contiene il comando che si vuole mandare al server di gioco per comandare le azioni del proprio personaggio.
 A seguito dell'invio il comando rimane presente e selezionato per permettere di rimandarlo con la sola pressione dell'invio.
+Possono essere concatenati più comandi separandoli da **;**
 La digitazione di un nuovo comando sostituisce il precedente.
 La barra delle azioni funziona tiene uno storico degli ultimi comandi inviati che si possono scorrere usando freccia su-giù
+
+**Comandi speciali**
+- Il client converte nelle direzioni corrispondenti una stringa che inizia con un . ed è seguita dalle direzioni. *Es: .sw3seeud*
+- Un comando preceduto da **~** (tilde) garantisce che venga passato il comando senza che venga chiamato un [alias](#alias). *Es: ~watch*
+- Si può cercare nel riquadro dell'output con **??ricerca**. Ripremendo invio si cerca a ritroso 
 
 Sulla destra sono presenti 3 pulsanti che servono per disattivare/attivare rispettivamente:
 
 - [Triggers](#triggers)
 - [Alias](#alias)
-- Concatenazione di comandi separandoli da **;**
 
 ## 3.3 Lato destro <a name="AreaDX"></a>
 
@@ -499,7 +504,7 @@ Gli alias sono script attivati da un comando impartito dal player nella riga di 
 
 | Flags | Funzione |
 | ----- | -------- |
-| **Macro** | In sviluppo. Non usare. |
+| **Macro** | Se selezionato permette di impostare un tasto o combinazione di tasti *es: Ctrl+I* che avviano l'alias. Nota: Funziona solo se è attiva la barra dei comandi |
 | **Abilitato** | Definisce se l'alias è abilitato e quindi funzionante oppure disabilitato. |
 | **Regex** | Definisce se il comando definito nel modello è un comando che deve essere impartito esattamente come scritto o se è una RegEx. Per approfondire e fere prove con le Regular Expression si consiglia il sito *https://regexr.com/* |
 | **Script** | Definisce se i comandi specificati nel riquadro Azioni sono da interpretare come codice JavaScript (flag attivo) o come lista di comandi da inviare al MUD (flag spento). |
@@ -507,6 +512,8 @@ Gli alias sono script attivati da un comando impartito dal player nella riga di 
 I comandi definiti nel riquadro script vengono interpretati dal client. Pertanto possono richiamare altri alias. A causa di questo c'è il rischio di avere chiamate ricorsive dove lo script richiama se stesso che richiama se stesso e così via. Questo manda in crash il client. 
 
 Qualora serva lanciare un comando che non deve essere interpretato come alias è necessario anteporre il simbolo di tilde. Esempio: ```~comando```
+E' possibile creare un alias con lo stesso nome di un alias predefinito. Se lanciato verrà utilizzato quello personale e non quello predefinito.
+
 
 ### Esempio di alias facile
 **Necessità**: Poichè per medicare le proprie ferite con la skill ```second wind``` è necessario essere seduti si vuole creare un atuomatismo che con l'invio di un solo comando venga svolta la sequenza: sedersi, lancio della skill, rialzarsi.
@@ -646,6 +653,15 @@ Notification.Show("Ti e' caduto " + $1);
 send("get ed" + TSPersonaggio)
 ```
 
+### Marcatore speciale @nomevariabile
+
+Sono usati negli [alaias](#alias) e nei [triggers](#triggers) per identificare una variabile.
+
+Esempio:
+```js
+powerranger @TSPersonaggio
+```
+
 ### aliasEnabled <a name="f_aliasEnabled"></a>
 
 Ritorna lo stato di abilitazione del'[alias](#alias) con ID 'id': true se abilitato, false altrimenti.
@@ -663,6 +679,22 @@ Utility per gli alias.
 ```js
  getById(aliasId:string) -> alias
  isEnabled(aliasId:string) -> bool
+```
+
+### append <a name="f_append"></a>
+
+All'interno di un [trigger](#triggers) aggiunge il testo specificato alla fine della stringa che ha fatto scattare il trigger.
+Vedi anche  [prepend](#f_prepend) e [sub](#f_sub)
+
+**Sintassi**
+```js
+append(cosa: string)
+```
+
+**Esempio d'uso**
+```js
+prepend(color("[","yellow"))
+append(color("]","yellow"))
 ```
 
 ### cap <a name="f_cap"></a>
@@ -1146,6 +1178,23 @@ Suona un file audio dall'URL specificato.
 playAudio(url: string)
 ```
 
+### prepend <a name="f_prepend"></a>
+
+All'interno di un [trigger](#triggers) aggiunge il testo specificato all'inizio della stringa che ha fatto scattare il trigger.
+Vedi anche  [append](#f_append) e [sub](#f_sub)
+
+**Sintassi**
+```js
+prepend(cosa: string)
+```
+
+**Esempio d'uso**
+```js
+prepend(color("[","yellow"))
+append(color("]","yellow"))
+```
+
+
 ### print <a name="f_print"></a>
 
 Visualizza nella finestra indicata (di default l'output del MUD) il testo richiesto.
@@ -1316,5 +1365,32 @@ variable(name: string) -> variable
 
 In questa sezione verranno aggiunte man mano le soluzioni alle domande più frequenti riguardo agli script non già riportate nelle spiegazioni precedenti.
 
+**Si possono inviare più comandi assieme?**
+Si separandoli da ; 
+
+**Si può digitare una path ?**
+Si con il comando . seguito dal percorso *Es: .swenud*
+
+**Posso rilanciare un comando già inviato?**
+Con freccia su e giù oppure con l'icona a lato della barra comandi si accede alla storia dei comandi inviati che possono essere riselezionati.
+
+**Posso cercare nel riquadro dell'output un testo?**
+Si con il comando ??termine
+Pressioni multiple di invio ricercano a ritroso 
+
+**Vorrei mandare un comando al mud senza che venga interpretato come alias**
+Far precedere al comando il carattere tilde ~
+
+**Vorrei modifcare un alias preimpostato**
+Si può creare un alias privato con lo stesso nome di quello preimpostato. Il client eseguirà quello privato.
+
+**Si possono creare delle macro/shortcut?**
+Si. E' stato introdotto. Vedi l'help nella sezione degli alias.
+
+**Si possono disabilitare le immagini?**
+Si nel menù impostazioni avanzate. Consulta pure l'help nel capitolo impostazioni
+
+**Si può cambiare la grandezza del font in una finestra?**
+Si tramite il bottone ingranaggio della finestra. E' diffusamente spiegato nel capitolo 3 di questo help.
 
 ---

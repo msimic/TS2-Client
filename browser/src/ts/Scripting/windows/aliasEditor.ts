@@ -1,11 +1,13 @@
 import { AliasManager } from "../aliasManager";
 import { EventHook } from "../../Core/event";
 import { copyData, TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
+import { ProfileManager } from "../../App/profileManager";
 export const EvtCopyAliasToBase = new EventHook<copyData>()
 
 export class AliasEditor extends TrigAlEditBase {
-    constructor(private aliasManager: AliasManager,  isBase:boolean, private title?:string) {
-        super(title || "Alias", isBase);
+    constructor(profileManager:ProfileManager, protected aliasManager: AliasManager,  isBase:boolean, title?:string) {
+        super(isBase, title || "Alias", aliasManager.jsScript);
+        this.setProfileManager(profileManager)
         aliasManager.changed.handle(()=>{
             if ((<any>this.$win).jqxWindow('isOpen')) super.refresh()
         })

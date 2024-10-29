@@ -6,6 +6,8 @@ import * as Util from "../../Core/util";
 import { circleNavigate, formatShortcutString } from "../../Core/util";
 import { TsClient } from "../../App/client";
 import { debounce } from "lodash";
+import { ProfileManager } from "../../App/profileManager";
+import { JsScript } from "../jsScript";
 
 declare let CodeMirror: any;
 
@@ -64,6 +66,7 @@ export abstract class TrigAlEditBase {
     protected $cancelButton: JQuery;
     protected $filter: JQuery;
     protected $copyButton: JQuery;
+    profileManager: ProfileManager;
 
     /* these need to be overridden */
     protected abstract getCount(): number;
@@ -79,6 +82,15 @@ export abstract class TrigAlEditBase {
     protected abstract defaultValue: string;
     protected abstract defaultScript: string;
 
+    protected expandItem = (itm: jqwidgets.TreeItem) => {
+        $(itm.element).show();
+        if (itm.parentElement) {
+            $(itm.parentElement).show();
+            this.jqList.expandItem(itm.parentElement);
+            this.expandItem(itm.parentElement)
+        }
+    };
+
     protected Filter:Function = null;
     protected FilterImpl(str:string) {
         if (str && str.length < 2) {
@@ -87,15 +99,6 @@ export abstract class TrigAlEditBase {
         if (!str) {
             this.jqList.collapseAll()
         }
-
-        const expand = (itm: jqwidgets.TreeItem) => {
-            $(itm.element).show();
-            if (itm.parentElement) {
-                $(itm.parentElement).show();
-                this.jqList.expandItem(itm.parentElement);
-                expand(itm.parentElement)
-            }
-        };
 
         const rx = new RegExp(str, 'gi');
         let items = this.jqList.getItems()
@@ -109,13 +112,25 @@ export abstract class TrigAlEditBase {
                 const txt = (<any>itm.value).id + "" + (<any>itm.value).pattern;
                 const visible = txt.match(rx) != null;
                 if (!!visible) {
-                    expand(itm);
+                    this.expandItem(itm);
                 }
             }
         }
     }
 
-    constructor(title: string, protected isBase:boolean) {
+    setProfileManager(profileManager:ProfileManager) {
+        this.profileManager = profileManager
+        if (profileManager) {
+            profileManager.evtProfileChanged.handle(async c => {
+                this.refresh()
+                if (this.isOpen()) {
+                    this.bringToFront()
+                }
+            })
+        }
+    }
+
+    constructor(protected isBase:boolean, protected title: string, private script:JsScript) {
         this.Filter = debounce(this.FilterImpl, 500)
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
@@ -184,8 +199,8 @@ export abstract class TrigAlEditBase {
                         <textarea class="winEdit-scriptArea" disabled></textarea>
                     </div>
                     <div class="pane-footer">
-                        <button class="winEdit-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">▲</button>
-                        <button class="winEdit-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">▼</button>
+                        <button class="winEdit-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">📄</button>
+                        <button class="winEdit-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">💾</button>
                         <button class="winEdit-btnSave bluebutton" disabled title="Accetta">&#10004;</button>
                         <button class="winEdit-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
@@ -266,7 +281,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             panels: [{size: "30%"}, {size: "70%"}]
         });
 
-        this.codeMirror = Util.CreateCodeMirror(this.$scriptArea[0] as HTMLTextAreaElement)
+        this.codeMirror = Util.CreateCodeMirror(this.$scriptArea[0] as HTMLTextAreaElement, this.script)
         
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
         this.$codeMirrorWrapper.css("height","100%");
@@ -308,6 +323,15 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     }
 
+    private isOpen() {
+        return (<any>this.$win).jqxWindow("isOpen");
+    }
+
+    private bringToFront() {
+        console.log("!!! Bring to front " + this.title);
+        (<any>this.$win).jqxWindow("bringToFront");
+    }
+
     copyProperties(item:TrigAlItem) {
         if (!item) return;
         Util.importFromFile((str) => {
@@ -327,9 +351,15 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     async handleImportButtonClick(ev: any) {
         let item = this.$listBox.data("selected");
-        if (!item) return;
-        if (this.isDirty()) {
-            await Messagebox.Show("Errore","Devi prima salvare le modifiche!")
+        if (!item || this.isDirty()) {
+            if ((await Messagebox.Question("Devi prima salvare le modifiche per continuare. Vuoi farlo?")).button == Button.Ok) 
+            {
+                this.handleSaveButtonClick()
+                setTimeout(()=>{
+                    // reimport after save
+                    this.handleImportButtonClick(ev)
+                }, 1)
+            }
             return
         }
         const ans = await Messagebox.Question("Sei sicuro di voler sovrascrivere il trigger corrente?")
@@ -532,8 +562,13 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
         this.treeOptions.source = items;
         this.jqList.setOptions(this.treeOptions);
+        
+        if (!this.$filter.val() && oneClass(lst)) {
+            this.jqList.expandAll();
+        } else if (!nofilter) {
+            this.ApplyFilter();
+        }
 
-        if (!nofilter) this.ApplyFilter();
         return items
     };
 
@@ -602,6 +637,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             let items = this.jqList.getItems();
             let newVal = items.find(i => (i.value as any) == newItem)
             if (newVal) this.jqList.selectItem( newVal.element )
+            Notification.Show("Salvato!", false, true, 500, false, 0.5, true)
         }
     }
 
@@ -730,7 +766,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
 
         (<any>this.$win).jqxWindow("open");
-        (<any>this.$win).jqxWindow("bringToFront");
+        this.bringToFront();
     }
 
     public refresh() {
@@ -738,5 +774,11 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.setEditorDisabled(true);
         this.updateListBox(this.saving);
     }
+}
+
+function oneClass(lst: TrigAlItem[]):boolean {
+    let r:{ [key:string]:number } = {}
+    lst.map(l => r[l.class]!=undefined ? r[l.class]++ : r[l.class]=0 )
+    return (Object.keys(r).length <= 1)
 }
 

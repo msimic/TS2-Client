@@ -90,6 +90,7 @@ export class UserConfig {
             this.setHandlers[key] = new EventHook<any>();
         }
         if (cb) {
+            this.onSetRelease(key, cb)
             this.setHandlers[key].handle(cb);
         } else {
             delete this.setHandlers[key];
@@ -119,15 +120,19 @@ export class UserConfig {
     private firing:boolean;
     public set(key: string, val: any, nosave:boolean=false) {
         if (this.firing) {
-            console.log("Setting while firing");
+            //console.log("Setting while firing");
+            return
         }
         const prev = this.data.cfgVals[key];
         this.data.cfgVals[key] = val;
         if (!nosave) this.saveConfig();
         if (prev != val && key in this.setHandlers) {
             this.firing = true;
-            this.setHandlers[key].fire(val)
-            this.firing = false;
+            try {
+                this.setHandlers[key].fire(val)
+            } finally {
+                this.firing = false;
+            }
         }
     }
 

@@ -1,9 +1,9 @@
 import { TrigAlItem } from "./windows/trigAlEditBase";
 import { EventHook } from "../Core/event";
 import { ClassManager } from "./classManager";
-import { API, EvtScriptEmitPrint, EvtScriptEmitToggleAlias } from "./jsScript";
+import { API, EvtScriptEmitPrint, EvtScriptEmitToggleAlias, JsScript } from "./jsScript";
 import { ProfileManager } from "../App/profileManager";
-import { ConfigIf, escapeRegExp, parseShortcutString } from "../Core/util";
+import { ConfigIf, escapeRegExp, parseScriptVariableAndParameters, parseShortcutString, parseSimpleScriptSyntax } from "../Core/util";
 import { UserConfig } from "../App/userConfig";
 import hotkeys from 'hotkeys-js';
 
@@ -25,7 +25,7 @@ export class AliasManager {
     private precompiledRegex = new Map<TrigAlItem,RegExp>();
 
 
-    constructor(private jsScript: ScriptIf, private config: ConfigIf, private baseConfig: ConfigIf, private classManager:ClassManager, private profileManager:ProfileManager) {
+    constructor(public jsScript: JsScript, private config: ConfigIf, private baseConfig: ConfigIf, private classManager:ClassManager, private profileManager:ProfileManager) {
         this.loadAliases(config);
         config.evtConfigImport.handle((d) => {
             if (d.owner.data.name != config.data.name) return;
@@ -188,10 +188,11 @@ export class AliasManager {
         return  null;
     } 
 
+
     // return the result of the alias if any (string with embedded lines)
     // return true if matched and script ran
     // return null if no match
-    public checkAlias(cmd: string, fromScript:boolean): boolean | string {
+    public checkAlias(cmd: string, fromScript:boolean): boolean | string[] {
         if (this.config.getDef("aliasesEnabled", true) !== true) return null;
 
         const aliasManager = this;
@@ -222,35 +223,37 @@ export class AliasManager {
     
     private createSimpleAliasCommands(alias: TrigAlItem, match: RegExpMatchArray, aliasManager: this) {
         let value = alias.value;
+        let lines: string[] = (value).replace("\r", "").split("\n");
+        let resLines: string[] = []
 
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-            if (d == undefined)
-                return m;
-            return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
-        });
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-            if (d == undefined)
-                return m;
-            return aliasManager.jsScript.getVariableValue(d) || "";
-        });
-        return value;
+        for (const l of lines) {
+            const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+                if (d == undefined)
+                    return m;
+                return d == 0 ? match.input.substring(match[0].length) : match[parseInt(d)] || "";
+            });
+            resLines.push(rl)  
+        }
+
+        lines = parseSimpleScriptSyntax(resLines, this.jsScript)
+        // resLines = []
+
+        // for (const l of lines) {
+        //     const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        //         if (d == undefined)
+        //             return m;
+        //         const val = aliasManager.jsScript.getVariableValue(d)
+        //         return d && val && val.toString() || "";
+        //     });
+        //     resLines.push(rl)  
+        // }
+        return lines;
     }
 
     private createAliasScript(alias: TrigAlItem, match: RegExpMatchArray) {
         if (!alias.script) {
             let value = alias.value;
-            value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-                if (d == undefined) {
-                    m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`")
-                    return m;
-                }
-                return d == 0 ? match.input.substring(match[0].length) : "(match[" + parseInt(d) + "] || '')";
-            });
-            value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-                if (d == undefined)
-                    return m;
-                return "(variable('" + d + "'))";
-            });
+            value = parseScriptVariableAndParameters(value, match);
             alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
         }
     }

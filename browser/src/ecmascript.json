@@ -1,6 +1,26 @@
 {
   "!name": "ecmascript",
   "!define": {
+    "windowdata": {
+      "name": "string",
+      "x": "number",
+      "y": "number",
+      "w": "number",
+      "h": "number",
+      "visible": "boolean",
+      "collapsed": "boolean",
+      "docked": "boolean",
+      "font": "boolean",
+      "fontSize": "boolean"
+    },
+    "windowdefinition": {
+      "window":"{}",
+      "custom":"boolean",
+      "output":"{}",
+      "data":"windowdata",
+      "created":"boolean",
+      "initialized":"boolean"
+    },
     "Error.prototype": "Error.prototype",
     "propertyDescriptor": {
       "enumerable": "bool",
@@ -687,7 +707,7 @@
     "!doc": "Nasconde la finestra window. Si puo accedere ad essa dal menu finestre"
   },
   "createWindow": {
-    "!type": "fn(window: string, windowData?: ?)",
+    "!type": "fn(window: string, windowData?: windowdata) -> windowdefinition",
     "!doc": "Crea la finestra window, opzionalmente con dati per la creazione windowData"
   },
   "destroyWindow": {

@@ -4,6 +4,47 @@ import { Button, Messagebox, messagebox } from "../App/messagebox";
 import { TrigAlItem } from "../Scripting/windows/trigAlEditBase";
 import { TsClient } from "../App/client";
 import { UserConfigData } from "../App/userConfig";
+import { IsNumeric, JsScript, Variable } from "../Scripting/jsScript";
+
+
+enum BlockType {
+    Plain,
+    Set,
+    If,
+    Loop,
+    Else,
+    End,
+    Inc,
+    Dec,
+    Neg,
+    Temp
+}
+
+enum conditions {
+    equal,
+    greater,
+    greaterorequal,
+    lesser,
+    lesserorequal
+}
+
+let condSymbols: { [key: string]:string} = {
+    "equal": "=",
+    "greater": ">",
+    "greaterorequal": ">=",
+    "lesser": "<",
+    "lesserorequal": "<="
+}
+
+interface ScriptBlock {
+    var1?: string;
+    var2?: string;
+    condition?:conditions;
+    blocks: ScriptBlock[];
+    type: BlockType,
+    size: number;
+    text: string;
+}
 
 export function htmlEscape(text:string) {
     return replaceLf(
@@ -144,6 +185,336 @@ export function stripHtml(sText:string):string {
         if (sText[i] == ">") intag = false;
     }
     return positions.join("");
+}
+
+export function parseScriptVariableAndParameters(value: string, match: RegExpMatchArray) {
+    value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+        if (d == undefined) {
+            m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`");
+            return m;
+        }
+        return d == 0 ? "`" + match.input + "`"  : "(match[" + parseInt(d) + "] || '')";
+    });
+    value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        if (d == undefined)
+            return m;
+        //return "(variable('" + d + "'))";
+        return "this." + d;
+    });
+    return value;
+}
+
+function parseCondition(text:string) {
+    let cond = conditions.equal
+    if (text != null) for (const c of Object.values(conditions)) {
+        const sm = condSymbols[c]
+        if (text.startsWith(sm)) {
+            cond = (conditions as any)[c] as conditions
+            text = text.slice(sm.length).trimStart()
+            break;
+        }
+    }
+    return { condition: cond, text: text}
+}
+
+const rxs = [
+    null,
+    new RegExp(/^#set ([a-zA-Z0-9]+) ?(.*)?$/gi), // set
+    new RegExp(/^#if ([a-zA-Z0-9]+) ?(.*)?$/gi), // if
+    new RegExp(/^#loop ([a-zA-Z0-9]+) ?(.*)?$/gi), // loop
+    new RegExp(/^#else( .*)?$/gi), // else
+    new RegExp(/^#end( .*)?$/gi), // end
+    new RegExp(/^#inc ([a-zA-Z0-9]+)(.*)?$/gi), // inc
+    new RegExp(/^#dec ([a-zA-Z0-9]+)(.*)?$/gi), // dec
+    new RegExp(/^#neg ([a-zA-Z0-9]+)(.*)?$/gi), // neg
+    new RegExp(/^#temp ([a-zA-Z0-9]+) ?(.*)?$/gi), // temp
+]
+
+function parseBlock(block:ScriptBlock, cmds: string[], script:JsScript) {
+        
+    if (!cmds) return block;
+    let commIndex = -1
+    for (let i = 0; i < cmds.length; i++) {
+        const cmd = cmds[i];
+        let type = -1
+        let match = null
+        for (let rx = 1; rx < rxs.length; rx++) {
+            const r = rxs[rx];
+            r.lastIndex = 0;
+            const res = r.exec(cmd.trimStart())
+            if (res) {
+                type = rx
+                match = res
+            }
+        }
+        block.size++
+        if (type<0) type = BlockType.Plain
+        switch (type) {
+            case BlockType.Plain: {
+                block.blocks.push({
+                    type: 0,
+                    blocks:[],
+                    size: 0,
+                    text: cmd
+                })
+            }
+            break;
+            case BlockType.Inc:
+            case BlockType.Dec:
+            case BlockType.Neg:
+            case BlockType.Temp:
+            case BlockType.Set: {
+                const varN = match[1].trim()
+                let varVal = parseVal2(match);
+                block.blocks.push({
+                    type: type,
+                    blocks:[],
+                    size: 0,
+                    var1: varN,
+                    var2: varVal,
+                    text: cmd
+                })
+            }
+            break;
+            case BlockType.If: {
+                const varN = match[1].trim()
+                let varVal = parseVal2(match);
+                let r = parseCondition(varVal)
+                const blk:ScriptBlock = {
+                    type: type,
+                    blocks: [],
+                    size:0,
+                    var1: varN,
+                    var2: r.text,
+                    condition: r.condition,
+                    text: cmd
+                }
+                parseBlock(blk, cmds.slice(i+1), script)
+                block.size += blk.size
+                block.blocks.push(blk)
+
+                i += blk.size
+            }
+            break;
+            case BlockType.Loop: {
+                const varN = match[1].trim()
+                let varN2 = parseVal2(match);
+                const blk:ScriptBlock = {
+                    type: type,
+                    blocks: [],
+                    size:0,
+                    var1: varN,
+                    var2: varN2,
+                    text: cmd
+                }
+                parseBlock(blk, cmds.slice(i+1), script)
+                block.blocks.push(blk)
+                block.size += blk.size
+                i += blk.size
+            }
+            break;
+            case BlockType.Else: {
+                if (block.type == BlockType.If) {
+                    const blk:ScriptBlock = {
+                        type: type,
+                        blocks: [],
+                        size:0,
+                        text: cmd
+                    }
+
+                    parseBlock(blk, cmds.slice(i+1), script)
+
+                    block.blocks.push(blk)
+                    block.size += blk.size
+                    i += blk.size
+                    return block
+                }
+            }
+            break;
+            case BlockType.End: {
+                if (block.type == BlockType.If ||
+                    block.type == BlockType.Loop ||
+                    block.type == BlockType.Else) {
+                    return block
+                }
+            }
+            break;
+        }
+    }
+    return block
+
+    function parseVal2(match: RegExpExecArray) {
+        let varVal = match[2] ? match[2] : null;
+        if (varVal && (commIndex = varVal.indexOf("//")) > -1) {
+            varVal = varVal.slice(0, commIndex);
+            varVal = varVal == "" ? null : varVal.trim()
+        }
+        if (varVal != null)
+            varVal = varVal.trim()
+        return varVal;
+    }
+}
+
+function compare(v1: string, v2: string, condition: conditions):boolean {
+    switch (condition) {
+        case conditions.greater:
+            return parseInt(v1) > parseInt(v2)
+        case conditions.greaterorequal:
+            return parseInt(v1) >= parseInt(v2)
+        case conditions.lesser:
+            return parseInt(v1) < parseInt(v2)
+        case conditions.lesserorequal:
+            return parseInt(v1) <= parseInt(v2)
+        default:
+            return (v2 != null ? v1 === v2 : !!v1)
+    }
+}
+
+function execLine(l:string, sc:JsScript) {
+    const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        if (d == undefined)
+            return m;
+        return sc.getVariableValue(d) || "";
+    })
+    return rl
+}
+
+function execBlock(b:ScriptBlock, sc:JsScript, cmds:string[]) {
+
+    switch (b.type) {
+        case BlockType.Plain:
+            if (b.text != null && b.text.trimStart()!="") cmds.push(execLine(b.text.trimStart(), sc))
+            for (const sb of b.blocks) {
+                execBlock(sb, sc, cmds)
+            }
+            break;
+        case BlockType.Inc: {
+            let v:Variable = sc.getVariable(b.var1) || {
+                name: b.var1,
+                class: "",
+                temp: false,
+                value: null
+            }
+            v.value++
+            sc.setVariable(v)
+        }
+            break;
+        case BlockType.Dec: {
+            let v:Variable = sc.getVariable(b.var1) || {
+                name: b.var1,
+                class: "",
+                temp: false,
+                value: null
+            }
+            v.value--
+            sc.setVariable(v)
+        }
+            break;
+        case BlockType.Neg: {
+            let v:Variable = sc.getVariable(b.var1) || {
+                name: b.var1,
+                class: "",
+                temp: false,
+                value: null
+            }
+            v.value=!v.value
+            sc.setVariable(v)
+        }
+            break;
+        case BlockType.Temp:
+        case BlockType.Set:
+            let v:Variable = sc.getVariable(b.var1) || {
+                name: b.var1,
+                class: "",
+                temp: false,
+                value: null
+            }
+            let nv = b.var2 || ""
+            if (nv.startsWith("@")) {
+                nv = nv.slice(1)
+                nv = sc.getVariableValue(nv)
+            }
+            v.value = nv
+            if (b.type == BlockType.Temp) {
+                v.temp = true
+            }
+            sc.setVariable(v)
+            break;
+        case BlockType.If:
+            let v1 = sc.getVariableValue(b.var1)
+            let cmpv = b.var2
+            if (cmpv && cmpv.startsWith("@")) {
+                cmpv = cmpv.slice(1)
+                cmpv = sc.getVariableValue(cmpv)
+            }
+            let okBlocks:ScriptBlock[] = []
+            if (cmpv == null ? !!v1 : compare(v1, cmpv, b.condition)) {
+                for (const b2 of b.blocks) {
+                    if (b2.type != BlockType.Else) {
+                        okBlocks.push(b2)
+                    }
+                }
+            } else {
+                let elseB = b.blocks.find(bl => bl.type == BlockType.Else)
+                if (elseB) for (const b2 of elseB.blocks) {
+                    okBlocks.push(b2)
+                }
+            }
+            for (const sb of okBlocks) {
+                execBlock(sb, sc, cmds)
+            }
+            break;
+        case BlockType.Loop:
+            let va1 = sc.getVariable(b.var1)
+            if (!va1) {
+                sc.setVariable({
+                    class: "temp",
+                    name: b.var1,
+                    temp: true,
+                    value: null
+                })
+                va1 = sc.getVariable(b.var1)
+            }
+            let va2 = b.var2
+            let cnt = 1
+            if (va2 && va2.startsWith("@")) {
+                va2 = va2.slice(1)
+                let tmp = sc.getVariable(va2)
+                va2 = tmp.value
+                cnt = parseInt(va2)
+            } else if (va2) {
+                cnt = parseInt(va2)
+            }
+            for (let i = 1; i <= cnt; i++) {
+                va1.value = i
+                sc.setVariable(va1)
+                for (const sb of b.blocks) {
+                    execBlock(sb, sc, cmds)
+                }
+                if (i != va1.value) {
+                    i = va1.value
+                }
+            }
+            break;
+    }
+
+}
+
+export function parseSimpleScriptSyntax(cmds: string[], script:JsScript) : string[] {
+    if (!cmds || !cmds.length) return [];
+
+    let b:ScriptBlock = {
+        blocks: [],
+        type:BlockType.Plain,
+        size: 0,
+        text: null
+    }
+
+    parseBlock(b, cmds, script)
+    cmds = []
+    execBlock(b, script, cmds)
+
+    return cmds;
 }
 
 export function Acknowledge(ack:string, str:string) {
@@ -409,7 +780,7 @@ export function utf8decode(array: Uint8Array): { result: string; partial: Uint8A
     return { result: out, partial: null };
 }
 
-export function CreateCodeMirror(element:HTMLTextAreaElement) {
+export function CreateCodeMirror(element:HTMLTextAreaElement, script: JsScript) {
     function bracketFolding(pairs:any) {
         return function(cm:any, start:any) {
           var line = start.line, lineText:string = cm.getLine(line);
@@ -571,20 +942,25 @@ export function CreateCodeMirror(element:HTMLTextAreaElement) {
         },
         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
         extraKeys: {"Ctrl-Space": "autocomplete", "Alt-F": "findPersistent"},
+        hintOptions: { caseInsensitive: true }
     };
     let cm = (window.CodeMirror as any).fromTextArea(
         element, <any>config
     );
-    addIntellisense(cm)
+    addIntellisense(cm, script)
     return cm
 }
             
-export function addIntellisense(editor:CodeMirror.Editor) {
+export function addIntellisense(editor:CodeMirror.Editor, script:JsScript) {
     if (!$("#editorContextMenu").length) {
         $("<div id='editorContextMenu' style='display:none'>").appendTo(document.body)
     }
     $.ajax("./modules/ecmascript.json?rng="+AppInfo.Version).done(function(code:any) {
-        let server = new (window.CodeMirror as any).TernServer({ecmaVersion: 10, hintDelay: 4000, allowAwaitOutsideFunction: true, defs: [code]});
+        let server = new (window.CodeMirror as any).TernServer({
+            ecmaVersion: 10, hintDelay: 4000, allowAwaitOutsideFunction: true, defs: [code],
+            queryOptions: {completions: { caseInsensitive: true}}
+        });
+        (editor as any).Tern = server;
         editor.on("contextmenu", (cm:CodeMirror.Editor, e:MouseEvent) => {
             setTimeout(() => {
                 let editorMenu:any = null;
@@ -773,10 +1149,39 @@ export function addIntellisense(editor:CodeMirror.Editor) {
                 !ExcludedIntelliSenseTriggerKeys[<string>(event.keyCode || event.which).toString()] && !(prevent.indexOf(__Token.string)!=-1)
                 /*(__Token.type == "tag" || __Token.string == " " || __Token.string == "<" || __Token.string == "/")*/)
             {
-                editor.showHint({hint: server.getHint, completeSingle:false});
+                editor.showHint({hint: server.getHint, completeSingle:false });
             }
         });
+        editor.on("focus", () => {
+            refreshVariablesInTern(editor, script)
+        })
     });
+}
+
+export function refreshVariablesInTern(cm: any, script: JsScript) {
+    cm.Tern.server.deleteDefs("tsclient-variables");
+    let variables:any = {
+        "!name": "tsclient-variables"
+    };
+    let vars = script.getVariables().sort((a,b)=> a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+    for (const va of vars) {
+        let type = "string"
+        if (va.value && typeof va.value == "object") {
+            type = "{}"
+        } else if (IsNumeric(va.value)) {
+            type = "number"
+        }
+        let tmp = va.value
+        tmp = tmp==undefined||tmp===""?"<vuota>":va.value
+        tmp = type == "{}" ? JSON.stringify(tmp) : tmp
+        let val = (tmp||"").toString()
+        val = val.length > 30 ? val.slice(0,30) + "..." : val
+        variables["@"+va.name] = {
+            "!type": type,
+            "!doc": `Variabile ${va.name}${va.class?" (classe "+va.class+")":""}${va.temp?" (temporanea)":""}. Ultimo valore: ${val}`
+        }
+    }
+    cm.Tern.server.addDefs(variables, false);
 }
 
 export function circleNavigate(first:JQuery|HTMLElement, last:JQuery|HTMLElement, fallback:JQuery|HTMLElement = null, win:JQuery) {
@@ -887,3 +1292,4 @@ export function denyClientVersion(cfg:any):string {
     }
     return null;
 }
+

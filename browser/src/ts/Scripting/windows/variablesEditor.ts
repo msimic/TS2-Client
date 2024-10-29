@@ -3,6 +3,7 @@ import { JsScript, Variable } from "../jsScript";
 import { Messagebox, messagebox } from "../../App/messagebox";
 import { isTrue } from "../../Core/util";
 import { isNumeric } from "jquery";
+import { ProfileManager } from "../../App/profileManager";
 declare let CodeMirror: any;
 
 export class VariablesEditor {
@@ -22,10 +23,12 @@ export class VariablesEditor {
     protected $saveButton: JQuery;
     protected $cancelButton: JQuery;
     $filter: JQuery;
+    $isTemp: JQuery;
     list: string[];
     values:Variable[];
     prevName: string;
     protected jqList: jqwidgets.jqxTree;
+    profileManager: ProfileManager;
 
     /* these need to be overridden */
     protected getList(): Array<string> {
@@ -43,11 +46,11 @@ export class VariablesEditor {
             if (v) this.script.delVariable(v);
         }
         this.script.setVariable(variable);
-        this.script.save();
+        this.script.save(true);
     }
     protected deleteItem(variable: Variable): void {
         this.script.delVariable(variable);
-        this.script.save();
+        this.script.save(true);
     }
 
     protected Filter(str:string) {
@@ -85,11 +88,30 @@ export class VariablesEditor {
         }
     }
 
-    constructor(private script:JsScript) {
+    setProfileManager(profileManager:ProfileManager) {
+        this.profileManager = profileManager
+        if (profileManager) {
+            profileManager.evtProfileChanged.handle(async c => {
+                this.refresh()
+                if (this.isOpen()) {
+                    this.bringToFront()
+                }
+            })
+        }
+    }
+    
+    private isOpen() {
+        return (<any>this.$win).jqxWindow("isOpen");
+    }
+
+    private bringToFront() {
+        console.log("!!! Bring to front variables");
+        (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    constructor(private script:JsScript, profileManager:ProfileManager) {
         const title: string = "Variabili";
-        /*script.variableChanged.handle(v => {
-            this.refresh()
-        })*/
+        this.setProfileManager(profileManager)
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -120,6 +142,10 @@ export class VariablesEditor {
                             <label>Nome: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-name fill-width" disabled></label>
                             <label>Valore: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-value fill-width" disabled placeholder="(valore)" title="Il valore della variabile. Se numerica verra convertita in numerico."></label>
                             <label>Classe: <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" class="winVar-className fill-width" disabled placeholder="(opzionale)" title="Se appartiene a una classe specifica"></label>
+                            <label>
+                                Temporanea
+                                <input type="checkbox" title="Se abilitato la variabile non verra' persistita" class="winVar-temp" />
+                            </label>
                         </div>
                     </div>                    
                     <div class="pane-footer">
@@ -141,6 +167,7 @@ export class VariablesEditor {
         this.$saveButton = $(myDiv.getElementsByClassName("winVar-btnSave")[0]);
         this.$cancelButton = $(myDiv.getElementsByClassName("winVar-btnCancel")[0]);
         this.$filter = $(myDiv.getElementsByClassName("winVar-filter")[0]);
+        this.$isTemp = $(myDiv.getElementsByClassName("winVar-temp")[0]);
         this.$filter.keyup((e)=> {
             this.ApplyFilter();
         });
@@ -229,6 +256,7 @@ export class VariablesEditor {
         this.$className.prop("disabled", state);
         this.$saveButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
+        this.$isTemp.prop("disabled", state);
         if (state) {
             this.$filter.focus();
         }
@@ -287,6 +315,7 @@ export class VariablesEditor {
         v.name = this.$name.val();
         v.value = (this.$value.val() == "true" || this.$value.val() == "false") ? isTrue(this.$value.val()) : (isNumeric(this.$value.val()) ? Number(this.$value.val()) : this.$value.val());
         v.class = this.$className.val();
+        v.temp = !!this.$isTemp.prop("checked")
         this.saveItem(v);
 
         this.selectNone();
@@ -332,13 +361,14 @@ export class VariablesEditor {
         this.$name.val(variable.name);
         this.$value.val(variable.value);
         this.$className.val(variable.class);
+        this.$isTemp.prop("checked", !!variable.temp)
     }
 
     public show() {
         this.refresh();
 
         (<any>this.$win).jqxWindow("open");
-        (<any>this.$win).jqxWindow("bringToFront");
+        this.bringToFront();
     }
 
     private refresh() {

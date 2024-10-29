@@ -18,7 +18,7 @@ export class ClassManager {
     constructor(private config: ConfigIf, private profileManager:ProfileManager) {
         EvtScriptEmitToggleClass.handle(this.onToggle, this);
         this.loadClasses();
-        profileManager.evtProfileChanged.handle(d => {
+        profileManager.evtProfileChanged.handle(async d => {
             this.loadClasses();
             this.changed.fire(true)
         })

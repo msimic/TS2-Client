@@ -2,7 +2,7 @@ import { ExitDir, Favorite, MapDatabase, Mapper, MapperOptions, MapVersion, Room
 import { Messagebox, MessageboxResult, messagebox, Button, Notification } from "../../App/messagebox";
 import { isNumeric } from "jquery";
 import { IBaseWindow, WindowManager } from "../../App/windowManager";
-import { EvtScriptEmitPrint } from "../../Scripting/jsScript";
+import { EvtScriptEmitCmd, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "../../Scripting/jsScript";
 import { EditMode, MapperDrawing } from "../mapperDrawing";
 import { ResizeSensor } from 'css-element-queries'
 import { downloadJsonToFile, importFromFile, padStart } from '../../Core/util'
@@ -39,11 +39,16 @@ export class MapperWindow implements IBaseWindow {
     optionsWindow: MapperOptionsWin;
     editMode: EditMode = EditMode.Drag;
     allowMove: boolean = false;
+    font: string;
+    fontSize: number;
+    roomSeen: boolean;
+    requestRemap: boolean;
+    requestSync: boolean;
     setMapFont() {
         const mdef = this.windowManager.windows.get("Mapper")
         if (!mdef || !mdef.data) return;
-        this.drawing.font = mdef.data.font
-        this.drawing.fontSize = mdef.data.fontSize
+        this.font = mdef.data.font
+        this.fontSize = mdef.data.fontSize
     }
 
     private $win: JQuery;
@@ -88,9 +93,10 @@ export class MapperWindow implements IBaseWindow {
     }
 
     onEmitMapperZoneChanged = (d:{id:number; zone:Zone}) => {
+        console.log("onEmitMapperZoneChanged", d)
         this.zones = [...this.mapper.idToZone.values()]
-        this.zoneId = d?.id
         this.loadZonesIfNeeded(!d || !d.zone)
+        this.zoneId = d?.id
         if (this.drawing) {
             const rooms = this.mapper.zoneRooms.get(this.zoneId)
             if (!rooms || !rooms.length) {
@@ -102,9 +108,11 @@ export class MapperWindow implements IBaseWindow {
     }
 
     onEmitMapperRoomChanged = (d:any) => {
+        if (d.id === 0 && d.vnum === 0) return;
+        console.log("onEmitMapperRoomChanged", d)
         this.zoneId = d.room?.zone_id
         if (!d.room || this.zoneId < 0) {
-            this.setBottomMessage("Zona sconosciuta " + d.room?.zone_id)
+            this.setBottomMessage("Zona sconosciuta " + (d.room?.zone_id || "?"))
         } else if (d.room) {
             const labels = this.mapper.getOptions().preferZoneAbbreviations
             const zoneName = createZoneLabel(labels, false, this.mapper.getRoomZone(d.room.id))||"Zona sconosciuta"
@@ -159,6 +167,16 @@ export class MapperWindow implements IBaseWindow {
             }
             me.fillZonesDropDown(mapper.getZones())
             me.zoneId = currZone
+        });
+        EvtScriptEvent.handle(d=>{
+            if (d && d.event == ScripEventTypes.VariableChanged && d.condition == me.mapper.vnumVariable) {
+                me.roomSeen = true
+                if (me.requestRemap && d.value?.newValue) {
+                    setTimeout(() => {
+                        me.remapRoomEnd(false)                 
+                    }, 30);
+                }
+            }
         });
         let win = document.createElement("div");
         win.style.display = "none";
@@ -241,6 +259,7 @@ export class MapperWindow implements IBaseWindow {
                         <button title="Consenti movimento stanze" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-move">✣</button>
                         <button title="Crea uscita" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-createlink">↦</button>
                         <span style="margin-top:3px;">Azioni</span>
+                        <button title="Rimappa stanza corrente" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-remap">&check;</button>
                         <button title="Aggiungi nuova stanza" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-add">➕</button>
                         <button title="Cancella selezionate" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-delete">❌</button>
                         <button title="Muovi selezionate" class="maptoolboxbutton" data-option-type="mapper" data-option-name="toolbox-movewindow">↔️</button>
@@ -328,7 +347,7 @@ export class MapperWindow implements IBaseWindow {
         const ww = Math.min($(window).width()-20, 400);
         const wh = Math.min($(window).height()-20, 300);
 
-        (<any>this.$win).jqxWindow({width: ww, height: wh, showCollapseButton: true, isModal: false});
+        (<any>this.$win).jqxWindow({showAnimationDuration: 0, width: ww, height: wh, showCollapseButton: true, isModal: false});
         const w = (<any>this.$win);
         this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu", this.$win))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
         
@@ -351,6 +370,8 @@ export class MapperWindow implements IBaseWindow {
             self.drawing.allowMove = self.allowMove
             self.drawing.editMode = self.editMode
             self.drawing.mapmode = self.mapper.mapmode
+            self.drawing.font = self.font
+            self.drawing.fontSize = self.fontSize
             self.drawing.setFocus(true);
             self.canvas.focus()
             self.drawing.zoomChanged.handle(self.onZoomChange)
@@ -764,8 +785,20 @@ export class MapperWindow implements IBaseWindow {
                     this.exportImage()
                     break;
                 case "sync":
-                    const r = this.mapper.syncToRoom();
-                    if (r) this.mapper.setRoomById(r.id)
+                    this.roomSeen = false
+                    this.requestRemap = false
+                    this.mapper.scripting.delVariable({name: this.mapper.roomNameVariable, class: "", value: null})
+                    this.mapper.scripting.delVariable({name: this.mapper.roomDescVariable, class: "", value: null})
+                    this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
+                    EvtScriptEmitCmd.fire({owner:"Mapper", message:"look", silent: true})    
+                    setTimeout((() => {
+                        this.mapper.roomDesc;
+                        this.mapper.roomName;
+                        this.mapper.roomVnum;
+                        
+                        const r = this.mapper.syncToRoom();
+                        if (r) this.mapper.setRoomById(r.id)        
+                    }).bind(this), 450);
                     break;
                 case "vai":
                     if (this.drawing.contextRoom) this.mapper.walkToId(this.drawing.contextRoom.id)
@@ -806,6 +839,7 @@ export class MapperWindow implements IBaseWindow {
                 case "toolbox-move":
                 case "toolbox-createlink":
                 case "toolbox-add":
+                case "toolbox-remap":
                 case "toolbox-delete":
                 case "toolbox-movewindow":
                 case "toolbox-movetozone":
@@ -933,11 +967,32 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             this.deleteZone()
         } else if (name == "toolbox-editzone") {
             this.showZoneWindow(false)
+        } else if (name == "toolbox-remap") {
+            this.remapRoomStart(false)
         }
 
 
         this.setToolboxButtonStates();
     }
+    remapRoomStart(createnew: boolean) {
+        this.mapper.scripting.delVariable({name: this.mapper.roomNameVariable, class: "", value: null})
+        this.mapper.scripting.delVariable({name: this.mapper.roomDescVariable, class: "", value: null})
+        this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
+        this.mapper.scripting.delVariable({name: this.mapper.exitsVariable, class: "", value: null})
+        setTimeout(() => {
+            this.roomSeen = false
+            this.requestRemap = true
+            EvtScriptEmitCmd.fire({owner:"Mapper", message:"look", silent: true})                    
+        }, 30);
+    }
+    remapRoomEnd(createnew: boolean) {
+        if (this.requestRemap && this.drawing.selected && this.roomSeen) {
+            this.mapper.lastStep = null
+            this.mapper.updateRoomOnMovement(this.mapper.current)
+        }
+        this.requestRemap = false
+    }
+
     async deleteZone() {
         if (this.zoneId >-1) {
             let cnt = (this.mapper.getZoneRooms(this.zoneId)||[]).length || 0

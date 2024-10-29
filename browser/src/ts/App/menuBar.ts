@@ -109,7 +109,7 @@ export class MenuBar {
                     if (clickable) this.clickFuncs[name](storageValNew);
                 }
                 if (storageValNew != undefined) {
-                    console.log(`${name} set to ${storageValNew}`);
+                    //console.log(`${name} set to ${storageValNew}`);
                     //Notification.Show(`${name}: ${storageValNew}`, true)
                 }
             };

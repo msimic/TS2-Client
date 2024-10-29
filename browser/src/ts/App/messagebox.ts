@@ -35,7 +35,7 @@ export class Notification {
         let lastSetting = {
             appendContainer: top ? "#notification-top" : "#notification-bottom",
             width: "auto", position: top ? "top-right" : "bottom-right", opacity: opacity || 0.9,
-            autoOpen: false, animationOpenDelay: 500, autoClose: true, autoCloseDelay: delay, blink: blink,
+            autoOpen: false, animationOpenDelay: Math.min(500,delay/2), autoClose: true, autoCloseDelay: delay, blink: blink,
             height: "auto", template: type
         };
         if (top && this.lastNotificationTop && continueLast) {

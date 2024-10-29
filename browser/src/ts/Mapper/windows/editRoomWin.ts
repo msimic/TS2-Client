@@ -611,7 +611,7 @@ export class EditRoomWin {
             }
             this.setValue<typeof this.room>("color", col);
             if (!tp.indeterminate) {
-                this.setValue<typeof this.room>("teleport", this.$teleport.data('checked')==true);
+                this.setValue<typeof this.room>("teleport", this.$teleport.prop('checked')==true);
             }
             if (this.$labelPos.val() != "") {
                 this.setValue<typeof this.room>("labelDir", this.$labelPos.val() ? parseInt(this.$labelPos.val()) : null);

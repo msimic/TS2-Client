@@ -49,9 +49,8 @@
   {"long": "Fiamme ardono tutto intorno a te.", "key": "fiamme"},
   {"long": "Una pianta di oleandro occupa tutta la strada.", "key":"trappola"},
   {"long": "una roccia spigolosa impedisce il passaggio.", "key":"spigolo"},
-  {"long": "Noti una stranezza sul muro...", "key":"trappola"}
+  {"long": "Noti una stranezza sul muro...", "key":"trappola"},
+  {"long": "Le fronde degli alberi malati si aggrovigliano intorno a te.", "key":"fronde"},
+  {"long": "Un cespuglio composto da numerose Tife ricopre interamente il terreno.", "key":"cespuglio"},
+  {"long": "Una trappola molto strana e pericolosa giace qui in terra.", "key":"trappola"}
 ]
-
-
-
-

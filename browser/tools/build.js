@@ -334,6 +334,11 @@ buildAndMinify(
 (async () => {
     console.log(`Merge and Minify completed`);
     try {
+        fsx.copy('./dist/tern_module.min.js', './static/public/modules/tern_module.min.js');
+        fsx.copy('./dist/jqwidgets_module.min.js', './static/public/modules/jqwidgets_module.min.js');
+        fsx.copy('./dist/codemirror_module.min.js', './static/public/modules/codemirror_module.min.js');
+        fsx.copy('./dist/corejs.min.js', './static/public/modules/corejs.min.js');
+        fsx.copy('./dist/jquery.min.js', './static/public/modules/jquery.min.js');
 
         await del("dist/public");
         

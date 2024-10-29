@@ -4,7 +4,7 @@ import { ClassManager } from "./classManager";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleTrigger, EvtScriptEvent, JsScript, ScripEventTypes } from "./jsScript";
 import { ProfileManager } from "../App/profileManager";
 import { TsClient } from "../App/client";
-import { ConfigIf, escapeRegExp, escapeRegexReplacement, stripHtml } from "../Core/util";
+import { ConfigIf, escapeRegExp, escapeRegexReplacement, parseScriptVariableAndParameters, parseSimpleScriptSyntax, stripHtml } from "../Core/util";
 import { Notification } from "../App/messagebox";
 
 /*export interface ConfigIf {
@@ -28,7 +28,7 @@ export class TriggerManager {
     public changed = new EventHook()
     private precompiledRegex = new Map<TrigAlItem, RegExp>()
 
-    constructor(private jsScript: JsScript, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
+    constructor(public jsScript: JsScript, private config: ConfigIf, private baseConfig: ConfigIf, private classManager: ClassManager, private profileManager:ProfileManager) {
         /* backward compatibility */
         let savedTriggers = localStorage.getItem("triggers");
         if (savedTriggers && baseConfig) {
@@ -322,7 +322,7 @@ export class TriggerManager {
 
         if (trig.is_script) {
             if (!trig.script) {
-                this.createTriggerScript(trig, line, jsScript);
+                this.createTriggerScript(trig, match, jsScript);
             }
             if (trig.script) {
                 trig.script(match, line); 
@@ -348,37 +348,48 @@ export class TriggerManager {
     }
 
     private createSimpleTriggerCommands(value: string, line: string, match: RegExpMatchArray, jsScript: JsScript) {
+        let lines: string[] = (value).replace("\r", "").split("\n");
+        let resLines: string[] = []
 
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-            if (d == undefined)
-                return m;
-            return d == 0 ? "`" + line + "`" : (match[parseInt(d)] || '');
-        });
+        for (const l of lines) {
+            const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+                if (d == undefined)
+                    return m;
+                return d == 0 ? "`" + line + "`" : (match[parseInt(d)] || '');
+            })
+            resLines.push(rl)  
+        }
 
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-            if (d == undefined)
-                return m;
-            return jsScript.getVariableValue(d) || "";
-        });
+        lines = parseSimpleScriptSyntax(resLines, this.jsScript)
+        // resLines = []
 
-        let cmds = value.replace("\r", "").split("\n");
-        return cmds;
+        // for (const l of lines) {
+        //     const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        //         if (d == undefined)
+        //             return m;
+        //         return jsScript.getVariableValue(d) || "";
+        //     })
+        //     resLines.push(rl)  
+        // }
+
+        return lines;
     }
 
-    private createTriggerScript(trig: TrigAlItem, line: string, jsScript: JsScript) {
+    private createTriggerScript(trig: TrigAlItem, match: RegExpMatchArray, jsScript: JsScript) {
         let value = trig.value;
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-            if (d == undefined) {
-                m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`")
-                return m;
-            }
-            return d == 0 ? "`" + line + "`" : "(match[" + parseInt(d) + "] || '')";
-        });
-        value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-            if (d == undefined)
-                return m;
-            return "(variable('" + d + "'))";
-        });
+        // value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
+        //     if (d == undefined) {
+        //         m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`")
+        //         return m;
+        //     }
+        //     return d == 0 ? "`" + line + "`" : "(match[" + parseInt(d) + "] || '')";
+        // });
+        // value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
+        //     if (d == undefined)
+        //         return m;
+        //     return "(variable('" + d + "'))";
+        // });
+        value = parseScriptVariableAndParameters(value, match)
         trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
     }
 

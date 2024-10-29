@@ -3,6 +3,7 @@ import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "../jsSc
 import { Messagebox } from "../../App/messagebox";
 import { CreateCodeMirror, circleNavigate } from "../../Core/util";
 import { TsClient } from "../../App/client";
+import { ProfileManager } from "../../App/profileManager";
 declare let CodeMirror: any;
 
 
@@ -37,6 +38,7 @@ export class EventsEditor {
     protected codeMirror: any;
     protected $codeMirrorWrapper: JQuery;
     protected $dummy: JQuery;
+    profileManager: ProfileManager;
 
     /* these need to be overridden */
     protected getList(evList:ScriptEvent[]): Array<string> {
@@ -115,8 +117,31 @@ export class EventsEditor {
         }
     }
 
-    constructor(private script:JsScript, private isBase:boolean) {
-        const title: string = isBase ? "Eventi preimpostati" : "Eventi";
+    setProfileManager(profileManager:ProfileManager) {
+        this.profileManager = profileManager
+        if (profileManager) {
+            profileManager.evtProfileChanged.handle(async c => {
+                this.refresh()
+                if (this.isOpen()) {
+                    this.bringToFront()
+                }
+            })
+        }
+    }
+
+    
+    private isOpen() {
+        return (<any>this.$win).jqxWindow("isOpen");
+    }
+
+    private bringToFront() {
+        console.log("!!! Bring to front events");
+        (<any>this.$win).jqxWindow("bringToFront");
+    }
+    
+    constructor(private script:JsScript, private isBase:boolean, profileManager:ProfileManager) {
+        this.setProfileManager(profileManager)
+        const title: string = isBase ? "Eventi preimpostati (!)" : "Eventi";
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -197,7 +222,7 @@ export class EventsEditor {
 
         (<any>this.$win).jqxWindow({width: Math.min(600, win_w), height: Math.min(500, win_h), showCollapseButton: true});
         script.eventChanged.handle(e => {
-            if ((<any>this.$win).jqxWindow('isOpen')) this.refresh();
+            if (this.isOpen()) this.refresh();
         });
         
         (<any>this.$mainSplit).jqxSplitter({
@@ -207,7 +232,7 @@ export class EventsEditor {
             panels: [{size: "30%"}, {size: "70%"}]
         });
 
-        this.codeMirror = CreateCodeMirror(this.$value[0] as HTMLTextAreaElement)
+        this.codeMirror = CreateCodeMirror(this.$value[0] as HTMLTextAreaElement, this.script)
          
         this.$codeMirrorWrapper = $(this.codeMirror.getWrapperElement());
         this.$codeMirrorWrapper.css("height","100%");
@@ -476,7 +501,7 @@ export class EventsEditor {
         this.refresh();
 
         (<any>this.$win).jqxWindow("open");
-        (<any>this.$win).jqxWindow("bringToFront");
+        this.bringToFront();
     }
 
     private refresh() {

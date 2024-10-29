@@ -87,7 +87,7 @@ export class OutputWin extends OutWinBase {
         },0)
     }
 
-    handleAliasSendCommands(orig: string, cmds: string[]) {
+    handleAliasSendCommands(orig: string, cmds: string[], fromScript:boolean) {
         if (!this.debugScripts) return;
         setTimeout(()=>{
         let html = "<span style=\"color:cyan\">[" + orig+ "]<br></span>";
@@ -104,7 +104,7 @@ export class OutputWin extends OutWinBase {
         }
         */
         this.append(html, true);
-        this.scrollBottom(false);
+          if (!fromScript) this.scrollBottom(false);
         },0)
     }
 

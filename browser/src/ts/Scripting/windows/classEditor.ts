@@ -3,6 +3,7 @@ import { JsScript, Variable } from "../jsScript";
 import { Class, ClassManager } from "../classManager";
 import { Messagebox } from "../../App/messagebox";
 import { circleNavigate } from "../../Core/util";
+import { ProfileManager } from "../../App/profileManager";
 declare let CodeMirror: any;
 
 export class ClassEditor {
@@ -60,7 +61,29 @@ export class ClassEditor {
         })
     }
 
-    constructor(private classManager:ClassManager) {
+    setProfileManager(profileManager:ProfileManager) {
+        this.profileManager = profileManager
+        if (profileManager) {
+            profileManager.evtProfileChanged.handle(async c => {
+                this.refresh()
+                if (this.isOpen()) {
+                    this.bringToFront()
+                }
+            })
+        }
+    }
+
+    private isOpen() {
+        return (<any>this.$win).jqxWindow("isOpen");
+    }
+
+    private bringToFront() {
+        console.log("!!! Bring to front classes");
+        (<any>this.$win).jqxWindow("bringToFront");
+    }
+
+    constructor(private classManager:ClassManager, private profileManager:ProfileManager) {
+        this.setProfileManager(profileManager)
         const title: string = "Classi";
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
@@ -124,7 +147,7 @@ export class ClassEditor {
         (<any>this.$win).jqxWindow({width: Math.min(400, win_w), height: Math.min(300, win_h), showCollapseButton: true});
 
         classManager.changed.handle(()=>{
-            if ((<any>this.$win).jqxWindow('isOpen')) this.refresh()
+            if (this.isOpen()) this.refresh()
         });
 
         (<any>this.$mainSplit).jqxSplitter({
@@ -313,7 +336,7 @@ export class ClassEditor {
         this.refresh();
 
         (<any>this.$win).jqxWindow("open");
-        (<any>this.$win).jqxWindow("bringToFront");
+        this.bringToFront();
     }
 
     private refresh() {

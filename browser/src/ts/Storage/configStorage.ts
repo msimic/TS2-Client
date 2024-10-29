@@ -31,6 +31,7 @@ export class UserConfigStorage {
         return (this.db).get('configs', key);
     }
     async setConfig(key: string, val: UserConfig) {
+        //console.log("saved config into indexeddb")
         let to_convert:string[] = [];
         for (const key in val.data.cfgVals||[]) {
             if (Object.prototype.hasOwnProperty.call(val.data.cfgVals, key)) {

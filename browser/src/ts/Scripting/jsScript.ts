@@ -20,6 +20,7 @@ export let EvtScriptEmitToggleClass = new EventHook<{owner:string, id:string, st
 export let EvtScriptEmitToggleEvent = new EventHook<{owner:string, id:string, state:boolean}>();
 
 export let EvtScriptEvent = new EventHook<{event:ScripEventTypes, condition:string, value:any}>();
+export let IsNumeric = isNumeric
 
 declare global {
     interface Window {
@@ -71,7 +72,7 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
     var self = <any>this;
 
     if (!self.watchTask) {
-        self._oldValues = [];
+        self._oldValues = {};
 
         for (var propName in self) {
             self._oldValues[propName] = self[propName];
@@ -101,12 +102,12 @@ let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void
 
                 }
             }
-            for (const key in oldKeys.keys()) {
+            for (const key of [...oldKeys.keys()]) {
                 if (key == "_oldValues") continue;
                 var oldValue = self._oldValues ? self._oldValues[key] : undefined;
                 if (oldValue) {
                     onWatch({ obj: self, propName: key, oldValue: oldValue, newValue: undefined });
-                    self._oldValues[key] = undefined;
+                    delete self._oldValues[key];
                 }
             }
         }, 30);
@@ -252,6 +253,7 @@ export class JsScript {
         this.scriptThis.startWatch((e)=>{
             //console.debug(e.propName + ": " + e.newValue);
             //this.aliasManager.checkAlias("on"+e.propName + " " + e.oldValue);
+            //console.log(e.propName)
             EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: e.propName, value: e});
             let evl = this.linkedEvents.get(e.propName)
 
@@ -288,9 +290,13 @@ export class JsScript {
         let cond = e.condition;
         let val = e.value;
         this.onEvent(<string>evt, cond, val);
-        if (e.event == ScripEventTypes.VariableChanged) {
+        let variable:Variable = null;
+        if (e.event == ScripEventTypes.VariableChanged && (variable = this.variables.get(e.condition))) {
             this.variableChanged.fire(evt)
-            this.save();
+            if (!variable.temp) {
+                //console.log("save due to event of variable changed: "+ variable.name)
+                this.save(true);
+            }
         }
     }
 
@@ -426,10 +432,17 @@ export class JsScript {
     }
 
     getVariables(Class?:string):Variable[] {
-        this.save();
+        //this.save();
         return [...this.variables.values()].filter(v => v.class == Class || !Class);
     }
 
+    getVariable(name:string):Variable {
+        let re = this.variables.get(name)
+        if (re) {
+            re.value = this.scriptThis[re.name]
+        }
+        return re
+    }
     setVariable(variable:Variable) {
         if (isNumeric(variable.value)) {
             variable.value = Number(variable.value);
@@ -500,12 +513,16 @@ export class JsScript {
             }
         }
         this.variables = new Map<string, Variable>(savedVars);
+        this.scriptThis["_oldValues"] = {}
         for (const v of this.variables) {
-            if (v[0] && v[1].value != undefined && v[1].value != null) this.scriptThis[v[0]] = v[1].value;
+            if (v[0] && v[1].value != undefined && v[1].value != null) {
+                this.scriptThis[v[0]] = v[1].value;
+                this.scriptThis["_oldValues"][v[0]] = (typeof(v[1].value) == 'object') ? clone(v[1].value) : v[1].value;
+            }
         }
     }
 
-    save() {
+    save(onlyVariables?:boolean) {
         /*if (this.events.size == 0) {
             console.log("Eventi cancellati? Errore. Non salvo.");
             return;
@@ -528,7 +545,7 @@ export class JsScript {
                 this.variables.delete(k);
             }
         }
-        this.saveVariablesAndEventsToConfig(this.events, this.variables);
+        this.saveVariablesAndEventsToConfig(onlyVariables ? null : this.events, this.variables);
     }
 
     saveBase() {
@@ -537,7 +554,7 @@ export class JsScript {
 
     private saveVariablesAndEventsToConfig:any;
     private saveVariablesAndEventsToConfigInternal(ev:Map<string, ScriptEvent[]>, vars:Map<string, Variable>) {
-        this.config.set("script_events", [...ev], true);
+        if (ev != null) this.config.set("script_events", [...ev], true);
         const variableArray = [...vars].filter(v => !v[1].temp)
         this.config.set("variables", variableArray);
     }
@@ -773,7 +790,10 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         cmd = cmds.join("\n")
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
-    const send = function(cmd: string, silent = false) {
+    const send = function(cmd: any, silent = false) {
+        if (typeof cmd == "object" && cmd.length) {
+            cmd = cmd.join("\n")
+        }
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
     const print = function(message: any, window?:string) {
