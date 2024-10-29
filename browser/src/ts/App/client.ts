@@ -231,16 +231,16 @@ export class Client {
 
 
         this.classEditor = new ClassEditor(this.classManager, this.profileManager);
-        this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false);
+        this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false, this.jsScript);
         this.eventsEditor = new EventsEditor(this.jsScript, false, this.profileManager);
-        this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false);
+        this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false, this.jsScript);
 
         this.baseAliasManager = new AliasManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseAliasEditor = new AliasEditor(this.profileManager, this.baseAliasManager, true, "Alias preimpostati (!)");
+        this.baseAliasEditor = new AliasEditor(this.profileManager, this.baseAliasManager, true, this.jsScript, "Alias preimpostati (!)");
         this.baseTriggerManager = new TriggerManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, "Trigger preimpostati (!)");
+        this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, this.jsScript, "Trigger preimpostati (!)");
         
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);
