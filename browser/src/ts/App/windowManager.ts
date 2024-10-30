@@ -99,7 +99,7 @@ export class WindowManager {
     }
 
     private loadProfileWindows(prof: Profile) {
-        let wnds = [...prof.windows];
+        let wnds = [...(prof.windows||[])];
         (this.windows as any).loadedFrom = prof.name;
         console.log("wm: LOAD profile windows" + prof.name)
         //console.log("LOAD")
@@ -355,7 +355,7 @@ export class WindowManager {
 
     async showSettings(window: string, parent:JQuery) {
         const wnd = this.windows.get(window);
-        const r = await Messagebox.ShowMultiInput("Impostazioni finestra (campi vuoti per predefinito)", ["Font (nome o famiglia di font)", "Grandezza font (in pixel)", "Larghezza ancorata", "Altezza ancorata"], [wnd.data.font||"",wnd.data.fontSize?wnd.data.fontSize.toString():"",wnd.data.anchorWidth?wnd.data.anchorWidth.toString():"",wnd.data.anchorHeight?wnd.data.anchorHeight.toString():""])
+        const r = await Messagebox.ShowMultiInput("Impostazioni finestra (campi vuoti per predefinito)", ["Font (nome o famiglia di font)", "Grandezza font (in pixel)", "Larghezza ancorata", "Altezza ancorata", "Cancella finestra!"], [wnd.data.font||"",wnd.data.fontSize?wnd.data.fontSize.toString():"",wnd.data.anchorWidth?wnd.data.anchorWidth.toString():"",wnd.data.anchorHeight?wnd.data.anchorHeight.toString():"", false])
         if (r.button == Button.Ok) {
             if (r.results[0]) {
                 wnd.data.font = r.results[0]
@@ -377,7 +377,12 @@ export class WindowManager {
             } else {
                 wnd.data.anchorHeight = undefined
             }
-            this.applySettings(wnd, parent);
+            if (r.results[4]) {
+                let r = await Messagebox.Question("Sei sicuro di voler cancellare questa finestra?")
+                if (r.button == Button.Ok) await this.destroyWindow(wnd.data.name, true)
+            } else {
+                this.applySettings(wnd, parent);
+            }
             this.save();
         }
     }

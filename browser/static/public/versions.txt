@@ -6,6 +6,7 @@ features:
 - miglioramenti al layout editor, ora si possono definire i contenuti dei pannelli
 - implementato le macro negli alias
 - consolidato l'uso di parametri e variabili in scripting (@variabile, $parametro)
+- si possono cancellare finestre dal bottone per opzioni (ingranaggio)
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()
@@ -13,6 +14,8 @@ scripting:
 - aggiunte funzioni append e prepend per i trigger
 - aggiunto intellisense per variabili (le variabili si prefissano con @)
 - gli alias non script hanno ora funzionalita (limitate) di scripting (con comandi prefissati da #)
+- aggiunto intellisense per browser e per jquery
+- oggetto api: accedere all'API nelle script e' conveniente usare "api."
 
 performance:
 - salvataggio profilo in IndexedDB
@@ -20,6 +23,7 @@ performance:
 
 bugfixes:
 - risolto un problema nella funzione hideWindow()
+- risolto problema di parsing parametri per script eseguite in linea comando
 - risolto vari bug minori
 ____________________________________________________________
 1.6.2

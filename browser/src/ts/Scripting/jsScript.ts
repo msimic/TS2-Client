@@ -7,7 +7,8 @@ import { OutputManager } from "../App/outputManager";
 import { ProfileManager } from "../App/profileManager";
 import { TrigAlItem } from "./windows/trigAlEditBase";
 import { TriggerManager } from "./triggerManager";
-import { ConfigIf, escapeRegExp, htmlEscape, throttle } from "../Core/util";
+import { ConfigIf, escapeRegExp, htmlEscape, parseScriptVariableAndParameters, throttle } from "../Core/util";
+import { Button, Messagebox } from "../App/messagebox";
 
 export let EvtScriptEmitCmd = new EventHook<{owner:string, message:string, silent:boolean}>();
 export let EvtScriptEmitPrint = new EventHook<{owner:string, message:string, window?:string, raw?:any}>();
@@ -228,6 +229,13 @@ export class JsScript {
         evl.push(lev);
     }
 
+    public getApi() {
+        if (!API.functions) {
+            this.makeScript("dummy", "", "")()
+        }
+        return API
+    }
+
     public unlinkEvent = (ev:string, lev:string) => {
         let evl = this.linkedEvents.get(ev)
         if (!evl) {
@@ -241,7 +249,10 @@ export class JsScript {
     }
 
     private self = this;
+    console: any;
+    
     constructor(private config: ConfigIf,private baseConfig: ConfigIf, public profileManager: ProfileManager, private mapper:Mapper) {
+        this.console = this.createConsole(console)
         this.loadBase();
         this.load();
         this.saveVariablesAndEventsToConfig = throttle(this.saveVariablesAndEventsToConfigInternal, 500);
@@ -268,6 +279,106 @@ export class JsScript {
         EvtScriptEvent.handle((e) => {
             this.eventFired(e)
         });
+    }
+    getStackTrace (owner:string, custom?:string):string {
+        let stack:string;
+
+        if (!custom) {
+            try {
+                throw new Error('');
+            }
+            catch (error) {
+                stack = error.stack || '';
+            }
+        } else {
+            stack = custom
+        }
+        
+        let tmp = stack.split('\n').map(function (line:string) { return line.trim(); });
+
+        const firefoxIndex = tmp.findIndex(l => l.startsWith("JsScript.prototype.makeScript"))
+        if (firefoxIndex>-1) {
+            let startI = tmp.findIndex(l => l.startsWith("wrapFunction"))
+            tmp = tmp.slice(startI+1, firefoxIndex)
+        } else {
+            tmp = tmp.filter(l => l.indexOf("makeScript")>-1)
+        }
+        tmp.push("at Script.execute('"+ owner + "')")
+        //tmp = tmp.slice(tmp[0] == 'Error' ? 2 : 1);
+        stack = "  " + tmp.join("\n  ")
+
+        if (firefoxIndex>-1) {
+            stack = stack.replace(/\/?\<?\@.+Function:(\d+)\:(\d+)/g, (v,v1, v2) => {
+                return " (line:" + (parseInt(v1)-11).toString() + ", col:" + v2 + ")"
+            })
+        } else {
+            stack = stack.replace(/ \(eval at .+\:(\d+)\:(\d+)/g, (v,v1, v2) => {
+                return " (line:" + (parseInt(v1)-11).toString() + ", col:" + v2
+            })
+        }
+
+        return stack
+    }
+    createConsole(console: Console): any {
+        let c:any = {}
+        const self = this
+        
+        function wrapFunction(fn:Function, fn2:Function) {
+            return function(...args:any) {
+                fn2.call(this,...args)
+                const result = fn(...args); 
+                return result; 
+            }; 
+        }
+
+        for (const key in console) {
+            if (Object.prototype.hasOwnProperty.call(console, key)) {
+                const element = (console as any)[key] as any;
+                if (typeof element != "function") {
+                    c[key] = element
+                } else {
+                    const oldF:Function = element
+                    c[key] = wrapFunction(oldF, function(...args:any) {
+                        const dbg = self.config.getDef("debugScripts", false)
+                        if (dbg) {
+                            let getKey = () => key.toUpperCase() + "(" + this.owner + ")"
+                            let message = "";
+                            switch (key) {
+                                case "error":
+                                    message = getKey() + ": " +args.join(' ')
+                                    message = colorize(message, "red", null, true, true) 
+                                    message += "\n"
+                                    message += colorize(self.getStackTrace(this.owner), "red", null, false, false) 
+                                    break
+                                case "warn":
+                                    message = getKey() + ": " +args.join(' ')
+                                    message = colorize(message, "yellow", null, true, true) 
+                                    break
+                                case "info":
+                                    message = getKey() + ": " +args.join(' ')
+                                    message = colorize(message, "lightblue", null, false, false) 
+                                    break
+                                case "trace":
+                                    message = getKey() + ": " +args.join(' ')
+                                    message = colorize(message, "green", null, false, false) 
+                                    message += "\n"
+                                    message += colorize(self.getStackTrace(this.owner), "green", null, false, false) 
+                                    break
+                                case "clear":
+                                    API.functions?.cls()
+                                    message = getKey() + ": " + args.join(' ')
+                                    break
+                                default:
+                                    message = getKey() + ": " + args.join(' ')
+                            }
+                            EvtScriptEmitPrint.fire({owner: "debug", message: (message).toString()});
+                        }
+                    })
+                }
+            }
+        }
+        
+        return c
     }
     onToggleEvent(ev:{owner:string, id:string, state:boolean}) {
         const t = this.getEvent(ev.id)
@@ -305,10 +416,15 @@ export class JsScript {
     }
 
     triggerEvent(ev:ScriptEvent, param:any) {
-        if (!ev.script) {
-            ev.script = this.makeScript("event " +ev.type + "(" + ev.condition + ")", ev.value, "args");
+        let match = {
+            0: ev.condition
         }
-        ev.script(param);
+        if (!ev.script) {
+            
+            let value = parseScriptVariableAndParameters(ev.value, match as any)
+            ev.script = this.makeScript("event " +ev.type + "(" + ev.condition + ")", value, "args, match");
+        }
+        ev.script(param, match);
     }
 
     onEvent(type:string, condition:string, param:any) {
@@ -568,7 +684,7 @@ export class JsScript {
 
     public makeScript(owner:string, text: string, argsSig: string): any {
         try {
-            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper, this);
+            let scr = makeScript.call(this.scriptThis, owner, text, argsSig, this.classManager, this.aliasManager, this.triggerManager, this.outputManager, this.mapper, this, this.console );
             if (!scr) { return null; }
             return (...args: any[]) => {
                 const ret = scr(...args);
@@ -613,7 +729,7 @@ function CreateFunction(name:string, args:any[], body:string, scope:any, values:
     return Function(scope, "function "+(name?name:"")+"("+args.join(", ")+") {\n"+body+"\n}\nreturn "+name+";").apply(scope, values);
 };
 export const API: { [key: string]: any} = {
-    functions: {}
+    
 }
 
 function makeScript(owner:string, userScript: string, argSignature: string,
@@ -622,7 +738,8 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     triggerManager: TriggerManager,
     outputManager: OutputManager,
     map:Mapper,
-    scriptManager:JsScript) {
+    scriptManager:JsScript,
+    console: any) {
 
     let own = owner;
 
@@ -877,7 +994,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         return throttle(func, freq, this.scriptThis)
     }
 
-    const api = {
+    const publicApi = {
         append: append,
         prepend: prepend,
         clone: clone,
@@ -889,8 +1006,6 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         sendRaw: sendRaw,
         throttle: throtle,
         escapeHTML: htmlEscape,
-        _errEmit: _errEmit,
-        owner: owner,
         aliasEnabled: aliasEnabled,
         getEvent: getEvent,
         eventEnabled: eventEnabled,
@@ -911,7 +1026,6 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         deleteTrigger: (l:TrigAlItem) => triggerManager.deleteTrigger(l),
         createTempTrigger: (l:TrigAlItem) => triggerManager.createTempTrigger(l),
         deleteTempTrigger: (l:TrigAlItem) => triggerManager.deleteTempTrigger(l),
-        "console": console,
         escapeRegex: escapeRegExp,
         cap: cap,
         gag: gag,
@@ -930,29 +1044,40 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         showWindow: showWindow,
         hideWindow: hideWindow,
         mapper: mapper,
+        map:map,
+        "Notification": Notification,
+        "Messagebox": Messagebox,
+        "Button": Button
+    }
+    const privateApi = {
         classManager: classManager,
         aliasManager: aliasManager,
         triggerManager: triggerManager,
         outputManager: outputManager,
-        map:map,
+        console: console,
+        _errEmit: _errEmit,
+        owner: owner,
         scriptManager:scriptManager
     }
-    API.functions = api;
+    API.functions = publicApi;
     const scriptSource = `
-        const { ${Object.keys(api).join(', ')} } = api;
+        const { ${Object.keys(publicApi).join(', ')} } = publicApi;
+        const { ${Object.keys(privateApi).join(', ')} } = privateApi;
+        const api = publicApi
         with (this) {
             return async (${argSignature}) => {
                 "use strict";
+                console.owner = owner
                 try {
-                    ${userScript}
+${userScript}
                 } catch (err) {
-                    _errEmit.fire({owner:owner,err:err,stack:err.stack}) // script execution error
+                    _errEmit.fire({owner:owner,err:err.message||err,stack:err.stack}) // script execution error
                 }
             };
         }
     `;
     try {
-        return new Function('api', scriptSource).call(this, api);
+        return new Function('publicApi',"privateApi", scriptSource).call(this, publicApi, privateApi);
     } catch (err) {
         EvtScriptEmitEvalError.fire(err); // script "compilation" exception
         return null;

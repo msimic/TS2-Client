@@ -211,7 +211,9 @@ function copyToPublic() {
         './dist/jqwidgets_module.min.js',
         './dist/modules.min.css',
         './dist/tern_module.min.js',
-        './src/ecmascript.json'
+        './src/ecmascript.json',
+        './src/browser.json',
+        './src/jquery.json'
     ];
 
     for (const file of distFiles) {
@@ -325,6 +327,8 @@ function copyToPublic() {
 }
 
 fsx.copy('./src/ecmascript.json', './static/public/modules/ecmascript.json');
+fsx.copy('./src/browser.json', './static/public/modules/browser.json');
+fsx.copy('./src/jquery.json', './static/public/modules/jquery.json');
 
 if (!fs.existsSync("./dist")) {
     fs.mkdirSync("dist")

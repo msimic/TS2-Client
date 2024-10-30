@@ -586,6 +586,8 @@ export class Client {
         });
 
         EvtScriptEmitError.handle((data: {owner:string, err: any, stack?:string}) => {
+            let st = this.jsScript.getStackTrace(data.owner, data.stack)
+            data.stack = st
             this.outputWin.handleScriptError(data)
         });
 

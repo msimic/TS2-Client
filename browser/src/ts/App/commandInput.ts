@@ -2,7 +2,7 @@ import { EventHook } from "../Core/event";
 
 import {AliasManager} from "../Scripting/aliasManager";
 import { UserConfig } from "./userConfig";
-import { createPath, isTrue, throttle } from "../Core/util";
+import { createPath, isTrue, parseScriptVariableAndParameters, throttle } from "../Core/util";
 import { EvtScriptEmitPrint, EvtScriptEvent, JsScript, ScripEventTypes } from "../Scripting/jsScript";
 import Split from "split.js";
 import { OutputWin } from "./windows/outputWin";
@@ -376,7 +376,8 @@ export class CommandInput {
 
         if (!script && cmd[0] == ">" && cmd.length > 1) {
             cmd = cmd.slice(1)
-            let script = this.jsScript.makeScript("Script", cmd, "");
+            let value = parseScriptVariableAndParameters(cmd, {} as any)
+            let script = this.jsScript.makeScript("commandLine", value, "");
             if (script) { script(); };
             this.$cmdInput.select();
             return;
