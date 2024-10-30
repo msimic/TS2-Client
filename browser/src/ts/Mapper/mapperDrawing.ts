@@ -132,7 +132,7 @@ export class MapperDrawing {
     public zoneId: number;
     public customZoneColor():string {
         if (this.zoneId) {
-            return this.mapper.idToZone.get(this.zoneId).backColor||null;
+            return this.mapper.idToZone.get(this.zoneId)?.backColor||null;
         }
         return null
     }
@@ -295,6 +295,7 @@ export class MapperDrawing {
         this._scale = savedScale ? (savedScale) : 1.5;
     }
     clear() {
+        this.zoneId = null
         this.active = null;
         this.current = null;
         this.selected = null;

@@ -77,6 +77,9 @@ export class MapperWindow implements IBaseWindow {
             if (newSelItem && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=newSelItem.index) {
                 (<any>this.$zoneList).jqxDropDownList('selectIndex', newSelItem.index );
             }
+        } else {
+            let v = (<any>this.$zoneList).jqxDropDownList('getSelectedItem');
+            if (v) (<any>this.$zoneList).jqxDropDownList('unselectItem', v ); 
         }
         
     }
@@ -819,6 +822,8 @@ export class MapperWindow implements IBaseWindow {
                                 this.editRoom([this.drawing.contextRoom]);
                             else if (this.drawing.selected)
                                 this.editRoom([this.drawing.selected])
+                        } else {
+                            Notification.Show("Il mapper deve trovarsi in modalita' mapping.")
                         }
                     }
                     break;

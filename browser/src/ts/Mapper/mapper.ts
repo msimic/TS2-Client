@@ -304,6 +304,7 @@ export class Mapper {
             this.db.zones.splice(zi, 1)
         }
         this.prepare()
+        this.zoneChanged.fire({ id: null, zone: null})
     }
     saveZone(zone: Zone) {
         if (!zone.id) {
