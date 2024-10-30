@@ -5,7 +5,7 @@ const fs = require("fs");
 var cp = require('child_process')
 
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain, session, protocol } = require("electron");
+const { app, BrowserWindow, ipcMain, session, protocol, dialog } = require("electron");
 
 // Check if Electron is running in development 
 const isDev = require("electron-is-dev");
@@ -122,6 +122,16 @@ mainWindow.setMenuBarVisibility(false);
   
 // Upper Limit is working of 500 %
 mainWindow.webContents.setVisualZoomLevelLimits(1, 1)
+mainWindow.webContents.on('will-prevent-unload', (event) => {
+  const options = {
+      type: 'question',
+      buttons: ['Annulla', 'Accetta'],
+      message: 'Vuoi andartene?',
+      detail: 'Sembra che sei ancora connesso...',
+  };
+  const response = dialog.showMessageBoxSync(null, options)
+  if (response === 1) event.preventDefault();
+});
 mainWindow.webContents.once('did-finish-load', () => {
   setTimeout(()=>mainWindow.webContents.send('set-text', '#electronZoom', "Zoom:"+(mainWindow.webContents.zoomFactor * 100).toFixed(0)+"%"),1000);
 })
