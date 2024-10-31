@@ -361,34 +361,12 @@ export class TriggerManager {
         }
 
         lines = parseSimpleScriptSyntax(resLines, this.jsScript)
-        // resLines = []
-
-        // for (const l of lines) {
-        //     const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-        //         if (d == undefined)
-        //             return m;
-        //         return jsScript.getVariableValue(d) || "";
-        //     })
-        //     resLines.push(rl)  
-        // }
-
+        
         return lines;
     }
 
     private createTriggerScript(trig: TrigAlItem, match: RegExpMatchArray, jsScript: JsScript) {
         let value = trig.value;
-        // value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
-        //     if (d == undefined) {
-        //         m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`")
-        //         return m;
-        //     }
-        //     return d == 0 ? "`" + line + "`" : "(match[" + parseInt(d) + "] || '')";
-        // });
-        // value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-        //     if (d == undefined)
-        //         return m;
-        //     return "(variable('" + d + "'))";
-        // });
         value = parseScriptVariableAndParameters(value, match)
         trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
     }

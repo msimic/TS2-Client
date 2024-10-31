@@ -129,7 +129,14 @@ export enum EditMode {
 }
 
 export class MapperDrawing {
-    public zoneId: number;
+    private _zoneId: number;
+    public get zoneId(): number {
+        return this._zoneId;
+    }
+    public set zoneId(value: number) {
+        this._zoneId = value;
+    }
+    contextMenuOpen: boolean;
     public customZoneColor():string {
         if (this.zoneId) {
             return this.mapper.idToZone.get(this.zoneId)?.backColor||null;
@@ -270,7 +277,14 @@ export class MapperDrawing {
         w: 0,
         h: 0
     };
-    hover: Room;
+    private _hover: Room;
+    public get hover(): Room {
+        return this._hover;
+    }
+    public set hover(value: Room) {
+        console.log("hover: " + value)
+        this._hover = value;
+    }
     mouseInside = false;
     lastKey: any;
     refresh() {
@@ -295,7 +309,7 @@ export class MapperDrawing {
         this._scale = savedScale ? (savedScale) : 1.5;
     }
     clear() {
-        this.zoneId = null
+        //this.zoneId = null
         this.active = null;
         this.current = null;
         this.selected = null;
@@ -312,7 +326,7 @@ export class MapperDrawing {
         if (!this.mapmode) this.selected = room;
         if (room) {
             this.level = room.z;
-            if (room.zone_id && (prevZone != room.zone_id || this.rooms.length <= 1)) {
+            if (room.zone_id && (!this.rooms || prevZone != room.zone_id || this.rooms.length <= 1)) {
                 console.log("map drawing changing zone")
                 this.rooms = this.mapper.getZoneRooms(this.active.zone_id)
                 this.$drawCache = {}
@@ -348,7 +362,14 @@ export class MapperDrawing {
     }
     x_scroll: number = 0;
     y_scroll: number = 0;
-    active: Room = null;
+    private _active: Room = null;
+    public get active(): Room {
+        return this._active;
+    }
+    public set active(value: Room) {
+        this._active = value;
+        this.hover = null
+    }
     $focused: boolean = true;
     private _allowMove = false;
     public get allowMove() {
@@ -588,7 +609,7 @@ export class MapperDrawing {
                 this.selectionBox.h = y*2 - this.selectionBox.y;
                 this.setCanvasCursor();
             }
-            else {
+            else if (!this.contextMenuOpen) {
                 const x = this.Mouse.x;
                 const y = this.Mouse.y;
                 const rCoord = {x: x * 2, y: y * 2}
@@ -619,7 +640,7 @@ export class MapperDrawing {
             if (this.editMode == EditMode.CreateLink && this.mouseLinkData?.room && this.mouseLinkData?.dir != ExitDir.Other) {
                 this.mouseLinkDataStart = this.mouseLinkData
             }
-            this.hover = null;
+            event.button <= 1 && (this.hover = null);
             this.Mouse = this.getMapMousePos(event);
             this.MouseDown = this.getMapMousePos(event);
             this.movedRoom = null;
@@ -633,6 +654,10 @@ export class MapperDrawing {
             const y = Math.floor(this.MouseDown.y);
             const hover = this.findActiveRoomByCoords(x, y)
             this.movedRoom = this.allowMove && hover && this.selectedRooms.has(hover.id) ? hover : null;
+            if (event.button > 1 && hover && !this.selectedRooms.has(hover.id)) {
+                this.selectedRooms.clear()
+                this.selected = hover
+            }
             this.setCanvasCursor();
             this.selectionBox = {
                 x: x*2,
@@ -664,7 +689,7 @@ export class MapperDrawing {
             this.mouseLinkDataStart = {room: null, dir: ExitDir.Other, point: {x: 0, y: 0}}
             this.mouseLinkDataEnd = {room: null, dir: ExitDir.Other, point: {x: 0, y: 0}}
             this.mouseLinkData = {room: null, dir: ExitDir.Other, point: {x: 0, y: 0}}
-            this.hover = null;
+            event.button <= 1 && (this.hover = null);
             this.Mouse = this.getMapMousePos(event);
             this.MouseDrag.state = false;
             if (!this.MouseDown)
@@ -719,12 +744,13 @@ export class MapperDrawing {
             this.setCanvasCursor();
         });
         $(this.canvas).mouseenter((event) => {
-            this.hover = null;
+            //this.hover = null;
             this.mouseInside = true;
             this.Mouse = this.getMapMousePos(event);
         });
         $(this.canvas).mouseleave((event) => {
-            this.hover = null;
+            if (!this.contextMenuOpen)
+                this.hover = null;
             this.mouseInside = false;
             this.Mouse = this.getMapMousePos(event);
             if (this.drag) {
@@ -780,8 +806,10 @@ export class MapperDrawing {
         
     }
     createRoom(createRoomPos: Point) {
-        if (!this.zoneId) return;
-        
+        if (!this.zoneId) {
+            Notification.Show("Non sei in nessuna zona")
+            return;
+        }
         const zone = this.zoneId
         const p = {x: 0, y: 0, z: 0}
         this.transformCanvasToRoomCoordinate(p, this.x_scroll + createRoomPos.x, this.y_scroll + createRoomPos.y, this.canvas)
@@ -1321,7 +1349,7 @@ export class MapperDrawing {
 
         if (this.gridSize < 32) return;
         const prevComposite = context.globalCompositeOperation;
-        context.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
+        context.globalCompositeOperation = "xor" //this.isDarkBackground ? 'lighten' : 'darken';
         
         context.beginPath(); // Start a new path
         const point = {x:0, y:0}
@@ -1389,6 +1417,12 @@ export class MapperDrawing {
         if (y + 50 > this.canvas.height) {
             y -= 50;
             y -= 64;
+        }
+        if (x < 0) {
+            x = 5
+        }
+        if (y < 0) {
+            y = 5
         }
         context.fillStyle = 'rgba(255,255,255,0.75)';
         context.fillRect(x, y, w, 50);

@@ -4,6 +4,7 @@ import { EvtScriptEvent, ScripEventTypes, EvtScriptEmitCmd } from '../Scripting/
 import { aStar, PathFinder } from 'ngraph.path';
 import * as ngraph from 'ngraph.graph';
 import {MapperStorage} from '../Storage/mapperStorage'
+import { Notification } from '../App/messagebox';
 
 export interface MapperOptions {
     mapperScale: number;
@@ -290,6 +291,11 @@ export interface Favorite {
 };
 
 export class Mapper {
+    requestIncrementVersion: number = 0;
+    OnZonesListChanged() {
+        this.zoneChanged.fire({ id: null, zone: null})
+        if (this.zoneId > -1) this.zoneChanged.fire({ id: this.zoneId, zone: this.idToZone.get(this.zoneId)})
+    }
     nonotify: boolean;
     deleteZone(zoneId: number) {
         let rooms = this.getZoneRooms(zoneId)
@@ -307,6 +313,7 @@ export class Mapper {
         this.zoneChanged.fire({ id: null, zone: null})
     }
     saveZone(zone: Zone) {
+        let curr = this.current
         if (!zone.id) {
             let maxId = -1
             for (const z of this.db.zones) {
@@ -321,10 +328,14 @@ export class Mapper {
             this.db.zones.push(zone)
         }
         this.prepare()
-        this.zoneChanged.fire({ id: zone.id, zone: zone})
+        this.current = curr;
+        if (curr?.id == zone.id) {
+            this.zoneChanged.fire({ id: zone.id, zone: zone})
+        }
     }
     moveRoomsToZone(rooms: Room[], newZone: Zone) {
         let lastRoom: Room;
+        let newRoom = this.current && rooms.find(r => r == this.current) ? this.current : null 
         for (const room of rooms) {
             let zrooms = this.zoneRooms.get(room.zone_id)
             let ri = zrooms?.findIndex(z => z.id == room.id)
@@ -336,14 +347,18 @@ export class Mapper {
             lastRoom = room
         }
 
-        this.createGraph();
+        if (!newRoom) {
+            newRoom = lastRoom
+        }
 
+        this.createGraph();
+        this.current = newRoom
         this.zoneChanged.fire({ id: newZone.id, zone: newZone})
-        if (lastRoom) this.roomChanged.fire({ id: lastRoom.id, vnum: lastRoom.vnum, room: lastRoom})
+        if (newRoom) this.roomChanged.fire({ id: newRoom.id, vnum: newRoom.vnum, room: newRoom})
     
     }
     deleteRooms(rooms: Room[]) {
-        let old = (this.current)
+        let old = (this.current?.zone_id || rooms[0].zone_id)
         for (const rm of rooms) {
             let index = this.db.rooms.findIndex((r,i) => r == rm)
             if (index>-1) {
@@ -356,7 +371,7 @@ export class Mapper {
         }
         this.prepare()
         if (old) {
-            this.zoneChanged.fire({ id: old.zone_id, zone: this.idToZone.get(old.zone_id)})
+            this.zoneChanged.fire({ id: old, zone: this.idToZone.get(old)})
         } else {
             this.zoneChanged.fire({ id: null, zone: null})
         }
@@ -513,6 +528,10 @@ export class Mapper {
     scripting: JsScript;
     loadLastPosition() {
         this.roomVnum = parseInt(this.scripting.getVariableValue(this.vnumVariable))
+        this.zoneChanged.fire({
+            id: null,
+            zone: null
+        })
         this.setRoomByVNum(this.roomVnum)
         if (!this.current) {
             const name = this.scripting.getVariableValue(this.roomNameVariable)
@@ -713,33 +732,53 @@ export class Mapper {
         const oldV = this._mapmode 
         this._mapmode = value
         if (!value && !!oldV) {
+            var now = new Date()
+            let dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`
             if (this.db.version) {
-                this.db.version.version++
+                if (this.requestIncrementVersion) {
+                    this.db.version.version = Math.min(this.requestIncrementVersion, ++this.db.version.version)
+                }
                 if (!this.db.version.message)
                     this.db.version.message = "Modifiche locali"
                 var now = new Date()
-                this.db.version.date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`
+                this.db.version.date = dateStr
+            } else {
+                this.db.version = {
+                    message: "Modifiche locali",
+                    date: dateStr,
+                    version: 1
+                }
             }
-
+            this.requestIncrementVersion = 0
             this.saveLocal()
         }
     }
     private _prevZoneId:number = null;
-    private _zoneId:number = null;
+    private _zoneId: number = null;
+    public get zoneId(): number {
+        return this._zoneId;
+    }
+    public set zoneId(value: number) {
+        this._zoneId = value;
+    }
 
     public set current(value: Room) {
-        this._zoneId = value ? value.zone_id : null
+        this.zoneId = value ? value.zone_id : null
+        if (value == this._current) {
+            return
+        }
+        
         this._previous = this.current;
         this._current = value;
         this._selected = value;
         this.resyncato = false;
         this.roomId = value?.id
         this.roomVnum = value?.vnum
-        if (this._prevZoneId != this._zoneId) {
-            this._prevZoneId = this._zoneId
+        if (this.zoneId && this._prevZoneId != this.zoneId) {
+            this._prevZoneId = this.zoneId
             if (!this.nonotify) this.zoneChanged.fire({
-                id: this._zoneId,
-                zone: this.idToZone.get(this._zoneId)
+                id: this.zoneId,
+                zone: this.idToZone.get(this.zoneId)
             })
         }
     }
@@ -941,9 +980,10 @@ export class Mapper {
                 if (d.value) {
                     // questo non va bene, nelle illogichge non cambia vnum al movimento
                     //
-                    const newVnum = (<any>d.value).newValue;
+                    let newVnum = (<any>d.value).newValue;
 
                     if (newVnum) setTimeout(() => {
+                        newVnum = parseInt(newVnum)
                         //console.log("got vnum " + newVnum)
                         if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
                             console.log("discarding " + this.discardWalkStep)
@@ -956,20 +996,22 @@ export class Mapper {
                         }
     
                         this.acknowledgingWalkStep = false
-                        if (this.mapmode && this._previous && this.lastStep) {
+                        if (this.mapmode && ((this.current && !this.current.vnum) || this.lastStep)) {
                             console.log("MAPPING:"+parseInt(newVnum))
-                            const existingRoom = this.getRoomByVnum(parseInt(newVnum))
-                            if (!existingRoom) {
+                            let existingRoom = this.getRoomByVnum(parseInt(newVnum))
+                            if (!existingRoom && !this.lastStep) {
+                                existingRoom = (this.current && !this.current.vnum) ? this.current : null
+                            }
+                            if (!existingRoom && this.lastStep) {
                                 this.createRoomOnMovement(newVnum);
                             } else {
-                                this.updateRoomOnMovement(existingRoom)
+                                this.updateRoomOnMovement(existingRoom, false, newVnum)
                             }
                         }
-                        {
-                            this.setRoomByVNum(parseInt(newVnum));
-                            this.acknowledgeStep(newVnum);
-                            if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
-                        }
+
+                        this.setRoomByVNum(parseInt(newVnum));
+                        this.acknowledgeStep(newVnum);
+                        if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
 
                         if (!this.currentWalk) {
                             this.virtualCurrent = null;
@@ -1002,11 +1044,11 @@ export class Mapper {
         })
     }
 
-    public updateRoomOnMovement(room: Room) {
+    public updateRoomOnMovement(room: Room, full?:boolean, vnumOverride?: number) {
         const oldExits = room.exits
         room.exits = {}
         console.log("updateRoomOnMovement")
-        
+        let changed = false
         if (this.lastStep) {
             const dir = this.lastStep;
             const fromRoom = dir.room;
@@ -1025,25 +1067,64 @@ export class Mapper {
             }
         }
         const sett = this.scripting.getVariableValue("TSSettore")
-        room.name = this.scripting.getVariableValue("RoomName"),
-        room.description = (this.scripting.getVariableValue("RoomDesc")??"").toString().replace(/\r/g,""),
-        room.vnum = parseInt(this.scripting.getVariableValue("TSRoom")||0)
-        if (!room.type) room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
-        
+        const newName = this.scripting.getVariableValue("RoomName") || this.roomName
+        const newDesc = (this.scripting.getVariableValue("RoomDesc")??this.roomDesc).toString().replace(/\r/g,"")
+        let newVnum = parseInt(this.scripting.getVariableValue("TSRoom")??this.roomVnum)||0
+        if (vnumOverride) {
+            newVnum = vnumOverride
+        }
+        changed ||= (newName != room.name)
+        changed ||= (newDesc != room.description)
+        changed ||= (newVnum != room.vnum)
+
+        room.name = newName
+        room.description = newDesc
+        room.vnum = newVnum
+
+        if (!room.type) {
+            room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
+            changed = true
+        }
+
         if (this.activeExits) this.activeExits.forEach((e)=>{
             if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
-                room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
+                if (full || !room.exits[<ExitDir>Long2ShortExit.get(e)]?.to_room) { 
+                    room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
+                }
             } else if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && !oldExits[<ExitDir>Long2ShortExit.get(e)]) {
                 room.exits[<ExitDir>Long2ShortExit.get(e)] = {
                     type: ExitType.Normal,
                 }
             }
         })
+        if (oldExits && !full) {
+            Object.keys(oldExits).forEach(ex => {
+                if (!room.exits[ex as ExitDir]) {
+                    room.exits[ex as ExitDir] = oldExits[ex as ExitDir]
+                }
+            })
+        }
+        changed || !this.sameExists(room.exits, oldExits)
+        if (changed) {
+            Notification.Show("Stanza con ID " + room.id + " si differenzia dal MUD. Rimappata.")
+        }
         this.lastStep = null;
         this.prepareRoom(room)
         this.createGraph()
-        this.roomChanged.fire({ id: 0, vnum: 0, room: null})
+        //this.roomChanged.fire({ id: 0, vnum: 0, room: null})
         this.roomChanged.fire({ id: room.id, vnum: room.vnum, room: room})
+    }
+
+    sameExists(ex1: RoomExits, ex2: RoomExits) {
+        const exL1 = [...Short2LongExit.keys()].filter(e => ex1[e as ExitDir])
+        const exL2 = [...Short2LongExit.keys()].filter(e => ex2[e as ExitDir])
+        if (exL1.length != exL2.length) return false
+        let same = true
+        for (const ex of exL1) {
+            same ||= (ex1[ex as ExitDir].to_room == ex2[ex as ExitDir].to_room)
+            same ||= (ex1[ex as ExitDir].to_dir == ex2[ex as ExitDir].to_dir)
+        }
+        return same
     }
 
     private createRoomOnMovement(newVnum: any) {
@@ -1499,7 +1580,6 @@ export class Mapper {
             this.current = null;
         } else {
             this.current = this.vnumToRoom.get(vnum);
-            if (this.current) this.roomId = this.current.id;
         }
         if (!this.mapmode && ((!this.current && this.autoSync) || (this.current && this.autoSync && this.roomName && this.current.name != this.roomName))) {
             let found:Room = null
@@ -1518,14 +1598,16 @@ export class Mapper {
                     }
                 }
             }
-            this.current = found || this.syncToRoom()
-            if (this.current) {
-                console.log("full resync for vnum " + vnum + " to id " + this.current.id)
-                this.setRoomById(this.current.id)
-                this.resyncato = true;
+            if (!this.mapmode) {
+                this.current = found || this.syncToRoom()
+                if (this.current) {
+                    console.log("full resync for vnum " + vnum + " to id " + this.current.id)
+                    this.setRoomById(this.current.id)
+                    this.resyncato = true;
+                }
             }
         }
-        if (old != this.current) {
+        if (!this.mapmode && old != this.current) {
             const lastStep = this.walkQueue.shift()
             if (!this.current && lastStep && old) {
                 const exitFromPrevious = old.exits[lastStep.direction];
@@ -1560,6 +1642,9 @@ export class Mapper {
                 }
             }
             this.roomChanged.fire({ id: this.roomId, vnum: this.roomVnum, room: this.current })
+        }
+        else {
+            this.roomChanged.fire({ id: this.current?.id, vnum: this.current?.vnum, room: this.current })
         }
     }
 
@@ -1621,7 +1706,7 @@ export class Mapper {
 
         rooms = rooms.filter(r => r.name == name);
         if (!rooms.length && this._previous) {
-            if (name.toLowerCase() == this._previous.name.toLowerCase()) {
+            if (name.toLowerCase() == this._previous.name?.toLowerCase()) {
                 rooms = [this._previous]
             } else {
                 const checkDir = (ex:ExitDir)=> (this._previous.exits[ex] && this._previous.exits[ex].to_room && this.getRoomById(this._previous.exits[ex].to_room)?.name.toLowerCase() == name.toLowerCase())

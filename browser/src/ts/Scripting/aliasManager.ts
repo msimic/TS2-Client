@@ -236,17 +236,7 @@ export class AliasManager {
         }
 
         lines = parseSimpleScriptSyntax(resLines, this.jsScript)
-        // resLines = []
 
-        // for (const l of lines) {
-        //     const rl = l.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
-        //         if (d == undefined)
-        //             return m;
-        //         const val = aliasManager.jsScript.getVariableValue(d)
-        //         return d && val && val.toString() || "";
-        //     });
-        //     resLines.push(rl)  
-        // }
         return lines;
     }
 

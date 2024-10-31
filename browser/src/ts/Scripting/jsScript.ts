@@ -262,9 +262,6 @@ export class JsScript {
             this.load();
         }, this);
         this.scriptThis.startWatch((e)=>{
-            //console.debug(e.propName + ": " + e.newValue);
-            //this.aliasManager.checkAlias("on"+e.propName + " " + e.oldValue);
-            //console.log(e.propName)
             EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: e.propName, value: e});
             let evl = this.linkedEvents.get(e.propName)
 

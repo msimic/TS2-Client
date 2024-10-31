@@ -68,10 +68,11 @@ export class MapperMoveToZoneWin {
 
         $("#mmzonelist", this.$win).on("open", (ev:any) => {
             (<any>$("#mmzonelist", this.$win)).jqxDropDownList('clearFilter');
+            $("input.jqx-listbox-filter-input", $("#listBoxmmzonelist")).focus();
         })
 
 
-        this.fillZones(this.mapper.getZones())
+        this.fillZonesDropDown(this.mapper.getZones())
         this.$addButton.click(this.createZone.bind(this));
         this.$applyButton.click(this.handleApplyButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
@@ -94,19 +95,36 @@ export class MapperMoveToZoneWin {
         })
     }
 
-    public fillZones(zones:Zone[]) {
-        (<any>this.$zoneList).jqxDropDownList('clear');
-
+    public fillZonesDropDown(zones:Zone[]) {
+        const useLabels = this.mapper.getOptions().preferZoneAbbreviations;
+        
+        const prevVal = (<any>this.$zoneList).jqxDropDownList('getSelectedItem');
+        let prevIndex = (<any>this.$zoneList).jqxDropDownList('selectedIndex');
+        ((<any>this.$zoneList)).jqxDropDownList('clearFilter');
+        
+        let newList:any[] = [];
         if (zones && zones.length) {
-            const useLabels = this.mapper.getOptions().preferZoneAbbreviations;
-            $.each(zones, (i, item) => {
-                (<any>this.$zoneList).jqxDropDownList("addItem", { 
-                    value: item.id?.toString(),
-                    label: createZoneLabel(useLabels, true, item)
-                });
+            newList = zones.map(z => {
+                return { 
+                    "value": z.id? z.id.toString() : "",
+                    "label": createZoneLabel(useLabels, true, z)    
+                }
             });
-        };
+        }
+
+        try {
+            (<any>this.$zoneList).jqxDropDownList({"source": newList});
+        } finally {
+        }
+        if (prevVal && prevVal.value && zones) {
+            prevIndex = zones.findIndex(z => z.id == parseInt(prevVal.value));
+            if (prevIndex>-1) (<any>this.$zoneList).jqxDropDownList('selectIndex', prevIndex);
+        } else if (prevIndex > -1) {
+            (<any>this.$zoneList).jqxDropDownList('unselectIndex', prevIndex);
+        }
+        return;
     }
+
 
     private handleApplyButtonClick() {
         this.apply()
@@ -115,7 +133,7 @@ export class MapperMoveToZoneWin {
 
     load() {
         let zones = this.getAllZones()
-        this.fillZones(zones)
+        this.fillZonesDropDown(zones)
     }
     private getAllZones() {
         return [...this.mapper.getZones(), ...this.addedZones];
@@ -137,6 +155,7 @@ export class MapperMoveToZoneWin {
         for (const z of this.addedZones) {
             this.mapper.saveZone(z) 
         }
+        this.mapper.OnZonesListChanged()
     }
 
     private handleCancelButtonClick() {

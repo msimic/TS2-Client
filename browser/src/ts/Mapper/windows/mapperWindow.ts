@@ -17,6 +17,9 @@ import { MoveRoomsWin } from "./moveRoomsWin"
 
 export enum UpdateType { none = 0, draw = 1 }
 export function createZoneLabel(useLabels: boolean, useId: boolean, item: Zone) {
+    if (!item) {
+        return "Zona sconosciuta"
+    }
     return (useLabels ? (item.label || item.name) : item.name) + (useId ? " (" + (item.id ? "#"+item.id.toString() : "nuova") + ")" : "");
 }
 
@@ -65,6 +68,7 @@ export class MapperWindow implements IBaseWindow {
     }
     public set zoneId(value: number) {
         if (this._zoneId === value) {
+            this.drawing && (this.drawing.zoneId = value)
             return
         }
         this._zoneId = value >-1 ? value : null;
@@ -118,7 +122,7 @@ export class MapperWindow implements IBaseWindow {
             this.setBottomMessage("Zona sconosciuta " + (d.room?.zone_id || "?"))
         } else if (d.room) {
             const labels = this.mapper.getOptions().preferZoneAbbreviations
-            const zoneName = createZoneLabel(labels, false, this.mapper.getRoomZone(d.room.id))||"Zona sconosciuta"
+            const zoneName = createZoneLabel(labels, false, this.mapper.getRoomZone(d.room.id))
             let message = `[${d.room?.id}] ${d.room?.name}`
             if (labels) {
                 message += " (" + zoneName + ")"
@@ -151,10 +155,12 @@ export class MapperWindow implements IBaseWindow {
         }
         if (this.mapper.mapmode || this.drawing.mapmode) {
             $("[data-option-name='edit']", this.$contextMenu).removeClass("disabled");
+            $("[data-option-name='toolbox-delete']", this.$contextMenu).removeClass("disabled");
         } else {
             $("[data-option-name='edit']", this.$contextMenu).addClass("disabled");
+            $("[data-option-name='toolbox-delete']", this.$contextMenu).addClass("disabled");
         }
-        (this.$contextMenu as any).jqxMenu('open', (data.x) + 5 + scrollLeft, (data.y) + 5 + scrollTop);
+        this.openContextMenu(data, scrollLeft, scrollTop);
         return false;
     }
     resizeSensor: ResizeObserver;
@@ -171,13 +177,21 @@ export class MapperWindow implements IBaseWindow {
             me.fillZonesDropDown(mapper.getZones())
             me.zoneId = currZone
         });
+        let finishRoomRemapTimeout: number = 0
         EvtScriptEvent.handle(d=>{
-            if (d && d.event == ScripEventTypes.VariableChanged && d.condition == me.mapper.vnumVariable) {
+            if (d && d.event == ScripEventTypes.VariableChanged &&
+                (d.condition == me.mapper.vnumVariable ||
+                 d.condition == me.mapper.roomNameVariable ||
+                 d.condition == me.mapper.roomDescVariable ||
+                 d.condition == me.mapper.exitsVariable)) {
                 me.roomSeen = true
                 if (me.requestRemap && d.value?.newValue) {
-                    setTimeout(() => {
-                        me.remapRoomEnd(false)                 
-                    }, 30);
+                    if (finishRoomRemapTimeout) {
+                        clearTimeout(finishRoomRemapTimeout)
+                    }
+                    finishRoomRemapTimeout = setTimeout(() => {
+                        me.remapRoomEnd()                 
+                    }, 50) as any;
                 }
             }
         });
@@ -286,6 +300,7 @@ export class MapperWindow implements IBaseWindow {
                 <li  class='custom' data-option-type="mapper" data-option-name="set">Posiziona</li>
                 <li type='separator'></li>
                 <li  class='custom' data-option-type="mapper" data-option-name="edit">Modifica</li>
+                <li  class='custom' data-option-type="mapper" data-option-name="toolbox-delete">Cancella</li>
                 </ul>
             </div>
         </div>
@@ -337,6 +352,7 @@ export class MapperWindow implements IBaseWindow {
 
         $("#zonelist", this.$win).on("open", (ev:any) => {
             (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
+            $("input.jqx-listbox-filter-input", $("#listBoxzonelist")).focus();
         })
 
         this.canvas = <JQuery>((<any>$("#mapcanvas",this.$win)));
@@ -453,7 +469,7 @@ export class MapperWindow implements IBaseWindow {
                 case "Delete":
                 case "Backspace": //delete
                     e.preventDefault();
-                    if (this.drawing.allowMove) this.deleteSelection();
+                    this.deleteSelection();
                     break;
                 case "Numpad1": //num1
                     e.preventDefault();
@@ -554,6 +570,11 @@ export class MapperWindow implements IBaseWindow {
         this.attachMenu();
         this.setMapFont()
     }
+    private openContextMenu(data: { x: number; y: number; }, scrollLeft: number, scrollTop: number) {
+        (this.$contextMenu as any).jqxMenu('open', (data.x) + 5 + scrollLeft, (data.y) + 5 + scrollTop);
+        this.drawing && (this.drawing.contextMenuOpen = true);
+    }
+
     public moveRoomsOnAxis(axis:string, positive:boolean, useGrid: boolean) {
         let offs:Point = {
             x: 0,
@@ -570,6 +591,9 @@ export class MapperWindow implements IBaseWindow {
         this.drawing.moveRooms([...this.drawing.selectedRooms.values()], offs, useGrid);
     }
 
+    isContextMenuOpen() {
+        return (<any>this.$menu).jqxMenu("isOpen")
+    }
     write(text: string, buffer: string): void {
         this.setBottomMessage(text);
     }
@@ -734,133 +758,159 @@ export class MapperWindow implements IBaseWindow {
     }
 
     private attachMenuOption(name:string, element:Element, checkbox:Element) {
-        $(element).click((event: JQueryEventObject) => {
+        $(element).click(async (event: JQueryEventObject) => {
             if (!event.target || (event.target.tagName != "LI" && event.target.tagName != "BUTTON")) return false;
             if ($((<any>event).target).closest(".jqx-menu-popup").length!=0) this.closeMenues($("#mapperMenubar",this.$win));
-            (this.$contextMenu as any).jqxMenu('close')
-            switch (name) {
-                case "mapmode":
-                    this.toggleMapMode();
-                    break;
-                case "mapversion":
-                    this.showMapVersions();
-                    break;
-                case "reload":
-                    this.load(false);
-                    break;
-                case "info":
-                    this.showInfo();
-                    break;
-                case "reloadweb":
-                    this.loadSite(true);
-                    break;
-                case "reloadLocal":
-                    this.load(true);
-                    break;
-                case "pathfind":
-                    this.findpath();
-                    break;
-                case "exportzone":
-                    this.exportZone();
-                    break;
-                case "importzone":
-                    this.importZone();
-                    break;
-                case "exportall":
-                    this.exportAll();
-                    break;
-                case "search":
-                    this.search();
-                    break;
-                case "zoomout":
-                    this.drawing.setScale(this.drawing.scale - this.drawing.scale/10);
-                    break;
-                case "zoomin":
-                    this.drawing.setScale(this.drawing.scale + this.drawing.scale/10);
-                    break;
-                case "leveldown":
-                    this.drawing.setLevel(this.drawing.level-1)
-                    break;
-                case "levelup":
-                    this.drawing.setLevel(this.drawing.level+1)
-                    break;
-                case "export":
-                    this.exportImage()
-                    break;
-                case "sync":
-                    this.roomSeen = false
-                    this.requestRemap = false
-                    this.mapper.scripting.delVariable({name: this.mapper.roomNameVariable, class: "", value: null})
-                    this.mapper.scripting.delVariable({name: this.mapper.roomDescVariable, class: "", value: null})
-                    this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
-                    EvtScriptEmitCmd.fire({owner:"Mapper", message:"look", silent: true})    
-                    setTimeout((() => {
-                        this.mapper.roomDesc;
-                        this.mapper.roomName;
-                        this.mapper.roomVnum;
-                        
-                        const r = this.mapper.syncToRoom();
-                        if (r) this.mapper.setRoomById(r.id)        
-                    }).bind(this), 450);
-                    break;
-                case "vai":
-                    if (this.drawing.contextRoom) this.mapper.walkToId(this.drawing.contextRoom.id)
-                    break;
-                case "set":
-                    if (this.drawing.contextRoom) {
-                        this.mapper.setRoomById(this.drawing.contextRoom.id)
-                        this.mapper.previous = null;
-                    }
-                    break;
-                case "mapperroom":
-                case "edit":
-                    {
-                        if (this.mapper.mapmode) {
-                            if (this.drawing.selectedRooms.size > 1)
-                                this.editRoom([...this.drawing.selectedRooms.values()])
-                            else if (this.drawing.contextRoom)
-                                this.editRoom([this.drawing.contextRoom]);
-                            else if (this.drawing.selected)
-                                this.editRoom([this.drawing.selected])
-                        } else {
-                            Notification.Show("Il mapper deve trovarsi in modalita' mapping.")
+            try {
+                switch (name) {
+                    case "mapmode":
+                        this.toggleMapMode();
+                        break;
+                    case "mapversion":
+                        this.showMapVersions();
+                        break;
+                    case "reload":
+                        this.load(false);
+                        break;
+                    case "info":
+                        this.showInfo();
+                        break;
+                    case "reloadweb":
+                        this.loadSite(true);
+                        break;
+                    case "reloadLocal":
+                        this.load(true);
+                        break;
+                    case "pathfind":
+                        this.findpath();
+                        break;
+                    case "exportzone":
+                        this.exportZone();
+                        break;
+                    case "importzone":
+                        this.importZone();
+                        break;
+                    case "exportall":
+                        this.exportAll();
+                        break;
+                    case "search":
+                        this.search();
+                        break;
+                    case "zoomout":
+                        this.drawing.setScale(this.drawing.scale - this.drawing.scale/10);
+                        break;
+                    case "zoomin":
+                        this.drawing.setScale(this.drawing.scale + this.drawing.scale/10);
+                        break;
+                    case "leveldown":
+                        this.drawing.setLevel(this.drawing.level-1)
+                        break;
+                    case "levelup":
+                        this.drawing.setLevel(this.drawing.level+1)
+                        break;
+                    case "export":
+                        this.exportImage()
+                        break;
+                    case "sync":
+                        this.roomSeen = false
+                        this.requestRemap = false
+                        this.mapper.scripting.delVariable({name: this.mapper.roomNameVariable, class: "", value: null})
+                        this.mapper.scripting.delVariable({name: this.mapper.roomDescVariable, class: "", value: null})
+                        this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
+                        EvtScriptEmitCmd.fire({owner:"Mapper", message:"look", silent: true})    
+                        setTimeout((() => {
+                            this.mapper.roomDesc;
+                            this.mapper.roomName;
+                            this.mapper.roomVnum;
+                            if (this.mapper.roomVnum && this.mapper.containsVnum(this.mapper.roomVnum)) {
+                                this.mapper.setRoomByVNum(this.mapper.roomVnum)
+                            } else {
+                                const r = this.mapper.syncToRoom();
+                                if (r) this.mapper.setRoomById(r.id)
+                            }        
+                        }).bind(this), 450);
+                        break;
+                    case "vai":
+                        if (this.drawing.contextRoom) this.mapper.walkToId(this.drawing.contextRoom.id)
+                        break;
+                    case "set":
+                        if (this.drawing.contextRoom) {
+                            this.mapper.setRoomById(this.drawing.contextRoom.id)
+                            this.mapper.previous = null;
                         }
-                    }
-                    break;
-                case "addfavorite":
-                    if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.addFavorite((this.drawing.contextRoom))
-                    break;
-                case "removefavorite":
-                    if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.removeFavorite((this.drawing.contextRoom))
-                    break;
-                case "legend":
-                    this.drawing.showLegend=!!!this.drawing.showLegend;
-                    break;
-                case "impostazioni":
-                    this.optionsWindow.show()
-                    break;
-                case "toolbox-pan":
-                case "toolbox-select":
-                case "toolbox-move":
-                case "toolbox-createlink":
-                case "toolbox-add":
-                case "toolbox-remap":
-                case "toolbox-delete":
-                case "toolbox-movewindow":
-                case "toolbox-movetozone":
-                case "toolbox-editrooms":
-                case "toolbox-newzone":
-                case "toolbox-deletezone":
-                case "toolbox-editzone":
-                    event.preventDefault();
-                    this.handleToolboxItem(name);
-                    return false;
-                default:
-                    break;
+                        break;
+                    case "mapperroom":
+                    case "edit":
+                        {
+                            if (this.mapper.mapmode) {
+
+                                if (this.drawing.hover) {
+                                    const hover = this.drawing.hover
+                                    if (this.drawing.selectedRooms.size > 1 &&
+                                        this.drawing.selectedRooms.get(hover.id)) {
+                                        const r = await Messagebox.Question("Vuoi fare modifiche multiple a " + this.drawing.selectedRooms.size + " stanze?\nSe vuoi modificare solo quella premuta rispondi negativamente.")
+                                        if (r.button == Button.Ok) {
+                                            this.editRoom([...this.drawing.selectedRooms.values()])
+                                        } else {
+                                            this.editRoom([hover])
+                                        }
+                                    } else {
+                                        this.editRoom([hover])
+                                    }
+                                }
+                                else if (this.drawing.selectedRooms.size > 1)
+                                    this.editRoom([...this.drawing.selectedRooms.values()])
+                                else if (this.drawing.contextRoom)
+                                    this.editRoom([this.drawing.contextRoom]);
+                                else if (this.drawing.selected)
+                                    this.editRoom([this.drawing.selected])
+                            } else {
+                                Notification.Show("Il mapper deve trovarsi in modalita' mapping.")
+                            }
+                        }
+                        break;
+                    case "addfavorite":
+                        if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.addFavorite((this.drawing.contextRoom))
+                        break;
+                    case "removefavorite":
+                        if (this.drawing.contextRoom && !$(element).hasClass("disabled")) this.removeFavorite((this.drawing.contextRoom))
+                        break;
+                    case "legend":
+                        this.drawing.showLegend=!!!this.drawing.showLegend;
+                        break;
+                    case "impostazioni":
+                        this.optionsWindow.show()
+                        break;
+                    case "toolbox-pan":
+                    case "toolbox-select":
+                    case "toolbox-move":
+                    case "toolbox-createlink":
+                    case "toolbox-add":
+                    case "toolbox-remap":
+                    case "toolbox-delete":
+                    case "toolbox-movewindow":
+                    case "toolbox-movetozone":
+                    case "toolbox-editrooms":
+                    case "toolbox-newzone":
+                    case "toolbox-deletezone":
+                    case "toolbox-editzone":
+                        event.preventDefault();
+                        this.handleToolboxItem(name);
+                        return false;
+                    default:
+                        break;
+                }
+            } finally {
+                this.closeContextMenu();
             }
             return true;
         });
     }
+    private async closeContextMenu() {
+        (this.$contextMenu as any).jqxMenu('close');
+        this.drawing && (this.drawing.contextMenuOpen = false)
+    }
+
     async showMapVersions() {
         const lv = await this.mapper.getLocalDbVersion()
         const ov = await this.mapper.getOnlineVersion()
@@ -936,7 +986,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             else if (this.drawing.selected)
                 this.editRoom([this.drawing.selected])
             else
-            this.setBottomMessage("Nessuna stanza selezionata")
+                this.setBottomMessage("Nessuna stanza selezionata")
         } else if (name == "toolbox-move") {
             this.allowMove = !this.allowMove
             this.drawing.allowMove = this.allowMove
@@ -980,20 +1030,28 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         this.setToolboxButtonStates();
     }
     remapRoomStart(createnew: boolean) {
+        let room = this.drawing?.active
+        if (!room) {
+            Notification.Show("Una stanza deve essere attiva con il pallino")
+            return
+        }
         this.mapper.scripting.delVariable({name: this.mapper.roomNameVariable, class: "", value: null})
         this.mapper.scripting.delVariable({name: this.mapper.roomDescVariable, class: "", value: null})
         this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
         this.mapper.scripting.delVariable({name: this.mapper.exitsVariable, class: "", value: null})
         setTimeout(() => {
+            this.mapper.current = room
             this.roomSeen = false
             this.requestRemap = true
             EvtScriptEmitCmd.fire({owner:"Mapper", message:"look", silent: true})                    
         }, 30);
     }
-    remapRoomEnd(createnew: boolean) {
-        if (this.requestRemap && this.drawing.selected && this.roomSeen) {
+    remapRoomEnd() {
+        if (this.requestRemap && this.drawing.active && this.drawing.active == this.mapper.current && this.roomSeen) {
             this.mapper.lastStep = null
-            this.mapper.updateRoomOnMovement(this.mapper.current)
+            this.mapper.updateRoomOnMovement(this.mapper.current, true)
+        } else {
+            Notification.Show("Remap fallito. Non trovo la stanza.")
         }
         this.requestRemap = false
     }
@@ -1010,7 +1068,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             const zw = new EditZoneWin(null, (z) => {
                 if (z && z.name && z.name.length > 2) {
                     z.id = null
-                    this.mapper.saveZone(z) 
+                    this.mapper.saveZone(z)
+                    this.mapper.zoneId = z.id
+                    this.mapper.OnZonesListChanged()
                 } else if (z) {
                     Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
                 }
@@ -1040,6 +1100,8 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         let mzw = new MapperMoveToZoneWin(this.mapper, (z) => {
             if (z) {
                 this.mapper.moveRoomsToZone(rooms, z)
+                this.drawing.selectedRooms = new Map<number, Room>(rooms.map(obj => [obj.id, obj]))
+                this.mapper.current = null
                 Notification.Show(`${rooms.length} stanze spostate`)
             } else {
                 Notification.Show(`Zona non selezionata. Abort, Retry, Fail? :D`)
@@ -1058,8 +1120,13 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         })
     }
     private async deleteSelection() {
-        if (this.drawing.selectedRooms.size > 1 || this.drawing.selected || this.drawing.selectedExit) {
-            let r = await Messagebox.Question("Sicuro di voler cancellare?")
+        if (!this.mapper.mapmode) {
+            Notification.Show("Per cancellare stanze devi trovarti nella modalita' mapping")
+            return
+        }
+        if (this.drawing.selectedRooms.size >= 1 || this.drawing.selected || this.drawing.selectedExit) {
+            let cosa = this.drawing.selectedExit ? "l'uscita" : this.drawing.selectedRooms.size + " stanze"
+            let r = await Messagebox.Question("Sicuro di voler eliminare " + cosa + "?")
             if (r.button != Button.Ok) return;
             if (this.drawing.selectedExit) {
                 let exits: RoomExit[] = [];
@@ -1077,6 +1144,11 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
     }
 
     deleteRooms(rooms: Room[]) {
+        this.drawing.selectedRooms.clear()
+        this.drawing.selected = null
+        if (this.drawing.active && rooms.find(r => r.id == this.drawing.active.id)) {
+            this.drawing.active = null
+        }
         this.mapper.deleteRooms(rooms)
     }
     deleteExits(exits: RoomExit[]) {
@@ -1121,19 +1193,19 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         this.addFavoritesToMenu(fv)
     }
     async toggleMapMode() {
-        // todo avvertimenti
+        const localVer = await this.mapper.getLocalDbVersion()
+        const onlineVer = await this.mapper.getOnlineVersion()
+            
         if (!this.mapper.mapmode && !this.mapper.useLocal) {
-            const lv = await this.mapper.getLocalDbVersion()
-            const ov = await this.mapper.getOnlineVersion()
-            if (ov && lv && lv.version > ov.version) {
+            if (onlineVer && localVer && localVer.version > onlineVer.version) {
                 const r = await Messagebox.Question(
 `ATTENZIONE!!!\n\r
 Stai tentando di modificare il DB mappe pubblico.\n\r
 Il tuo DB locale ha versione piu' alta di quello pubblico\n\r
 Uscendo dalla modalita' mapping potresti sovrascrivere le tue modifiche locali!\n\r
 \n\r
-Versione pubblica: ${ov.version}\n\r
-Versione locale: ${lv.version}\n\r
+Versione pubblica: ${onlineVer.version}\n\r
+Versione locale: ${localVer.version}\n\r
 \n\r
 Sei SICURO di voler continuare?`
                 )
@@ -1167,6 +1239,14 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
                 }
             }
         }
+
+        if (this.mapper.mapmode) {
+            if (onlineVer?.version && onlineVer?.version >= localVer?.version) {
+                this.mapper.requestIncrementVersion = onlineVer?.version+1
+                Notification.Show("Incremento versione locale in quanto era piu bassa si quella online.")
+            }
+        }
+
         this.mapper.mapmode = !this.mapper.mapmode;
         this.drawing.mapmode = this.mapper.mapmode
         if (this.mapper.mapmode) {
@@ -1303,9 +1383,46 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
               }, "image/png");
         })
     }
-    editRoom(rooms: Room[]) {
-        const w = new EditRoomWin()
-        w.editRooms(rooms)
+
+    private openRoomEditors = new Map<number, EditRoomWin>()
+    async editRoom(rooms: Room[]) {
+        if (!rooms.length) return
+
+        let existingW: EditRoomWin;
+        let alreadyEditingW: EditRoomWin;
+        let alreadyEditing = false
+        for (const k of this.openRoomEditors.keys()) {
+            let tmp = this.openRoomEditors.get(k)
+            if (tmp && tmp.rooms[0].id == rooms[0].id && 
+                sameRooms(tmp?.rooms, rooms)) {
+                    existingW = tmp
+            } else {
+                let anyId = false
+                rooms.map(r => tmp?.rooms.includes(r) ? (anyId = true) : false)
+                alreadyEditing ||= anyId
+                if (alreadyEditing) {
+                    alreadyEditingW = tmp
+                }
+            }
+        }
+
+        if (!existingW && alreadyEditingW) {
+            const r = await Messagebox.Question("Alcune stanze che vuoi editare sono gia' aperte in altri editor.\nVuoi continuare comunque?")
+            if (r.button != Button.Ok) {
+                return
+            }
+        }
+
+        if (existingW) {
+            existingW.refresh()
+            return
+        }
+
+        existingW = new EditRoomWin()
+        this.openRoomEditors.set(rooms[0].id, existingW)
+        existingW.editRooms(rooms, () => {
+            this.openRoomEditors.delete(rooms[0].id)
+        })
     }
 
     search() {
@@ -1315,16 +1432,28 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     }
 
     findpath() {
-        if (!this.drawing.selected) {
-            Messagebox.Show("Errore", "Non c'e' locazione iniziale per iniziare il percorso")
-            return;
-        }
-        Messagebox.ShowInput("Vai a #num", "Inserisci il numero della locazione", this.drawing.selected ? this.drawing.selected.id.toString() : "?").then(r => {
+        Messagebox.ShowMultiInput("Vai a #num", ["Inserisci il numero della locazione", "Posizionami senza eseguire la path"], [this.drawing.selected ? this.drawing.selected.id.toString() : "?", true]).then(r => {
             if (r.button == 1) {
-                const id1 = this.drawing.selected.id;
-                const id2 = parseInt(r.result);
+                const destId = parseInt(r.results[0]);
                 
-                const walk = this.mapper.calculateWalk(id1, id2, -1);
+                if (r.results[1]) {
+                    let r = this.mapper.getRoomById(destId)
+                    if (r) {
+                        this.mapper.setRoomById(r.id)
+                    } else {
+                        Notification.Show("La stanza non esiste")
+                    }
+                    return
+                }
+
+                if (!this.drawing.active) {
+                    Messagebox.Show("Errore", "Non c'e' locazione iniziale per iniziare il percorso")
+                    return;
+                }
+                
+                const id1 = this.drawing.active.id;
+                
+                const walk = this.mapper.calculateWalk(id1, destId, -1);
                 if (!walk.end) {
                     Messagebox.Show("Ouch", "Non trovo il percorso")
                 } else if (!walk.steps || walk.steps.length < 1) {
@@ -1465,8 +1594,33 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     public fillZonesDropDown(zones:Zone[]) {
         const useLabels = this.mapper.getOptions().preferZoneAbbreviations;
         
-        const prevIndex = (<any>this.$zoneList).jqxDropDownList('selectedIndex');
+        const prevVal = (<any>this.$zoneList).jqxDropDownList('getSelectedItem');
+        let prevIndex = (<any>this.$zoneList).jqxDropDownList('selectedIndex');
         (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
+        
+        let newList:any[] = [];
+        if (zones && zones.length) {
+            newList = zones.map(z => {
+                return { 
+                    "value": z.id.toString(),
+                    "label": createZoneLabel(useLabels, true, z)    
+                }
+            });
+        }
+
+        try {
+            this.selecting = true;
+            (<any>this.$zoneList).jqxDropDownList({"source": newList});
+        } finally {
+            this.selecting = false
+        }
+        if (prevVal && prevVal.value && zones) {
+            prevIndex = zones.findIndex(z => z.id == parseInt(prevVal.value));
+            if (prevIndex>-1) (<any>this.$zoneList).jqxDropDownList('selectIndex', prevIndex);
+        } else if (prevIndex > -1) {
+            (<any>this.$zoneList).jqxDropDownList('unselectIndex', prevIndex);
+        }
+        return;
         (<any>this.$zoneList).jqxDropDownList('clear');
 
         if (zones && zones.length) {
@@ -1526,4 +1680,13 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     }
 }
 
+
+function sameRooms(rooms: Room[], rooms1: Room[]) {
+    if (!rooms || !rooms1 || rooms.length != rooms1.length) return false
+    for (let i = 0; i < rooms.length; i++) {
+        if (rooms1[i].id != rooms[i].id)
+            return false
+    }
+    return true
+}
 

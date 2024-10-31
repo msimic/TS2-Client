@@ -5,13 +5,22 @@ import { MapperDrawing } from "../mapperDrawing";
 import { Messagebox } from "../../App/messagebox";
 
 export class EditRoomWin {
+    refresh() {
+        this.show()
+    }
     private $win: JQuery;
     private $applyButton: JQuery;
     private $cancelButton: JQuery;
     private $name: JQuery;
     private $short: JQuery;
     private $desc: JQuery;
-    private rooms:Room[];
+    private _rooms: Room[];
+    public get rooms(): Room[] {
+        return this._rooms;
+    }
+    public set rooms(value: Room[]) {
+        this._rooms = value;
+    }
     private room:Room = { id: 0, zone_id: 0, name: "", color: "", x: 0, y: 0, z: 0, exits: {}};
     private $numrooms: JQuery;
     private $cost: JQuery;
@@ -33,6 +42,7 @@ export class EditRoomWin {
     private $roomeditexithidden: JQuery;
 
     private _selectedExit: RoomExit;
+    callB: Function;
     public get selectedExit(): RoomExit {
         return this._selectedExit;
     }
@@ -341,6 +351,9 @@ export class EditRoomWin {
         $(".deleteExitButton", this.$win).click((ev) => this.deleteExit(ev))
         $(".createExitButton", this.$win).click((ev) => this.createExit(this.selectedExitName))
 
+        this.$win.on("close", () => {
+            this.onClosing();
+        })
     }
 
     applyExitFields(selectedExit: RoomExit) {
@@ -414,7 +427,8 @@ export class EditRoomWin {
         }
     }
 
-    public editRooms(rooms: Iterable<Room>) {
+    public editRooms(rooms: Iterable<Room>, cb?: Function) {
+        if (cb) this.callB = cb
         this.rooms = [...rooms];
         this.startEditing()
         this.show()
@@ -493,7 +507,19 @@ export class EditRoomWin {
 
         this.loadFields();
 
-        this.$numrooms.text(this.rooms.length>1 ? `(${this.rooms.length}) selezionate` : "Id stanza: " + this.room.id)
+        let msg = "Id stanza: " + this.room.id
+        if (this.rooms.length > 1) {
+            msg = `${this.rooms.length} selezionate `
+            let byId = [...this.rooms.map(r => r.id)]
+            let min = Math.min(...byId)
+            let max = Math.max(...byId)
+            let range = " da Id " + min + " a Id " + max + "";
+            msg += range;
+            (<any>this.$win).jqxWindow("setTitle", "Modifica stanze (" + this.rooms.length + ")")
+        } else {
+            (<any>this.$win).jqxWindow("setTitle", "Modifica stanze (" + (this.room?.id||"?") + ")")
+        }
+        this.$numrooms.text(msg)
         if (this.multiEdit()) {
             $(".nomultiedit", this.$win).hide();
             $(".onlymultiedit", this.$win).show();
@@ -629,10 +655,17 @@ export class EditRoomWin {
     private handleApplyButtonClick() {
         if (this.applyEdits())
             this.hide();
+
+        this.onClosing();
+    }
+
+    private onClosing() {
+        this.callB && this.callB() || (this.callB = null);
     }
 
     private handleCancelButtonClick() {
         this.hide();
+        this.onClosing();
     }
 
     public show() {
