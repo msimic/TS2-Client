@@ -1079,13 +1079,17 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
             const zone = this.mapper.idToZone.get(this.zoneId)
             if (zone) {
                 const zw = new EditZoneWin(zone, (z) => {
-                    if (z) {
+                    if (z && z.name && z.name.length > 2) {
                         zone.id = parseInt(z.id?.toString())
                         zone.name = z.name
                         zone.description = z.description
                         zone.label = z.label
                         zone.backColor = z.backColor
                         this.mapper.saveZone(zone) 
+                        this.mapper.zoneId = zone.id
+                        this.mapper.OnZonesListChanged()
+                    } else if (z) {
+                        Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
                     }
                 })
             }
