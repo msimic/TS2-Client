@@ -246,7 +246,7 @@ export class Client {
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
         this.jsScript.setOutputManager(this.outputManager);
-        this.layoutManager = new LayoutManager(this.profileManager, this.windowManager, this.jsScript, this.commandInput);
+        this.layoutManager = new LayoutManager(this.profileManager, this.jsScript, this.commandInput);
         this.profilesWin = new ProfilesWindow(this.profileManager, this.windowManager,this.layoutManager, this.profileWin, this);
 
         this.windowManager.setLayoutManager(this.layoutManager);
@@ -262,7 +262,7 @@ export class Client {
         
         this.helpWin = new HelpWin();
         this.changelog = new VersionsWin();
-        this.layoutWindow = new LayoutWindow("Editor disposizione schermo", this.profileManager, this.layoutManager, this.windowManager);
+        this.layoutWindow = new LayoutWindow("Editor disposizione schermo", this.jsScript, this.profileManager, this.layoutManager, this.windowManager);
         
         this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.layoutWindow, this.changelog);
         this.menuBar.setWIndowManager(this.windowManager);

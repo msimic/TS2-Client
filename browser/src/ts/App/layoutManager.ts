@@ -6,7 +6,7 @@ import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { isAlphaNumeric, isTrue, rawToHtml, throttle } from "../Core/util";
-import { WindowManager } from "./windowManager";
+
 
 export let LayoutVersion = 1;
 
@@ -90,13 +90,59 @@ export interface Control {
     items?: Control[];
 }
 
+export let populateItemsInPanes = (layout:LayoutDefinition) => {
+    let child: Control;
+    while ((child = layout.items.find(i => i.parent))) {
+        let parentControl = layout.items.find(i => i.id == child.parent)
+        if (!parentControl) {
+            throw new Error("Missing parent for control " + child.id)
+        }
+        if (!parentControl.items) {
+            parentControl.items = []
+        }
+        parentControl.items.push(child)
+        child.parent = null
+        child.paneId = null
+        let index = layout.items.indexOf(child)
+        if (index > -1) {
+            layout.items.splice(index, 1)
+        }
+    }
+    while ((child = layout.items.find(i => i.paneId))) {
+        let pane = layout.panes.find(p => p.id == child.paneId)
+        if (!pane) {
+            throw new Error("Missing pane for control " + child.id)
+        }
+        if (!pane.items) {
+            pane.items = []
+        }
+        pane.items.push(child)
+        child.paneId = null
+        let index = layout.items.indexOf(child)
+        if (index > -1) {
+            layout.items.splice(index, 1)
+        }
+    }
+}
+
 export class LayoutManager {
+    
+    findDockingPositions(window: string):Control[] {
+
+        let ret = []
+        let l = this.getCurrent()
+        for (const p of l.panes) {
+            let dp = (p.items || []).find(i => i.type == ControlType.Window && (i.content == window || !window));
+            if (dp) ret.push(dp)
+        }
+        return ret
+    }
 
     public EvtEmitLayoutChanged = new EventHook<LayoutDefinition>();
     public onlineBaseLayout:LayoutDefinition;
     public layout:LayoutDefinition;
     public scripts = new Map<number, Function>();
-    public controls = new Map<number, JQuery>();
+    public controls = new Map<Control, JQuery>();
     public parents = new Map<string, JQuery>();
     public variableChangedMap = new Map<string, Control[]>();
     public variableStyleChangedMap = new Map<string, Control[]>();
@@ -114,7 +160,7 @@ export class LayoutManager {
         {position: PanelPosition.PaneLeftBottom, id: "column-left-bottom"},
     ];
 
-    constructor(private profileManager:ProfileManager, private windowManager:WindowManager, private scripting:JsScript, private cmdInput:CommandInput) {
+    constructor(private profileManager:ProfileManager, private scripting:JsScript, private cmdInput:CommandInput) {
         
         (async () => {
                 this.onlineBaseLayout = await $.ajax(
@@ -133,11 +179,11 @@ export class LayoutManager {
             }
         )();
         
-        profileManager.evtProfileChanged.handle(async (ev:{[k: string]: any})=>{
+        profileManager?.evtProfileChanged.handle(async (ev:{[k: string]: any})=>{
             this.profileConnected()
         });
-        this.deleteLayout();
-        this.load();
+        if (profileManager) this.deleteLayout();
+        if (profileManager) this.load();
         EvtScriptEvent.handle((e) => this.handleEvent(e));
     }
 
@@ -166,7 +212,7 @@ export class LayoutManager {
                 this.controlContentMap.set(c, cont);
                 //let t1 = performance.now();
                 //if (variableName != "TickRemaining" && numCtrl>0) console.log(`VarChanged-${numCtrl} ${variableName} ${t1 - t0} ms.`);
-                let ui = this.controls.get(index);
+                let ui = this.controls.get(c);
                 //t0 = performance.now();        
                 const ccont = $(".ui-control-content", ui)
                 ccont[0].innerHTML = cont;
@@ -201,7 +247,7 @@ export class LayoutManager {
         this.unload();
     }
 
-    emptyLayout():LayoutDefinition  {
+    static emptyLayout():LayoutDefinition  {
         const ret = {
             "version": LayoutVersion,
             "customized": false,
@@ -359,13 +405,14 @@ export class LayoutManager {
     }
 
     public load() {
+        if (!this.profileManager) return
         let cp:string;
         cp = this.profileManager.getCurrent();
 
         this.unload();
         
         if (!cp) {
-            this.loadLayout(this.emptyLayout());
+            this.loadLayout(LayoutManager.emptyLayout());
             return;
         }
 
@@ -374,7 +421,7 @@ export class LayoutManager {
              this.loadLayout(prof.layout);
              this.checkNewerLayoutExists(prof);
         } else if (prof && !prof.useLayout) {
-            this.loadLayout(this.emptyLayout());
+            this.loadLayout(LayoutManager.emptyLayout());
         }
 
         this.triggerChanged();
@@ -434,12 +481,6 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
     async updateLayout(prof: Profile, newLayout: LayoutDefinition) {
         prof.layout = newLayout;
         this.profileManager.saveProfiles(true);
-//         const r = await Messagebox.Question(`Disposizione schermo aggiornata.\n
-// Ora e' molto consigliabile riavviare il client per poterla caricare.\n
-// Vuoi farlo ora?`);
-//         if (r.button == Button.Ok) {
-//             window.location.reload()
-//         }
     }
 
     public unload() {
@@ -511,12 +552,11 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         if (!layout) return;
 
         this.layout = layout;
-        const isDarkTheme = $("body").hasClass("dark")
-
-        const foreColor = layout.color || isDarkTheme ? "#C5BFB1" : "#C5BFB1"
-        $("#content-wrapper").css("color", foreColor);
-        const backColor = layout.background || isDarkTheme ? "#203C20" : "#156AA7"
-        $("#content-wrapper").css("background-color", backColor);
+        
+        const foreColor = LayoutManager.getForecolor(layout)
+        $(".content-wrapper").css("color", foreColor);
+        const backColor = LayoutManager.getBackcolor(layout)
+        $(".content-wrapper").css("background-color", backColor);
         const cmdBack = layout.panes.find(p => p.position == PanelPosition.PaneBottomLeft)?.background || backColor;
         $("#row-input").css("background-color", cmdBack);
         
@@ -538,37 +578,150 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
             $("#"+p.id).css(cssObj);
         }
 
+        if (this.layout.items?.length) {
+            //this.loadFlatItems();
+            populateItemsInPanes(this.layout)
+        }
+
+        this.loadHierarchical();
+    }
+
+    static getForecolor(layout: LayoutDefinition) {
+        const isDarkTheme = $("body").hasClass("dark")
+        return layout.color || isDarkTheme ? "#C5BFB1" : "#C5BFB1";
+    }
+
+    static getBackcolor(layout: LayoutDefinition) {
+        const isDarkTheme = $("body").hasClass("dark")
+        return layout.background || isDarkTheme ? "#203C20" : "#156AA7"
+    }
+
+    createHierarchicalControl(indexer:{index:number}, c:Control, parent:Control, parentControl:JQuery):JQuery {
+        let control: JQuery;
+        
+        if (c.type == ControlType.Button) {
+            control = this.createButton(c);
+            if (c.id)
+                this.parents.set(c.id, control);
+        }
+        else if (c.type == ControlType.DropDownButton) {
+            control = this.createDropDownButton(c);
+            if (c.id)
+                this.parents.set(c.id, control);
+        }
+        else if (c.type == ControlType.Window) {
+            control = this.createWindow(c);
+            if (c.id)
+                this.parents.set(c.id, control);
+        }
+        else {
+            control = this.createPanel(c);
+            if (c.id)
+                this.parents.set(c.id, control);
+        }
+
+        if (c.tooltip) {
+            control.attr("title", c.tooltip);
+        }
+        this.controls.set(c, control);
+
+        if (parent && parentControl) {
+            $(".ui-control-content", parentControl).first().append(control);
+        }
+
+        if (c.checkbox) {
+            for (const v of c.checkbox.split(",")) {
+                let variables = this.parseVariables(v);
+                variables = variables.map(v => this.getVariableName(v));
+                for (const variable of variables) {
+                    if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                    this.variableStyleChangedMap.get(variable).push(c);
+                }
+            }
+            this.checkCheckbox(c);
+        }
+
+        if (c.gauge) {
+            for (const v of c.gauge.split(",").map(v => this.getVariableName(v))) {
+                if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
+                this.variableStyleChangedMap.get(v).push(c);
+            }
+            this.checkGauge(c);
+        }
+
+        if (c.visible) {
+            for (const v of c.visible.split(",")) {
+                let variables = this.parseVariables(v);
+                variables = variables.map(v => this.getVariableName(v));
+                for (const variable of variables) {
+                    if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                    this.variableStyleChangedMap.get(variable).push(c);
+                }
+            }
+            this.checkVisible(c);
+        }
+
+        if (c.blink) {
+            for (const v of c.blink.split(",")) {
+                let variables = this.parseVariables(v);
+                for (const variable of variables) {
+                    if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
+                    this.variableStyleChangedMap.get(variable).push(c);
+                }
+            }
+            this.checkBlink(c);
+        }
+
+        indexer.index++
+
+        for (const ci of (c.items||[])) {
+            this.createHierarchicalControl(indexer, ci, c, control)
+        }
+        return control
+    }
+
+    loadHierarchical() {
+        let indexer = {index: 0}
+        for (const pane of this.layout.panes) {
+            for (const c of (pane.items || [])) {
+                let instance = this.createHierarchicalControl(indexer, c, null, null)
+                $("#" + pane.id).append(instance);
+            }
+        }
+    }
+
+    private loadFlatItems() {
         let index = 0;
         for (const c of this.layout.items) {
-            let control:JQuery;
+            let control: JQuery;
             if (c.type == ControlType.Button) {
                 control = this.createButton(c);
                 if (c.id)
-                    this.parents.set(c.id, control);                
+                    this.parents.set(c.id, control);
             }
             else if (c.type == ControlType.DropDownButton) {
                 control = this.createDropDownButton(c);
                 if (c.id)
-                    this.parents.set(c.id, control);                
+                    this.parents.set(c.id, control);
             }
             else if (c.type == ControlType.Panel) {
                 control = this.createPanel(c);
                 if (c.id)
-                    this.parents.set(c.id, control);                
+                    this.parents.set(c.id, control);
             }
             else if (c.type == ControlType.Window) {
                 control = this.createWindow(c);
                 if (c.id)
-                    this.parents.set(c.id, control);                
+                    this.parents.set(c.id, control);
             }
 
             if (c.tooltip) {
                 control.attr("title", c.tooltip);
             }
-            this.controls.set(index, control);
+            this.controls.set(c, control);
             if (c.parent && this.parents.has(c.parent)) {
-                $($(".ui-control-content",this.parents.get(c.parent))[0]).append(control);
-            } else { $("#"+c.paneId).append(control); }
+                $($(".ui-control-content", this.parents.get(c.parent))[0]).append(control);
+            } else { $("#" + c.paneId).append(control); }
 
             if (c.checkbox) {
                 for (const v of c.checkbox.split(",")) {
@@ -576,8 +729,8 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                     variables = variables.map(v => this.getVariableName(v));
                     for (const variable of variables) {
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);                                                    
-                    }                      
+                        this.variableStyleChangedMap.get(variable).push(c);
+                    }
                 }
                 this.checkCheckbox(c);
             }
@@ -585,7 +738,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
             if (c.gauge) {
                 for (const v of c.gauge.split(",").map(v => this.getVariableName(v))) {
                     if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
-                    this.variableStyleChangedMap.get(v).push(c);                        
+                    this.variableStyleChangedMap.get(v).push(c);
                 }
                 this.checkGauge(c);
             }
@@ -596,8 +749,8 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                     variables = variables.map(v => this.getVariableName(v));
                     for (const variable of variables) {
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);                                                    
-                    }                      
+                        this.variableStyleChangedMap.get(variable).push(c);
+                    }
                 }
                 this.checkVisible(c);
             }
@@ -607,7 +760,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                     let variables = this.parseVariables(v);
                     for (const variable of variables) {
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);                                                    
+                        this.variableStyleChangedMap.get(variable).push(c);
                     }
                 }
                 this.checkBlink(c);
@@ -624,8 +777,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
     }
 
     checkGauge(c: Control) {
-        let index = this.layout.items.indexOf(c);
-        let ui = this.controls.get(index);
+        let ui = this.controls.get(c);
         let color = c.color || "red";
         let sthis = this.scripting.getScriptThis();
         const vars = c.gauge.split(",");
@@ -649,55 +801,6 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                 });
             }
         });
-        return;
-        if (!c.visible) return;
-        let index = this.layout.items.indexOf(c);
-        let ui = this.controls.get(index);
-        let sthis = this.scripting.getScriptThis();
-        const vars = c.visible.split(",");
-        let allTrue = true;
-        for (const v of vars) {
-            let compareOP = (v1:any,v2:any)=>v1==v2;
-            let compare = null;
-            let variable = v;
-            if (variable.indexOf("==")!=-1) {
-                compare = variable.split("==")[1];
-                variable = variable.split("==")[0];
-            }
-            if (variable.indexOf("!=")!=-1) {
-                compare = variable.split("!=")[1];
-                variable = variable.split("!=")[0];
-                compareOP = (v1:any,v2:any)=>v1!=v2;
-            }
-            if (variable.indexOf(">=")!=-1) {
-                compare = variable.split(">=")[1];
-                variable = variable.split(">=")[0];
-                compareOP = (v1:any,v2:any)=>v1>=v2;
-            }
-            if (variable.indexOf("<=")!=-1) {
-                compare = variable.split("<=")[1];
-                variable = variable.split("<=")[0];
-                compareOP = (v1:any,v2:any)=>v1<=v2;
-            }
-            if (variable.indexOf("<")!=-1) {
-                compare = variable.split("<")[1];
-                variable = variable.split("<")[0];
-                compareOP = (v1:any,v2:any)=>v1<v2;
-            }
-            if (variable.indexOf(">")!=-1) {
-                compare = variable.split(">")[1];
-                variable = variable.split(">")[0];
-                compareOP = (v1:any,v2:any)=>v1>v2;
-            }
-            if (!compare) {
-                allTrue = allTrue && isTrue(sthis[variable]);
-            } else if (compare) {
-                allTrue = allTrue && compareOP(sthis[variable], compare);
-            }
-        }
-        ui.css({
-            "display": (allTrue ? "block" : "none")
-        });
     }
 
     getSubExpression(sthis:any, varExpression:string):any {
@@ -718,8 +821,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
     checkExpression(c:Control, expression:string, func:(ui:JQuery, result:boolean)=>void) {
         if (!c || !expression) return;
-        let index = this.layout.items.indexOf(c);
-        let ui = this.controls.get(index);
+        let ui = this.controls.get(c);
         let sthis = this.scripting.getScriptThis();
         const tmpExp = expression.split(",");
         const vars = tmpExp.map(v => v.replace("()", ""));
@@ -766,14 +868,6 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                 ui.removeClass("toggled");
             }
         });
-        return;
-        let index = this.layout.items.indexOf(c);
-        let ui = this.controls.get(index);
-        ui.removeClass("toggled");
-        if (!c.checkbox) return;
-        let sthis = this.scripting.getScriptThis();
-        if (isTrue(sthis[c.checkbox]))
-            ui.addClass("toggled");
     }
 
     deleteLayout() {
@@ -855,7 +949,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         const btn = `<button tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;">${this.createContent(ctrl,true)}</div></button>`;
         const b = $(btn);
         if (ctrl.commands) {
-            const index = this.layout.items.indexOf(ctrl);
+            const index = [...this.controls.keys()].indexOf(ctrl);
             if (ctrl.is_script) {
                 let scr = this.scripting.makeScript("button "+index, ctrl.commands, "");
                 this.scripts.set(index, scr);
@@ -1108,7 +1202,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
             style+= "height:"+ctrl.h+"px !important;";
         }
         if (ctrl.position) {
-            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+" !important;";
         }
         if (ctrl.stack != Direction.None && ctrl.stack) {
 
@@ -1134,7 +1228,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
         if (ctrl.stack == Direction.None) {
             style+= "clear:both !important;";
-        } else {
+        } else if (ctrl.stack && ctrl.stack <= Direction.Right) {
             style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
         }
 
@@ -1145,7 +1239,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         const btn = `<div tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;${containerStyle}">${this.createContent(ctrl,true)}</div></div>`;
         const b = $(btn);
         if (ctrl.commands) {
-            const index = this.layout.items.indexOf(ctrl);
+            const index = [...this.controls.keys()].indexOf(ctrl);
             if (ctrl.is_script) {
                 let scr = this.scripting.makeScript("panel "+index, ctrl.commands, "");
                 this.scripts.set(index, scr);
@@ -1162,7 +1256,6 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
     }
 
     createContent(ctrl: Control, parseVariable:boolean) {
-        let index = this.layout.items.indexOf(ctrl);
         let content = ctrl.content || "";
         content=rawToHtml(content);
         let sthis = this.scripting.getScriptThis()

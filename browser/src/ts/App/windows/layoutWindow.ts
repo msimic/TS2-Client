@@ -3,6 +3,8 @@ import { Button, Messagebox } from "../messagebox";
 import { ProfileManager } from "../profileManager";
 import * as Util from "../../Core/util";
 import { WindowDefinition, WindowManager } from "../windowManager";
+import { EditPanelWindow } from "./editPanelWindow";
+import { JsScript } from "../../Scripting/jsScript";
 
 export class LayoutWindow {
     protected $win: JQuery;
@@ -42,13 +44,13 @@ export class LayoutWindow {
         return this._layout;
     }
     public set layout(value: LayoutDefinition) {
-        this._layout = value;
+        this._layout = structuredClone(value);
         const title = this.title + " (vers. layout v" + (value ? value.version : "0") + (value && value.customized ? " (personalizzato)" : "") + ")";
         (<any>this.$win).jqxWindow("setTitle", title)
     }
     panesElements: string[];
 
-    constructor(private title: string, private profileManager:ProfileManager, private layoutManager:LayoutManager, private windowManager:WindowManager) {
+    constructor(private title: string, private script:JsScript, private profileManager:ProfileManager, private layoutManager:LayoutManager, private windowManager:WindowManager) {
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
         document.body.appendChild(myDiv);
@@ -73,7 +75,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Larghezza: <input type="text" class="left-top-width" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="left-top-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="left-top-color" title="Il colore di sfondo del pannello"></span></label>
-                                <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                             
                             <div class="pane-content" data-panel="column-left-bottom" style="position: relative;margin:2px; border: 1px solid ${foreColor}; background-color: ${panelColor};">
@@ -81,7 +83,8 @@ export class LayoutWindow {
                                 <label>&nbsp;Larghezza: <input type="text" class="left-bottom-width" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="left-bottom-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="left-bottom-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                <span class="note">Il contenuto viene ordinato dal basso verso l'alto</span>
+                                <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                         </div>
                         <div class="right-pane">                
@@ -89,7 +92,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Altezza: <input type="text" class="top-left-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="top-left-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="top-left-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                             <div class="pane-content" style="flex:3;background-color:black;">
                             </div>
@@ -97,7 +100,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Altezza: <input type="text" class="bottom-left-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="bottom-left-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="bottom-left-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                         </div>
                         <div class="right-pane">            
@@ -105,7 +108,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Altezza: <input type="text" class="top-right-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="top-right-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="top-right-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                             <div class="pane-content" style="flex:3;background-color:black;">
                             </div>
@@ -113,7 +116,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Altezza: <input type="text" class="bottom-right-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="bottom-right-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="bottom-right-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                         </div>
                         <div class="right-pane"> 
@@ -121,13 +124,14 @@ export class LayoutWindow {
                                 <label>&nbsp;Larghezza: <input type="text" class="right-top-width" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="right-top-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="right-top-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                             <div class="pane-content" data-panel="column-right-bottom" style="position: relative;margin:2px; border: 1px solid ${foreColor}; background-color: ${panelColor};">
                                 <label>&nbsp;Larghezza: <input type="text" class="right-bottom-width" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="right-bottom-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>
                                 <label>&nbsp;Colore: <span><input type="color" class="right-bottom-color" title="Il colore di sfondo del pannello"></span></label>
-                                 <a href="#" style="color: ${foreColor};text-decoration:underline;" class="text-shadow align-bottom-right">Personalizza&nbsp;contenuto...</a>
+                                <span class="note">Il contenuto viene ordinato dal basso verso l'alto</span>
+                                 <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
                         </div>
                     </div>
@@ -260,10 +264,25 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
                 this.handleApplyButtonClick(null)
             }
         });
+
+        $(".pane-content[data-panel] a").on("click", (ev) => {
+            let pane = $(ev.currentTarget.parentElement).data("panel")
+            this.editPanel(pane)
+        })
+
+
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$applyButton.click(this.handleApplyButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
 
+    }
+    editPanel(pane: string) {
+        let panel = this.layout.panes.find(p => p.id == pane)
+        if (panel) {
+            this.applyFields()
+            let pw = new EditPanelWindow(this.script, this.layout, panel, this.profileManager)
+            pw.show()
+        }
     }
     blink(pane: string, blink: boolean) {
         for (const pn of this.panesElements) {
@@ -482,6 +501,36 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     private async handleApplyButtonClick(ev:any, customized:boolean = true) {
 
+        this.applyFields();
+
+        let ws:WindowDefinition[] = [];
+
+        for (const w of this.windowManager.windows) {
+            if (w[1].data.visible) {
+                ws.push(w[1])
+                await this.windowManager.destroyWindow(w[0], false)
+            }
+        }
+
+        this.layout.customized = customized;
+        Object.assign(this.layoutManager.layout, this.layout)
+        let prof = this.profileManager.getProfile(this.profileManager.getCurrent())
+        if (!prof.layout) {
+            prof.layout = LayoutManager.emptyLayout()
+        }
+        Object.assign(prof.layout, this.layout)
+        this.layoutManager.save();
+        this.layoutManager.load();
+        this.layout = this.layoutManager.layout;
+        this.load()
+
+        for (const w of ws) {
+            await this.windowManager.show(w.data.name)
+        }
+        
+    }
+
+    private applyFields() {
         this.setPaneWidth(PanelPosition.PaneLeftTop, parseInt(this.$leftTopWidth.val()));
         this.setPaneWidth(PanelPosition.PaneLeftBottom, parseInt(this.$leftBottomWidth.val()));
         this.setPaneWidth(PanelPosition.PaneRightTop, parseInt(this.$rightTopWidth.val()));
@@ -510,27 +559,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.setPaneExpand(PanelPosition.PaneBottomRight, (this.$bottomRightExpand.prop("checked")));
 
         this.setTextColor(this.$layoutColor.attr("disabled") ? null : (this.$layoutColor.val()));
-        this.setBackColor(this.$layoutBackColor.attr("disabled") ? null :(this.$layoutBackColor.val()));
-
-        let ws:WindowDefinition[] = [];
-
-        for (const w of this.windowManager.windows) {
-            if (w[1].data.visible) {
-                ws.push(w[1])
-                await this.windowManager.destroyWindow(w[0], false)
-            }
-        }
-
-        this.layout.customized = customized;
-        this.layoutManager.save();
-        this.layoutManager.load();
-        this.layout = this.layoutManager.layout;
-        this.load()
-
-        for (const w of ws) {
-            await this.windowManager.show(w.data.name)
-        }
-        
+        this.setBackColor(this.$layoutBackColor.attr("disabled") ? null : (this.$layoutBackColor.val()));
     }
 
     private handleCancelButtonClick() {

@@ -1709,7 +1709,7 @@ export class Mapper {
             if (name.toLowerCase() == this._previous.name?.toLowerCase()) {
                 rooms = [this._previous]
             } else {
-                const checkDir = (ex:ExitDir)=> (this._previous.exits[ex] && this._previous.exits[ex].to_room && this.getRoomById(this._previous.exits[ex].to_room)?.name.toLowerCase() == name.toLowerCase())
+                const checkDir = (ex:ExitDir)=> (this._previous.exits[ex] && this._previous.exits[ex].to_room && this.getRoomById(this._previous.exits[ex].to_room)?.name?.toLowerCase() == name.toLowerCase())
                 const dirs = Object.keys(ExitDir).map(k => (<any>ExitDir)[k])
                 for (let dir of dirs) {
                     if (checkDir(dir as ExitDir)) {

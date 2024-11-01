@@ -120,8 +120,8 @@ export class WindowManager {
     }
 
     private addDockedWindowsFromLayout(prof: Profile) {
-        if (prof.useLayout && this.layoutManager.getCurrent()?.items) {
-            for (let w of this.layoutManager.getCurrent().items) {
+        if (prof.useLayout) {
+            for (let w of this.layoutManager.findDockingPositions(null)) {
                 if (w.type == ControlType.Window) {
                     if (!this.windows.has(w.content)) {
                         this.windows.set(w.content, {
@@ -157,7 +157,6 @@ export class WindowManager {
             (this.windows as any).loadedFrom = "-"
             console.log("windowsmanager profileDisconnected: " + this.profileManager.getCurrent())
             this.cleanupWindows();
-            this.windows.clear()
         } finally {
             this.loading = false
         }
@@ -232,6 +231,7 @@ export class WindowManager {
                 v.data.visible = wasVisible;
             }
         });
+        this.windows.clear()
     }
 
     public isDocked(window:string, ui:JQuery) {
@@ -250,7 +250,7 @@ export class WindowManager {
         }
         let windowDef = this.windows.get(window);
         if (!windowDef) return;
-        const witm = this.layoutManager.getCurrent().items.find(i => i.type == ControlType.Window && i.content == window);
+        const witm = this.layoutManager.findDockingPositions(window)[0];
         let dockPos = $("#window-dock-"+window.replace(/ /g,"-"));
         if (!witm) {
             windowDef.data.docked = false;

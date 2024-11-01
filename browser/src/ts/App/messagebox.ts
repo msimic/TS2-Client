@@ -116,44 +116,49 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     cancelbuttontext = cancelbuttontext == undefined ? "Annulla" : cancelbuttontext;
 
     const numInputs = multiinput ? text.split('\n').length : 1
-    const inputLabels = multiinput ? text.split('\n') : [text]
+    const inputLabels = multiinput ? text.split('\n') : [typeof text != "string" ? "" : text]
 
     let innserMessageboxBody = ""
 
-
-    for (let index = 0; index < inputLabels.length; index++) {
-        const label = inputLabels[index];
-        let type = "text"
-        if (inputDefault && typeof inputDefault[index] == "boolean") {
-            type = "checkbox"
-        }
-        let inputTemplate = `<input type="${type}" style="box-sizing:border-box;width:${numInputs>1?"auto":"100%"};" id="messageboxinput${index}">`
-        let rowOrCell = "row"
-        let tableorRow = "table;width:100%"
-        let innercell = "display: table-cell;"
-        let align = "left"
-        if (numInputs > 1) {
-            align = "right"
-            rowOrCell = "cell"
-            innercell = ""
-            tableorRow = "table-row"
-        }
-        if (multiline) {
-            inputTemplate = `<textarea style="min-height:200px;height:100%;box-sizing:border-box;width:100%;" id="messageboxinput${index}"></textarea>`
-        }
-        const template =`
-        <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
-            <div style="display: table-${rowOrCell};height:auto;">
-                <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};padding:5px" id="message${index}"></div>
+    if (typeof text != "string") {
+        innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;' class='customjq'></div>"
+    } else {
+        innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;'>"
+        for (let index = 0; index < inputLabels.length; index++) {
+            const label = inputLabels[index];
+            let type = "text"
+            if (inputDefault && typeof inputDefault[index] == "boolean") {
+                type = "checkbox"
+            }
+            let inputTemplate = `<input type="${type}" style="box-sizing:border-box;width:${numInputs>1?"auto":"100%"};" id="messageboxinput${index}">`
+            let rowOrCell = "row"
+            let tableorRow = "table;width:100%"
+            let innercell = "display: table-cell;"
+            let align = "left"
+            if (numInputs > 1) {
+                align = "right"
+                rowOrCell = "cell"
+                innercell = ""
+                tableorRow = "table-row"
+            }
+            if (multiline) {
+                inputTemplate = `<textarea style="min-height:200px;height:100%;box-sizing:border-box;width:100%;" id="messageboxinput${index}"></textarea>`
+            }
+            const template =`
+            <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
+                <div style="display: table-${rowOrCell};height:auto;">
+                    <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};padding:5px" id="message${index}"></div>
+                </div>
+                <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
+                    ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
+                        ${inputTemplate}
+                    ${rowOrCell=="row"?"</div>":""}
+                </div>
             </div>
-            <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
-                ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
-                    ${inputTemplate}
-                ${rowOrCell=="row"?"</div>":""}
-            </div>
-        </div>
-            `;
-        innserMessageboxBody += template
+                `;
+            innserMessageboxBody += template
+        }
+        innserMessageboxBody += "</div>"
     }
 
     win.innerHTML = `
@@ -162,7 +167,7 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     <!--content-->
     <div id="msgboxcontent">
         <div style="display: table;height: 100%;width: 100%;box-sizing: border-box;position:relative;">
-            <div style="display: table;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
+            <div style="display: table-row;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
             ${innserMessageboxBody}
             </div>
             <div style="display: table-row;height:auto">
@@ -176,6 +181,10 @@ export async function messagebox(title: string, text: string, callback:(val:stri
     `;
     
     let $win = $(win);
+
+    if (typeof text != "string") {
+        $(".customjq", $win).append(text)
+    }
 
         const acceptButton = $("#accept", $win);
         const cancelButton = $("#cancel", $win);
