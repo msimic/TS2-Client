@@ -812,7 +812,7 @@ export class MenuBar {
 
                 let denyReason = "";
                 if ((denyReason = denyClientVersion(importObj))) {
-                    Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.`)
+                    Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.\n\n<a href="https://github.com/temporasanguinis/TS2-Client/releases" target="_blank">Scarica l'ultima versione da qui</a>`)
                     return;
                 }
 

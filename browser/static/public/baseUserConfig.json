@@ -1,9 +1,9 @@
 {
   "version": 39,
   "versionMessage": "Correzioni ad alias 'ub/us/usastaffa' e 'tool socket', Where e altro. Aggiunto tool ident.",
-  "requiresClientMajor": 1,
-  "requiresClientMinor": 6,
-  "requiresClientRevision": 2,
+  "requiresClientMajor": 2,
+  "requiresClientMinor": 0,
+  "requiresClientRevision": 4,
   "text-color": "green-on-black",
   "wrap-lines": true,
   "utf8Enabled": false,
@@ -107,18 +107,18 @@
   ],
   "script_events": [
     [
-	  "CommandExecuted",
-	  [
-	    {
-		  "type":"CommandExecuted",
-		  "condition":"false",
-		  "id":"afkReset",
-		  "value":"if (args.command.toLowerCase() != \"afk\") {\n  send(\"afk false\")\n}",
-		  "class":"",
-		  "enabled":true
-		}
-	  ]
-	],
+      "CommandExecuted",
+      [
+        {
+          "type": "CommandExecuted",
+          "condition": "false",
+          "id": "afkReset",
+          "value": "if (!@initDone) return\nif (args.command.toLowerCase() != \"afk\") {\n  send(\"afk false\")\n}",
+          "class": "",
+          "enabled": true
+        }
+      ]
+    ],
     [
       "VariableChanged",
       [
@@ -126,7 +126,7 @@
           "type": "VariableChanged",
           "condition": "Gruppo",
           "id": "printGruppo",
-          "value": "send(\"printGruppo\");",
+          "value": "if (!@initDone) return\nsend(\"printGruppo\");",
           "class": "",
           "enabled": true
         },
@@ -134,7 +134,7 @@
           "type": "VariableChanged",
           "condition": "TSTank",
           "id": "",
-          "value": "send(\"updateCombatStatus\")",
+          "value": "if (!@initDone) return\nsend(\"updateCombatStatus\")",
           "class": "",
           "enabled": true
         },
@@ -142,7 +142,7 @@
           "type": "VariableChanged",
           "condition": "TSTankCond",
           "id": "",
-          "value": "send(\"updateCombatStatus\")",
+          "value": "if (!@initDone) return\nsend(\"updateCombatStatus\")",
           "class": "",
           "enabled": true
         },
@@ -150,7 +150,7 @@
           "type": "VariableChanged",
           "condition": "TSMob",
           "id": "",
-          "value": "send(\"updateCombatStatus\")",
+          "value": "if (!@initDone) return\nsend(\"updateCombatStatus\")",
           "class": "",
           "enabled": true
         },
@@ -158,7 +158,7 @@
           "type": "VariableChanged",
           "condition": "TSMobCond",
           "id": "",
-          "value": "send(\"updateCombatStatus\")",
+          "value": "if (!@initDone) return\nsend(\"updateCombatStatus\")",
           "class": "",
           "enabled": true
         },
@@ -166,7 +166,7 @@
           "type": "VariableChanged",
           "condition": "TSSpells",
           "id": "",
-          "value": "send(\"updateCombatStatus\")",
+          "value": "if (!@initDone) return\nsend(\"updateCombatStatus\")",
           "class": "",
           "enabled": true
         },
@@ -174,7 +174,7 @@
           "type": "VariableChanged",
           "condition": "Gruppo",
           "id": "checkAcl",
-          "value": "if (classEnabled(\"autocleric\")) send(\"cura\");",
+          "value": "if (!@initDone) return\nif (classEnabled(\"autocleric\")) send(\"cura\");",
           "class": "autocleric",
           "enabled": true
         },
@@ -182,7 +182,7 @@
           "type": "VariableChanged",
           "condition": "TSLag",
           "id": "checkAcl2",
-          "value": "if (classEnabled(\"autocleric\")) send(\"cura\");",
+          "value": "if (!@initDone) return\nif (classEnabled(\"autocleric\")) send(\"cura\");",
           "class": "autocleric",
           "enabled": true
         },
@@ -190,7 +190,7 @@
           "type": "VariableChanged",
           "condition": "TSGold,TSBank",
           "id": "",
-          "value": "send(\"generaGold\");",
+          "value": "if (!@initDone) return\nsend(\"generaGold\");",
           "class": "",
           "enabled": true
         },
@@ -198,7 +198,7 @@
           "type": "VariableChanged",
           "condition": "TSTank,TSTankCond",
           "id": "checkAass",
-          "value": "send(\"checkAssist\")",
+          "value": "if (!@initDone) return\nsend(\"checkAssist\")",
           "class": "",
           "enabled": true
         },
@@ -206,7 +206,7 @@
           "type": "VariableChanged",
           "condition": "Mobs,TSLag",
           "id": "",
-          "value": "delay(\"mobchanged\", 20, ()=>{\n  if (this.Mobs && this.TSLag != \"+\") {\n      send(\"autokillcheck\")\n  }\n});",
+          "value": "if (!@initDone) return\ndelay(\"mobchanged\", 20, ()=>{\n  if (this.Mobs && this.TSLag != \"+\") {\n      send(\"autokillcheck\")\n  }\n});",
           "class": "autokill",
           "enabled": true
         },
@@ -214,7 +214,7 @@
           "type": "VariableChanged",
           "condition": "TSRoom",
           "id": "",
-          "value": "print(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
+          "value": "if (!@initDone) return\nprint(\"Sei a: '\" + this.RoomName + \"', Vnum: \"+this.TSRoom);",
           "class": "debug",
           "enabled": true
         },
@@ -222,7 +222,7 @@
           "type": "VariableChanged",
           "condition": "TSRoom",
           "id": "",
-          "value": "this.pauseAutocleric = false;\nthis.preventAntispalm = false;\nif (this.temp_dice)\n  delete this.temp_dice;\ntoggleTrigger(\"dice\", false);\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)\ndelay(\"aspettomapper\", 1, () => {\n  if (mapper.current) {\n      send(\"onroomenter \" + mapper.current.id)\n  }\n})\nthis.roomTraps=[];\ntoggleTrigger(\"disarm-click\", false);\n",
+          "value": "if (!@initDone) return\nthis.pauseAutocleric = false;\nthis.preventAntispalm = false;\nif (this.temp_dice)\n  delete this.temp_dice;\ntoggleTrigger(\"dice\", false);\nsetTimeout(()=>send(\"onroomenter \" + this.TSRoom),0)\ndelay(\"aspettomapper\", 1, () => {\n  if (mapper.current) {\n      send(\"onroomenter \" + mapper.current.id)\n  }\n})\nthis.roomTraps=[];\ntoggleTrigger(\"disarm-click\", false);\n",
           "class": "",
           "enabled": true
         }
@@ -235,7 +235,7 @@
           "type": "ConnectionState",
           "condition": "telnet",
           "id": "",
-          "value": "this.Mobs = \"\";\nsend(\"generaFunzioni\")",
+          "value": "if (args) {\n  this.Mobs = \"\"\n  send(\"createTemporaryVariables\")\n  send(\"generaFunzioni\")\n}",
           "class": "",
           "enabled": true
         }
@@ -2598,7 +2598,7 @@
     {
       "pattern": "updateCombatStatus",
       "id": "",
-      "value": "function getPercent(str) {\n  switch (str) {\n  case \"eccellente\":\n\treturn 100;\n  case \"graffiato\":\n\treturn 95;\n  case \"tagliato\":\n\treturn 85;\n  case \"ferito\":\n\treturn 65;\n  case \"sanguinante\":\n\treturn 40;\n  case \"squarciato\":\n\treturn 25;\n  case \"devastato\":\n\treturn 10;\n  case \"morente\":\n\treturn 1;\n\t}\n  return 100;\n}\nthis.tankMax = 100;\nthis.tankPercent = getPercent(this.TSTankCond)\nthis.tankKey = (this.TSTank||\"*\").split(\" \")[0]\nthis.tankKey = [this.tankKey[0].toUpperCase(),...this.tankKey.slice(1)].join(\"\")\nthis.mobMax = 100;\nthis.mobPercent = getPercent(this.TSMobCond)\nthis.mobKey = (this.TSMob||\"*\").split(\" \")[0]\nthis.mobKey = [this.mobKey[0].toUpperCase(),...this.mobKey.slice(1)].join(\"\")\nlet spells = this.TSSpells;\nthis.spells=\"\";\nfor (let i=0;i<spells.length;i++) {\n  switch (spells[i]) {\n    case 'F':\n    case 'f':\n      {\n        switch (spells[i+1]) {\n          case '2':\n            this.spells += color(spells[i],\"lightblue\", null, true)\n            i++;\n            break;\n          case '3':\n            this.spells += color(spells[i],\"blue\", null, true)\n            i++;\n            break;\n          case '4':\n            this.spells += color(spells[i],\"yellowgreen\", null, true)\n            i++;\n            break;\n          case '3':\n            this.spells += color(spells[i],\"yellow\", null, true)\n            i++;\n            break;\n          default:\n            this.spells += color(spells[i],\"red\", null, true)\n        }\n      }\n      break;\n    case 'S':\n    case 's':\n      this.spells += color(spells[i],\"white\", null, true)\n      break;\n    case 'N':\n    case 'n':\n      this.spells += color(spells[i],\"green\", null, true)\n      break;\n    case 'A':\n    case 'a':\n      this.spells += color(spells[i],\"blue\", null, true)\n      break;\n    case 'I':\n    case 'i':\n      this.spells += color(spells[i],\"cyan\", null, true)\n      break;\n    case 'D':\n    case 'd':\n      this.spells += color(spells[i],\"gray\", null, true)\n      break;\n    case 'G':\n    case 'g':\n      this.spells += color(spells[i],\"maroon\", null, true)\n      break;\n    default:\n      this.spells += spells[i]\n  }\n}\nif (this.TSSpells.toLowerCase().indexOf(\"s\")==-1) {\n  this.sancato = false;\n  this.scadenzaSanc = false;\n  if (window.sancTimeout) {\n      clearTimeout(window.sancTimeout);\n      window.sancTimeout = null;\n    }\n} else {\n  this.sancato = true;\n}\nif (this.TSSpells.toLowerCase().indexOf(\"f\")==-1) {\n  this.scudato = false;\n  this.scadenzaScudo = false;\n  if (window.scudoTimeout) {\n      clearTimeout(window.scudoTimeout);\n      window.scudoTimeout = null;\n    }\n} else {\n  this.scudato = true;\n}\nthis.spells+=color(\"B:\"+this.TSBlink,\"magenta\",null,true)",
+      "value": "function getPercent(str) {\n  switch (str) {\n  case \"eccellente\":\n\treturn 100;\n  case \"graffiato\":\n\treturn 95;\n  case \"tagliato\":\n\treturn 85;\n  case \"ferito\":\n\treturn 65;\n  case \"sanguinante\":\n\treturn 40;\n  case \"squarciato\":\n\treturn 25;\n  case \"devastato\":\n\treturn 10;\n  case \"morente\":\n\treturn 1;\n\t}\n  return 100;\n}\nthis.tankMax = 100;\nthis.tankPercent = getPercent(this.TSTankCond)\nthis.tankKey = (this.TSTank||\"*\").split(\" \")[0]\nthis.tankKey = [this.tankKey[0].toUpperCase(),...this.tankKey.slice(1)].join(\"\")\nthis.mobMax = 100;\nthis.mobPercent = getPercent(this.TSMobCond)\nthis.mobKey = (this.TSMob||\"*\").split(\" \")[0]\nthis.mobKey = [this.mobKey[0].toUpperCase(),...this.mobKey.slice(1)].join(\"\")\nlet spells = this.TSSpells || \"\";\nthis.spells=\"\";\nfor (let i=0;i<spells.length;i++) {\n  switch (spells[i]) {\n    case 'F':\n    case 'f':\n      {\n        switch (spells[i+1]) {\n          case '2':\n            this.spells += color(spells[i],\"lightblue\", null, true)\n            i++;\n            break;\n          case '3':\n            this.spells += color(spells[i],\"blue\", null, true)\n            i++;\n            break;\n          case '4':\n            this.spells += color(spells[i],\"yellowgreen\", null, true)\n            i++;\n            break;\n          case '3':\n            this.spells += color(spells[i],\"yellow\", null, true)\n            i++;\n            break;\n          default:\n            this.spells += color(spells[i],\"red\", null, true)\n        }\n      }\n      break;\n    case 'S':\n    case 's':\n      this.spells += color(spells[i],\"white\", null, true)\n      break;\n    case 'N':\n    case 'n':\n      this.spells += color(spells[i],\"green\", null, true)\n      break;\n    case 'A':\n    case 'a':\n      this.spells += color(spells[i],\"blue\", null, true)\n      break;\n    case 'I':\n    case 'i':\n      this.spells += color(spells[i],\"cyan\", null, true)\n      break;\n    case 'D':\n    case 'd':\n      this.spells += color(spells[i],\"gray\", null, true)\n      break;\n    case 'G':\n    case 'g':\n      this.spells += color(spells[i],\"maroon\", null, true)\n      break;\n    default:\n      this.spells += spells[i]\n  }\n}\nif (this.TSSpells!=undefined) {\n  if (this.TSSpells.toLowerCase().indexOf(\"s\")==-1) {\n    this.sancato = false;\n    this.scadenzaSanc = false;\n    if (window.sancTimeout) {\n        clearTimeout(window.sancTimeout);\n        window.sancTimeout = null;\n      }\n  } else {\n    this.sancato = true;\n  }\n  if (this.TSSpells.toLowerCase().indexOf(\"f\")==-1) {\n    this.scudato = false;\n    this.scadenzaScudo = false;\n    if (window.scudoTimeout) {\n        clearTimeout(window.scudoTimeout);\n        window.scudoTimeout = null;\n      }\n  } else {\n    this.scudato = true;\n  }\n}\nthis.spells+=color(\"B:\"+this.TSBlink,\"magenta\",null,true)",
       "regex": false,
       "is_script": true,
       "class": "",
@@ -4100,6 +4100,18 @@
       "pattern": "^(\\d+)x(?: (.*))?$",
       "regex": true,
       "value": "const nvolte = match[1];\nif (nvolte>50) {\n  print(\"Numero troppo grande di ripetizioni richieste\");\n  return;\n}\n\nconst comando = match[2];\nif (!comando || (nvolte==0)) {\n  print(\"USO: NNx comando1|comando2|...|comando\")\n  print(\"         dove NN è un numero da 1 a 50\")\n  print(\"         eventuali # verranno convertiti nel numero della ripetizione\")\n  return;\n}\n\nlet result;\nfor (let i=1; i<=nvolte; i++) {\n\tresult = comando.replace(\"#\", i)\n  result = result.replace(\"|\", \";\")\n\tsend(result)\n}",
+      "shortcut": "",
+      "script": null
+    },
+    {
+      "class": "",
+      "enabled": true,
+      "id": "",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "createTemporaryVariables",
+      "regex": false,
+      "value": "const tempVars = {\n  \"_stat_pqsess\": 0,\n  \"_stat_pqh\": 0,\n  \"_stat_pq5m\": 0,\n  \"_stat_pq15m\": 0,\n  \"_stat_pq1h\": 0,\n  \"_stat_xpsess\": 0,\n  \"_stat_xph\": 0,\n  \"_stat_xp5m\": 0,\n  \"_stat_xp15m\": 0,\n  \"_stat_xp1h\": 0,\n  \"STARTPROMPT\": \"\",\n  \"ENDPROMPT\": \"\",\n  \"onetimeLook\": false,\n  \"preventAutoassist\": false,\n  \"ultimoSpellCastato\": \"\",\n  \"ultimoTargetSpell\": \"\",\n  \"TickRemaining\": 0,\n  \"currentTickLenght\": 60,\n  \"ticksToLongTick\": 0,\n  \"lastTickTime\": 0,\n  \"TickDuration\": 0,\n  \"tickInterval\": 0,\n  \"feastFatto\": false,\n  \"feastTimeout\": 0,\n  \"afkProcTimout\": 0,\n  \"walkingToId\": 0,\n  \"RoomName\": \"\",\n  \"RoomDesc\": \"\",\n  \"RoomExit\": \"\",\n  \"Mobs\": [],\n  \"TSHp\": 1,\n  \"TSMana\": 1,\n  \"TSMov\": 1,\n  \"TSMaxHp\": 1,\n  \"TSMaxMana\": 1,\n  \"TSMaxMov\": 1,\n  \"TSBlink\": 0,\n  \"TSMovRegen\": 1,\n  \"TSPosizione\": \"\",\n  \"TSSettore\": \"\",\n  \"TSGold\": 1,\n  \"TSGoldK\": 1,\n  \"TSTank\": \"*\",\n  \"TSTankCond\": \"*\",\n  \"TSMob\": \"*\",\n  \"TSMobCond\": \"*\",\n  \"TSLag\": \"-\",\n  \"TSXptoLevel\": 1,\n  \"TSXp\": 1,\n  \"Gruppo\": `{\"tank\":\"*\",\"mob\":\"*\"}`,\n  \"Exits\": \"\",\n  \"prev_room\": 0,\n  \"grandezzaGruppo\": 0,\n  \"initDone\": false,\n  \"disableCheckAssist\": false,\n}\n\nObject.keys(tempVars).map(v => {\n  // queste variabili le cancello e ricreo temporary\n  delvar(v);\n  setvar(v, tempVars[v], \"temp\", true);\n})\n",
       "shortcut": "",
       "script": null
     }

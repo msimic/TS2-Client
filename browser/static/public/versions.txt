@@ -25,7 +25,6 @@ bugfixes:
 - risolto un problema nella funzione hideWindow()
 - risolto problema di parsing parametri per script eseguite in linea comando
 - risolto vari bug minori
-
 ____________________________________________________________
 1.6.2
 - feature: implementata una funzionalita' per mantenere il client attivo anche dopo molto tempo in background

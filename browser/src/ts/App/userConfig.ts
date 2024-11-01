@@ -258,7 +258,7 @@ export class UserConfig {
         let denyReason = "";
         if ((denyReason = denyClientVersion(vals))) {
             (async ()=> {
-                const ret = await Messagebox.Question(`E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.\n\nSe credi che questo sia un errore puoi provare a rilanciare il client senza caching premendo Si.`)
+                const ret = await Messagebox.Question(`E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.\n\n<a href="https://github.com/temporasanguinis/TS2-Client/releases" target="_blank">Scarica l'ultima versione da qui</a>\n\nSe credi che questo sia un errore puoi provare a rilanciare il client senza caching premendo Si.`)
                 if (ret.button == Button.Ok) {
                     $.ajax({
                         url: window.location.href,
