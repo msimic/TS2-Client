@@ -1,4 +1,4 @@
-2.0.4beta5
+2.0.5beta1
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 
 features:

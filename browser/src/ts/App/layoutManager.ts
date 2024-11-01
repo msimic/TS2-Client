@@ -203,7 +203,6 @@ export class LayoutManager {
         if (ctrls=this.variableChangedMap.get(variableName)) {
             for (const c of ctrls) {
                 numCtrl++;
-                let index = this.layout.items.indexOf(c);
                 //let t0 = performance.now();        
                 let cont = this.createContent(c, false);
                 if (this.controlContentMap.get(c) == cont) {
