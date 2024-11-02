@@ -266,7 +266,7 @@ export class WindowManager {
         if (!w) return;
         (<any>$(w)).jqxWindow("expand");
         w.hide()
-        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
+        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration')||100;
         setTimeout(() => {
             w.css({
                 "position":"relative",
@@ -298,6 +298,7 @@ export class WindowManager {
             if ((<any>$(w))[0] && (<any>$(w))[0].sizeChanged) {
                 setTimeout(() => (<any>$(w))[0].sizeChanged(), (duration||150));
             }
+            console.log("Saving: Docked " + windowDef.data.name)
             this.save();
             w.trigger("docked", true);
         }, duration);
@@ -308,8 +309,9 @@ export class WindowManager {
         $(".jqx-window-pin-button",w).removeClass("jqx-window-pin-button-pinned");
         w.data("docked", false);
         (<any>$(w)).jqxWindow({ draggable: true }); 
-        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration');
+        var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration')||100;
         let wnd = this.windows.get(window);
+        if (!wnd) return;
         wnd.data.docked = false;
         const prevContent:string[] = wnd.output ? wnd.output.getLines() : [];
         if (wnd.output || wnd.custom) {
@@ -328,6 +330,7 @@ export class WindowManager {
                 wnd.output.write(line, line)
             }
         }
+        console.log("Saving: Undocked " + wnd.data.name)
         this.save();
         w.trigger("undocked", true);
     }
@@ -647,6 +650,7 @@ export class WindowManager {
             let data = self.windows.get(name).data;
             data.w = event.args.width;
             data.h = event.args.height;
+            console.log("Saving: Resized " + data.name)
             self.save();
         });
 
