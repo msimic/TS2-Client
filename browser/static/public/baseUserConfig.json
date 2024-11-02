@@ -113,7 +113,7 @@
           "type": "CommandExecuted",
           "condition": "false",
           "id": "afkReset",
-          "value": "if (!@initDone) return\nif (args.command.toLowerCase() != \"afk\") {\n  send(\"afk false\")\n}",
+          "value": "if (!@initDone) return\nif (args.command.toLowerCase() != \"afk\" && classEnabled(\"afk\")) {\n  send(\"afk false\")\n}",
           "class": "",
           "enabled": true
         }
