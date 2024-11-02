@@ -389,9 +389,11 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
                 clearInterval(this.autologinInterval);
             }
         }
-        (<any>this.$win).jqxWindow("open");
-        (<any>this.$win).jqxWindow('bringToFront');
-        setTimeout(() => $(this.profileList).focus(), 500);
+        if (!autologin) {
+            (<any>this.$win).jqxWindow("open");
+            (<any>this.$win).jqxWindow('bringToFront');
+            setTimeout(() => $(this.profileList).focus(), 500);
+        }
     }
 
     private startAutoreconnect() {

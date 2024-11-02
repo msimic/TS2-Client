@@ -215,7 +215,7 @@ export class JsScript {
     private variables: Map<string, Variable>;
     private eventList: ScriptEvent[] = [];
     private events: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
-    private baseVariables: Map<string, Variable>;
+    private baseVariables: Map<string, Variable> = new Map<string, Variable>;
     private baseEventList: ScriptEvent[] = [];
     private baseEvents: Map<string, ScriptEvent[]> = new Map<string, ScriptEvent[]>();
     public variableChanged = new EventHook<string>();
@@ -264,7 +264,7 @@ export class JsScript {
             this.load();
         }, this);
         this.scriptThis.startWatch((e)=>{
-            EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: e.propName, value: e});
+            this.onVariableChanged(e);
             let evl = this.linkedEvents.get(e.propName)
 
             if (evl) {
@@ -286,6 +286,17 @@ export class JsScript {
             }
         }, 1)
     }
+    private onVariableChanged(e: PropertyChanged) {
+        if (!this.variables.get(e.propName)) {
+            this.setVariable({
+                class: '',
+                name: e.propName,
+                value: e.newValue
+            })
+        }
+        EvtScriptEvent.fire({ event: ScripEventTypes.VariableChanged, condition: e.propName, value: e });
+    }
+
     getStackTrace (owner:string, custom?:string):string {
         let stack:string;
 
