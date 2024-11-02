@@ -29,7 +29,7 @@
     "electronpostinstall": "echo electron-builder install-app-deps",
     "compile": "tsc -p tsconfig.json",
     "webpack": "webpack",
-    "build": "node tools/genAppInfo.js \"git rev-parse HEAD\" && node tools/merge-contrib.js && node tools/generateHtmlHashes.js && tsc --sourceMap false -p tsconfig.json && webpack && node tools/build.js && rm -f dist/public/client.config.electron.json",
+    "build": "node tools/genAppInfo.js \"git rev-parse HEAD\" && node tools/merge-contrib.js && node tools/generateHtmlHashes.js && tsc --sourceMap false -p tsconfig.json && webpack && node tools/build.js && (rm -f dist/public/client.config.electron.json || del /q /f dist\\public\\client.config.electron.json)",
     "build_for_electron": "npm run build && cd ./../telnet_proxy && npm install && npm run build && npm run webpack && cd ./../browser && cp ./../telnet_proxy/dist/telnet_proxy/bundle/telnet_proxy.js dist/public/telnet_proxy.js && cp -f static/public/client.config.electron.json dist/public/client.config.json && rm -f dist/public/cacheServiceWorker.js",
     "build-dev": "node tools/genAppInfo.js \"git rev-parse HEAD\" && node tools/merge-contrib.js && tsc -p tsconfig.json && webpack --mode=development --config webpack.config.dev.js",
     "start": "tsc -p tsconfig.json && webpack-dev-server --config ./webpack.config.dev.js --hot",
