@@ -131,7 +131,7 @@ export class LayoutManager {
 
         let ret = []
         let l = this.getCurrent()
-        for (const p of l.panes) {
+        if (l && l.panes) for (const p of l.panes) {
             let dp = (p.items || []).find(i => i.type == ControlType.Window && (i.content == window || !window));
             if (dp) ret.push(dp)
         }
