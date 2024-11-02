@@ -43,8 +43,10 @@ export class EditPanelWindow {
     private $ui_checkbox: JQuery;
     private $ui_gauge: JQuery;
 
-    fields:any = []
+    fieldDefs:any = []
+    fields:JQuery[] = []
     loadFields:Function[] = []
+    disableMap: Map<ControlType, JQuery[]>;
     
     constructor(private jsScript: JsScript, private layout:LayoutDefinition, private panel:DockPane, private profileM: ProfileManager) {
         let win = document.createElement("div");
@@ -95,7 +97,7 @@ export class EditPanelWindow {
                                                 <select class="ui-type" style="flex:1">
                                                     <option value="0">Pulsante</option>
                                                     <option value="1">Pannello</option>
-                                                    <option value="2">Finestra</option>
+                                                    <option value="2">Ancora finestra</option>
                                                     <option value="3">Pulsante a discesa</option>
                                                 </select>
                                             </td>
@@ -366,7 +368,7 @@ export class EditPanelWindow {
         let inx = {
             index: 0
         }
-        let pr = $("<div class='content-wrapper' style='display:block;position:relative;font-family: Consolas, monospace;'>")
+        let pr = $("<div class='content-wrapper' style='display:block;position:relative;font-family: Consolas, monospace;'></div>")
         let cmStub = {
             sendCmd: (cmd: string, nohistory:boolean, script:boolean) => {}
         }
@@ -375,12 +377,21 @@ export class EditPanelWindow {
             let pw = lm.createHierarchicalControl(inx, c, null, null)
             if (pw) {
                 pw.css("flex", 1)
-                //pw.css("display", "flex")
-                //pw.css("flex-direction", "column")
                 if (c as any == this.panel) {
-                    pw.children().first().css("flex", 1)
-                    pw.children().first().css("display", "flex")
-                    pw.children().first().css("flex-direction", "column")
+                    let el = pw.children().first()
+                    el.css("flex", 1)
+                    el.css("display", "flex")
+                    el.css("flex-direction", "column")
+                    const element = document.querySelector('#'+this.panel.id);
+                    const computedStyle = getComputedStyle(element);
+                    let copy = ["display","flexDirection","alignItems"]
+                    for (const k of Object.keys(computedStyle)) {
+                        if (copy.includes(k)) {
+                            el.css(k, computedStyle[k as any])
+                        }
+                    }
+                    el.css("height", "auto")
+                    el.css("width", "auto")
                 }
                 pr.append(pw)
                 pr.append("<div style='display:block;position:relative;width:0;height:0;clear:both;'>")
@@ -394,16 +405,17 @@ export class EditPanelWindow {
             bc = (this.panel as any)?.background
             bc ||= LayoutManager.getBackcolor(this.layout)
             pr.css("backgroundColor", bc)
-            await messagebox("Anteprima", pr as any, null, "OK", "", false, [""], null, null, false, "");    
-        } catch (ex) {
-            Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
-        }
+            let jc = $("<div style='min-height:32px;'>").append(pr)
+            await messagebox("Anteprima", jc as any, null, "OK", "", false, [""], null, null, false, "");    
+         } catch (ex) {
+             Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
+         }
         pr.remove()
     }
 
     private initFields() {
 
-        this.fields = [
+        this.fieldDefs = [
             [((v:JQuery) => this.$ui_type = v), '.ui-type', 'number', "type"],
             [((v:JQuery) => this.$ui_content = v), '.ui-content', 'string', "content"],
             [((v:JQuery) => this.$ui_commands = v), '.ui-commands', 'string', "commands"],
@@ -426,16 +438,39 @@ export class EditPanelWindow {
         ]
 
         this.loadFields = []
-
-        for (const f of this.fields) {
+        this.fields = []
+        for (const f of this.fieldDefs) {
             this.initField(f[0], f[1], f[2], f[3]);
         }
-        
+        let ct = ControlType
+        let disableMap = new Map<ControlType, JQuery[]>()
+        for (const K of Object.keys(ct)) {
+            disableMap.set(parseInt(K), [])
+        }
+
+        let wnds = disableMap.get(ControlType.Window)
+        wnds.push(this.$ui_commands)
+        wnds.push(this.$ui_isscript)
+        wnds.push(this.$ui_tooltip)
+        wnds.push(this.$ui_style)
+        wnds.push(this.$ui_color)
+        wnds.push(this.$ui_backcolor)
+        wnds.push(this.$ui_css)
+        wnds.push(this.$ui_position)
+        wnds.push(this.$ui_stack)
+        wnds.push(this.$ui_x)
+        wnds.push(this.$ui_y)
+        wnds.push(this.$ui_visible)
+        wnds.push(this.$ui_blink)
+        wnds.push(this.$ui_checkbox)
+        wnds.push(this.$ui_gauge)
+        this.disableMap = disableMap
     }
 
     private initField(setUi:Function, selector:string, type:string, field:string) {
         const ui = $(selector, this.$win)
         setUi(ui);
+        this.fields.push(ui)
         ui.on("blur", () => {
             if (this.editing) {
                 let edt = (this.editing as any)
@@ -531,6 +566,9 @@ export class EditPanelWindow {
     }
     public set editing(value: Control) {
         this._editing = value;
+        this.fields.forEach(f => {
+            f.prop('disabled', true);
+        })
         if (value) {
             this.loadUiElements();
             $(".uielement",this.$uiitems).removeClass("selected")
@@ -540,6 +578,12 @@ export class EditPanelWindow {
                 return data == value 
             })
             hl.addClass("selected")
+            for (const f of this.fields) {
+                let dv = this.disableMap.get(value.type)
+                if (!dv.includes(f)) {
+                    f.prop('disabled', false);
+                }
+            }
         } else {
             this.unloadUiElement();
             $(".uielement",this.$uiitems).removeClass("selected")
@@ -609,7 +653,7 @@ export class EditPanelWindow {
                     icon = "🅿️";
                     break;
                 case ControlType.Window:
-                    type = "Finestra: " + e.content;
+                    type = "Ancora: " + e.content;
                     icon = "⏹️";
                     break;
                 case ControlType.DropDownButton:

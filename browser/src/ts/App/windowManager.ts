@@ -1,6 +1,6 @@
 import { CustomWin } from "./windows/customWindow";
 import { EventHook } from "../Core/event";
-import { ControlType, LayoutManager } from "./layoutManager";
+import { Control, ControlType, LayoutManager } from "./layoutManager";
 import { Mapper } from "../Mapper/mapper";
 import { MapperWindow } from "../Mapper/windows/mapperWindow";
 import { Button, Messagebox, messagebox } from "./messagebox";
@@ -445,23 +445,27 @@ export class WindowManager {
     private applyDockSizes(wnd: WindowDefinition) {
         if (!wnd || !wnd.data) return;
 
-        if (wnd.data.anchorWidth && wnd.window) {
-            wnd.window.css({
-                "width": `${wnd.data.anchorWidth}px !important`
-            });
-            //((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important")
+        const witm = this.layoutManager.findDockingPositions(wnd.data.name);
+        let ancH = wnd.data.anchorHeight || witm[0]?.h;
+        let ancW = wnd.data.anchorWidth || witm[0]?.w;
+        
+        if (ancW && wnd.window) {
+            (wnd.window[0] as HTMLElement).style.setProperty("width", ancW + "px", "important");
         } else { if (wnd.window) wnd.window.css({ "width": "unset", "display": "unset" }); }
 
-        if (wnd.data.anchorHeight && wnd.window) {
-            wnd.window.css({
-                "flex-grow:": "0 !important",
-                "flex-basis": `${wnd.data.anchorHeight}px !important`
-            });
+        if (ancH && wnd.window) {
+            
+            (wnd.window[0] as HTMLElement).style.setProperty("flex-basis", `${ancH}px`, "important");
+            (wnd.window[0] as HTMLElement).style.setProperty("flex-grow", `0`, "important");
+            
             $(".jqx-resize", wnd.window).css({
                 "height": `${wnd.data.anchorHeight}px !important`
             });
-            ((wnd.window)[0] as HTMLElement).style.setProperty("display", "block", "important");
+
         } else if (wnd.window) { 
+            (wnd.window[0] as HTMLElement).style.removeProperty("flex-basis");
+            (wnd.window[0] as HTMLElement).style.removeProperty("flex-grow");
+            
             wnd.window.css({ "height": "unset !important", "display": "unset" });
             $(".jqx-resize", wnd.window).css({
                 "height": "unset !important"

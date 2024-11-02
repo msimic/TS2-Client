@@ -173,7 +173,8 @@ export enum ScripEventTypes {
     TriggerFired,
     CommandExecuted,
     MXP_VariableArrived,
-    MXP_EntityArrived
+    MXP_EntityArrived,
+    ScriptingInitialized
 }
 
 export class ScriptEventsIta {
@@ -186,7 +187,8 @@ export class ScriptEventsIta {
             'Trigger scattato',
             "Comando eseguito",
             "Variabile MXP arrivata",
-            "Entita' MXP arrivata"
+            "Entita' MXP arrivata",
+            "Scripting inizializzato"
         ];
         return itaNames[Number(index)];
     }
@@ -253,7 +255,7 @@ export class JsScript {
     
     constructor(private config: ConfigIf,private baseConfig: ConfigIf, public profileManager: ProfileManager, private mapper:Mapper) {
         this.console = this.createConsole(console)
-        this.loadBase();
+        //this.loadBase();
         this.load();
         this.saveVariablesAndEventsToConfig = throttle(this.saveVariablesAndEventsToConfigInternal, 500);
         EvtScriptEmitToggleEvent.handle(this.onToggleEvent, this);
@@ -276,6 +278,13 @@ export class JsScript {
         EvtScriptEvent.handle((e) => {
             this.eventFired(e)
         });
+
+        setTimeout(()=> {
+            for (const ev of this.events.get(ScripEventTypes[ScripEventTypes.ScriptingInitialized])??[]) {
+                this.onEvent(ScripEventTypes[ScripEventTypes.ScriptingInitialized], ev.condition, true)
+                //EvtScriptEvent.fire({event: ScripEventTypes.ScriptingInitialized, condition: ev.condition, value: true});            
+            }
+        }, 1)
     }
     getStackTrace (owner:string, custom?:string):string {
         let stack:string;
@@ -433,6 +442,9 @@ export class JsScript {
                     this.triggerEvent(ev, param);
                 }
             }
+        }
+        if (this.baseEvents == this.events) {
+            return
         }
         if (this.baseEvents.has(type)) {
             const evts = this.baseEvents.get(type);
@@ -908,6 +920,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         if (typeof cmd == "object" && cmd.length) {
             cmd = cmd.join("\n")
         }
+        cmd = parseScriptVariableAndParameters(cmd, {} as any, true, scriptManager);
         EvtScriptEmitCmd.fire({owner: own, message: cmd.toString(), silent: silent});
     };
     const print = function(message: any, window?:string) {
@@ -928,6 +941,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
             // string
             message = colorize(message.toString(), "orange")
         }
+        message = parseScriptVariableAndParameters(message, {} as any, true, scriptManager);
         EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
     };
     const printText = function(message: any, window?:string) {

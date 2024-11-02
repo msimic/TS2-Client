@@ -5,7 +5,7 @@ import { EventHook } from "../Core/event";
 import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "../Scripting/jsScript";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
-import { isAlphaNumeric, isTrue, rawToHtml, throttle } from "../Core/util";
+import { isAlphaNumeric, isTrue, parseScriptVariableAndParameters, rawToHtml, throttle } from "../Core/util";
 
 
 export let LayoutVersion = 1;
@@ -597,7 +597,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
 
     createHierarchicalControl(indexer:{index:number}, c:Control, parent:Control, parentControl:JQuery):JQuery {
         let control: JQuery;
-        
+        this.controls.set(c, null);
         if (c.type == ControlType.Button) {
             control = this.createButton(c);
             if (c.id)
@@ -693,6 +693,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         let index = 0;
         for (const c of this.layout.items) {
             let control: JQuery;
+            this.controls.set(c, null);
             if (c.type == ControlType.Button) {
                 control = this.createButton(c);
                 if (c.id)
@@ -877,8 +878,12 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         }
     }
 
-    public createWindow(ctrl:Control):JQuery {
-        return $(`<div id="window-dock-${ctrl.content.replace(/ /g,"-")}" style="display:none;"></div>`)
+    public createWindow(ctrl:Control):JQuery 
+    {
+        if (this.profileManager)
+            return $(`<div id="window-dock-${ctrl.content.replace(/ /g,"-")}" style="display:none;"></div>`)
+        else 
+            return $(`<div id="window-dock-${ctrl.content.replace(/ /g,"-")}" style="background-color:black;color:white;border: 1px solid white;">Ancora per '${ctrl.content}'</div>`)
     }
 
     public createButton(ctrl:Control):JQuery {
@@ -950,14 +955,16 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         if (ctrl.commands) {
             const index = [...this.controls.keys()].indexOf(ctrl);
             if (ctrl.is_script) {
-                let scr = this.scripting.makeScript("button "+index, ctrl.commands, "");
+                let cmd = parseScriptVariableAndParameters(ctrl.commands, {} as any);
+                let scr = this.scripting.makeScript("button "+index, cmd, "");
                 this.scripts.set(index, scr);
                 b.click(()=>{
                     this.scripts.get(index)();
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.sendCmd(ctrl.commands,true, false);
+                    let cmd = parseScriptVariableAndParameters(ctrl.commands, {} as any, true, this.scripting);
+                    this.cmdInput.sendCmd(cmd,true, false);
                 });
             }
         }
@@ -1032,7 +1039,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         const b = $(btn);
         
         if (ctrl.commands) {
-
+            let layout = this.layout || {} as any
             b.click((e)=>{
                 let controlCommands:string[] = [];
                 let controlCommandsValues:string[]  = [];
@@ -1084,7 +1091,7 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                     EvtScriptEmitPrint.fire({owner:"Layout", message: "Bottone multiopzione senza valori da mostrare: " + ctrl.content})
                 }
 
-                const cmdIndex = this.layout.items.indexOf(ctrl);
+                const cmdIndex = [...this.controls.keys()].indexOf(ctrl);
                 var offset = b.offset();
                 var posY = offset.top - $(window).scrollTop();
                 var posX = offset.left - $(window).scrollLeft();
@@ -1093,8 +1100,8 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                 let cmds = controlCommands;
                 let cmdsval = controlCommandsValues;
 
-                let col = ctrl.color ? ctrl.color : this.layout.color ? this.layout.color : "white"
-                let bckc = ctrl.background ? ctrl.background : this.layout.background ? this.layout.background : "#00000077";
+                let col = ctrl.color ? ctrl.color : layout.color ? layout.color : "white"
+                let bckc = ctrl.background ? ctrl.background : layout.background ? layout.background : "#00000077";
                 
                 let dropdownStyle = ""
                 if (ctrl.color) {
@@ -1117,7 +1124,8 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                 for (let I = 0; I < btnCnt; I++) {
                     let index = I;
                     $(`#ctrl-${cmdIndex}-btn${I}`, popup).click(() => {
-                        this.cmdInput.sendCmd(cmdsval[index],true, false);
+                        let cmd = parseScriptVariableAndParameters(cmdsval[index], {} as any, true, this.scripting);
+                        this.cmdInput.sendCmd(cmd,true, false);
                         popup.remove()
                     })
                 }
@@ -1240,14 +1248,16 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         if (ctrl.commands) {
             const index = [...this.controls.keys()].indexOf(ctrl);
             if (ctrl.is_script) {
-                let scr = this.scripting.makeScript("panel "+index, ctrl.commands, "");
+                let cmd = parseScriptVariableAndParameters(ctrl.commands, {} as any);
+                let scr = this.scripting.makeScript("panel "+index, cmd, "");
                 this.scripts.set(index, scr);
                 b.click(()=>{
                     this.scripts.get(index)();
                 });
             } else {
                 b.click(()=>{
-                    this.cmdInput.sendCmd(ctrl.commands,true, false);
+                    let cmd = parseScriptVariableAndParameters(ctrl.commands, {} as any, true, this.scripting);
+                    this.cmdInput.sendCmd(cmd,true, false);
                 });
             }
         }

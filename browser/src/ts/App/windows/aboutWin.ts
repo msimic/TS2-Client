@@ -30,7 +30,8 @@ export class AboutWin {
             <br>
             Autore: ${htmlEscape(AppInfo.Author)}
             <br>
-            Contributori: ${htmlEscape(AppInfo.Contributors.join(", "))}
+            Contributori: ${htmlEscape(AppInfo.Contributors.join(", "))}<br><br>
+            <a href="https://github.com/temporasanguinis/TS2-Client/releases" target="_blank">Scarica l'ultima versione da qui</a>
         </div>
         `;
 

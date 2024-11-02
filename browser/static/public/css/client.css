@@ -1072,6 +1072,27 @@ div:focus-visible {
     background-color: rgb(109, 118, 250) !important;
 }
 
+
+.greenpanel {
+    color: white !important;
+    background-color: rgb(108, 150, 25) !important;
+}
+
+.yellowpanel {
+    color: black !important;
+    background-color: #fced99 !important;
+}
+
+.redpanel {
+    color: white !important;
+    background-color: rgb(209, 77, 77) !important;
+    }
+
+.bluepanel {
+    color: #d6d6d6 !important;
+    background-color: rgb(109, 118, 250) !important;
+}
+
 .bluebutton:disabled {
     color: #eae7e7 !important;
 }

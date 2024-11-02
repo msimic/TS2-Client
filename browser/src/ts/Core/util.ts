@@ -187,7 +187,7 @@ export function stripHtml(sText:string):string {
     return positions.join("");
 }
 
-export function parseScriptVariableAndParameters(value: string, match: RegExpMatchArray) {
+export function parseScriptVariableAndParameters(value: string, match: RegExpMatchArray, evaluate?:boolean, script?: JsScript) {
     value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|(?:\$|\%)(\d+)/g, function (m, d) {
         if (d == undefined) {
             m = m.replace(/\`(.*)\$\{(?:\$|\%)(\d+)\}(.*)\`/g, "`$1${(match[$2]||'')}$3`");
@@ -198,8 +198,11 @@ export function parseScriptVariableAndParameters(value: string, match: RegExpMat
     value = value.replace(/(?:\\`|`(?:\\`|[^`])*`|\\"|"(?:\\"|[^"])*"|\\'|'(?:\\'|[^'])*')|\@(\w+)/g, function (m, d: string) {
         if (d == undefined)
             return m;
-        //return "(variable('" + d + "'))";
-        return "this." + d;
+        let ret = "this." + d;
+        if (evaluate) {
+            ret = script.getVariableValue(d)
+        }
+        return ret
     });
     return value;
 }

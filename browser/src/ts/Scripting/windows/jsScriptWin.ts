@@ -1,6 +1,6 @@
 import { TsClient } from "../../App/client";
 import {JsScript} from "../jsScript";
-import { CreateCodeMirror, refreshVariablesInTern } from "../../Core/util";
+import { CreateCodeMirror, parseScriptVariableAndParameters, refreshVariablesInTern } from "../../Core/util";
 
 declare let CodeMirror: any;
 
@@ -63,6 +63,7 @@ export class JsScriptWin {
 
     private handleRunButtonClick() {
         let code_text = this.codeMirror.getValue();
+        code_text = parseScriptVariableAndParameters(code_text, {} as any);
         let script = this.jsScript.makeScript("Script", code_text, "");
         if (script) { script(); };
     }
