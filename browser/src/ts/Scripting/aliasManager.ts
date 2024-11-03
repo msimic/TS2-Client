@@ -244,7 +244,7 @@ export class AliasManager {
         if (!alias.script) {
             let value = alias.value;
             value = parseScriptVariableAndParameters(value, match);
-            alias.script = this.jsScript.makeScript("ALIAS: " + (alias.id || alias.pattern), value, "match, input");
+            alias.script = this.jsScript.makeScript("(alias) " + (alias.id || alias.pattern), value, "match, input");
         }
     }
 

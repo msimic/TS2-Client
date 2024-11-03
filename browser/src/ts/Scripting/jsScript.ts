@@ -38,7 +38,7 @@ export interface PropertyChanged {
 }
 
 declare interface ScriptThis {
-    startWatch(onWatch:(ev:PropertyChanged)=>void) : void;
+    startWatch(scr:JsScript) : void;
     [prop:string]:any;
 }
 
@@ -68,52 +68,6 @@ function clone(o:any):any {
     return ((<any>window).structuredClone)(o);
 }
 
-let startWatch = function (this : ScriptThis, onWatch:(ev:PropertyChanged)=>void) {
-
-    var self = <any>this;
-
-    if (!self.watchTask) {
-        self._oldValues = {};
-
-        for (var propName in self) {
-            self._oldValues[propName] = self[propName];
-        }
-
-
-        setInterval(function () {
-            const oldKeys = new Map<string,boolean>(Object.keys(self._oldValues).map(v => [v ,true]));
-            for (var propName in self) {
-                
-                oldKeys.delete(propName)
-
-                var propValue = self[propName];
-                if (typeof (propValue) != 'function' && propName != "_oldValues") {
-
-
-                    var oldValue = self._oldValues ? self._oldValues[propName] : undefined;
-
-                    if (((typeof(oldValue) == 'object' || typeof(propValue) == 'object') && !isEqual(oldValue, propValue))
-                         || (!(typeof(oldValue) == 'object' || typeof(propValue) == 'object') && 
-                             (propValue != oldValue || (oldValue == undefined && propValue != undefined)))) {
-
-                        onWatch({ obj: self, propName: propName, oldValue: oldValue, newValue: propValue });
-                        self._oldValues[propName] = (typeof(propValue) == 'object') ? clone(propValue) : propValue;
-
-                    }
-
-                }
-            }
-            for (const key of [...oldKeys.keys()]) {
-                if (key == "_oldValues") continue;
-                var oldValue = self._oldValues ? self._oldValues[key] : undefined;
-                if (oldValue) {
-                    onWatch({ obj: self, propName: key, oldValue: oldValue, newValue: undefined });
-                    delete self._oldValues[key];
-                }
-            }
-        }, 30);
-    }
-}
 
 export function colorize(sText: string, sColor:string, sBackground?:string, bold?:boolean, underline?:boolean, blink?:boolean) {
     if (typeof bold == "string") bold=(bold=="true");
@@ -205,8 +159,69 @@ export interface ScriptEvent {
 }
 
 export class JsScript {
+    forceVariable(varName: string, arg1: string) {
+        this.getScriptThis()[varName] = arg1
+        this.checkChanges(this.getScriptThis())
+    }
+    
+    checkChanges = (self:any) => {
+        const oldKeys = new Map<string,boolean>(Object.keys(self._oldValues).map(v => [v ,true]));
+        for (var propName in self) {
+            
+            oldKeys.delete(propName)
+
+            var propValue = self[propName];
+            if (typeof (propValue) != 'function' && propName != "_oldValues") {
+
+
+                var oldValue = self._oldValues ? self._oldValues[propName] : undefined;
+
+                if (((typeof(oldValue) == 'object' || typeof(propValue) == 'object') && !isEqual(oldValue, propValue))
+                    || (!(typeof(oldValue) == 'object' || typeof(propValue) == 'object') && 
+                        (propValue != oldValue || (oldValue == undefined && propValue != undefined)))) {
+
+                    this.onWatch({ obj: self, propName: propName, oldValue: oldValue, newValue: propValue });
+                    self._oldValues[propName] = (typeof(propValue) == 'object') ? clone(propValue) : propValue;
+
+                }
+
+            }
+        }
+        for (const key of [...oldKeys.keys()]) {
+            if (key == "_oldValues") continue;
+            var oldValue = self._oldValues ? self._oldValues[key] : undefined;
+            if (oldValue) {
+                this.onWatch({ obj: self, propName: key, oldValue: oldValue, newValue: undefined });
+                delete self._oldValues[key];
+            }
+        }
+    }
+    onWatch = (e:PropertyChanged)=>{
+        this.onVariableChanged(e);
+        let evl = this.linkedEvents.get(e.propName)
+
+        if (evl) {
+            for (const le of evl) {
+                e.propName = le;
+                EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: le, value: e});
+            }
+        }
+    
+    }
+    startWatch = function (scr:JsScript) {
+
+        if (!this.watchTask) {
+            this._oldValues = {};
+
+            for (var propName in this) {
+                this._oldValues[propName] = this[propName];
+            }
+
+            setInterval(() => scr.checkChanges(this), 30);
+        }
+    }
     private scriptThis: ScriptThis = {
-        startWatch: startWatch
+        startWatch: null
     }; /* the 'this' used for all scripts */
     private classManager: ClassManager;
     private aliasManager: AliasManager;
@@ -263,18 +278,8 @@ export class JsScript {
             this.loadBase();
             this.load();
         }, this);
-        this.scriptThis.startWatch((e)=>{
-            this.onVariableChanged(e);
-            let evl = this.linkedEvents.get(e.propName)
-
-            if (evl) {
-                for (const le of evl) {
-                    e.propName = le;
-                    EvtScriptEvent.fire({event: ScripEventTypes.VariableChanged, condition: le, value: e});
-                }
-            }
-        
-        });
+        this.scriptThis.startWatch = this.startWatch.bind(this.scriptThis)
+        this.scriptThis.startWatch(this);
         EvtScriptEvent.handle((e) => {
             this.eventFired(e)
         });
@@ -388,7 +393,7 @@ export class JsScript {
                                 default:
                                     message = getKey() + ": " + args.join(' ')
                             }
-                            EvtScriptEmitPrint.fire({owner: "debug", message: (message).toString()});
+                            EvtScriptEmitPrint.fire({owner: "(debug console)", message: (message).toString()});
                         }
                     })
                 }
@@ -439,7 +444,7 @@ export class JsScript {
         if (!ev.script) {
             
             let value = parseScriptVariableAndParameters(ev.value, match as any)
-            ev.script = this.makeScript("event " +ev.type + "(" + ev.condition + ")", value, "args, match");
+            ev.script = this.makeScript("(event) " +ev.type + "(" + ev.condition + ")", value, "args, match");
         }
         ev.script(param, match);
     }

@@ -100,7 +100,7 @@ export class KeepAwake {
         console.log("Keep tab awake On")
         this.interval = <any>setInterval(() => {
             this.sg.setMute(false)
-            console.log("Keepawake")
+            //console.log("Keepawake")
             setTimeout(() => this.sg.setMute(true), 100)
         }, 15000)
     }

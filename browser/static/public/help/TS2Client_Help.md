@@ -29,7 +29,8 @@
     5. [Menu Informazioni](#MenuInformazioni)
         1. Versione
         2. Registro modifiche
-        3. Aiuto
+        3. Scarica eseguibile
+        4. Aiuto
 3. [Elementi della finestra](#Elements)
     1. [Lato sinistro](#AreaSX)
         1. Riquadro dei pulsanti
@@ -51,8 +52,9 @@
     3. [Variabili](#variabili)
     4. [Classi](#classi)
     5. [Eventi](#eventi)
-    6. [Funzioni disponibili](#funzioni)
-    7. [Come fare per?](#howto)
+    6. [Funzioni disponibili avanzate](#funzioni)
+    7. [Funzioni disponibili semplificate](#funzioni_semplici)
+    8. [Come fare per?](#howto)
 
 ---
 
@@ -255,7 +257,46 @@ Permette di apire un riquadro esistente che precedentemente è stato chiuso.
 
 ### 2.4.2 Disposizione schermo
 
-TODO: Funzione non ancora implementata
+Apre l'interfaccia per la configurazione del layout.
+I tooltip presenti in ogni sezione spiegano brevemente a cosa serve ogni elemento.
+Si possono creare 4 elementi:
+
+## Pannelli <a name="LayoutPannelli"></a>
+
+Elemento grafico.
+Il testo è definito all'interno del campo Modello. Può contenere variabili
+Per impostare il colore includere il testo tra i tag %color e %closecolor
+Per includere una variabile usare il tag %var(nomevariabile,numcaratteri)
+
+**Esempio d'uso**:
+```
+%color(yellow)%var(TSSigDivini,5)%closecolor
+```
+
+E' possibile anche definire un comando da eseguire quando il pannello viene premuto all'interno del campo *Comandi*
+Nel tab *stile* si può impostare lo stile grafico del pannello
+
+## Finestre
+
+Posizione della finestra disponibile nella lista delle finestre quando è ancorata al layout
+La grafica della finestra è definita a livello della finestra e non a livello del layout.
+
+## Pulsanti
+
+Elemento grafico che può prevedere uno stato attivo o disattivo.
+Il testo è definito all'intero del campo Modello. [Vedi Pannelli](#LayoutPannelli)
+Il comando da eseguire alla pressione deve essere impostato nel campo *Comandi*
+Nel campo *Avanzate-Stato* si può impostare la variabile che definisce se il pulsante risulta premuto o non premuto
+
+Per Indicatori a barra scorrevole come il tickcounter deve essere creato un pulsante e compilato il campo *Avanzate-Indicatore*
+indicando due variabili divise da una virgola. La prima variabile rappresenta il valore da rappresentare, la seconda rappresenta il valore massimo su cui viene calcolata la dimensione della barra
+
+## Pulsanti a discesa
+Elemento grafico che rappresenta un pulsante a discesa.
+Il testo è definito all'intero del campo Modello. [Vedi Pannelli](#LayoutPannelli)
+L'elenco degli elementi da inserire nel pulsante a discesa deve essere messo nel campo *Comandi*:
+* Lista di valori separati da | se il flag Script non è selezionato
+* Nome di una variabile che contiene un array se il flag Script è selezionato
 
 ### 2.4.3 Mapper
 
@@ -271,7 +312,11 @@ Mostra la versione del WebClient.
 
 Mostra la storia delle modifiche introdotte nel client
 
-### 2.5.3 Help
+### 2.5.3 Scarica eseguibile
+
+Apre una finestra del browser dove scaricare l'ultima versione del client qualora si volesse installarla
+
+### 2.5.4 Help
 
 Apre il presente help del WebClient.
 
@@ -476,10 +521,11 @@ Quando è disponibile un aggiornamento il WebClient evidenzia la disponibilità 
 
 Lo script non è altro che un elenco di comandi che il WebClient deve eseguire. Questi comandi possono riguardare il solo WebClient oppure essere comandi che il WebClient manda al MUD. 
 
-Nella forma più semplice sono un sequenza di comandi che il WebClient deve inviare al MUD.
+Nella forma più semplice sono un sequenza di comandi che il WebClient deve inviare al MUD. [Vedi Funzioni semplici](#funzioni_semplici)
 Per la forma più complessa si ha a disposizione JavaScript. Si rimanda a risorse esterne per tutorial sulla programmazione e sulla sintassi di JavaScript.
 
-La spiegazione delle funzioni messe a disposizione dal WebClient sono nella sezione [Funzioni](#funzioni)
+La spiegazione delle funzioni semplici messe a disposizione dal WebClient sono nella sezione [Funzioni semplici](#funzioni_semplici)
+La spiegazione delle funzioni complete messe a disposizione dal WebClient utilizzabili quando è messa la spunta su *script* sono nella sezione [Funzioni avanzate](#funzioni)
 
 Gli script, indipendentemente dal contenuto di azioni che devono essere svolte, si dividono in 3 categorie in funzione di cosa fa partire quello script:
 
@@ -631,12 +677,12 @@ Se i [Trigger](#triggers) scattano quando il MUD manda la sequenza di testo impo
 | **Comando eseguito** | Viene eseguito ogni volta che viene dato un comando. La *Condizione* è true se il comando è da script, false se manuale da linea di comando. *args.command* conterrà il comando lanciato.|
 
 
-## 4.6 Funzioni disponibili <a name="funzioni"></a>
+## 4.6 Funzioni disponibili avanzate <a name="funzioni"></a>
 
 Elenco in ordine alfabetico delle funzioni messe a disposizione dal WebClient.
 
 
-### Marcatori speciali %n e $n
+### Marcatori speciali %n e $n <a name="f_marcatorespeciale_campo"></a>
 
 Sono usati negli [alaias](#alias) e nei [triggers](#triggers) per identificare i campi variabili in alternativa alle regex e all'uso di ```match[n]```
 
@@ -653,7 +699,7 @@ Notification.Show("Ti e' caduto " + $1);
 send("get ed" + TSPersonaggio)
 ```
 
-### Marcatore speciale @nomevariabile
+### Marcatore speciale @nomevariabile <a name="f_marcatorespeciale_variabile"></a>
 
 Sono usati negli [alaias](#alias) e nei [triggers](#triggers) per identificare una variabile.
 
@@ -726,6 +772,15 @@ Create(id:string, val:boolean)
 isEnabled(id: string) -> bool
 ```
 
+### clone <a namve="f_name"></a>
+
+Esegue un clone profondo dell'oggetto json
+
+**Sintassi**: 
+```js
+clone(obj: oggetto) -> oggetto
+```
+
 ### cls <a name="f_cls"></a>
 
 Cancella il contenuto della finestra 'window'.
@@ -758,8 +813,9 @@ print("Questo help e' " + color('bellissimo', 'red', 'Gold', true, false, true))
 
 Funzione per creare un trigger temporaneo che rimarra' disponibile fino al riavvio del client.
 Il vantaggio e' di poter creare il trigger con un patter e uno script definito a runtime e non prefissato.
-[vedi deleteTempTrigger](#f_deleteTempTrigger) per come cancellarlo.
-[vedi escapeRegex](#f_escapeRegex) per aggiungere gli escape ai caratteri di una stringa non regex
+[Vedi deleteTempTrigger](#f_deleteTempTrigger) per come cancellarlo.
+[Vedi escapeRegex](#f_escapeRegex) per aggiungere gli escape ai caratteri di una stringa non regex.
+
 
 **Sintassi**: 
 ```js
@@ -779,6 +835,10 @@ createTempTrigger({
   value: script
 })
 ```
+
+### createTrigger <a name="f_createTrigger"></a>
+Analogo a [createTempTrigger](#f_createTempTrigger) per trigger non temporanei.
+
 
 ### createWindow <a name="f_createWindow"></a>
 
@@ -855,6 +915,12 @@ deleteTempTrigger(trg: alias o trigger) -> bool
 deleteTempTrigger({id: "trg_test"})
 ```
 
+
+### deleteTrigger <a name="f_deleteTrigger"></a>
+
+Analogo a [deleteTempTrigger](#f_deleteTempTrigger) per trigger non temporanei.
+
+
 ### deleteWindow <a name="f_deleteWindow"></a>
 
 Cancella la finestra con quel nome e la rimuove dalla lista di finestra nel menu finestre.
@@ -863,6 +929,26 @@ Cancella la finestra con quel nome e la rimuove dalla lista di finestra nel menu
 ```js
 deleteWindow(windowName:string)
 ```
+
+### delvar <a name="f_delvar"></a>
+
+Cancella una variabile.
+Vedi anche [setvar](#f_setvar)
+
+**Sintassi**
+```js
+delvar(varname:string)
+```
+
+### destroyWindow <a name="f_destroyWindow"></a>
+Distrugge/Cancella la finestra window. 
+Scomparirà dal menù finestre.
+
+**Sintassi**
+```js
+destroyWindow(windowName:string)
+```
+
 
 ### escapeHTML <a name="f_escapeHTML"></a>
 
@@ -903,6 +989,24 @@ Ritorna lo stato di abilitazione del'[evento](#eventi) con ID 'id': true se abil
 **Sintassi**: 
 ```js
 eventEnabled(id: string) -> bool
+```
+
+### findAlias <a name="f_gag"></a>
+
+Accede all'aliasManager e cerca l'alias che corrisponde all'input passato e lo ritorna.
+
+**Sintassi**: 
+```js
+findAlias(input: string) -> alias
+```
+
+### findTrigger <a name="f_gag"></a>
+
+Accede al triggerManager e cerca il trigger che corrisponde all'input passato e lo ritorna.
+
+**Sintassi**: 
+```js
+findTrigger(input: string) -> trigger
 ```
 
 ### gag <a name="f_gag"></a>
@@ -959,6 +1063,16 @@ Ritorna un oggetto WindowDefinition ([vedi createWindow](#f_createWindow)) della
 **Sintassi**: 
 ```js
 getWindow(window:string) -> WindowDefinition
+```
+
+### hideWindow <a name="f_hideWindow"></a>
+
+Nasconde la finestra window. Si può accedere ad essa dal menu finestre.
+[Vedi anche destroyWindow](#f_destroyWindow)
+
+**Sintassi**: 
+```js
+hideWindow(window:string)
 ```
 
 ### highlight <a name="f_highlight"></a>
@@ -1194,7 +1308,6 @@ prepend(color("[","yellow"))
 append(color("]","yellow"))
 ```
 
-
 ### print <a name="f_print"></a>
 
 Visualizza nella finestra indicata (di default l'output del MUD) il testo richiesto.
@@ -1202,6 +1315,20 @@ Visualizza nella finestra indicata (di default l'output del MUD) il testo richie
 **Sintassi**
 ```js
 print(testo: string, finestra?: string)
+```
+
+**Esempio d'uso**
+```js
+print("Esempio di print", "Social")
+```
+
+### printRaw <a name="f_printRaw"></a>
+
+Come [print])(#f_print) ma non interpreta eventuali variabli.
+
+**Esempio d'uso**
+```js
+printRaw("Esempio di print", "Social")
 ```
 
 **Esempio d'uso**
@@ -1233,22 +1360,43 @@ repeat('test_repeat')
 Manda un comando, o più comandi se separati da ; al mud. 
 
 Può contenere [alias](#alias) che verranno eseguiti.
+Se silent = true il send non comparirà nella finestra di output
 
 **Sintassi**
 ```js
-send(command: string)
+send(command: string, silent: bool)
+```
+
+### sendRaw <a name="f_sendRaw"></a>
+
+Come [send](#f_send) ma non interpreta variabili e non lancia eventuali alias.
+Se silent = true il send non comparirà nella finestra di output
+
+**Sintassi**
+```js
+sendRaw(command: string, silent: bool)
 ```
 
 ### setvar <a name="f_setvar"></a>
 
 Analogo a ```this.varname = value``` nel caso di temporary=false.
 In caso di temporary=true la variabile rimarrà temporanea e non verrà mantenuta all'uscita.
-
 Imposta il valore di una variabile.
+Vedi anche [delvar](#f_delvar)
 
 **Sintassi**
 ```js
 setvar(varname:string, value:any, class:string, temporary:bool))
+```
+
+### showWindow <a name="f_showWindow"></a>
+
+Mostra la finestra window ma non la crea se non esiste già.
+Vedi anche [createWindow](#f_createWindow)
+
+**Sintassi**
+```js
+showWindow(window: string)
 ```
 
 ### stopAudio <a name="f_stopAudio"></a>
@@ -1361,7 +1509,51 @@ Ritorna il valore della variabile con il nome richiesto. Analogo a [getvar](#f_g
 variable(name: string) -> variable
 ```
 
-## 4.7 Come fare per? <a name="howto"></a>
+## 4.7 Funzioni Semplici Disponibili<a name="funzioni_semplici"></a>
+
+Per l'accesso alle variabili e ai campi trovati dal trigger si rimanda alle sezioni [Marcatore speciale per la variabile](#f_marcatorespeciale_variabile) e [Marcatore speciale per i campi del trigger](#f_marcatorespeciale_campo) nella parte delle funzioni avanzate.
+
+Elenco in ordine alfabetico delle funzioni semplificate messe a disposizione dal WebClient quando non si abilita lo scripting in JavaScript: casella scripting senza spunta.
+
+```#temp var1 valore```   Crea la variabile tempornea var1 e inizializza con valore
+
+```#set var2 valore2```   Crea la variabile permanente var2 e inizializza con valore2
+
+```#if var3```   Verifica se la var3 non e' vuota ed esegue la parte sotto
+
+```#if var3 valore3```  Verifica se la var3 ha il valore testuale "valore3" ed esegue la parte sotto
+
+```#else```  Se l'if messo non è vero invece di essere eseguita la parte sotto all'if viene eseguita la parte sotto all'else
+
+```#end ```  Ogni if e ogni loop deve finire con #end
+
+```#loop variabileCounter```  Esegue un ciclo su variabileCounter da 1 fino al valore iniziale che aveva (la variabile se non esiste sarà temporanea) ed esegue le righe comprese nella sezione tra il loop e l'end
+
+```#loop variabileCounter 10 ``` Esegue un ciclo su variabileCounter da 1 fino al valore impostato (in questo esempio 10) ed esegue le righe comprese nella sezione tra il loop e l'end
+
+```#inc var5``` Incrementa di 1 la variabile var5
+
+```#dec var6``` Decremente di 1 la variabile var6
+
+```#neg var7``` Nega la variabile var7. Se var7 è vero #neg var7 è falso e viceversa.
+
+
+**Esempio**
+```
+#temp nomemob guardiano
+#loop nummob 3
+look @nummob.@nomemob
+#end
+
+#if autoloot
+#neg autoloot 
+#end
+```
+Nella prima parte guarda 1.guardiano, 2.guardiano e 3.guardiano
+Nella seconda parte se autoloot è abilitato lo disabilita
+
+
+## 4.8 Come fare per? <a name="howto"></a>
 
 In questa sezione verranno aggiunte man mano le soluzioni alle domande più frequenti riguardo agli script non già riportate nelle spiegazioni precedenti.
 

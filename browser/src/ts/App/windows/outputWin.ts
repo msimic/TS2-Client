@@ -9,7 +9,7 @@ export class OutputWin extends OutWinBase {
     clearWindow(owner: string) {
         this.cls();
         if (this.debugScripts) this.append(
-            "<span style=\"color:orange\">CLS:" /*+ owner + ": "*/
+            "<span style=\"color:orange\">(cls): " /*+ owner + ": "*/
             + Util.rawToHtml(owner)
             + "<br>"
             + "</span>", true);
@@ -39,40 +39,45 @@ export class OutputWin extends OutWinBase {
         return this.outer;
     }
 
-    handleScriptPrint(owner:string, data: string) {
+    handleSendCommand(cmd: string, fromScript:boolean, debug?:boolean) {
         this.append(
-            "<span style=\"color:orange\">" /*+ owner + ": "*/
-            + Util.raw(data)
-            + "<br>"
-            + "</span>", true);
-        this.scrollBottom(false);
-    }
-
-    handleSendCommand(cmd: string, fromScript:boolean) {
-        this.append(
-            "<span style=\"color:yellow\">"
+            "<span style=\"color:yellow"+(debug?";padding-left: 15px; opacity: 0.5;":"")+"\">"
             + Util.rawToHtml(cmd)
             + "<br>"
             + "</span>", true);
         this.scrollBottom(!fromScript);
     }
 
-    handleScriptSendCommand(owner:string, cmd: string) {
+    debugScriptSendingCommand(owner:string, cmd: string) {
         if (!this.debugScripts) return;
-        setTimeout(()=>{
+        
         this.append(
-            "<span style=\"color:cyan\">[" + owner /*": "
+            "<span style=\"color:cyan;padding-left: 15px; opacity: 0.5;\">[" + owner /*": "
             + Util.rawToHtml(cmd)*/
-            + "]<br>"
+            + " running commands]<br>"
             + "</span>", true);
+        setTimeout(()=>{
         this.scrollBottom(false);
         },0)
     }
 
-    handleTriggerSendCommands(orig:string, cmds:string[]) {
+    debugScriptPrinting(owner:string, cmd: string) {
         if (!this.debugScripts) return;
+        
+        this.append(
+            "<span style=\"color:cyan;padding-left: 15px; opacity: 0.5;\">[" + owner /*": "
+            + Util.rawToHtml(cmd)*/
+            + " printing]<br>"
+            + "</span>", true);
         setTimeout(()=>{
-        let html = "<span style=\"color:magenta\">[" + orig + "]<br></span>";
+        this.scrollBottom(false);
+        },0)
+    }
+
+    debugTriggerSentCommands(orig:string, cmds:string[]) {
+        if (!this.debugScripts) return;
+        
+        let html = "<span style=\"color:magenta;padding-left: 15px; opacity: 0.5;\">[(trigger) " + orig + " sent " + cmds.join(",") + "]<br></span>";
 
         /*for (let i = 0; i < data.length; i++) {
             if (i >= 5) {
@@ -83,14 +88,14 @@ export class OutputWin extends OutWinBase {
             }
         }*/
         this.append(html, true);
+        setTimeout(()=>{
         this.scrollBottom(false);
         },0)
     }
 
-    handleAliasSendCommands(orig: string, cmds: string[], fromScript:boolean) {
+    debugAliasSentCommands(orig: string, cmds: string[], fromScript:boolean) {
         if (!this.debugScripts) return;
-        setTimeout(()=>{
-        let html = "<span style=\"color:cyan\">[" + orig+ "]<br></span>";
+        let html = "<span style=\"color:cyan;padding-left: 15px; opacity: 0.5;\">[(alias) " + orig + (!cmds.length ? " executed" : " sent: " + cmds.join(",")) + "]<br></span>";
         /*html += Util.rawToHtml(orig);
         html += "</span><span style=\"color:cyan\"> --> ";
 
@@ -104,6 +109,7 @@ export class OutputWin extends OutWinBase {
         }
         */
         this.append(html, true);
+        setTimeout(()=>{
           if (!fromScript) this.scrollBottom(false);
         },0)
     }

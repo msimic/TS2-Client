@@ -100,7 +100,9 @@ export class MapperWindow implements IBaseWindow {
     }
 
     onEmitMapperZoneChanged = (d:{id:number; zone:Zone}) => {
-        console.log("onEmitMapperZoneChanged", d)
+        if (this.drawing && this.drawing.zoneId != d.id) {
+            console.log("drawing ZoneChanged ", d.id)
+        }
         this.zones = [...this.mapper.idToZone.values()]
         this.loadZonesIfNeeded(!d || !d.zone)
         this.zoneId = d?.id
@@ -114,9 +116,11 @@ export class MapperWindow implements IBaseWindow {
         }
     }
 
-    onEmitMapperRoomChanged = (d:any) => {
+    onEmitMapperRoomChanged = (d:{id: number, vnum:number, room:Room}) => {
         if (d.id === 0 && d.vnum === 0) return;
-        console.log("onEmitMapperRoomChanged", d)
+        if (this.drawing && this.drawing.active != d.room) {
+            console.log("drawing roomChanged id:", d.id," vnum:", d.vnum, " zone:", d.room?.zone_id)
+        }
         this.zoneId = d.room?.zone_id
         if (!d.room || this.zoneId < 0) {
             this.setBottomMessage("Zona sconosciuta " + (d.room?.zone_id || "?"))
@@ -1040,6 +1044,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         this.mapper.scripting.delVariable({name: this.mapper.vnumVariable, class: "", value: null})
         this.mapper.scripting.delVariable({name: this.mapper.exitsVariable, class: "", value: null})
         setTimeout(() => {
+            this.mapper.clearManualSteps()
             this.mapper.current = room
             this.roomSeen = false
             this.requestRemap = true
@@ -1048,8 +1053,9 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
     }
     remapRoomEnd() {
         if (this.requestRemap && this.drawing.active && this.drawing.active == this.mapper.current && this.roomSeen) {
-            this.mapper.lastStep = null
-            this.mapper.updateRoomOnMovement(this.mapper.current, true)
+            if (!this.mapper.updateRoomOnMovement(this.mapper.current, true)) {
+                Notification.Show("La stanza sembra identica.")
+            }
         } else {
             Notification.Show("Remap fallito. Non trovo la stanza.")
         }
@@ -1085,9 +1091,12 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                         zone.description = z.description
                         zone.label = z.label
                         zone.backColor = z.backColor
+                        zone.imageOffset = z.imageOffset
+                        zone.image = z.image
                         this.mapper.saveZone(zone) 
                         this.mapper.zoneId = zone.id
                         this.mapper.OnZonesListChanged()
+                        this.drawing.refresh()
                     } else if (z) {
                         Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
                     }

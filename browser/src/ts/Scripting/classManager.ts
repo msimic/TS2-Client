@@ -25,10 +25,13 @@ export class ClassManager {
     }
 
     private onToggle(data: {owner: string, id:string, state:boolean}) {
+        const oldState = this.classes.get(data.id)?.enabled
         this.Toggle(data.id, data.state);
-        const msg = "La classe " + data.id + " e' ora " + (this.isEnabled(data.id) ? "ABILITATA" : "DISABILITATA");
-        if (this.config.getDef("debugScripts", false)) {
-            EvtScriptEmitPrint.fire({owner:"ClassManager", message: msg});
+        if (this.classes.get(data.id)?.enabled != oldState) {
+            const msg = "La classe " + data.id + " e' ora " + (this.isEnabled(data.id) ? "ABILITATA" : "DISABILITATA");
+            if (this.config.getDef("debugScripts", false)) {
+                EvtScriptEmitPrint.fire({owner:"ClassManager", message: msg});
+            }
         }
     }
 

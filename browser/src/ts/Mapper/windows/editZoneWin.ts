@@ -2,7 +2,7 @@ import { cloneDeep } from "lodash";
 import {ExitDir, Room, RoomExit, Zone} from "../mapper"
 import { circleNavigate, colorCssToRGB, colorToHex } from "../../Core/util";
 import { MapperDrawing } from "../mapperDrawing";
-import { Messagebox } from "../../App/messagebox";
+import { Messagebox , Notification} from "../../App/messagebox";
 
 export type zoneCallback = (zone:Zone | null) => void;
 
@@ -15,6 +15,8 @@ export class EditZoneWin {
     private $label: JQuery;
     private $desc: JQuery;
     private $backColor: JQuery;
+    private $imgurl: JQuery;
+    private $imgoffset: JQuery;
     private zone: Zone;
 
     constructor(private inZone: Zone, private callback: zoneCallback) {
@@ -33,6 +35,8 @@ export class EditZoneWin {
         this.zone.description = inZone?.description
         this.zone.label = inZone?.label
         this.zone.backColor = inZone?.backColor
+        this.zone.image = inZone.image
+        this.zone.imageOffset = {x: inZone.imageOffset?.x??0, y: inZone.imageOffset?.y??0}
 
         let win = document.createElement("div");
         win.style.display = "none";
@@ -76,10 +80,22 @@ export class EditZoneWin {
                         <div style="flex:none;">
                             Colore sfondo
                         </div>
-                        <div style="flex:auto;display:flex;flex-direction:row;padding:5px;">
+                        <div style="display:flex;flex-direction:row;padding:5px;">
                             <input type="color" class="zoneedit-color" title="Il colore di sfondo nel mapper"> <span>(nero puro disabilita colore)</span>
                         </div>
-                        <div style="flex:none;display:flex;flex-direction:row;">
+                        <div style="flex:none;">
+                            Immagine (URL)
+                        </div>
+                        <div style="display:flex;flex-direction:row;padding:5px;">
+                            <input style="flex:1" type="text" class="zoneedit-image" title="L'immagine di sfondo della zona nel mapper (centrata a 0,0)">
+                        </div>
+                        <div style="flex:none;">
+                            Offset immagine (x,y)
+                        </div>
+                        <div style="display:flex;flex-direction:row;padding:5px;">
+                            <input style="flex:1" type="text" class="zoneedit-offset" title="Quanto spostare l'immagine in coordinate room">
+                        </div>
+                        <div style="flex:auto;display:flex;flex-direction:row;">
                         </div>    
                     </div>
                 </div>
@@ -100,6 +116,8 @@ export class EditZoneWin {
         this.$label = $(win.getElementsByClassName("zoneedit-short")[0]);
         this.$id = $(win.getElementsByClassName("zoneedit-id")[0]);
         this.$backColor = $(win.getElementsByClassName("zoneedit-color")[0]);
+        this.$imgurl = $(win.getElementsByClassName("zoneedit-image")[0]);
+        this.$imgoffset = $(win.getElementsByClassName("zoneedit-offset")[0]);
         
         const w = 360
         const h = 270
@@ -153,6 +171,9 @@ export class EditZoneWin {
         this.setUiValue(this.$name, this.zone.name);
         this.setUiValue(this.$desc, this.zone.description);
         this.setUiValue(this.$label, this.zone.label);
+        this.setUiValue(this.$imgurl, this.zone.image ?? "");
+        this.setUiValue(this.$imgoffset, this.zone.imageOffset ?
+            this.zone.imageOffset.x + "," + this.zone.imageOffset.y : "");
         
         let rcol = this.zone.backColor?.toString()
         if (!rcol) {
@@ -174,7 +195,28 @@ export class EditZoneWin {
         this.setValue<typeof this.zone>("name", this.$name.val())
         this.setValue<typeof this.zone>("description", this.$desc.val())
         this.setValue<typeof this.zone>("label", this.$label.val())
-
+        this.setValue<typeof this.zone>("image", this.$imgurl.val())
+        if (this.$imgoffset.val()) {
+            let of = this.$imgoffset.val().split(",")
+            if (of.length!=2) {
+                Notification.Show("Offset non valido")
+                this.setValue<typeof this.zone>("imageOffset", null)
+            } else {
+                let x = parseInt(of[0])
+                let y = parseInt(of[1])
+                if (isNaN(x) || isNaN(y)) {
+                    Notification.Show("Offset non valido")
+                    this.setValue<typeof this.zone>("imageOffset", null)
+                } else {
+                    this.setValue<typeof this.zone>("imageOffset", {
+                        x: x,
+                        y: y
+                    })
+                }
+            }
+        } else {
+            this.setValue<typeof this.zone>("imageOffset", null)
+        }
         this.setValue<typeof this.zone>("id", this.$id.text())
 
         let col = this.$backColor.val();

@@ -58,10 +58,13 @@ export class TriggerManager {
     }
 
     private onToggle(data: {owner: string, id:string, state:boolean}) {
-        this.setEnabled(data.id, data.state);
-        if (this.config.getDef("debugScripts", false)) {
-            const msg = "Trigger " + data.id + " e' ora " + (this.isEnabled(data.id) ? "ABILITATO" : "DISABILITATO");
-            EvtScriptEmitPrint.fire({owner:"TriggerManager", message: msg});
+        if (data.state == undefined || this.getById(data.id)?.enabled != data.state) 
+        {
+            this.setEnabled(data.id, data.state);
+            if (this.config.getDef("debugScripts", false)) {
+                const msg = "Trigger " + data.id + " e' ora " + (this.isEnabled(data.id) ? "ABILITATO" : "DISABILITATO");
+                EvtScriptEmitPrint.fire({owner:"TriggerManager", message: msg});
+            }
         }
     }
 
@@ -79,7 +82,13 @@ export class TriggerManager {
         }
         const changed = t.enabled != val;
         t.enabled = val;
-        if (changed) this.saveTriggers(true)
+        if (changed) {
+            if (this.config.getDef("debugScripts", false)) EvtScriptEmitPrint.fire({
+                owner: "TriggerManager",
+                message: "Abilito trigger " + t.id
+            })
+            this.saveTriggers(true)
+        }
     }
 
     public getById(id:string):TrigAlItem {
@@ -368,7 +377,7 @@ export class TriggerManager {
     private createTriggerScript(trig: TrigAlItem, match: RegExpMatchArray, jsScript: JsScript) {
         let value = trig.value;
         value = parseScriptVariableAndParameters(value, match)
-        trig.script = jsScript.makeScript("TRIGGER: " + (trig.id || trig.pattern), value, "match, line");
+        trig.script = jsScript.makeScript("(trigger) " + (trig.id || trig.pattern), value, "match, line");
     }
 
     checkLoop(source: string):boolean {

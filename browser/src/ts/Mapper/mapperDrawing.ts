@@ -3,7 +3,7 @@ import { EventHook } from "../Core/event";
 import { to_screen_coordinate } from "../Core/isometric";
 import { ExitDir, ExitType, Mapper, Room, RoomExit, LabelPos, RoomType, ExitDir2LabelPos, ReverseExitDir, MapperOptions } from "./mapper";
 import { Button, Messagebox, Notification } from "../App/messagebox";
-import { colorCssToRGB } from "../Core/util";
+import { Color, colorCssToRGB } from "../Core/util";
 interface MouseData {
     x: number;
     y: number;
@@ -130,6 +130,7 @@ export enum EditMode {
 
 export class MapperDrawing {
     private _zoneId: number;
+    lastDarkState: boolean;
     public get zoneId(): number {
         return this._zoneId;
     }
@@ -140,6 +141,31 @@ export class MapperDrawing {
     public customZoneColor():string {
         if (this.zoneId) {
             return this.mapper.idToZone.get(this.zoneId)?.backColor||null;
+        }
+        return null
+    }
+
+    cachedImg: HTMLImageElement
+    cachedImgUrl: string;
+    cachedImgOffsetX: number = 0;
+    cachedImgOffsetY: number = 0;
+    public customZoneImage():HTMLImageElement {
+        if (this.zoneId) {
+            const z = this.mapper.idToZone.get(this.zoneId)
+            const imgurl = z?.image||null;
+            if (imgurl && imgurl != this.cachedImgUrl) {
+                this.cachedImgUrl = imgurl
+                this.cachedImg = preloadImage(imgurl)
+                this.cachedImgOffsetX = z.imageOffset?.x ?? 0
+                this.cachedImgOffsetY = z.imageOffset?.y ?? 0
+                return this.cachedImg
+            } else if (imgurl && imgurl == this.cachedImgUrl && this.cachedImg) {
+                return this.cachedImg
+            } else {
+                this.cachedImgUrl = null
+                this.cachedImg = null
+                return null
+            }
         }
         return null
     }
@@ -156,7 +182,7 @@ export class MapperDrawing {
     drawAdjacentLevel: boolean;
     drawRoomType: boolean;
     themeDark: boolean = $("body").hasClass("dark");
-    isDarkBackground: boolean = false;
+    //isDarkBackground: boolean = false;
     defaultLightBackground: string = "#C5BFB1";
     defaultDarkBackground: string = "#156aa7";
     defaultLightForeground: string = "black";
@@ -169,20 +195,27 @@ export class MapperDrawing {
         return this._backColor;
     }
     public set backColor(value: string) {
-        this._backColor = value;
-        if (value) {
-            const c = colorCssToRGB(this.backColor)
-            if (!c) {
-                this.isDarkBackground = false;
-            } else {
-                let luminance = 0.2126 * c.r/255.0 + 0.7152 * c.g/255.0 + 0.0722 * c.b/255.0
-                this.isDarkBackground = luminance < 0.5
-            }
-        } else {
-            this.isDarkBackground = false
+        if (this._backColor != value) {
+            this.$drawCache = {}
+            this.$wallsCache = {}
         }
+        this._backColor = value;
     }
-    foreColor: string;
+    private _foreColor: string;
+    public get foreColor(): string {
+        return this._foreColor;
+    }
+    public set foreColor(value: string) {
+        if (this._foreColor != value) {
+            this.$drawCache = {}
+            this.$wallsCache = {}
+        }
+        this._foreColor = value;
+    }
+
+    private isDarkColor(c: Color) {
+        return 0.2126 * c.r / 255.0 + 0.7152 * c.g / 255.0 + 0.0722 * c.b / 255.0 < 0.5;
+    }
 
     public get selectedExit(): RoomExit {
         return this._selectedExit;
@@ -282,7 +315,7 @@ export class MapperDrawing {
         return this._hover;
     }
     public set hover(value: Room) {
-        console.log("hover: " + value)
+        //console.log("hover: " + value)
         this._hover = value;
     }
     mouseInside = false;
@@ -292,12 +325,17 @@ export class MapperDrawing {
         this.rooms = this.rooms || []
         this.$drawCache = {}
         this.$wallsCache = {}
+        this.cachedImgUrl = null
+        this.cachedImg = null
+        this.cachedImgOffsetX = 0
+        this.cachedImgOffsetY = 0
         this.readOptions()
         this.forcePaint = true
     }
     private readOptions() {
         this.backColor = this.mapperOptions.backgroundColor
         this.foreColor = this.mapperOptions.foregroundColor
+
         this.isCustomBackground = this.backColor != null
         this.isCustomForeground = this.foreColor != null
         
@@ -339,7 +377,7 @@ export class MapperDrawing {
         this.focusActiveRoom()
         this.forcePaint = true
     }
-    wallColor = '#AAAAAA'//'#ACADAC';
+    wallColor = '#999999'//'#ACADAC';
     rendererId: number;
     stop:boolean;
     forcePaint:boolean;
@@ -1114,7 +1152,7 @@ export class MapperDrawing {
         if (!canvas || !context) return;
 
         let darkTheme = this.themeDark;
-        if (this._drawTime % 100 && darkTheme != (this.themeDark = $("body").hasClass("dark"))) {
+        if ((this._drawTime==1 || this._drawTime % 30 == 0) && darkTheme != (this.themeDark = $("body").hasClass("dark"))) {
             // theme change
             this.assignThemeColors();
         }
@@ -1122,9 +1160,53 @@ export class MapperDrawing {
         context.font = `${this.fontSize || 14}pt ${this.font || 'Tahoma, Arial, Helvetica, sans-serif'}`;
         context.lineWidth = (0.6 * this.scale)|0;
 
+            
+        if ((this._drawTime==1 || !this.foreColor || !this.backColor || this._drawTime % 30 == 0)) {
+            if (this.customZoneColor()) {
+                this.backColor = this.customZoneColor() 
+                const c = colorCssToRGB(this.backColor)
+                if (c) {
+                    this.lastDarkState = this.isDarkColor(c) 
+                }
+                this.foreColor = this.lastDarkState ? "white" : "black"
+            } else {
+                if (!this.isCustomBackground)
+                    this.backColor = this.themeDark ? this.defaultDarkBackground : this.defaultLightBackground;
+                const c = colorCssToRGB(this.backColor)
+                if (c) {
+                    this.lastDarkState = this.isDarkColor(c) 
+                }
+                if (!this.isCustomForeground) {
+                    if (this.isCustomBackground) {
+                        this.foreColor = this.lastDarkState ? this.defaultDarkForeground : this.defaultLightForeground; 
+                    } else {
+                        this.foreColor = this.themeDark ? this.defaultDarkForeground : this.defaultLightForeground;
+                    }
+                }
+                
+            }
+        }
+
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = (this.customZoneColor() || this.backColor || '#C5BFB1');
+        context.fillStyle = this.backColor || '#C5BFB1';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        let img:HTMLImageElement;
+        if ((img = this.customZoneImage()) && img.complete && img.width && img.height) {
+            let w = img.width * this.scale
+            let h = img.width * this.scale
+            let x = -w/2
+            let y = -h/2
+            const p = {
+                x: this.cachedImgOffsetX,
+                y: this.cachedImgOffsetY
+            }
+            this.transformPointToCanvas(p, this.x_scroll, this.y_scroll, this.canvas)
+                
+            context.drawImage(img, p.x, p.y, w, h)
+        }
+
+        let isdark:boolean = this.lastDarkState        
         
         if (this.mapmode) {
             this.DrawGrid(context, forExport, this.scale)
@@ -1170,16 +1252,16 @@ export class MapperDrawing {
         }
 
         const prevComposite = context.globalCompositeOperation;
-        context.globalCompositeOperation = !this.isDarkBackground ? 'lighten' : 'darken';
+        context.globalCompositeOperation = isdark ? 'lighten' : 'darken';
             
-        const aboveColor = !this.isDarkBackground ? "#EEEEEE" : '#333333'
+        const aboveColor = isdark ? "#666666" : '#888888'
         if (this.drawAdjacentLevel) for (const data of drawDataAbove.values()) {
             this.DrawRect(context, data.rect, data.rect.w/5, -data.rect.h/5, data.room, aboveColor, null, this.scale);
         }
-        context.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
+        context.globalCompositeOperation = isdark ? 'lighten' : 'darken';
         
         if (this.drawAdjacentLevel) for (const data of drawDataBelow.values()) {
-            this.DrawRect(context, data.rect, -data.rect.w/5, data.rect.h/5, data.room, "#333333", "#888888", this.scale);
+            this.DrawRect(context, data.rect, -data.rect.w/5, data.rect.h/5, data.room, "#777777", "#777777", this.scale);
         }
         context.globalCompositeOperation = prevComposite
 
@@ -1187,20 +1269,20 @@ export class MapperDrawing {
         let drawLabels = false;
         
         if (this.drawAdjacentLevel) for (const data of drawDataBelow.values()) {
-            this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, -data.rect.w/5, data.rect.h/5)    
+            this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, -data.rect.w/5, data.rect.h/5, isdark)    
         }
 
         
-        strokeColor = this.foreColor || 'black'
+        strokeColor = this.foreColor || (isdark ? 'white' : 'black')
         drawLabels = true;
         
         let allLabels:LabelData[] = [];
 
         for (const data of drawData.values()) {
-            this.DrawWalls(context, data.rect, data.room, forExport, this.scale);
+            this.DrawWalls(context, data.rect, data.room, forExport, isdark, this.scale);
         }
         for (const data of drawData.values()) {
-            allLabels = allLabels.concat(this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, 0, 0))  
+            allLabels = allLabels.concat(this.calculateLabelsAndDrawLinks(context, data, drawData, drawDataBelow, drawDataAbove, strokeColor, drawLabels, 0, 0, isdark))  
         }
         for (const data of drawData.values()) {
             this.DrawRoom(context, data.rect, data.room, forExport, this.scale);
@@ -1336,11 +1418,6 @@ export class MapperDrawing {
                 this.defaultLightForeground = "black"
             }
         }
-
-        if (!this.isCustomBackground)
-            this.backColor = this.themeDark ? this.defaultDarkBackground : this.defaultLightBackground;
-        if (!this.isCustomForeground)
-            this.foreColor = this.themeDark ? this.defaultDarkForeground : this.defaultLightForeground;
     }
 
     DrawGrid(context: CanvasRenderingContext2D, forExport: boolean, scale: number) {
@@ -1456,7 +1533,7 @@ export class MapperDrawing {
         this.drawLink(context, outer, steps, exit, "black", offsX, offsY);
         context.lineWidth = oldL
     }
-    calculateLabelsAndDrawLinks(context:CanvasRenderingContext2D, roomData:DrawData, drawData:Map<number,DrawData>, drawDataBelow:Map<number,DrawData>, drawDataAbove:Map<number,DrawData>, strokeColor:string, drawLabels:boolean, offsX:number, offsY:number) : LabelData[] {
+    calculateLabelsAndDrawLinks(context:CanvasRenderingContext2D, roomData:DrawData, drawData:Map<number,DrawData>, drawDataBelow:Map<number,DrawData>, drawDataAbove:Map<number,DrawData>, strokeColor:string, drawLabels:boolean, offsX:number, offsY:number, isdark:boolean) : LabelData[] {
         const ret:LabelData[] = []
 
         if (drawLabels && roomData.room.shortName && roomData.room.labelDir != undefined) {
@@ -2096,7 +2173,7 @@ export class MapperDrawing {
         return this.isIndoor(room) + "," + room.type + ',' + Object.keys(room.exits).filter(e => this.exitLeadsSomewhere(room.exits[<ExitDir>e], room)).join()
     }
 
-    public DrawWalls(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, scale?:number) {
+    public DrawWalls(ctx:CanvasRenderingContext2D, rect:Rect, room:Room, forExport:boolean, isdark:boolean, scale?:number) {
         const x = rect.x
         const y = rect.y
         if (!this.$wallsCache)
@@ -2109,14 +2186,14 @@ export class MapperDrawing {
 
         const roomKey = this.roomHash(room);
 
-        this.cacheRoom(roomKey, scale, room);
+        this.cacheRoom(roomKey, scale, room, isdark);
 
         if (this.drawWalls) {
             const prevComposite = ctx.globalCompositeOperation;
-            ctx.globalCompositeOperation = this.isDarkBackground ? 'lighten' : 'darken';
+            ctx.globalCompositeOperation = isdark ? 'lighten' : 'darken';
             const wallsKey = this.wallsHash(room);
 
-            const wall = this.cacheWalls(wallsKey, scale, room);
+            const wall = this.cacheWalls(wallsKey, scale, room, isdark);
 
             if (wall) {
                 ctx.drawImage(wall, (x), (y), Math.ceil(32 * scale), Math.ceil(32 * scale));
@@ -2402,7 +2479,7 @@ export class MapperDrawing {
         return null;
     }
 
-    private cacheRoom(key: string, scale: number, room: Room) {
+    private cacheRoom(key: string, scale: number, room: Room, isdark:boolean) {
         if (!this.$drawCache[key]) {
             this.$drawCache[key] = document.createElement('canvas');
             this.$drawCache[key].classList.add('map-canvas');
@@ -2738,7 +2815,7 @@ export class MapperDrawing {
         }
     }
 
-    private cacheWalls(key: string, scale: number, room: Room) : HTMLCanvasElement {
+    private cacheWalls(key: string, scale: number, room: Room, isdark: boolean) : HTMLCanvasElement {
         if (!this.isIndoor(room)) return null;
         let fillWalls = this.drawWalls
         if (!this.$wallsCache[key] && fillWalls) {
@@ -2747,7 +2824,7 @@ export class MapperDrawing {
             this.$wallsCache[key].height = Math.ceil(32 * scale)|0;
             this.$wallsCache[key].width = Math.ceil(32 * scale)|0;
             const tx = this.$wallsCache[key].getContext('2d') as CanvasRenderingContext2D;
-            tx.globalAlpha = this.isDarkBackground ? .40 : 1.0
+            tx.globalAlpha = isdark ? .40 : 1.0
             this.translate(tx, 0.5, scale);
             tx.beginPath();
             

@@ -5,6 +5,7 @@ import { aStar, PathFinder } from 'ngraph.path';
 import * as ngraph from 'ngraph.graph';
 import {MapperStorage} from '../Storage/mapperStorage'
 import { Notification } from '../App/messagebox';
+import { ProfileManager } from '../App/profileManager';
 
 export interface MapperOptions {
     mapperScale: number;
@@ -27,6 +28,8 @@ export interface Zone {
     description?: string;
     label?: string;
     backColor?: string
+    image?:string,
+    imageOffset?: {x: number, y:number}
 }
 
 export enum ExitType {
@@ -567,44 +570,120 @@ export class Mapper {
     }
 
     private manualSteps:Step[]=[]
-    public lastStep:Step = null;
+    //private _lastStep: Step = null;
+    public get nextStep(): Step {
+        return this.manualSteps.length ? this.manualSteps[0] : null;
+    }
+
+    public get stepAfterNext(): Step {
+        return this.manualSteps.length ? this.manualSteps[1] : null;
+    }
+
+    public get lastStep() : Step {
+        return this.manualSteps.length ? this.manualSteps[this.manualSteps.length-1] : null;
+    }
+    // public set lastStep(value: Step) {
+    //     this._lastStep = value;
+    // }
     public clearManualSteps() {
-        this.manualSteps.splice(0, this.manualSteps.length)
+        this.manualSteps = []
+        this.mapDebug("Clearing all manual queued steps")
+        return
+        //this.manualSteps.splice(0, this.manualSteps.length)
+    }
+
+    public countManualSteps() {
+        return this.manualSteps.length
+    }
+
+    public addManualStep(s:Step) {
+        this.manualSteps.push(s)
+        let msg = ("Stepping from " + s.room.id + " towards " + s.dir + (s.exit ? "(existing exit)":"(no exit)") + " ("+ this.manualSteps.length +" steps left)")
+        this.mapDebug(msg);
+    }
+
+    public mapDebug(msg: string) {
+        let cfg = this.profileManager.getCurrentConfig();
+        if (cfg && cfg.getDef("debugScripts", false)) {
+            EvtScriptEmitPrint.fire({
+                message: msg,
+                owner: "Mapper",
+            });
+        }
     }
 
     parseCommandsForDirection(command: string): string[] {
         if (!this.current) return [command];
         
-        const lastStepRoom = this.manualSteps.length && this.manualSteps[this.manualSteps.length-1].exit ? this.idToRoom.get(this.manualSteps[this.manualSteps.length-1].exit.to_room) : this.current
-        if (!lastStepRoom) return [command];
-        const ret:string[] = <string[]>[command];
+        
+        const ret:string[] = [];
         let doLog = false;
-        if (IsDirectionalCommand(command, this.useItalian)) {
+        let dir = null
+        if (IsDirectionalCommand(command, this.useItalian) &&
+            (dir = this.parseDirectionalCommand(command))) {
+
+            // we have a direction given, mapper could do work
+            let stepStartRoom:Room = null;
+            const longCommand = Short2LongExit.get(command)
+                
+            if (this.lastStep) {
+                if (this.lastStep.exit) {
+                    // either we follow the last step and start from there
+                    stepStartRoom = this.idToRoom.get(this.lastStep.exit.to_room)
+                } else if (this.mapmode) {
+                    // we fake a room
+                    stepStartRoom = {
+                        id: -1,
+                        name: "",
+                        color: "",
+                        x: 0,
+                        y: 0,
+                        z: this.lastStep.room.z,
+                        zone_id: this.lastStep.room.zone_id,
+                        exits: {}
+                    }
+                }
+            } else if (!this.lastStep) {
+                // or we go from the current when it has this exit
+                if (this.current && this.current.exits[dir]?.to_room) { 
+                    stepStartRoom = this.current
+                } else if (this.current && this.mapmode) {
+                    // mapping new room
+                    stepStartRoom = this.current
+                }
+            }
+
+            // nowhere to go on the map, just give the command
+            if (!stepStartRoom) return [longCommand || command];
+            
             if (this.acknowledgingWalkStep) 
             {
-                //this.acknowledgingWalkStep = false;
-                return [command];
+                // this means mapper is walking with a path
+                // we have sent the next dir and are waiting 
+                // for the mud output to give the vnum
+                return [longCommand || command];
             }
-            const dir = this.parseDirectionalCommand(command);
-            this.checkValidManualSteps(dir, lastStepRoom);
+            this.checkValidManualSteps(dir, stepStartRoom);
+            // our next step will will exit the dest room
             const st = {
                 dir: dir,
-                room: lastStepRoom,
-                exit: lastStepRoom.exits[dir]
+                room: stepStartRoom,
+                exit: stepStartRoom.exits[dir]
             }
+            // but if there is no exit and we are mapping
+            // just go there without handling doors
             if (!st.exit) {
                 if (this.mapmode) {
-                    this.manualSteps.push(st)
-                    this.lastStep = st;
+                    this.addManualStep(st)
+                } else {
+                    this.mapDebug("No exit " + (longCommand||command) + " and not in mapmode. Skipping manual step.")
                 }
-                return [command];
+                return [longCommand || command];
             }
-            this.manualSteps.push(st)
-            this.lastStep = st;
-            doLog = true
+            this.addManualStep(st)
+
             const queue:WalkCommand[] = []
-            this.handlePossibleDoor(st, this.manualSteps.length == 1 && this.doorAlreadyOpen(st.room, st.dir), queue)
-            ret.splice(0, ret.length)
+            this.handlePossibleDoor(st, this.countManualSteps() == 1 && this.doorAlreadyOpen(st.room, st.dir), queue)
             if (queue.length) {
                 queue.map(q => {
                     if (q.type == WalkCommandType.Directional) {
@@ -615,31 +694,41 @@ export class Mapper {
                     }
                 })
             }
+        } else {
+            // no directions given, just a command
+            ret.push(command)
         }
         
-        if (doLog && this.manualSteps.length) console.log("Steps: " + this.manualSteps.reduce((ps, cs, i, arr) => ps + ", " + cs.room.name, ""))
-            
         return ret;
     }
-    checkValidManualSteps( dir: ExitDir, room:Room) {
-        if (!this.manualSteps.length) return;
+    checkValidManualSteps( dir: ExitDir, steppingTo:Room) {
+        if (!this.countManualSteps()) return;
 
-        const wrongRooms = this.manualSteps.filter(ms => ms.room.id == room.id)
-        if (wrongRooms.length) {
-            this.manualSteps.splice(0, this.manualSteps.length)
+        if (!this.lastStep.exit && this.lastStep.room.id == -1 ||
+            steppingTo.id == -1) {
+            // mapping in advance
             return
         }
-
         const dirs = [ExitDir.Down,ExitDir.Up,ExitDir.North,ExitDir.NorthEast,ExitDir.East,ExitDir.SouthEast,ExitDir.South,ExitDir.SouthWest,ExitDir.West,ExitDir.NorthWest]
         let ok = false;
-        for (const dir of dirs) {
-            const ex = this.manualSteps[this.manualSteps.length-1].room.exits[dir]
-            if (ex && (ex.to_room == room.id || (this.current && ex.to_room == this.current.id))) {
+        if (this.lastStep.exit.to_room == steppingTo.id) {
+            ok = true
+        } else {
+        //for (const dir of dirs) {
+            const ex = this.lastStep.room.exits[dir]
+            // our last step leads to destination
+            if (ex && (ex.to_room == steppingTo.id)) {
                 ok = true
             }
+            //exit from last step leads to current
+            // illogic, leads to itself
+            if (ex && this.current && ex.to_room == this.current.id) {
+                ok = true
+            }
+        //}
         }
         if (!ok) {
-            this.manualSteps.splice(0, this.manualSteps.length)
+            this.clearManualSteps()
             return
         }        
     }
@@ -972,7 +1061,7 @@ export class Mapper {
         }
     }
 
-    constructor(private storage:MapperStorage) {
+    constructor(private storage:MapperStorage, private profileManager:ProfileManager) {
         this.loadFavorites();
         this.loadOptions();
         EvtScriptEvent.handle(d => {
@@ -986,7 +1075,7 @@ export class Mapper {
                         newVnum = parseInt(newVnum)
                         //console.log("got vnum " + newVnum)
                         if (this.acknowledgingWalkStep && this.discardWalkStep>=0 && this.discardWalkStep == newVnum) {
-                            console.log("discarding " + this.discardWalkStep)
+                            this.mapDebug("Discarding step for vnum " + this.discardWalkStep)
                             this.discardWalkStep = -1;
                             this.acknowledgingWalkStep = false
                             this.recalculating = false
@@ -995,14 +1084,15 @@ export class Mapper {
                             return;
                         }
     
+                        this.mapDebug("Got VNUM: "+(newVnum))
+                            
                         this.acknowledgingWalkStep = false
-                        if (this.mapmode && ((this.current && !this.current.vnum) || this.lastStep)) {
-                            console.log("MAPPING:"+parseInt(newVnum))
+                        if (this.mapmode && ((this.current && !this.current.vnum) || this.nextStep)) {
                             let existingRoom = this.getRoomByVnum(parseInt(newVnum))
-                            if (!existingRoom && !this.lastStep) {
+                            if (!existingRoom && !this.nextStep) {
                                 existingRoom = (this.current && !this.current.vnum) ? this.current : null
                             }
-                            if (!existingRoom && this.lastStep) {
+                            if (!existingRoom && this.nextStep) {
                                 this.createRoomOnMovement(newVnum);
                             } else {
                                 this.updateRoomOnMovement(existingRoom, false, newVnum)
@@ -1010,17 +1100,18 @@ export class Mapper {
                         }
 
                         this.setRoomByVNum(parseInt(newVnum));
-                        this.acknowledgeStep(newVnum);
-                        if (this.manualSteps.length) this.manualSteps.splice(0,1)                            
+                        this.acknowledgeStep(newVnum);                            
 
                         if (!this.currentWalk) {
                             this.virtualCurrent = null;
                         }
-                        
+                        this.oneManualStepDone();
                     }, 0);
                 } 
-                else
+                else {
                     this.setRoomByVNum(-1);
+                    this.oneManualStepDone();
+                }
             }
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.exitsVariable) {
                 if (d.value) 
@@ -1044,21 +1135,27 @@ export class Mapper {
         })
     }
 
-    public updateRoomOnMovement(room: Room, full?:boolean, vnumOverride?: number) {
-        const oldExits = room.exits
-        room.exits = {}
-        console.log("updateRoomOnMovement")
+    private oneManualStepDone() {
+        if (this.manualSteps.length) {
+            this.manualSteps.shift();
+        }
+    }
+
+    public updateRoomOnMovement(mudSeenRoom: Room, full?:boolean, vnumOverride?: number) : boolean {
+        const oldExits = mudSeenRoom.exits
+        mudSeenRoom.exits = {}
+        this.mapDebug("updateRoomOnMovement " + mudSeenRoom.id + " vnum:" + (vnumOverride||mudSeenRoom.vnum))
         let changed = false
-        if (this.lastStep) {
-            const dir = this.lastStep;
+        if (this.nextStep) {
+            const dir = this.nextStep;
             const fromRoom = dir.room;
             if (dir?.dir && fromRoom) {
                 fromRoom.exits[dir?.dir] = {
                     type: ExitType.Normal,
-                    to_room: room.id,
+                    to_room: mudSeenRoom.id,
                     to_dir: ReverseExitDir.get(dir?.dir)
                 }
-                room.exits[ReverseExitDir.get(dir?.dir)] = {
+                mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] = {
                     type: ExitType.Normal,
                     to_room: fromRoom.id,
                     to_dir: (dir?.dir)
@@ -1067,52 +1164,64 @@ export class Mapper {
             }
         }
         const sett = this.scripting.getVariableValue("TSSettore")
-        const newName = this.scripting.getVariableValue("RoomName") || this.roomName
+        let newName = this.scripting.getVariableValue("RoomName") ?? this.roomName
         const newDesc = (this.scripting.getVariableValue("RoomDesc")??this.roomDesc).toString().replace(/\r/g,"")
         let newVnum = parseInt(this.scripting.getVariableValue("TSRoom")??this.roomVnum)||0
         if (vnumOverride) {
             newVnum = vnumOverride
         }
-        changed ||= (newName != room.name)
-        changed ||= (newDesc != room.description)
-        changed ||= (newVnum != room.vnum)
+        changed ||= (newName !== mudSeenRoom.name)
+        changed ||= (this.compareDescriptions(newDesc, mudSeenRoom.description))
+        changed ||= (newVnum != mudSeenRoom.vnum)
 
-        room.name = newName
-        room.description = newDesc
-        room.vnum = newVnum
-
-        if (!room.type) {
-            room.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
+        if (!(mudSeenRoom.type >= 0) && sett) {
             changed = true
         }
 
         if (this.activeExits) this.activeExits.forEach((e)=>{
-            if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
-                if (full || !room.exits[<ExitDir>Long2ShortExit.get(e)]?.to_room) { 
-                    room.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
+            if (!mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
+                if (full || !mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)]?.to_room) { 
+                    mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
                 }
-            } else if (!room.exits[<ExitDir>Long2ShortExit.get(e)] && !oldExits[<ExitDir>Long2ShortExit.get(e)]) {
-                room.exits[<ExitDir>Long2ShortExit.get(e)] = {
+            } else if (!mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] && !oldExits[<ExitDir>Long2ShortExit.get(e)]) {
+                mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] = {
                     type: ExitType.Normal,
                 }
             }
         })
         if (oldExits && !full) {
             Object.keys(oldExits).forEach(ex => {
-                if (!room.exits[ex as ExitDir]) {
-                    room.exits[ex as ExitDir] = oldExits[ex as ExitDir]
+                if (!mudSeenRoom.exits[ex as ExitDir]) {
+                    mudSeenRoom.exits[ex as ExitDir] = oldExits[ex as ExitDir]
                 }
             })
         }
-        changed || !this.sameExists(room.exits, oldExits)
+        changed ||= !this.sameExists(mudSeenRoom.exits, oldExits)
         if (changed) {
-            Notification.Show("Stanza con ID " + room.id + " si differenzia dal MUD. Rimappata.")
+            mudSeenRoom.name = newName
+            mudSeenRoom.description = newDesc
+            mudSeenRoom.vnum = newVnum
+            if (!mudSeenRoom.type) {
+                mudSeenRoom.type = sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
+            }
+            this.prepareRoom(mudSeenRoom)
+            this.createGraph()
+            this.roomChanged.fire({ id: mudSeenRoom.id, vnum: mudSeenRoom.vnum, room: mudSeenRoom})
+            Notification.Show("Stanza con ID " + mudSeenRoom.id + " si differenzia dal MUD. Rimappata.")
         }
-        this.lastStep = null;
-        this.prepareRoom(room)
-        this.createGraph()
-        //this.roomChanged.fire({ id: 0, vnum: 0, room: null})
-        this.roomChanged.fire({ id: room.id, vnum: room.vnum, room: room})
+        if (this.countManualSteps()) {
+            //this.manualSteps.shift()
+            //this.lastStep = this.manualSteps[this.manualSteps.length - 1]
+            this.mapDebug("  Seen " + mudSeenRoom.id + (changed ? " and UPDATED" : ""))
+            this.mapDebug("    by going from " + this.nextStep?.room?.id + " to -> " + this.nextStep?.dir)
+        }
+        return changed
+    }
+
+    private compareDescriptions(newDesc: any, oldDesc: string): boolean {
+        const oldDs = (oldDesc??"").replace(/\r/g,"").trimEnd()
+        const newDs = (newDesc??"").replace(/\r/g,"").trimEnd()
+        return newDs != oldDs;
     }
 
     sameExists(ex1: RoomExits, ex2: RoomExits) {
@@ -1128,10 +1237,14 @@ export class Mapper {
     }
 
     private createRoomOnMovement(newVnum: any) {
-        if (!this.lastStep) return;
-        console.log("createRoomOnMovement")
-        const dir = this.lastStep;
-        const fromRoom = dir.room;
+        if (!this.nextStep) return;
+        this.mapDebug("createRoomOnMovement vnum: " + newVnum)
+        const steppingFrom = this.nextStep;
+        const fromRoom = steppingFrom.room;
+        if (fromRoom.id == -1) {
+            this.mapDebug("createRoomOnMovement bug not updated previous room of " + newVnum)
+            return
+        }
         const oneRoomWidth = 240
         const sett = this.scripting.getVariableValue("TSSettore")
         const toRoom:Room = {
@@ -1146,7 +1259,7 @@ export class Mapper {
             z: fromRoom.z,
             type: sett == "Foresta" ? RoomType.Forest : sett == "Aperto" ? RoomType.Field : RoomType.Inside
         };
-        switch (dir.dir) {
+        switch (steppingFrom.dir) {
             case ExitDir.Down:
                 toRoom.z--;
                 break;        
@@ -1180,17 +1293,18 @@ export class Mapper {
                 type: ExitType.Normal,
             }
         })
-        if (dir?.dir) {
-            console.log("mapmode: ", fromRoom.id, toRoom.id, dir?.dir);
-            fromRoom.exits[dir?.dir] = {
+        if (steppingFrom?.dir) {
+            this.mapDebug("Creating exit from : " + fromRoom.id + " to " + toRoom.id);
+            fromRoom.exits[steppingFrom?.dir] = {
                 type: ExitType.Normal,
                 to_room: toRoom.id,
-                to_dir: ReverseExitDir.get(dir?.dir)
+                to_dir: ReverseExitDir.get(steppingFrom?.dir)
             }
-            toRoom.exits[ReverseExitDir.get(dir?.dir)] = {
+            // todo if oneway dont do this check if (this.activeExits)
+            toRoom.exits[ReverseExitDir.get(steppingFrom?.dir)] = {
                 type: ExitType.Normal,
                 to_room: fromRoom.id,
-                to_dir: (dir?.dir)
+                to_dir: (steppingFrom?.dir)
             }
         }
         const fromIndex = this.db.rooms.findIndex(r => r.id == fromRoom.id)
@@ -1202,11 +1316,19 @@ export class Mapper {
         if (toIndex>-1) {
             this.db.rooms.splice(toIndex, 1)
         }
+        this.mapDebug("Created room " + toRoom.id)
+        this.mapDebug("  by going from " + this.nextStep?.room?.id + " to -> " + this.nextStep?.dir)
         this.db.rooms.push(toRoom)
-        this.lastStep = null;
         this.prepareRoom(fromRoom)
         this.prepareRoom(toRoom)
         this.createGraph()
+        if (this.stepAfterNext && this.stepAfterNext.room.id == -1) {
+            // update next step with this created room
+            this.stepAfterNext.room = toRoom
+            if (toRoom.id == -1) {
+                return
+            }
+        }
     }
 
     private getFreeId(fromId: number) {
@@ -1284,7 +1406,7 @@ export class Mapper {
             this._zoneRoomsByLevel.clear();
             this.currentWalk = null;
             this.current = null;
-            this.manualSteps = [];
+            this.clearManualSteps();
             this.walkQueue = [];
             this.loadFavorites();
             if (!this.db) return;
@@ -1561,14 +1683,14 @@ export class Mapper {
             }
         }
         if (old != this.current) {
-            console.log("roomchanged " + old?.id + " -> " + this.current?.id)
+            this.mapDebug("Roomchanged " + old?.id + " -> " + this.current?.id)
             this.roomChanged.fire({ id: this.roomId, vnum: this.roomVnum, room: this.current })
         }
     }
 
     public setRoomByVNum(vnum:number) {
         if (typeof(vnum) != "number" || isNaN(vnum)) {
-            console.log("Vnum not numeric");
+            this.mapDebug("Vnum not numeric");
             return;
         }
         this.roomVnum = vnum;
@@ -1593,7 +1715,7 @@ export class Mapper {
                             return candidate.exits[<ExitDir>shortExit];
                         })) {
                             found = candidate
-                            console.log("resync by name and exits" + vnum)
+                            this.mapDebug("resync by name and exits" + vnum)
                         }
                     }
                 }
@@ -1601,7 +1723,7 @@ export class Mapper {
             if (!this.mapmode) {
                 this.current = found || this.syncToRoom()
                 if (this.current) {
-                    console.log("full resync for vnum " + vnum + " to id " + this.current.id)
+                    this.mapDebug("full resync for vnum " + vnum + " to id " + this.current.id)
                     this.setRoomById(this.current.id)
                     this.resyncato = true;
                 }
@@ -1617,11 +1739,11 @@ export class Mapper {
                         this.roomId = backupRoom.id
                         this.roomVnum = backupRoom.vnum
                         this.current = backupRoom
-                        console.log("resync for walkqueue to id " + this.roomId)
+                        this.mapDebug("resync for walkqueue to id " + this.roomId)
                     }
                 }
             }
-            const lastStepManual = this.manualSteps.shift()
+            const lastStepManual = this.nextStep
             if (!this.current && lastStepManual && old) {
                 const exitFromPrevious = old.exits[lastStepManual.dir];
                 if (exitFromPrevious && exitFromPrevious.to_room) {
@@ -1630,7 +1752,7 @@ export class Mapper {
                         this.roomId = backupRoom.id
                         this.roomVnum = backupRoom.vnum
                         this.current = backupRoom
-                        console.log("resync for manualQueue to id " + this.roomId)
+                        this.mapDebug("resync for manualQueue to id " + this.roomId)
                     }
                 }
             }
@@ -1791,12 +1913,12 @@ export class Mapper {
 
     public failWalk(reason:string):boolean {
         const ret = !!this.currentWalk
-        console.log("fail walk " + ret + " '" + (reason||"") + "'")
+        this.mapDebug(reason ? "Fail walk " + reason : "End walk")
         if (this.virtualCurrent) {
             this.current = this.virtualCurrent;
             if (this.acknowledgingWalkStep) {
                 this.discardWalkStep = this.virtualCurrent.vnum;
-                console.log("about to discard " + this.discardWalkStep)
+                this.mapDebug("About to discard step with vnum: " + this.discardWalkStep)
             }
         }
         this.virtualCurrent = null;
@@ -1808,7 +1930,7 @@ export class Mapper {
             EvtScriptEmitPrint.fire( { owner: "Mapper", message: this.walkQueue.join(",")})
         }*/
         this.walkQueue = []
-        this.manualSteps = [];
+        this.clearManualSteps();
         this.currentWalk = null;
         return ret;
     }
@@ -1885,7 +2007,7 @@ export class Mapper {
         if (!this.currentWalk || !this.current)
             return;
 
-        console.log("acknowledgeStep " + vnum)
+            this.mapDebug("AcknowledgeStep " + vnum)
 
         if (!this.currentWalk.steps || this.currentWalk.index >= this.currentWalk.steps.length) {
             if (this.currentWalk.index >= this.currentWalk.steps.length) this.failWalk( `Arrivato a destinazione.`)
@@ -1918,7 +2040,7 @@ export class Mapper {
             const lastStepDir = this.currentWalk.steps[this.currentWalk.steps.length-1].direction;
             const endRoom = this.currentWalk.end;
             const nextId = endRoom.exits[lastStepDir].to_room
-            console.log("ricalcolo " + stepVnum + " - " + nextId)
+            this.mapDebug("Ricalcolo " + stepVnum + " - " + nextId)
             this.recalculating = true;
             this.failWalk("");
             EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${nextId}`})
@@ -1950,7 +2072,7 @@ export class Mapper {
             }
             this.acknowledgingWalkStep = true
             const nr = this.getRoomById(step.room.exits[step.direction].to_room)
-            console.log("sending next dir for vnum " + nr.vnum + " -> in " + (this.virtualCurrent?.vnum||this.current?.vnum) + ":" + step.direction )
+            this.mapDebug("Walk: sending next dir for vnum " + nr.vnum + " from " + (this.virtualCurrent?.vnum||this.current?.vnum) + ": dir: " + step.direction )
             this.virtualCurrent = nr;
             const longDir = walkCommand.type == WalkCommandType.Directional ? Short2LongExit.get(walkCommand.command) || walkCommand.command : walkCommand.command 
             EvtScriptEmitCmd.fire( { owner: "Mapper", message: longDir, silent: false})

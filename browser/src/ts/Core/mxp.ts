@@ -110,7 +110,8 @@ export class Mxp {
                 }
             }
         }
-        e.regex = new RegExp('<' + e.name + '\\b[^>]*>([\\s\\S]*?)<\/' + e.name + '>', 'i');
+        let closeTag = e.empty == "EMPTY" ? "" : '<\/' + e.name + '>'
+        e.regex = new RegExp('<' + e.name + '\\b[^>]*>([\\s\\S]*?)' + closeTag, 'i');
         return e;
     }
 
@@ -483,7 +484,7 @@ export class Mxp {
 
         for (var i = 0; i < this.elements.length; i++) {
             let tmp:RegExpMatchArray;
-            if (this.elements[i].regex && (tmp = data.match(this.elements[i].regex))) {
+            if (this.elements[i].regex && !this.elements[i].empty && (tmp = data.match(this.elements[i].regex))) {
                 tmp[0] = tmp[0].substring(0, tmp[0].indexOf(tmp[1]))
                 const attrs:any = {};
                 if (this.elements[i].att) {
@@ -518,7 +519,8 @@ export class Mxp {
                 if (this.elements[i].flag) {
                     const varName = this.elements[i].flag.replace(/^set /i, "");
                     tmp[1] = stripAnsi(tmp[1]);
-                    this.script.getScriptThis()[varName] = tmp[1];
+                    tmp[1] = this.stripMxpTags(tmp[1])
+                    this.script.forceVariable(varName, tmp[1]);
                     EvtScriptEvent.fire({event: ScripEventTypes.MXP_VariableArrived, condition: varName, value:
                         {
                             type: htmlEscape(varName),
@@ -555,7 +557,14 @@ export class Mxp {
                 this.outputManager.handleTelnetData(this.str2ab(data));
             }
         }
-    };
+    }
+
+    stripMxpTags(arg0: string): string {
+        for (const el of this.elements) {
+            arg0 = arg0.replace(el.regex, "")    
+        }
+        return arg0
+    }
 
     // Need to close any remaining open tags whe we get newlines
     public handleNewline() {

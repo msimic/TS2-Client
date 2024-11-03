@@ -162,7 +162,7 @@ export class Client {
         (<any>window)["Notification"] = Notification;
         this.outputLogger = new OutputLogger();
         this.aboutWin = new AboutWin();
-        this.mapper = new Mapper(new MapperStorage());
+        this.mapper = new Mapper(new MapperStorage(), this.profileManager);
         (<any>$.fn).findByContentText = function (text:string) {
             const start = $(this)
             const allEl = start.find(":not(iframe)").addBack().contents().filter(function() {
@@ -488,7 +488,7 @@ export class Client {
         });
 
         this.commandInput.EvtEmitAliasCmds.handle((data) => {
-            this.outputWin.handleAliasSendCommands(data.orig, data.commands, data.fromScript)
+            if (data.commands || data.fromScript) this.outputWin.debugAliasSentCommands(data.orig, data.commands, data.fromScript)
             for (let cmd of data.commands) {
                 this.commandInput.execCommand(cmd, cmd, true);
             }
@@ -536,12 +536,14 @@ export class Client {
 
         // JsScript events
         EvtScriptEmitCmd.handle((data:{owner:string, message:string, silent:boolean}) => {
-            this.outputWin.handleScriptSendCommand(data.owner, data.message);
+            this.outputWin.debugScriptSendingCommand(data.owner, data.message);
             const lines = linesToArray(data.message)
             //console.log(lines)
             try {
                 this.serverEcho = data.silent;
                 for (const line of lines) {
+                    if (this.outputWin.debugScripts)
+                        this.outputWin.handleSendCommand(line, true, true)
                     this.commandInput.sendCmd(line.trim(), true, true);    
                 }
             } finally {
@@ -551,7 +553,7 @@ export class Client {
         });
 
         EvtScriptEmitPrint.handle((data:{owner:string, message:string, window?:string, raw?:any}) => {
-            setTimeout(()=>{
+            //setTimeout(()=>{
             if (data.window) {
                 this.outputManager.sendToWindow(data.window, data.message||"", data.message, true);
             } else {
@@ -560,7 +562,7 @@ export class Client {
                     + raw(data.message||"")
                     + "<br>"
                     + "</span>"
-                    this.outputWin.handleScriptSendCommand(data.owner, data.message||"");
+                    this.outputWin.debugScriptPrinting(data.owner, data.message||"");
                     const f = () => {
                         this.outputManager.handlePreformatted(msg);
                         this.outputWin.scrollBottom(false);
@@ -570,9 +572,11 @@ export class Client {
                     //}, 0);
                     
                 } else {
+                    this.outputWin.debugScriptPrinting(data.owner, data.raw||"");
                     this.outputWin.append(data.raw||"", true)
                 }
-            }},0)
+            }
+            //},0)
         });
 
         EvtScriptEmitCls.handle((data:{owner:string, window?:string}) => {
@@ -597,7 +601,7 @@ export class Client {
 
         // TriggerManager events
         this.triggerManager.EvtEmitTriggerCmds.handle((data: {orig:string, cmds:string[]}) => {
-            this.outputWin.handleTriggerSendCommands(data.orig, data.cmds);
+            this.outputWin.debugTriggerSentCommands(data.orig, data.cmds);
             for (let cmd of data.cmds) {
                 this.commandInput.execCommand(cmd, cmd, true);
             }

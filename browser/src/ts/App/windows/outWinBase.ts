@@ -16,7 +16,7 @@ export class OutWinBase {
     public EvtBuffer = new EventHook<[string, string]>();
     protected logger: OutputLogger = new OutputLogger();
     
-    protected debugScripts = false;
+    public debugScripts = false;
 
     protected colorsEnabled: boolean;
     private copyOnMouseUp: boolean;
