@@ -436,8 +436,9 @@ export class Client {
                 + rawToHtml(data.command)
                 + "<br>"
                 + "</span>"
+                this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
+                    
                 const f = () => {
-                    this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
                     if (!data.fromScript) this.outputWin.scrollLock = false
                     this.outputWin.scrollBottom(!data.fromScript);
                 }
@@ -580,13 +581,13 @@ export class Client {
         });
 
         EvtScriptEmitCls.handle((data:{owner:string, window?:string}) => {
-            setTimeout(() => {
+            //setTimeout(() => {
                 if (data.window) {
                     this.outputManager.clearWindow(data.window);
                 } else {
                     this.outputWin.clearWindow(data.owner);
                 }    
-            }, 0);
+            //}, 0);
         });
 
         EvtScriptEmitError.handle((data: {owner:string, err: any, stack?:string}) => {
