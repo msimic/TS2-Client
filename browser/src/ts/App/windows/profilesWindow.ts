@@ -389,7 +389,7 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
                 clearInterval(this.autologinInterval);
             }
         }
-        if (!autologin) {
+        if (document.activeElement && document.activeElement.id == "cmdInput") {
             (<any>this.$win).jqxWindow("open");
             (<any>this.$win).jqxWindow('bringToFront');
             setTimeout(() => $(this.profileList).focus(), 500);

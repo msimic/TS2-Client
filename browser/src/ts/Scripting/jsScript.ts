@@ -277,6 +277,7 @@ export class JsScript {
         config.evtConfigImport.handle((d) => {
             this.loadBase();
             this.load();
+            this.runScriptingInitializedEvents()
         }, this);
         this.scriptThis.startWatch = this.startWatch.bind(this.scriptThis)
         this.scriptThis.startWatch(this);
@@ -284,13 +285,17 @@ export class JsScript {
             this.eventFired(e)
         });
 
-        setTimeout(()=> {
-            for (const ev of this.events.get(ScripEventTypes[ScripEventTypes.ScriptingInitialized])??[]) {
-                this.onEvent(ScripEventTypes[ScripEventTypes.ScriptingInitialized], ev.condition, true)
-                //EvtScriptEvent.fire({event: ScripEventTypes.ScriptingInitialized, condition: ev.condition, value: true});            
-            }
-        }, 1)
+        this.runScriptingInitializedEvents();
     }
+
+    private runScriptingInitializedEvents() {
+        setTimeout(() => {
+            for (const ev of this.events.get(ScripEventTypes[ScripEventTypes.ScriptingInitialized]) ?? []) {
+                this.onEvent(ScripEventTypes[ScripEventTypes.ScriptingInitialized], ev.condition, true);
+            }
+        }, 1);
+    }
+
     private onVariableChanged(e: PropertyChanged) {
         if (!this.variables.get(e.propName)) {
             this.setVariable({
