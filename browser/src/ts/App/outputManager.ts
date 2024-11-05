@@ -8,6 +8,7 @@ import { ansiColorTuple, copyAnsiColorTuple, colorIdToHtml,
 import { UserConfig } from "./userConfig";
 import { Socket } from "../Core/socket";
 import { WindowManager } from "./windowManager";
+import { JsScript } from "../Scripting/jsScript";
 
 /*
 export interface ConfigIf {
@@ -52,7 +53,7 @@ export class OutputManager {
         return this.socket && this.socket.mxpActive();
     }
 
-    constructor(private outputWin: OutputWin, private config: ConfigIf, private windowManager: WindowManager) {
+    constructor(private outputWin: OutputWin, private config: ConfigIf, private windowManager: WindowManager, private script:JsScript) {
         this.targetWindows = [this.outputWin];
         this.target = this.outputWin;
         this.loadConfig();
@@ -370,8 +371,9 @@ export class OutputManager {
 
     private partialUtf8: Uint8Array;
     private partialSeq: string;
-    public handleTelnetData(data: ArrayBuffer) {
+    public handleTelnetData(data: ArrayBuffer, directFromServer:boolean):boolean {
         this.reentrance++;
+        let anyMxpVariableChanged = false
         // console.timeEnd("command_resp");
         // console.time("_handle_telnet_data");
 
@@ -415,7 +417,7 @@ export class OutputManager {
                 this.handleText(output);
                 output = "";
 
-                this.EvtNewLine.fire();
+                this.newLine();
                 if (this.dataQueue.length) {
                     for (const data of this.dataQueue) {
                         this.handleText(data);
@@ -502,7 +504,7 @@ export class OutputManager {
                 i += match[0].length;
                 this.handleText(output);
                 output = "";
-                this.EvtMxpTag.fire(match[1]);
+                anyMxpVariableChanged = this.EvtMxpTag.fire(match[1]) || anyMxpVariableChanged;
                 continue;
             }
 
@@ -522,7 +524,7 @@ export class OutputManager {
                 i += match[0].length;
                 this.handleText(output);
                 output = "";
-                this.EvtMxpTag.fire(match[0]);
+                anyMxpVariableChanged = this.EvtMxpTag.fire(match[0]) || anyMxpVariableChanged;
                 continue;
             }
 
@@ -534,7 +536,7 @@ export class OutputManager {
                 i += match[0].length;
                 this.handleText(output);
                 output = "";
-                this.EvtMxpTag.fire(match[0]);
+                anyMxpVariableChanged = this.EvtMxpTag.fire(match[0]) || anyMxpVariableChanged;
                 continue;
             }
 
@@ -581,7 +583,7 @@ export class OutputManager {
                 i += match[0].length;
                 this.handleText(output);
                 output = "";
-                this.EvtMxpTag.fire(match[0]);
+                anyMxpVariableChanged = this.EvtMxpTag.fire(match[0]) || anyMxpVariableChanged;
                 continue;
             }
 
@@ -603,6 +605,7 @@ export class OutputManager {
                 i += bad_stuff.length;
                 console.log("Malformed sequence or tag");
                 console.log(bad_stuff);
+                //this.handleText(bad_stuff);
                 // this.outputManager.handleText("{" + bad_stuff + "}");
                 continue;
             }
@@ -615,8 +618,7 @@ export class OutputManager {
                 this.handleText(output);
             }*/
             this.partialSeq = (i !== 0 ? output : "") + rx.slice(i);
-            //console.log("Got partial:");
-            //console.log(this.partialSeq);
+
             break;
         }
         if (!this.partialSeq) {
@@ -624,10 +626,21 @@ export class OutputManager {
             this.handleText(output);
         }
 
+        if (directFromServer && anyMxpVariableChanged) {
+            this.script.notifyVariableChanges()
+        }
+
         if (output.length && output.indexOf('\n')==-1 && this.reentrance<=1) {
             this.outputDone();
         }
         // console.timeEnd("_handle_telnet_data");
         this.reentrance--;
+
+        return anyMxpVariableChanged
+    }
+
+    private newLine() {
+        this.EvtNewLine.fire();
+        this.target.newLineReceived()
     }
 }

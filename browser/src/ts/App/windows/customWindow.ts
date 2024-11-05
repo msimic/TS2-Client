@@ -5,7 +5,7 @@ import { IBaseWindow } from "../windowManager";
 export class CustomWin extends OutWinBase implements IBaseWindow {
     constructor(elementName:string, config: ConfigIf) {
         const parent = $("#"+elementName);
-        super(parent, config);
+        super(elementName, parent, config);
     }
 
     public write(text:string, buffer:string) {

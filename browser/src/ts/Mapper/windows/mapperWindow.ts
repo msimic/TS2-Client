@@ -1256,7 +1256,7 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
         if (this.mapper.mapmode) {
             if (onlineVer?.version && onlineVer?.version >= localVer?.version) {
                 this.mapper.requestIncrementVersion = onlineVer?.version+1
-                Notification.Show("Incremento versione locale in quanto era piu bassa si quella online.")
+                Notification.Show("Incremento versione locale in quanto era piu bassa di quella online.")
             }
         }
 
@@ -1517,7 +1517,15 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
         })
     }
 
-    public load(useLocal:boolean) {
+    public async load(useLocal:boolean) {
+
+        if (this.mapper.mapmode) {
+            let r = await Messagebox.Question("Sei in modalita' mappaggio.\nProseguendo perderai eventuali modifiche.\nVuoi continuare?")
+            if (r.button != Button.Ok) {
+                return
+            }
+        }
+        this.hideMapToolbar();
         let version: MapVersion = null;
         (<any>this.$win).jqxWindow("setTitle", this.windowTitle + (useLocal ? " (da locale)" : " (pubblico)"));
 
@@ -1550,7 +1558,15 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
 
     }
 
-    public loadSite(force:boolean) {
+    public async loadSite(force:boolean) {
+        
+        if (this.mapper.mapmode) {
+            let r = await Messagebox.Question("Sei in modalita' mappaggio.\nProseguendo perderai eventuali modifiche.\nVuoi continuare?")
+            if (r.button != Button.Ok) {
+                return
+            }
+        }
+        this.hideMapToolbar();
         (<any>this.$win).jqxWindow("setTitle", this.windowTitle + " (pubblico)");
         
         let version: MapVersion = null;

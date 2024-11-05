@@ -154,8 +154,7 @@ export class MapperDrawing {
             const z = this.mapper.idToZone.get(this.zoneId)
             const imgurl = z?.image||null;
             if (imgurl && imgurl != this.cachedImgUrl) {
-                this.cachedImgUrl = imgurl
-                this.cachedImg = preloadImage(imgurl)
+                this.setZoneImage(imgurl);
                 this.cachedImgOffsetX = z.imageOffset?.x ?? 0
                 this.cachedImgOffsetY = z.imageOffset?.y ?? 0
                 return this.cachedImg
@@ -175,6 +174,14 @@ export class MapperDrawing {
     private _selectedExit: RoomExit;
     private static readonly _defaultRoomFillColorLight = "rgb(220,220,220)";
     private static readonly _defaultRoomFillColorDark = "rgb(155,155,155)";
+    private static readonly zoneImages:Map<string, HTMLImageElement> = new Map()
+    private setZoneImage(imgurl: string) {
+        this.cachedImgUrl = imgurl;
+        const img = MapperDrawing.zoneImages.get(imgurl) ?? preloadImage(imgurl)
+        this.cachedImg = img;
+        MapperDrawing.zoneImages.set(imgurl, img)
+    }
+
     public static get defaultRoomFillColor() {
         return $("body").hasClass("dark") ? MapperDrawing._defaultRoomFillColorDark : MapperDrawing._defaultRoomFillColorLight;
     }

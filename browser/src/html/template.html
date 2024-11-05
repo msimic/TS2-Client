@@ -16,16 +16,16 @@
 
   <title>TS Client</title>
 
-  <link rel="icon" type="image/png" href="favicon.png?hash=v2.0.5">
-  <link rel="stylesheet" href="modules/modules.min.css?hash=v2.0.5">
-  <link rel="stylesheet" href="css/client.css?hash=v2.0.5">
-  <link rel="manifest" href="ts2client.webmanifest?hash=v2.0.5">
+  <link rel="icon" type="image/png" href="favicon.png?hash=v2.0.6">
+  <link rel="stylesheet" href="modules/modules.min.css?hash=v2.0.6">
+  <link rel="stylesheet" href="css/client.css?hash=v2.0.6">
+  <link rel="manifest" href="ts2client.webmanifest?hash=v2.0.6">
 
-  <script src="modules/corejs.min.js?hash=v2.0.5"></script>
-  <script src="modules/jquery.min.js?hash=v2.0.5" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
-  <script src="modules/jqwidgets_module.min.js?hash=v2.0.5"></script>
-  <script src="modules/codemirror_module.min.js?hash=v2.0.5"></script>
-  <script src="modules/tern_module.min.js?hash=v2.0.5"></script>
+  <script src="modules/corejs.min.js?hash=v2.0.6"></script>
+  <script src="modules/jquery.min.js?hash=v2.0.6" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
+  <script src="modules/jqwidgets_module.min.js?hash=v2.0.6"></script>
+  <script src="modules/codemirror_module.min.js?hash=v2.0.6"></script>
+  <script src="modules/tern_module.min.js?hash=v2.0.6"></script>
   
   <script>
     if (window.visualViewport) {
@@ -177,8 +177,10 @@
             <ul>
               <li data-option-name="enable-mxp" title="Il protocollo MXP permette al server di mandare variabili ed altro al client (preferibile abilitato)"><label for="menuBar-chkEnableMxp"><input id="menuBar-chkEnableMxp" type="checkbox" checked>MXP</label></li>
               <li data-option-name="enable-mxp-images" title="Se abilitato il mud mostrera immagini in certe room"><label for="menuBar-chkEnableMxpImages"><input id="menuBar-chkEnableMxpImages" type="checkbox" checked>Immagini MXP</label></li>
+              <li type="separator"></li>
               <li data-option-name="log-time"><label><input type="checkbox">Marca tempo</label></li>
-              <li data-option-name="debug-scripts"><label><input type="checkbox">Informazioni (debug)</label></li>
+              <li data-option-name="debug-scripts"><label><input type="checkbox">Debug script</label></li>
+              <li data-option-name="debug-variables"><label><input type="checkbox">Debug variabili</label></li>
               <li type="separator"></li>
               <li data-option-name="log-alerts">Avvertimenti log</li>
               <li type="separator"></li>

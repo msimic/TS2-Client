@@ -91,10 +91,19 @@ export class WindowManager {
             this.loadProfileWindows(prof);
             this.addDockedWindowsFromLayout(prof);
             await this.showWindows(false);
+            this.bringToFrontUndockedWindows()
             this.updateWindowList();
+            setTimeout(() => $("#cmdInput").focus(),200)
             this.loading = false;
         } finally {
             this.loading = false;
+        }
+    }
+    bringToFrontUndockedWindows() {
+        for (const w of this.windows) {
+            if (w[1].data.visible && !w[1].data.docked) {
+                this.bringToFront(w[1])
+            }
         }
     }
 
@@ -120,10 +129,12 @@ export class WindowManager {
     }
 
     private addDockedWindowsFromLayout(prof: Profile) {
+        let ret:string[] = []
         if (prof.useLayout) {
             for (let w of this.layoutManager.findDockingPositions(null)) {
                 if (w.type == ControlType.Window) {
                     if (!this.windows.has(w.content)) {
+                        ret.push(w.content)
                         this.windows.set(w.content, {
                             window: null,
                             output: null,
@@ -145,6 +156,7 @@ export class WindowManager {
                 }
             }
         }
+        return ret
     }
 
     public updateWindowListImpl() {
@@ -190,7 +202,6 @@ export class WindowManager {
     }
 
     public async showWindows(duringLoad?:boolean) {
-        let resolve:Function = null;
         let toShow:string[] = [];
 
         let oldLoading = this.loading
@@ -554,7 +565,7 @@ export class WindowManager {
         if (this.loading) {
             return null;
         }
-        //console.log("NEW window" + name);
+        console.log("!! Create window " + name);
 
         let win = null;
         let customOutput = null;
@@ -644,6 +655,9 @@ export class WindowManager {
             self.save();
         });
 
+        w.on('destroy', function (event:any) {
+            console.log("!! Destroy window " + name);
+        })
         w.on('resized', function (event:any) {
             if (event.args.width == 0 && event.args.height == 0) return;
             if (!self.windows || !self.windows.get || !self.windows.get(name)) return;
@@ -676,8 +690,12 @@ export class WindowManager {
             if (!wd.initialized) {
                 wd.initialized = true;
                 setTimeout(() => {
-                    self.addDockButton($(".win-"+name.replace(/ /g,"-")),name);
-                    self.addSettingsButton($(".win-"+name.replace(/ /g,"-")),name);
+                    let wd = self.windows.get(name)
+                    if (!wd || !wd.window || !wd.initialized) {
+                        return
+                    }
+                    self.addDockButton(w,name);
+                    self.addSettingsButton(w,name);
                     $(".jqx-resize", $win).height('unset')
                     if (collapse) {
                          (<any>w).jqxWindow('collapse');

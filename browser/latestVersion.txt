@@ -6,6 +6,7 @@ features:
 - implementato le macro negli alias
 - consolidato l'uso di parametri e variabili in scripting (@variabile, $parametro)
 - si possono cancellare finestre dal bottone per opzioni (ingranaggio)
+- aggiunto debug per variabili in menu impostazioni avanzate
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()
@@ -23,4 +24,5 @@ performance:
 bugfixes:
 - risolto un problema nella funzione hideWindow()
 - risolto problema di parsing parametri per script eseguite in linea comando
+- risolto un bug con l'output quando il mud mandava una riga in piu pezzi
 - risolto vari bug minori

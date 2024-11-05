@@ -15,7 +15,7 @@ export class OutputWin extends OutWinBase {
             + "</span>", true);
     }
     constructor(config: ConfigIf, private triggerManager:TriggerManager) {
-        super($("#winOutput"), config);
+        super("winOutput",$("#winOutput"), config);
         this.outer = $("#winOutput").parent();
         this.postInit();
         this.setupLogTime();
@@ -122,23 +122,24 @@ export class OutputWin extends OutWinBase {
             this.connIntervalId = null;
         }
 
-        let elem = document.createElement("span");
+        let elem = "<span>";
         if (host && port) {
-            elem.innerHTML = "<br/><span style='color:cyan'><br/>"
+            elem += "<br/><span style='color:cyan'><br/>"
                 + "[[Connessione telnet a " + host + ":" + port.toString()
-                + "<span class='conn-dots'></span>"
+                + "<span class='conn-dots blink'>...</span>"
                 + "]]<br>";
         }
         else {
-            elem.innerHTML = "<br/><span style='color:cyan'>"
+            elem += "<br/><span style='color:cyan'>"
                 + "[[Connessione telnet "
-                + "<span class='conn-dots'></span>"
+                + "<span class='conn-dots blink'>...</span>"
                 + "]]<br>";
         }
 
-        let dots = elem.getElementsByClassName('conn-dots')[0] as HTMLSpanElement;
+        elem += "</span>"
+        //let dots = elem.getElementsByClassName('conn-dots')[0] as HTMLSpanElement;
 
-        this.connIntervalId = <number><any>setInterval(() => dots.textContent += '.', 1000);
+        //this.connIntervalId = <number><any>setInterval(() => dots.textContent += '.', 1000);
 
         this.append(elem, true);
         this.scrollBottom(true);

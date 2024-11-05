@@ -382,6 +382,7 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
         this.load();
         Acknowledge("profileCreateChar", this.profileCreateChar);
         $(this.connectButton).text(connectText);
+        let wasReconnecting = this.autologinInterval
         if (autologin) {
             this.startAutoreconnect();
         } else {
@@ -389,7 +390,7 @@ Vuoi caricare il layout predefinito in questo profilo?`).then(async v => {
                 clearInterval(this.autologinInterval);
             }
         }
-        if (document.activeElement && document.activeElement.id == "cmdInput") {
+        if (!wasReconnecting) {
             (<any>this.$win).jqxWindow("open");
             (<any>this.$win).jqxWindow('bringToFront');
             setTimeout(() => $(this.profileList).focus(), 500);

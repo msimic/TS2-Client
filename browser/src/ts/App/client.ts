@@ -242,7 +242,7 @@ export class Client {
             null, baseConfig, null, this.classManager, profileManager);
         this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, this.jsScript, "Trigger preimpostati (!)");
         
-        this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager);
+        this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager, this.jsScript);
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);
         this.socket = new Socket(this.outputManager, this.mxp, this.profileManager.activeConfig);
         this.jsScript.setOutputManager(this.outputManager);
@@ -436,7 +436,7 @@ export class Client {
                 + rawToHtml(data.command)
                 + "<br>"
                 + "</span>"
-                this.outputManager.handlePreformatted(cmd);//.outputWin.handleSendCommand(data.command, data.fromScript);
+                this.outputWin.append(cmd, true);//.outputWin.handleSendCommand(data.command, data.fromScript);
                     
                 const f = () => {
                     if (!data.fromScript) this.outputWin.scrollLock = false
@@ -565,7 +565,7 @@ export class Client {
                     + "</span>"
                     this.outputWin.debugScriptPrinting(data.owner, data.message||"");
                     const f = () => {
-                        this.outputManager.handlePreformatted(msg);
+                        this.outputWin.append(msg, true);
                         this.outputWin.scrollBottom(false);
                     }
                     //setTimeout(() => {
@@ -634,7 +634,7 @@ export class Client {
         });
 
         this.outputManager.EvtMxpTag.handle((data: string) => {
-            this.mxp.handleMxpTag(data);
+            return this.mxp.handleMxpTag(data);
         });
 
         EvtCopyAliasToBase.handle(this.copyAliasToOther, this)

@@ -1,11 +1,11 @@
 export class EventHook<TData> {
-    private handlers: Array<[(data: TData) => void, any]> = [];
+    private handlers: Array<[(data: TData) => boolean|void|Promise<void>|Promise<boolean>, any]> = [];
 
-    public handle(callback: (data: TData) => void, context?: any) {
+    public handle(callback: (data: TData) => boolean|void|Promise<void>|Promise<boolean>, context?: any) {
         this.handlers.push([callback, context]);
     }
 
-    public release(callback: (data: TData) => void) {
+    public release(callback: (data: TData) => boolean|void|Promise<void>|Promise<boolean>) {
         for (let index = 0; index < this.handlers.length; index++) {
             const element = this.handlers[index];
             if (element && element[0] == callback) {
@@ -20,10 +20,11 @@ export class EventHook<TData> {
             return false;
         }
 
+        let ret = false
         for (let [cb, context] of this.handlers) {
-            cb.call(context, data);
+            ret = cb.call(context, data) || ret;
         }
 
-        return true;
+        return ret;
     }
 }

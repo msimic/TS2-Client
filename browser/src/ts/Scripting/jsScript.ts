@@ -161,6 +161,10 @@ export interface ScriptEvent {
 export class JsScript {
     forceVariable(varName: string, arg1: string) {
         this.getScriptThis()[varName] = arg1
+        //this.checkChanges(this.getScriptThis())
+    }
+
+    notifyVariableChanges() {
         this.checkChanges(this.getScriptThis())
     }
     
@@ -302,6 +306,12 @@ export class JsScript {
                 class: '',
                 name: e.propName,
                 value: e.newValue
+            })
+        }
+        if (e.propName != "TickRemaining" && this.config.getDef("debugVariables", false)) {
+            EvtScriptEmitPrint.fire({
+                owner: "Scripting",
+                message: "Variabile " + e.propName + " cambiata"
             })
         }
         EvtScriptEvent.fire({ event: ScripEventTypes.VariableChanged, condition: e.propName, value: e });

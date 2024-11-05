@@ -410,10 +410,8 @@ export class TriggerManager {
     public line:string;
 
     public handleBuffer(line: string, raw:string): string {
-        this.line = null;
-        this.buffer = null;
         if (this.config.getDef("triggersEnabled", true) !== true) return null;
-        this.buffer = raw;
+        this.buffer += raw;
         this.line = line;
         this.handleAutologin(line);
 
@@ -423,6 +421,7 @@ export class TriggerManager {
             if (!trig.is_prompt) continue;
             this.runTrigger(trig, line);
         }
+
         return this.buffer;
     }
 
@@ -448,15 +447,18 @@ export class TriggerManager {
     public handleLine(line: string, raw:string): string {
         this.line = null;
         this.buffer = null;
+
         if (this.config.getDef("triggersEnabled", true) !== true) return null;
         this.buffer = raw;
         this.line = line;
+
         for (let i = 0; i < this.allTriggers.length; i++) {
             let trig = this.allTriggers[i];
             if (!trig.enabled || (trig.class && !this.classManager.isEnabled(trig.class))) continue;
             if (trig.is_prompt) continue;
-            this.runTrigger(trig, this.line);
+            this.runTrigger(trig, line);
         }
+
         return this.buffer;
     }
 
@@ -569,6 +571,7 @@ export class TriggerManager {
       }
 
     public subBuffer(sWhat: string, sWith: string) {
+        
         sWhat = escapeRegExp(sWhat)
         sWith = escapeRegexReplacement(sWith)
 

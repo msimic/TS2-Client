@@ -82,6 +82,7 @@ export class MenuBar {
         ["log-time", "logTime"],
         ["prompt-style", "prompt-style"],
         ["debug-scripts", "debugScripts"],
+        ["debug-variables", "debugVariables"],
         ["about", ""],
         ["docs", ""],
         ["contact", ""],

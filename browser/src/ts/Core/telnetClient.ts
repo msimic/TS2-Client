@@ -34,7 +34,7 @@ export class TelnetClient extends Telnet {
     constructor(writeFunc: (data: ArrayBuffer) => void, private config:UserConfig) {
         super(writeFunc);
 
-        this.EvtNegotiation.handle((data) => { this.onNegotiation(data); });
+        this.EvtNegotiation.handle((data) => this.onNegotiation(data));
     }
 
     private writeNewEnvVar(varName: string, varVal: string) {
@@ -91,53 +91,64 @@ export class TelnetClient extends Telnet {
         }
     }
 
-    private onNegotiation(data: NegotiationData) {
+    private onNegotiation(data: NegotiationData):boolean {
         let {cmd, opt} = data;
         // console.log(CmdName(cmd), OptName(opt));
-
+        let ret = false
         if (cmd === Cmd.WILL) {
             if (opt === Opt.ECHO) {
                 this.EvtServerEcho.fire(true);
                 this.writeArr([Cmd.IAC, Cmd.DO, Opt.ECHO]);
+                ret = true
             } else if (opt === Opt.SGA) {
                 this.writeArr([Cmd.IAC, Cmd.DO, Opt.SGA]);
+                ret = true
             } else if (opt === ExtOpt.MXP) {
                 if (this.config.getDef("mxpEnabled", true)) {
                   this.writeArr([Cmd.IAC, Cmd.DO, ExtOpt.MXP]);
                 } else {
                     this.writeArr([Cmd.IAC, Cmd.WONT, ExtOpt.MXP]);
                 }
+                ret = true
             } else {
                 this.writeArr([Cmd.IAC, Cmd.DONT, opt]);
+                ret = true
             }
         } else if (cmd === Cmd.WONT) {
             if (opt === Opt.ECHO) {
                 this.EvtServerEcho.fire(false);
                 this.writeArr([Cmd.IAC, Cmd.DONT, Opt.ECHO]);
+                ret = true
             }
         } else if (cmd === Cmd.DO) {
             if (opt === Opt.TTYPE) {
                 this.writeArr([Cmd.IAC, Cmd.WILL, Opt.TTYPE]);
+                ret = true
             } else if (opt == Opt.NEW_ENVIRON) {
                 this.writeArr([Cmd.IAC, Cmd.WILL, Opt.NEW_ENVIRON]);
                 this.doNewEnviron = true;
+                ret = true
             } else if (opt === ExtOpt.MXP && this.config.getDef("mxpEnabled", true) === true) {
                 this.writeArr([Cmd.IAC, Cmd.WILL, ExtOpt.MXP]);
+                ret = true
             } else if (opt === ExtOpt.MXP && !this.config.getDef("mxpEnabled", true)) {
                 this.writeArr([Cmd.IAC, Cmd.WONT, ExtOpt.MXP]);
+                ret = true
             } else {
                 this.writeArr([Cmd.IAC, Cmd.WONT, opt]);
+                ret = true
             }
         } else if (cmd === Cmd.DONT) {
             if (opt === Opt.NEW_ENVIRON) {
                 this.doNewEnviron = false;
+                ret = true
             }
         } else if (cmd === Cmd.SB) {
         } else if (cmd === Cmd.SE) {
             let sb = this.readSbArr();
 
             if (sb.length < 1) {
-                return;
+                return false;
             }
 
             if (sb.length === 1 && sb[0] === ExtOpt.MXP) {
@@ -146,11 +157,12 @@ export class TelnetClient extends Telnet {
                 } else {
                     this.mxp = false;
                 }
+                ret = true
             }
             else if (sb.length === 2 && sb[0] === Opt.TTYPE && sb[1] === SubNeg.SEND) {
                 let ttype: string;
                 if (this.ttypeIndex > 0)
-                    return; // support only one TType by joinging all ttypes, legacy telnet clients are not supporter anymore
+                    return false; // support only one TType by joinging all ttypes, legacy telnet clients are not supporter anymore
                 ttype = TTYPES.join(", ") + ", IP<" + (this.clientIp || "Missing-IP") + ">";
                 this.ttypeIndex++;
                 
@@ -164,11 +176,14 @@ export class TelnetClient extends Telnet {
                     arrayFromString(ttype),
                     [Cmd.IAC, Cmd.SE]
                 ));
+                ret = true
             } else if (this.doNewEnviron && sb.length > 0 && sb[0] == Opt.NEW_ENVIRON) {
                 let seq = sb.slice(1);
                 this.handleNewEnvSeq(seq);
+                ret = true
             }
         }
+        return ret
     }
 }
 

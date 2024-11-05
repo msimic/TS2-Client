@@ -12,6 +12,7 @@ import { OutputLogger } from "../outputLogger";
 
 
 export class OutWinBase {
+
     public EvtLine = new EventHook<[string, string]>();
     public EvtBuffer = new EventHook<[string, string]>();
     protected logger: OutputLogger = new OutputLogger();
@@ -110,7 +111,8 @@ export class OutWinBase {
         this.config.onSet("logTime", this.onLogTime);
     }
 
-    constructor(rootElem: JQuery, private config: ConfigIf) {
+    constructor(protected name:string, rootElem: JQuery, private config: ConfigIf) {
+        console.log("!!! Ceate output  " + this.name)
         this.$rootElem = rootElem;
         this.$targetElems = [rootElem];
         this.$target = rootElem;
@@ -139,6 +141,7 @@ export class OutWinBase {
     }
 
     public destroy() {
+        console.log("!!! DestroyOutput " + this.name)
         this.releaseOnSetHandlers()
     }
 
@@ -317,7 +320,7 @@ export class OutWinBase {
             //if (data[1] != this.appendBuffer) {
                 //this.outputChanged(data);
             //}
-            this.appendBuffer = "";
+
             this.newLine();
         } else {
             let data:[string,string] = [this.lineText, this.appendBuffer];
@@ -327,6 +330,10 @@ export class OutWinBase {
             //}
         }
     };
+
+    newLineReceived() {
+        this.appendBuffer = "";
+    }
 
     protected outputChanged(data: [string, string]) {
         this.lineText = data[0];
@@ -359,7 +366,7 @@ export class OutWinBase {
         return this.$targetElems[1];
     }
 
-    public append(o: any, toRoot:boolean) {
+    public append(o: string, toRoot:boolean) {
         if (o == "<span></span>" || o == '') {
             return;
         }
@@ -369,18 +376,25 @@ export class OutWinBase {
             this.appendToCurrentTarget('<span class="timeLog">' + time + "</span>");
         }*/
         if (toRoot) {
-            this.$target.append(o); //$(o).insertBefore(this.$target);
-            if(this.log) {
-                this.lineText = (this.$target).text()+"\n"
+            this.$rootElem.append(o); //$(o).insertBefore(this.$target);
+            if (this.lineText == "" && this.$target != this.$rootElem && this.$targetElems.length == 2) {
+                let elm = this.popElem()
+                this.pushElem(elm)
             }
-            if (this.$target == this.$rootElem) {
+            if(this.log) {
+                const oldLine = this.lineText
+                this.lineText = (o)+"\n"
+                this.logLine()
+                this.lineText = oldLine
+            }
+            //if (this.$target == this.$rootElem) {
                 this.lineCount += 1;
                 /*const childCnt = this.$rootElem.children().length;
                 if (childCnt != this.lineCount) {
                     console.log("Lines out of sync! " + childCnt + ":" + this.lineCount);
                 }*/
-            }
-            this.newLine();
+            //}
+            //this.newLine();
         }
         else {
             this.appendToCurrentTarget(o);
@@ -443,7 +457,7 @@ export class OutWinBase {
     };
 
     public outputDone() {
-        this.writeBuffer();
+        //this.writeBuffer();
         this.scrollBottom();
     };
 

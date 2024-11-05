@@ -432,7 +432,7 @@ export class Mxp {
                         });
                     }
                     this.outputManager.pushMxpElem(elem);
-                    this.outputManager.handleTelnetData(this.str2ab(content));
+                    this.outputManager.handleTelnetData(this.str2ab(content), false);
                     this.openTags.pop();
                     this.outputManager.popMxpElem();
                     EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: "send", value: 
@@ -479,8 +479,9 @@ export class Mxp {
         return buf;
       }
 
-    handleMxpTag(data: string) {
+    handleMxpTag(data: string):boolean {
         let handled = false;
+        let anyVarChanged = false
 
         for (var i = 0; i < this.elements.length; i++) {
             let tmp:RegExpMatchArray;
@@ -521,6 +522,7 @@ export class Mxp {
                     tmp[1] = stripAnsi(tmp[1]);
                     tmp[1] = this.stripMxpTags(tmp[1])
                     this.script.forceVariable(varName, tmp[1]);
+                    anyVarChanged = true
                     EvtScriptEvent.fire({event: ScripEventTypes.MXP_VariableArrived, condition: varName, value:
                         {
                             type: htmlEscape(varName),
@@ -536,8 +538,8 @@ export class Mxp {
         }
 
         if (handled) {
-            this.outputManager.handleTelnetData(this.str2ab(data));
-            return;
+            this.outputManager.handleTelnetData(this.str2ab(data), false);
+            return anyVarChanged;
         }
 
         for (let ti = 0; ti < this.tagHandlers.length; ti++) {
@@ -554,14 +556,26 @@ export class Mxp {
             const m = data.match(re);
             if (m && m.length >= 2) {
                 data = m[2];
-                this.outputManager.handleTelnetData(this.str2ab(data));
+                this.outputManager.handleTelnetData(this.str2ab(data), false);
             }
         }
+
+        return anyVarChanged
     }
 
+    escapes = ["&quot;","&lt;","&gt;","&amp;"]
+    escapeTo = ['"',"<",">","&"]
+        
     stripMxpTags(arg0: string): string {
+        if (arg0 == '') return arg0
+
         for (const el of this.elements) {
             arg0 = arg0.replace(el.regex, "")    
+        }
+
+        for (let i = 0; i < this.escapes.length; i++) {
+            const element = this.escapes[i];
+            arg0 = arg0.replaceAll(element, this.escapeTo[i])
         }
         return arg0
     }

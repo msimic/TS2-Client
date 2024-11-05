@@ -2,14 +2,15 @@
     "compilerOptions": {
         "sourceMap": true,
         "outDir": "./build",
+        "moduleResolution":"node",
         "noImplicitAny": true,
         "esModuleInterop": true,
         "noImplicitReturns": true,
-        "target": "es5",
+        "target": "es2021",
         "downlevelIteration": true,
         "lib": [
             "DOM",
-            "ES6",
+            "ES2021",
             "DOM.Iterable",
             "ScriptHost"
         ],

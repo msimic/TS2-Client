@@ -106,7 +106,7 @@ export class Socket {
 
             this.telnetClient.EvtData.handle((data) => {
                 // this.handleTelnetData(data);
-                this.outputManager.handleTelnetData(data);
+                this.outputManager.handleTelnetData(data, true);
             });
 
             this.telnetClient.EvtServerEcho.handle((data) => {
