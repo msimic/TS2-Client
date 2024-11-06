@@ -100,7 +100,16 @@ export abstract class TrigAlEditBase {
             this.jqList.collapseAll()
         }
 
-        const rx = new RegExp(str, 'gi');
+        let rx:RegExp
+        try {
+            if (str[0]=="#") {
+                rx  = new RegExp(str.slice(1), 'gi');
+            } else {
+                rx  = new RegExp(Util.escapeRegExp(str), 'gi');
+            }
+        } catch {
+            rx  = new RegExp("", 'gi');
+        }
         let items = this.jqList.getItems()
         for (const itm of items) {
             if (str) {
