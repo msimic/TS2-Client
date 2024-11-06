@@ -383,7 +383,7 @@ export class OutWinBase {
             }
             if(this.log) {
                 const oldLine = this.lineText
-                this.lineText = (o)+"\n"
+                this.lineText = $("<span>"+o+"</span").text()+"\n"
                 this.logLine()
                 this.lineText = oldLine
             }

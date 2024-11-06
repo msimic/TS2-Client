@@ -450,7 +450,10 @@ export class MenuBar {
                 val = true;
             }
             Notification.Show("Prevenzione Sleep della finestra quando in sfondo: " + (val ? "ABILITATA" : "DISABILITATA"))
-            Notification.Show("Affinche' funzioni il client produrra' rumori inaudibili. Serve rilancio client.")
+            if (val) {
+                Notification.Show("Il computer non andra' in sleep mentre il client e' attivo.")
+                Notification.Show("Affinche' funzioni il client produrra' rumori inaudibili. Serve rilancio client.")
+            }
         };
 
         this.clickFuncs["changelog"] = (val) => {
@@ -459,21 +462,33 @@ export class MenuBar {
 
         this.clickFuncs["stoplog"] = (val) => {
             logger.clear()
+            if (!logger.isEnabled()) {
+                return
+            }
             this.outWin.log = false
-            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Logging interrotto"})
-            Notification.Show(`Logging interrotto`, true)
+            logger.stop()
+            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Registrazione interrotta"})
+            Notification.Show(`Registrazione interrotta`, true)
         };
         this.clickFuncs["log"] = (val) => {
             logger.clear()
+            logger.start()
             this.outWin.log = true
-            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log"})
-            Notification.Show(`Inizio log`, true)
+            EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log. Cancello registrazioni precedenti."})
+            Notification.Show(`Inizio log. Cancello registrazioni precedenti.`, true)
         };
 
         this.clickFuncs["downloadlog"] = async (val) => {
+            if (logger.empty()) {
+                Notification.Show("Nessuna registrazione attiva da interrompere.")
+                return
+            }
             if (val || !logger.empty()) {
                 downloadString(val || await logger.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
+            } else {
+                Notification.Show("Sembra che la registrazione sia vuota...")
             }
+            this.clickFuncs["stoplog"](true)
         };
 
         this.clickFuncs["reset-settings"] = (val) => {
