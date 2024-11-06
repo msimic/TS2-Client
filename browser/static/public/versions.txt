@@ -18,7 +18,7 @@ scripting:
 - gli alias non script hanno ora funzionalita (limitate) di scripting (con comandi prefissati da #)
 - aggiunto intellisense per browser e per jquery
 - oggetto api: accedere all'API nelle script e' conveniente usare "api."
-- oggetto custom: si puo settare cose private nelle script che persistono il rilancio del client
+- oggetto custom: si puo settare in esso cose che non persistono il rilancio ma acessibili da ogni profilo
 
 performance:
 - salvataggio profilo in IndexedDB
