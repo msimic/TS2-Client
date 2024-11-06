@@ -448,6 +448,7 @@ export class LayoutManager {
                 const w = wm.windows.get(dk.content)
                 if (w && w.data) {
                     w.data.docked = true
+                    w.data.collapsed = false
                 }
             }
         }

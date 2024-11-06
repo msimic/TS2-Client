@@ -247,6 +247,7 @@ export abstract class TrigAlEditBase {
 
         this.$win.on('open', (event) => {
             this.$win.focusable().focus()
+            this.ApplyFilter()
         })
 
         this.$win.on('close', (event) => {
@@ -451,6 +452,9 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     }
 
     private ApplyFilter() {
+        if (!this.isOpen()) {
+            return
+        }
         this.Filter(this.$filter.val());
     }
 

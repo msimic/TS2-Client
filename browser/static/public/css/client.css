@@ -1973,8 +1973,12 @@ ul.select {
     display: flex !important;
     flex-direction: column;
     flex: 1;
-    width: unset !important;
+    width: 100% !important;
     height: unset !important;
+}
+
+.content-wrapper .customWindow .outputText {
+    overflow-x: hidden;
 }
 
 .content-wrapper .jqx-window-header {
