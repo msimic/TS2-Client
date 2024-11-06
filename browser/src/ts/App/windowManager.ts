@@ -132,7 +132,7 @@ export class WindowManager {
         let ret:string[] = []
         if (prof.useLayout) {
             for (let w of this.layoutManager.findDockingPositions(null)) {
-                if (w.type == ControlType.Window) {
+                if (w.type == ControlType.Window && this.layoutManager.isDockingVisible(w)) {
                     if (!this.windows.has(w.content)) {
                         ret.push(w.content)
                         this.windows.set(w.content, {
