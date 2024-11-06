@@ -1071,12 +1071,18 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
     }
     showZoneWindow(create:boolean) {
         if (create) {
+            let cur = this.mapper.current
+                    
             const zw = new EditZoneWin(null, (z) => {
                 if (z && z.name && z.name.length > 2) {
                     z.id = null
                     this.mapper.saveZone(z)
                     this.mapper.zoneId = z.id
                     this.mapper.OnZonesListChanged()
+                    if (cur) {
+                        this.mapper.setRoomById(-1)
+                        this.mapper.setRoomById(cur.id)
+                    }
                 } else if (z) {
                     Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
                 }
@@ -1084,8 +1090,11 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
         } else {
             const zone = this.mapper.idToZone.get(this.zoneId)
             if (zone) {
+                let cur = this.mapper.current
+                    
                 const zw = new EditZoneWin(zone, (z) => {
                     if (z && z.name && z.name.length > 2) {
+                        
                         zone.id = parseInt(z.id?.toString())
                         zone.name = z.name
                         zone.description = z.description
@@ -1097,6 +1106,10 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                         this.mapper.zoneId = zone.id
                         this.mapper.OnZonesListChanged()
                         this.drawing.refresh()
+                        if (cur) {
+                            this.mapper.setRoomById(-1)
+                            this.mapper.setRoomById(cur.id)
+                        }
                     } else if (z) {
                         Notification.Show("Dati zona non validi. Il nome deve avere almeno tre caratteri.")
                     }

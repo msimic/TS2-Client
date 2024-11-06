@@ -460,7 +460,6 @@ export class EditPanelWindow {
         wnds.push(this.$ui_stack)
         wnds.push(this.$ui_x)
         wnds.push(this.$ui_y)
-        wnds.push(this.$ui_visible)
         wnds.push(this.$ui_blink)
         wnds.push(this.$ui_checkbox)
         wnds.push(this.$ui_gauge)

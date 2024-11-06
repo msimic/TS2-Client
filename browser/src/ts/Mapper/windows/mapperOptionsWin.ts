@@ -1,5 +1,5 @@
 import {ExitDir, Mapper, MapperOptions, Room, RoomExit, Zone} from "../mapper"
-import { circleNavigate, colorCssToRGB, colorToHex } from "../../Core/util";
+import { circleNavigate, colorCssToRGB, colorToHex, makeIndeterminate } from "../../Core/util";
 
 export type BooleanFunction = (opt: MapperOptions) => void;
 
@@ -146,6 +146,9 @@ export class MapperOptionsWin {
         this.$drawWalls = $(win.getElementsByClassName("mapoptions-drawwalls")[0]);
         this.$drawRoomType = $(win.getElementsByClassName("mapoptions-roomtype")[0]);
         
+        makeIndeterminate(this.$drawRoomType);
+        makeIndeterminate(this.$drawWalls);
+
         const w = 320
         const h = 220
         const left = ($(window).width()-w)/2;
@@ -173,9 +176,17 @@ export class MapperOptionsWin {
         this.$useLocal.prop("checked", this.mapper.getOptions().preferLocalMap)
         this.$foreColor.val(this.mapper.getOptions().foregroundColor)
         this.$backColor.val(this.mapper.getOptions().backgroundColor)
-        this.$drawWalls.prop("checked", this.mapper.getOptions().drawWalls)
         this.$adjacent.prop("checked", this.mapper.getOptions().drawAdjacentLevel)
-        this.$drawRoomType.prop("checked", this.mapper.getOptions().drawRoomType)
+        if (this.mapper.getOptions().drawWalls == undefined) {
+            (this.$drawWalls[0] as HTMLInputElement).indeterminate = true
+        } else {
+            this.$drawWalls.prop("checked", this.mapper.getOptions().drawWalls)
+        }
+        if (this.mapper.getOptions().drawRoomType == undefined) {
+            (this.$drawRoomType[0] as HTMLInputElement).indeterminate = true
+        } else {
+            this.$drawRoomType.prop("checked", this.mapper.getOptions().drawRoomType)
+        }
     }
     apply() {
         const opt = this.mapper.getOptions()
@@ -186,6 +197,12 @@ export class MapperOptionsWin {
         opt.drawWalls = this.$drawWalls.prop("checked")
         opt.drawAdjacentLevel = this.$adjacent.prop("checked")
         opt.drawRoomType = this.$drawRoomType.prop("checked")
+        if ((this.$drawWalls[0] as HTMLInputElement).indeterminate) {
+            delete opt.drawWalls
+        }
+        if ((this.$drawRoomType[0] as HTMLInputElement).indeterminate) {
+            delete opt.drawRoomType
+        }
         let col = this.$foreColor.val()
         if (col == "black" ||
             col == "rgb(0,0,0)" ||
@@ -220,3 +237,4 @@ export class MapperOptionsWin {
         (<any>this.$win).jqxWindow("close");
     }
 }
+

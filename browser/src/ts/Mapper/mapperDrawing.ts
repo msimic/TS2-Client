@@ -1201,7 +1201,7 @@ export class MapperDrawing {
         let img:HTMLImageElement;
         if ((img = this.customZoneImage()) && img.complete && img.width && img.height) {
             let w = img.width * this.scale
-            let h = img.width * this.scale
+            let h = img.height * this.scale
             let x = -w/2
             let y = -h/2
             const p = {
@@ -2195,7 +2195,7 @@ export class MapperDrawing {
 
         this.cacheRoom(roomKey, scale, room, isdark);
 
-        if (this.drawWalls) {
+        if (this.shouldDrawWalls()) {
             const prevComposite = ctx.globalCompositeOperation;
             ctx.globalCompositeOperation = isdark ? 'lighten' : 'darken';
             const wallsKey = this.wallsHash(room);
@@ -2209,6 +2209,12 @@ export class MapperDrawing {
             }
             ctx.globalCompositeOperation = prevComposite
         }
+    }
+    shouldDrawWalls() {
+        if (this.cachedImg && this.drawWalls == undefined) {
+            return false
+        }
+        return this.drawWalls == undefined ? true : this.drawWalls
     }
 
     private closestMultiple(numToRound:number, multiple:number)
@@ -2507,7 +2513,7 @@ export class MapperDrawing {
                 img = RoomTypeImages.get(room.type || 0)
                 fillWalls = false
                 tx.save()
-                if (this.drawRoomType && img) {
+                if (this.shouldDrawRoomType() && img) {
                     tx.globalAlpha = 0.7;
                     tx.drawImage(img, 0, 0, (32 * scale), (32 * scale))
                 }
@@ -2821,11 +2827,16 @@ export class MapperDrawing {
             this.translate(tx, -0.5, scale);
         }
     }
+    shouldDrawRoomType() {
+        if (this.cachedImg && this.drawRoomType == undefined) {
+            return false
+        }
+        return this.drawRoomType == undefined ? true : this.drawRoomType
+    }
 
     private cacheWalls(key: string, scale: number, room: Room, isdark: boolean) : HTMLCanvasElement {
         if (!this.isIndoor(room)) return null;
-        let fillWalls = this.drawWalls
-        if (!this.$wallsCache[key] && fillWalls) {
+        if (!this.$wallsCache[key]) {
             this.$wallsCache[key] = document.createElement('canvas');
             this.$wallsCache[key].classList.add('map-canvas');
             this.$wallsCache[key].height = Math.ceil(32 * scale)|0;
@@ -2840,10 +2851,10 @@ export class MapperDrawing {
             
             tx.fillStyle = this.wallColor;
 
-            if (!this.exitLeadsSomewhere(room.exits.n, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.n, room))
                 tx.fillRect(9 * scale, 0 * scale, 14 * scale, 4 * scale);
 
-            if (!this.exitLeadsSomewhere(room.exits.nw, room) &&  fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.nw, room)) {
                 tx.fillRect(2 * scale, 0 * scale, 2 * scale, 2 * scale);
                 tx.fillRect(0 * scale, 2 * scale, 4 * scale, 2 * scale);
                 if (!this.exitLeadsSomewhere(room.exits.n, room))
@@ -2852,7 +2863,7 @@ export class MapperDrawing {
                     tx.fillRect(0 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.exitLeadsSomewhere(room.exits.ne, room) &&  fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.ne, room)) {
                 tx.fillRect(28 * scale, 0 * scale, 2 * scale, 2 * scale);
                 tx.fillRect(28 * scale, 2 * scale, 4 * scale, 2 * scale);
                 tx.clearRect(30 * scale, 0 * scale, 2 * scale, 2 * scale);
@@ -2862,16 +2873,16 @@ export class MapperDrawing {
                     tx.fillRect(28 * scale, 4 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.exitLeadsSomewhere(room.exits.e, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.e, room))
                 tx.fillRect(28 * scale, 9 * scale, 4 * scale, 14 * scale);
             
-            if (!this.exitLeadsSomewhere(room.exits.w, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.w, room))
                 tx.fillRect(0 * scale, 9 * scale, 4 * scale, 14 * scale);
             
-            if (!this.exitLeadsSomewhere(room.exits.s, room) &&  fillWalls)
+            if (!this.exitLeadsSomewhere(room.exits.s, room))
                 tx.fillRect(9 * scale, 28 * scale, 14 * scale, 4 * scale);
             
-            if (!this.exitLeadsSomewhere(room.exits.se, room) && fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.se, room)) {
                 tx.fillRect(28 * scale, 28 * scale, 4 * scale, 2 * scale);
                 tx.fillRect(28 * scale, 30 * scale, 2 * scale, 2 * scale);
                 if (!this.exitLeadsSomewhere(room.exits.s, room))
@@ -2880,7 +2891,7 @@ export class MapperDrawing {
                     tx.fillRect(28 * scale, 23 * scale, 4 * scale, 5 * scale);
             }
 
-            if (!this.exitLeadsSomewhere(room.exits.sw, room) && fillWalls) {
+            if (!this.exitLeadsSomewhere(room.exits.sw, room)) {
                 tx.fillRect(0 * scale, 28 * scale, 4 * scale, 2 * scale);
                 tx.fillRect(2 * scale, 30 * scale, 2 * scale, 2 * scale);
                 if (!this.exitLeadsSomewhere(room.exits.s, room))

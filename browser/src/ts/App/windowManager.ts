@@ -279,6 +279,7 @@ export class WindowManager {
         w.hide()
         var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration')||100;
         setTimeout(() => {
+            const vis = this.layoutManager.isDockingVisible(witm)
             w.css({
                 "position":"relative",
                 "left":"unset",
@@ -303,7 +304,12 @@ export class WindowManager {
             });
             w.insertAfter(dockPos);
             $(".jqx-window-pin-button",w).addClass("jqx-window-pin-button-pinned");
-            w.show();
+            if (vis) {
+                (w[0] as HTMLElement).style.removeProperty("display");              
+                w.show();
+            } else {
+                (w[0] as HTMLElement).style.setProperty("display", "none", "important");              
+            }
             w.data("docked", true);
             windowDef.data.docked = true;
             if ((<any>$(w))[0] && (<any>$(w))[0].sizeChanged) {

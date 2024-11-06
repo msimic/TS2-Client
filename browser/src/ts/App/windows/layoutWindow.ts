@@ -40,11 +40,15 @@ export class LayoutWindow {
     protected $cancelButton: JQuery;
 
     private _layout: LayoutDefinition;
+    $importButton: JQuery;
+    $downloadButton: JQuery;
+    private _origLayout: LayoutDefinition;
     public get layout(): LayoutDefinition {
         return this._layout;
     }
     public set layout(value: LayoutDefinition) {
         this._layout = structuredClone(value);
+        this._origLayout = structuredClone(value);
         const title = this.title + " (vers. layout v" + (value ? value.version : "0") + (value && value.customized ? " (personalizzato)" : "") + ")";
         (<any>this.$win).jqxWindow("setTitle", title)
     }
@@ -144,6 +148,8 @@ export class LayoutWindow {
                         <div class="pane-footer" style="float:left;">
                             <button class="winLayout-btnUpdate yellowbutton">Aggiorna da preimpostato</button>
                             <button class="winLayout-btnRemColors yellowbutton">Usa colori tema</button>
+                            <button class="winLayout-btnImport" title="Importa da file">📄</button>
+                            <button class="winLayout-btnDownload" title="Esporta e scarica">💾</button>
                         </div>
                         <div class="pane-footer" style="float:right;">
                             <button class="winLayout-btnApply bluebutton">Applica</button>
@@ -193,6 +199,16 @@ export class LayoutWindow {
         this.$saveButton = $(".winLayout-btnSave", this.$win);
         this.$applyButton = $(".winLayout-btnApply", this.$win);
         this.$cancelButton = $(".winLayout-btnCancel", this.$win);
+        this.$importButton = $(".winLayout-btnImport", this.$win);
+        this.$downloadButton = $(".winLayout-btnDownload", this.$win);
+
+        this.$importButton.on("click", (ev) => {
+            this.ImportLayout()
+        })
+
+        this.$downloadButton.on("click", (ev) => {
+            this.DownloadLayout()
+        })
 
         this.$win.on('close', (event) => {
             if (this.isDirty()) {
@@ -274,6 +290,25 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$saveButton.click(this.handleSaveButtonClick.bind(this));
         this.$applyButton.click(this.handleApplyButtonClick.bind(this));
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
+
+    }
+    DownloadLayout() {
+        if (this.isDirty()) {
+            Messagebox.Show("Ehm..", "Serve prima salvare/applicare per poter scaricare")
+            return
+        }
+        Util.downloadJsonToFile(this.layout, "layoutExport.json")
+    }
+    async ImportLayout() {
+        if (this.isDirty()) {
+            let r = await Messagebox.Question("Hai modifiche non salvate. Vuoi continuare?")
+            if (r.button != Button.Ok) return
+        }
+        Util.importFromFile(d => {
+            let l = JSON.parse(d)
+            this.layout = l
+            this.load()
+        })
 
     }
     editPanel(pane: string) {
@@ -436,7 +471,23 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         
         modified = modified || (!this.$layoutColor.attr("disabled") && this.$layoutColor.val() != (this.getTextColor()||""));
         modified = modified || (!this.$layoutBackColor.attr("disabled") && this.$layoutBackColor.val() != (this.getBackColor()||""));
-        
+     
+        modified = modified || this.layout.panes.length != this._origLayout.panes.length
+
+        if (!modified) {
+            for (let I = 0; I < this.layout.panes.length; I++) {
+                const p1 = this.layout.panes[I];
+                const p2 = this._origLayout.panes[I];
+                if (p1 && !p2 || !p1 && p2) {
+                    modified = true
+                    break
+                }
+                if (p1 && p2 && JSON.stringify(p1) != JSON.stringify(p2)) {
+                    modified = true
+                    break;
+                }
+            }
+        }
         return modified;
     }
 
@@ -520,6 +571,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
         Object.assign(prof.layout, this.layout)
         this.layoutManager.save();
+        this.layoutManager.redockWindowsWithAnchor()
         this.layoutManager.load();
         this.layout = this.layoutManager.layout;
         this.load()

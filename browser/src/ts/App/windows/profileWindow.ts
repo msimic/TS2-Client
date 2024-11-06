@@ -132,12 +132,13 @@ export class ProfileWindow {
         this.$baseScripting = $(".winProfile-scriptingbase", this.$win);
 
         $("#editLayout", this.$win).on("click", () => {
-            let lstr = JSON.stringify(this.profile.layout?this.profile.layout:{},null,2)
-            Messagebox.ShowInput("Edit layout", "Definizione layout (attento)", lstr, true).then(v => {
-                if (v.button == 1) {
-                    this.profile.layout = JSON.parse(v.result)
-                }
-            })
+            Messagebox.Show("Disposizione schermo", "Per modificare la disposizione schermo connetti il profilo\ne usa la finestra Disposizione schermo dal menu Finestre.")
+            // let lstr = JSON.stringify(this.profile.layout?this.profile.layout:{},null,2)
+            // Messagebox.ShowInput("Edit layout", "Definizione layout (attento)", lstr, true).then(v => {
+            //     if (v.button == 1) {
+            //         this.profile.layout = JSON.parse(v.result)
+            //     }
+            // })
         });
 
         this.$baseScripting.change(() => {

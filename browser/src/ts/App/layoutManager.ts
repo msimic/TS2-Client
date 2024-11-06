@@ -6,6 +6,7 @@ import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { isAlphaNumeric, isTrue, parseScriptVariableAndParameters, rawToHtml, throttle } from "../Core/util";
+import { WindowDefinition } from "./windowManager";
 
 
 export let LayoutVersion = 1;
@@ -126,15 +127,28 @@ export let populateItemsInPanes = (layout:LayoutDefinition) => {
 }
 
 export class LayoutManager {
+    askingUser: Profile;
     
     findDockingPositions(window: string):Control[] {
 
         let ret = []
         let l = this.getCurrent()
         if (l && l.panes) for (const p of l.panes) {
-            let dp = (p.items || []).find(i => i.type == ControlType.Window && (i.content == window || !window));
-            if (dp) ret.push(dp)
+            let dp = (p.items || []).filter(i => i.type == ControlType.Window && (i.content == window || !window));
+            if (dp) {
+                for (const D of dp) {
+                    ret.push(D)   
+                }
+            }
         }
+        return ret
+    }
+
+    isDockingVisible(c:Control) {
+        let ret = true
+        if (c.visible) this.checkExpression(c, c.visible, (ui, res) => {
+            ret = res
+        })
         return ret
     }
 
@@ -418,7 +432,7 @@ export class LayoutManager {
         let prof = this.profileManager.getProfile(cp);
         if (prof && prof.useLayout && prof.layout) {
              this.loadLayout(prof.layout);
-             this.checkNewerLayoutExists(prof);
+             if (this.askingUser != prof) this.checkNewerLayoutExists(prof);
         } else if (prof && !prof.useLayout) {
             this.loadLayout(LayoutManager.emptyLayout());
         }
@@ -426,12 +440,26 @@ export class LayoutManager {
         this.triggerChanged();
     }
 
+    redockWindowsWithAnchor() {
+        if (this.profileManager) {
+            let wm = this.profileManager.windowManager
+            let docks = this.findDockingPositions(null)
+            for (const dk of docks) {
+                const w = wm.windows.get(dk.content)
+                if (w && w.data) {
+                    w.data.docked = true
+                }
+            }
+        }
+    }
+
     async checkNewerLayoutExists(prof: Profile) {
         if (!prof || !prof.layout || !this.onlineBaseLayout) return;
 
+        this.askingUser = prof
         const skipped = this.scripting.getScriptThis()["skipLayoutVersion"];
 
-        if ((prof.layout.version||0) < this.onlineBaseLayout.version && skipped < this.onlineBaseLayout.version) {
+        if ((prof.layout.version||0) < this.onlineBaseLayout.version && (!skipped || skipped < this.onlineBaseLayout.version)) {
             if (prof.layout.customized) {
                 const r = await Messagebox.Question(`Questo personaggio sta usando una predisposizione schermo propria\n
 creata quando esisteva una versione precedente di quello preimpostato.\n
@@ -440,19 +468,41 @@ Se invece vuoi aggiornare su quella nuova scegli Si\n\n
 N.b. Se scegli Si perderai tutte le proprie modifiche al layout.`);
                 if (r.button == Button.Ok) {
                     this.updateLayout(prof, this.onlineBaseLayout)
+                    setTimeout(() => {
+                        this.reloadLayout()
+                    }, 100)
                 } else {
                     this.scripting.getScriptThis()["skipLayoutVersion"] = this.onlineBaseLayout.version;
                 }
             } else {
                 const r = await Messagebox.Question(`C'e' una nuova versione della predisposizione schermo.\n
 Vuoi aggiornarla per questo profilo?\n
-Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione schermo.`);
+Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione schermo.`);
                 if (r.button == Button.Ok) {
                     this.updateLayout(prof, this.onlineBaseLayout)
+                    setTimeout(() => {
+                        this.reloadLayout();
+                    }, 100)
                 } else {
                     this.scripting.getScriptThis()["skipLayoutVersion"] = this.onlineBaseLayout.version;
                 }
             }
+        }
+        this.askingUser = null
+    }
+
+    private async reloadLayout() {
+        let ws:WindowDefinition[] = [];
+        if (this.profileManager) for (const w of this.profileManager.windowManager.windows) {
+            if (w[1].data.visible) {
+                ws.push(w[1])
+                await this.profileManager.windowManager.destroyWindow(w[0], false)
+            }
+        }
+        this.redockWindowsWithAnchor();
+        this.load();
+        if (this.profileManager) for (const w of ws) {
+            await this.profileManager.windowManager.show(w.data.name)
         }
     }
 
@@ -824,14 +874,22 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
         let ui = this.controls.get(c);
         let sthis = this.scripting.getScriptThis();
         const tmpExp = expression.split(",");
-        const vars = tmpExp.map(v => v.replace("()", ""));
+        const vars = tmpExp.map(v => {
+            let r = v.replace("()", "")
+            if (r[0] == "!") {
+                r = r.slice(1)
+            }
+            return r
+        });
         const isFunctionCall = tmpExp.map(v => v.endsWith("()"));
+        const isNegated = tmpExp.map(v => v.startsWith("!"));
 
         let allTrue = true;
         let i = 0;
         for (const v of vars) {
             if (isFunctionCall[i]) {
-                allTrue = allTrue && sthis[v] && sthis[v]();
+                let res = sthis[v] && sthis[v]()
+                allTrue = allTrue && isNegated[i] ? !res : res;
             } else {
                 let vr = this.parseVariables(v);
                 let expr = v;
@@ -842,7 +900,8 @@ Se ora rispondi No dovrai aggironare manualmente dalla finestra Dispisizione sch
                     }
                     expr = expr.replace(vrb, value)
                 });
-                allTrue = allTrue && eval(expr);
+                const res = eval(expr)
+                allTrue = allTrue && isNegated[i] ? !res : res;
             }
             if (!allTrue) break;
             i++;

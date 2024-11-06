@@ -86,6 +86,41 @@ export interface ConfigIf {
     evtConfigImport: EventHook<{data: {[k: string]: any}, owner: any}>;
 }
 
+export function makeIndeterminate(jqe: JQuery) {
+    jqe.on("mousedown", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        let wasChecked = jqe.prop("checked");
+        let wasIndeterminate = (jqe[0] as HTMLInputElement).indeterminate;
+        jqe.data("checked", wasChecked);
+        jqe.data("indeterminate", wasIndeterminate);
+        return false;
+    });
+    jqe.on("mouseup", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        let wasChecked = jqe.data("checked");
+        let wasIndeterminate = jqe.data("indeterminate");
+        setTimeout(() => {
+            if (wasChecked) {
+                jqe.prop("checked", false);
+                (jqe[0] as HTMLInputElement).indeterminate = false;
+            } else if (wasIndeterminate) {
+                (jqe[0] as HTMLInputElement).indeterminate = false;
+                jqe.prop("checked", true);
+            } else if (!wasIndeterminate) {
+                jqe.prop("checked", false);
+                (jqe[0] as HTMLInputElement).indeterminate = true;
+            } else {
+                jqe.prop("checked", true);
+                (jqe[0] as HTMLInputElement).indeterminate = false;
+            }
+
+        }, 1);
+        return false;
+    });
+}
+
 export function padStart(str:string, targetLength:number, padString:string) {
     targetLength = targetLength >> 0; //truncate if number, or convert non-number to 0;
     padString = String(typeof padString !== 'undefined' ? padString : ' ');
