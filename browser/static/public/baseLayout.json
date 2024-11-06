@@ -1,815 +1,875 @@
 {
-  "version": 2,
+  "version": 3,
   "customized": false,
-  "color": "#bbbbbb",
-  "background": "#000000",
+  "color": "",
+  "background": "",
   "panes": [
     {
       "position": 1,
       "id": "row-top-left",
-      "background": "#156aa7",
+      "background": "",
       "height": "",
       "autoexpand": false
     },
     {
       "position": 2,
       "id": "row-top-right",
-      "background": "#156aa7",
+      "background": "",
       "height": "",
-      "autoexpand": false
+      "autoexpand": false,
+      "items": [
+        {
+          "id": "pannello_staffe_altodestra",
+          "h": 20,
+          "paneId": null,
+          "type": 1,
+          "visible": "staffa",
+          "css": "z-index:2;margin:0;border:0;padding:0;position:absolute;top:5px;right:20px",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "white",
+              "background": "darkgreen",
+              "type": 0,
+              "stack": 2,
+              "content": " Usa ",
+              "commands": "usastaffa",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "white",
+              "background": "darkred",
+              "type": 3,
+              "stack": 2,
+              "content": " Staffa: %var(staffa) ",
+              "commands": "staffe",
+              "is_script": true
+            }
+          ]
+        }
+      ]
     },
     {
       "position": 3,
       "id": "column-right-top",
-      "background": "#156aa7",
-      "width": "280px",
-      "autoexpand": false
+      "background": "",
+      "width": "320px",
+      "autoexpand": false,
+      "items": [
+        {
+          "paneId": null,
+          "type": 2,
+          "position": 0,
+          "content": "Social",
+          "is_script": true
+        }
+      ]
     },
     {
       "position": 4,
       "id": "column-right-bottom",
-      "background": "#156aa7",
-      "width": "280px",
-      "autoexpand": false
+      "background": "",
+      "width": "320px",
+      "autoexpand": false,
+      "items": [
+        {
+          "paneId": null,
+          "type": 2,
+          "position": 0,
+          "content": "Mapper",
+          "is_script": true
+        }
+      ]
     },
     {
       "position": 5,
       "id": "row-bottom-left",
-      "background": "#156aa7",
+      "background": "",
       "height": "",
-      "autoexpand": false
+      "autoexpand": false,
+      "items": [
+        {
+          "paneId": null,
+          "color": "rgb(255, 255, 255)",
+          "type": 1,
+          "content": "%var(TSPersonaggio) %color(white)%var(TSHp)/%var(TSMaxHp)%closecolor %var(afk,%color(black)[AFK],)",
+          "css": "margin:1px;margin-left:4px;padding:1px;font-size:12px;color:lightgray !important;"
+        },
+        {
+          "paneId": null,
+          "color": "rgb(255, 255, 255)",
+          "background": "rgba(0,0,0,0.5)",
+          "type": 1,
+          "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NON SANCATO!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
+          "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+        },
+        {
+          "paneId": null,
+          "color": "rgb(255, 255, 255)",
+          "background": "rgba(0,0,0,0.5)",
+          "type": 1,
+          "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NON Scudato!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
+          "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+        },
+        {
+          "paneId": null,
+          "color": "rgb(35, 200, 35)",
+          "background": "red",
+          "type": 0,
+          "content": "%color(white,transparent,true)%var(tankKey): %var(tankPercent<50,%color(yellow,transparent,true,false,true)%var(TSTankCond),%color(white,transparent,true)%var(TSTankCond))",
+          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
+          "gauge": "tankPercent,tankMax",
+          "commands": "if (this.TSTank!=this.TSPersonaggio) send('assist ' + this.tankKey)",
+          "visible": "TSTank!='*'",
+          "is_script": true
+        },
+        {
+          "paneId": null,
+          "color": "rgb(35, 200, 35)",
+          "background": "black",
+          "type": 0,
+          "content": "%color(white,transparent,true)%var(mobKey): %var(TSMobCond)",
+          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
+          "gauge": "mobPercent,mobMax",
+          "commands": "send('attack ' + this.mobKey)",
+          "visible": "TSMob!='*'",
+          "is_script": true
+        },
+        {
+          "paneId": null,
+          "color": "rgb(185, 185, 185)",
+          "background": "rgba(0,0,0,0.5)",
+          "type": 0,
+          "content": "Spell:(%var(spells))",
+          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
+          "commands": "attr"
+        }
+      ]
     },
     {
       "position": 6,
       "id": "row-bottom-right",
-      "background": "#156aa7",
+      "background": "",
       "height": "",
-      "autoexpand": false
+      "autoexpand": false,
+      "items": [
+        {
+          "paneId": null,
+          "color": "rgb(255, 255, 255, 0.3)",
+          "type": 0,
+          "content": "%var(TSSettore==Chiuso,%color(white)Al CHIUSO,%color(black,yellowgreen)All'APERTO)",
+          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+          "commands": "if (this.healtype==\"C\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } } else if (this.healtype==\"D\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } else { send(\"bloom\") } }",
+          "is_script": true
+        },
+        {
+          "paneId": null,
+          "background": "blue",
+          "type": 0,
+          "content": "%var(TSPosizione!=In piedi,%color(white)Seduto,%color(yellowgreen)In piedi)",
+          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+          "commands": "if (this.TSPosizione!='In piedi') { send('stand') } else { send('sit') }",
+          "is_script": true
+        },
+        {
+          "paneId": null,
+          "background": "blue",
+          "type": 1,
+          "content": "%var(TSLag==+,%color(white)Laggato,%color(yellowgreen)Reattivo)",
+          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:3px !important;font-size:12px;"
+        },
+        {
+          "id": "tap_ui",
+          "w": 150,
+          "h": 150,
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;border:0;padding:0;position:absolute;top:-150px;right:0;background-image:url(css/images/clickUI-small.png) !important;opacity:0.7;",
+          "stack": 0,
+          "content": "",
+          "visible": "ClickControls",
+          "items": [
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 5,
+              "y": 5,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "attack",
+              "tooltip": "Assisti gruppo o attacca il primo mob"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 55,
+              "y": 5,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "nord"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 105,
+              "y": 5,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "up"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 5,
+              "y": 55,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "west"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 55,
+              "y": 55,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "stoporfleeorlook",
+              "tooltip": "Stoppa o flea, o se fuori combat guarda"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 105,
+              "y": 55,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "est"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 5,
+              "y": 105,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "casta",
+              "tooltip": "Cura o casta"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 55,
+              "y": 105,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "sud"
+            },
+            {
+              "parent": null,
+              "background": "transparent",
+              "w": 40,
+              "h": 40,
+              "x": 105,
+              "y": 105,
+              "paneId": null,
+              "type": 0,
+              "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
+              "stack": 0,
+              "content": "",
+              "commands": "down"
+            }
+          ]
+        }
+      ]
     },
     {
       "position": 7,
       "id": "column-left-top",
-      "background": "#156aa7",
-      "width": "280px",
-      "autoexpand": false
+      "background": "",
+      "width": "310px",
+      "autoexpand": false,
+      "items": [
+        {
+          "id": "btnrow1",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "Autoassist%color(black)%var(autoassist,%color(white) ON,%color(black) OFF)",
+              "commands": "autoassist",
+              "checkbox": "autoassist",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoStop%color(black)%var(autostop,%color(white) ON,%color(black) OFF)",
+              "commands": "autostop",
+              "checkbox": "autostop",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "AutoRescue%color(black)%var(autorescue,%color(white) ON,%color(black) OFF)",
+              "commands": "autorescue",
+              "checkbox": "autorescue",
+              "is_script": false
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "id": "btnrow2",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "AutoBash%color(black)%var(autobash,%color(white) ON,%color(black) OFF)",
+              "commands": "autobash",
+              "checkbox": "autobash",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "Auto%var(canPlay,Slam,Stab)%color(black)%var(autostab,%color(white) ON,%color(black) OFF)",
+              "commands": "autostab",
+              "checkbox": "autostab",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "%var(autofuryButton)%color(black)%var(autofuryEnabled(),%color(white) ON,%color(black) OFF)",
+              "commands": "this.autofuryToggle()",
+              "checkbox": "autofuryEnabled()",
+              "is_script": true
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "id": "btnrow3",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "AutoCast%color(black)%var(autocast,%color(white) ON,%color(black) OFF)",
+              "commands": "autocast",
+              "checkbox": "autocast",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "AutoCleric%color(black)%var(autocleric,%color(white) %var(aclMinimum)%,%color(black) OFF)",
+              "commands": "autocleric",
+              "checkbox": "autocleric",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "type": 0,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "content": "AutoSanc%color(black)%var(autosanc,%color(white) ON,%color(black) OFF)",
+              "commands": "autosanc",
+              "checkbox": "autosanc",
+              "is_script": false
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "id": "btnrow4",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoGroup%color(black)%var(autogroup,%color(white) ON,%color(black) OFF)",
+              "commands": "autogroup",
+              "checkbox": "autogroup",
+              "tooltip": "Nel momento quando qualcuno inizia a seguirti lo grupperai automaticamente",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoOrder%color(black)%var(autoorder,%color(white) ON,%color(black) OFF)",
+              "commands": "autoorder",
+              "checkbox": "autoorder",
+              "tooltip": "Appena entri in gruppo il client ascoltera' gli ordini del capogruppo",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoFollow%color(black)%var(autofollow,%color(white) ON,%color(black) OFF)",
+              "commands": "autofollow",
+              "checkbox": "autofollow",
+              "tooltip": "Segue in stagni e portali automaticamente",
+              "is_script": false
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "id": "btnrow5",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoLoot%color(black)%var(autoloot,%color(white) ON,%color(black) OFF)",
+              "commands": "autoloot",
+              "checkbox": "autoloot",
+              "tooltip": "Raccoglie soldi e altro automaticamente dai corpi morti",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "Antispalm%color(black)%var(antispalm,%color(white) ON,%color(black) OFF)",
+              "commands": "antispalm",
+              "checkbox": "antispalm",
+              "tooltip": "Cambia scudi automaticamente se vede che si sta spalmando su uno scudo elementale (o ci sono draghi vicino)",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoArmi%color(black)%var(autoarmi,%color(white) ON,%color(black) OFF)",
+              "commands": "autoarmi",
+              "checkbox": "autoarmi",
+              "tooltip": "Cambia le armi automaticamente se vede che non colpiscono",
+              "is_script": false
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "id": "btnrow6",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;display:flex;flex-direction:column;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "AutoKill%color(black)%var(autokill,%color(white) ON,%color(black) OFF)",
+              "commands": "autokill",
+              "checkbox": "autokill",
+              "tooltip": "Uccidi a vista",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "SelfSanc%color(black)%var(selfsanc,%color(white) ON,%color(black) OFF)",
+              "commands": "selfsanc",
+              "checkbox": "selfsanc",
+              "tooltip": "Tieni sancato se stesso",
+              "is_script": false
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "style": "",
+              "css": "flex:1;white-space:pre;margin:2px;",
+              "type": 0,
+              "content": "SelfShield%color(black)%var(selfshield,%color(white) ON,%color(black) OFF)",
+              "commands": "selfshield",
+              "checkbox": "selfshield",
+              "tooltip": "Tieniti scudato",
+              "is_script": false
+            }
+          ],
+          "visible": "!Immortal"
+        },
+        {
+          "paneId": null,
+          "type": 1,
+          "style": "",
+          "content": "%color(lightgray) Divini:%closecolor %color(yellow)%var(TSSigDivini,5)%closecolor  PQ/h:  %color(white) %var(_stat_pqh,4)%closecolor   MXP/h:%color(white)  %var(_stat_xph,6)%closecolor\n%color(lightgray) Aria:  %closecolor %color(white)%var(TSSigAria,5)%closecolor  5 min: %color(yellow) %var(_stat_pq5m,4)%closecolor   5 min:%color(green)  %var(_stat_xp5m,6)%closecolor\n%color(lightgray) Acqua: %closecolor %color(lightblue)%var(TSSigAcqua,5)%closecolor  15 min:%color(yellow) %var(_stat_pq15m,4)%closecolor   15 min:%color(green) %var(_stat_xp15m,6)%closecolor\n%color(lightgray) Terra: %closecolor %color(brown)%var(TSSigTerra,5)%closecolor  1 ora: %color(yellow) %var(_stat_pq1h,4)%closecolor   1 ora:%color(green)  %var(_stat_xp1h,6)%closecolor\n%color(lightgray) Fuoco: %closecolor %color(red)%var(TSSigFuoco,5)%closecolor  Sess.: %color(yellow) %var(_stat_pqsess,4)%closecolor   Sess.:%color(green)  %var(_stat_xpsess,6)%closecolor\n%color(yellow) Gold:%closecolor %color(yellow)%var(TSGoldK,7)%closecolor  %color(orange)Bank:%closecolor%color(orange)%var(TSBankK,7)%closecolor",
+          "css": "background-color:rgba(0,0,0,0.3);box-shadow: 0px 0px 1px 1px rgba(0,0,255,0.3);color:lightgray;",
+          "stack": 0,
+          "visible": "!Immortal"
+        }
+      ]
     },
     {
       "position": 8,
       "id": "column-left-bottom",
-      "background": "#156aa7",
-      "width": "280px",
-      "autoexpand": false
+      "background": "",
+      "width": "310px",
+      "autoexpand": false,
+      "items": [
+        {
+          "id": "tick_and_btn",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "color": "#AAAAAA",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "EXTRA",
+              "commands": "send('extra')",
+              "checkbox": "usiExtra",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "color": "#FF3333",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "ResFIRE",
+              "commands": "send('immufire')",
+              "checkbox": "usiImmuFire",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "rgb(221 221 221)",
+              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+              "w": 160,
+              "h": 20,
+              "type": 0,
+              "stack": 5,
+              "content": "Tick: %var(TickRemaining) sec.",
+              "commands": "tick",
+              "gauge": "TickRemaining,currentTickLenght",
+              "is_script": false
+            }
+          ]
+        },
+        {
+          "id": "mv_and_btn",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "color": "#AAAAAA",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "PIERCE",
+              "commands": "send('pierce')",
+              "checkbox": "usiPierce",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "color": "#AAAAFF",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "ResCOLD",
+              "commands": "send('immucold')",
+              "checkbox": "usiImmuCold",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "rgb(210 151 90)",
+              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+              "w": 160,
+              "h": 20,
+              "type": 0,
+              "stack": 5,
+              "content": "Move: %var(TSMov)/%var(TSMaxMov)",
+              "commands": "feast",
+              "gauge": "TSMov,TSMaxMov",
+              "is_script": false
+            }
+          ]
+        },
+        {
+          "id": "mn_and_btn",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "color": "#AAAAAA",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "position": 0,
+              "stack": 1,
+              "css": "margin:1px;padding:1px;",
+              "content": "SLASH",
+              "commands": "send('slash')",
+              "checkbox": "usiSlash",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "color": "#2222FF",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "ResELE",
+              "commands": "send('immuele')",
+              "checkbox": "usiImmuEle",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "rgb(129 129 210)",
+              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(0,0,255,0.5) !important; color:white !important;",
+              "w": 160,
+              "h": 20,
+              "type": 0,
+              "stack": 5,
+              "content": "Mana: %var(TSMana)/%var(TSMaxMana)",
+              "commands": "cani",
+              "gauge": "TSMana,TSMaxMana",
+              "is_script": false
+            }
+          ]
+        },
+        {
+          "id": "hp_and_btn",
+          "paneId": null,
+          "type": 1,
+          "css": "margin:0;",
+          "stack": 1,
+          "content": "",
+          "items": [
+            {
+              "paneId": null,
+              "color": "#AAAAAA",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "BLUNT",
+              "commands": "send('blunt')",
+              "checkbox": "usiBlunt",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "color": "#33FF33",
+              "parent": null,
+              "h": 20,
+              "w": 70,
+              "type": 0,
+              "stack": 1,
+              "position": 0,
+              "css": "margin:1px;padding:1px;",
+              "content": "ResACID",
+              "commands": "send('immuacid')",
+              "checkbox": "usiImmuAcid",
+              "is_script": true,
+              "visible": "!Immortal"
+            },
+            {
+              "paneId": null,
+              "parent": null,
+              "color": "#33AA33",
+              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,0,0,0.5) !important; color:white !important;",
+              "w": 160,
+              "h": 20,
+              "type": 0,
+              "stack": 5,
+              "content": "HP: %var(TSHp)/%var(TSMaxHp)",
+              "commands": "heal",
+              "gauge": "TSHp,TSMaxHp",
+              "blink": "TSHp<TSMaxHp/4",
+              "is_script": false
+            }
+          ]
+        },
+        {
+          "paneId": null,
+          "type": 2,
+          "position": 0,
+          "content": "Gruppo",
+          "visible": "!Immortal"
+        },
+        {
+          "paneId": null,
+          "type": 2,
+          "position": 0,
+          "content": "Group Tell",
+          "visible": "!Immortal"
+        },
+        {
+          "type": 2,
+          "paneId": "",
+          "content": "Logs",
+          "visible": "Immortal"
+        }
+      ]
     }
   ],
-  "items": [
-    {
-      "paneId": "column-right-top",
-      "type": 2,
-      "position": 0,
-      "content": "Social",
-      "is_script": true
-    },
-    {
-      "paneId": "column-right-bottom",
-      "type": 2,
-      "position": 0,
-      "content": "Mapper",
-      "is_script": true
-    },
-    {
-      "id": "btnrow1",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "btnrow2",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "btnrow3",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "btnrow4",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "btnrow5",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "btnrow6",
-      "paneId": "column-left-top",
-      "type": 1,
-      "css": "margin:0;display:flex;flex-direction:column;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow6",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoKill%color(black)%var(autokill,%color(white) ON,%color(black) OFF)",
-      "commands": "autokill",
-      "checkbox": "autokill",
-      "tooltip": "Uccidi a vista",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow6",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "SelfSanc%color(black)%var(selfsanc,%color(white) ON,%color(black) OFF)",
-      "commands": "selfsanc",
-      "checkbox": "selfsanc",
-      "tooltip": "Tieni sancato se stesso",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow6",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "SelfShield%color(black)%var(selfshield,%color(white) ON,%color(black) OFF)",
-      "commands": "selfshield",
-      "checkbox": "selfshield",
-      "tooltip": "Tieniti scudato",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow4",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoGroup%color(black)%var(autogroup,%color(white) ON,%color(black) OFF)",
-      "commands": "autogroup",
-      "checkbox": "autogroup",
-      "tooltip": "Nel momento quando qualcuno inizia a seguirti lo grupperai automaticamente",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow4",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoOrder%color(black)%var(autoorder,%color(white) ON,%color(black) OFF)",
-      "commands": "autoorder",
-      "checkbox": "autoorder",
-      "tooltip": "Appena entri in gruppo il client ascoltera' gli ordini del capogruppo",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow4",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoFollow%color(black)%var(autofollow,%color(white) ON,%color(black) OFF)",
-      "commands": "autofollow",
-      "checkbox": "autofollow",
-      "tooltip": "Segue in stagni e portali automaticamente",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow5",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoLoot%color(black)%var(autoloot,%color(white) ON,%color(black) OFF)",
-      "commands": "autoloot",
-      "checkbox": "autoloot",
-      "tooltip": "Raccoglie soldi e altro automaticamente dai corpi morti",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow5",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "Antispalm%color(black)%var(antispalm,%color(white) ON,%color(black) OFF)",
-      "commands": "antispalm",
-      "checkbox": "antispalm",
-      "tooltip": "Cambia scudi automaticamente se vede che si sta spalmando su uno scudo elementale (o ci sono draghi vicino)",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow5",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoArmi%color(black)%var(autoarmi,%color(white) ON,%color(black) OFF)",
-      "commands": "autoarmi",
-      "checkbox": "autoarmi",
-      "tooltip": "Cambia le armi automaticamente se vede che non colpiscono",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow1",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "Autoassist%color(black)%var(autoassist,%color(white) ON,%color(black) OFF)",
-      "commands": "autoassist",
-      "checkbox": "autoassist",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow1",
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "type": 0,
-      "content": "AutoStop%color(black)%var(autostop,%color(white) ON,%color(black) OFF)",
-      "commands": "autostop",
-      "checkbox": "autostop",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow2",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "AutoBash%color(black)%var(autobash,%color(white) ON,%color(black) OFF)",
-      "commands": "autobash",
-      "checkbox": "autobash",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow2",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "Auto%var(canPlay,Slam,Stab)%color(black)%var(autostab,%color(white) ON,%color(black) OFF)",
-      "commands": "autostab",
-      "checkbox": "autostab",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow2",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "%var(autofuryButton)%color(black)%var(autofuryEnabled(),%color(white) ON,%color(black) OFF)",
-      "commands": "this.autofuryToggle()",
-      "checkbox": "autofuryEnabled()",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow1",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "AutoRescue%color(black)%var(autorescue,%color(white) ON,%color(black) OFF)",
-      "commands": "autorescue",
-      "checkbox": "autorescue",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow3",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "AutoCast%color(black)%var(autocast,%color(white) ON,%color(black) OFF)",
-      "commands": "autocast",
-      "checkbox": "autocast",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow3",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "AutoCleric%color(black)%var(autocleric,%color(white) %var(aclMinimum)%,%color(black) OFF)",
-      "commands": "autocleric",
-      "checkbox": "autocleric",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "parent": "btnrow3",
-      "type": 0,
-      "style": "",
-      "css": "flex:1;white-space:pre;margin:2px;",
-      "content": "AutoSanc%color(black)%var(autosanc,%color(white) ON,%color(black) OFF)",
-      "commands": "autosanc",
-      "checkbox": "autosanc",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-top",
-      "type": 1,
-      "style": "",
-      "content": "%color(lightgray) Divini:%closecolor %color(yellow)%var(TSSigDivini,5)%closecolor  PQ/h:  %color(white) %var(_stat_pqh,4)%closecolor   MXP/h:%color(white)  %var(_stat_xph,6)%closecolor\n%color(lightgray) Aria:  %closecolor %color(white)%var(TSSigAria,5)%closecolor  5 min: %color(yellow) %var(_stat_pq5m,4)%closecolor   5 min:%color(green)  %var(_stat_xp5m,6)%closecolor\n%color(lightgray) Acqua: %closecolor %color(lightblue)%var(TSSigAcqua,5)%closecolor  15 min:%color(yellow) %var(_stat_pq15m,4)%closecolor   15 min:%color(green) %var(_stat_xp15m,6)%closecolor\n%color(lightgray) Terra: %closecolor %color(brown)%var(TSSigTerra,5)%closecolor  1 ora: %color(yellow) %var(_stat_pq1h,4)%closecolor   1 ora:%color(green)  %var(_stat_xp1h,6)%closecolor\n%color(lightgray) Fuoco: %closecolor %color(red)%var(TSSigFuoco,5)%closecolor  Sess.: %color(yellow) %var(_stat_pqsess,4)%closecolor   Sess.:%color(green)  %var(_stat_xpsess,6)%closecolor\n%color(yellow) Gold:%closecolor %color(yellow)%var(TSGoldK,7)%closecolor  %color(orange)Bank:%closecolor%color(orange)%var(TSBankK,7)%closecolor",
-      "css": "background-color:rgba(0,0,0,0.3);box-shadow: 0px 0px 1px 1px rgba(0,0,255,0.3);color:lightgray;",
-      "stack": 0
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(255, 255, 255)",
-      "type": 1,
-      "content": "%var(TSPersonaggio) %color(white)%var(TSHp)/%var(TSMaxHp)%closecolor %var(afk,%color(black)[AFK],)",
-      "css": "margin:1px;margin-left:4px;padding:1px;font-size:12px;color:lightgray !important;"
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgba(0,0,0,0.5)",
-      "type": 1,
-      "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NON SANCATO!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
-      "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgba(0,0,0,0.5)",
-      "type": 1,
-      "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NON Scudato!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
-      "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(35, 200, 35)",
-      "background": "red",
-      "type": 0,
-      "content": "%color(white,transparent,true)%var(tankKey): %var(tankPercent<50,%color(yellow,transparent,true,false,true)%var(TSTankCond),%color(white,transparent,true)%var(TSTankCond))",
-      "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
-      "gauge": "tankPercent,tankMax",
-      "commands": "if (this.TSTank!=this.TSPersonaggio) send('assist ' + this.tankKey)",
-      "visible": "TSTank!='*'",
-      "is_script": true
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(35, 200, 35)",
-      "background": "black",
-      "type": 0,
-      "content": "%color(white,transparent,true)%var(mobKey): %var(TSMobCond)",
-      "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
-      "gauge": "mobPercent,mobMax",
-      "commands": "send('attack ' + this.mobKey)",
-      "visible": "TSMob!='*'",
-      "is_script": true
-    },
-    {
-      "paneId": "row-bottom-left",
-      "color": "rgb(185, 185, 185)",
-      "background": "rgba(0,0,0,0.5)",
-      "type": 0,
-      "content": "Spell:(%var(spells))",
-      "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
-      "commands": "attr"
-    },
-    {
-      "paneId": "row-bottom-right",
-      "color": "rgb(255, 255, 255, 0.3)",
-      "type": 0,
-      "content": "%var(TSSettore==Chiuso,%color(white)Al CHIUSO,%color(black,yellowgreen)All'APERTO)",
-      "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
-      "commands": "if (this.healtype==\"C\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } } else if (this.healtype==\"D\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } else { send(\"bloom\") } }",
-      "is_script": true
-    },
-    {
-      "paneId": "row-bottom-right",
-      "background": "blue",
-      "type": 0,
-      "content": "%var(TSPosizione!=In piedi,%color(white)Seduto,%color(yellowgreen)In piedi)",
-      "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
-      "commands": "if (this.TSPosizione!='In piedi') { send('stand') } else { send('sit') }",
-      "is_script": true
-    },
-    {
-      "paneId": "row-bottom-right",
-      "background": "blue",
-      "type": 1,
-      "content": "%var(TSLag==+,%color(white)Laggato,%color(yellowgreen)Reattivo)",
-      "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:3px !important;font-size:12px;"
-    },
-    {
-      "id": "tick_and_btn",
-      "paneId": "column-left-bottom",
-      "type": 1,
-      "css": "margin:0;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "mv_and_btn",
-      "paneId": "column-left-bottom",
-      "type": 1,
-      "css": "margin:0;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "mn_and_btn",
-      "paneId": "column-left-bottom",
-      "type": 1,
-      "css": "margin:0;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "id": "hp_and_btn",
-      "paneId": "column-left-bottom",
-      "type": 1,
-      "css": "margin:0;",
-      "stack": 1,
-      "content": ""
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#AAAAAA",
-      "parent": "hp_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "BLUNT",
-      "commands": "send('blunt')",
-      "checkbox": "usiBlunt",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#AAAAAA",
-      "parent": "tick_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "EXTRA",
-      "commands": "send('extra')",
-      "checkbox": "usiExtra",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#AAAAAA",
-      "parent": "mn_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "position": 0,
-      "stack": 1,
-      "css": "margin:1px;padding:1px;",
-      "content": "SLASH",
-      "commands": "send('slash')",
-      "checkbox": "usiSlash",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#AAAAAA",
-      "parent": "mv_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "PIERCE",
-      "commands": "send('pierce')",
-      "checkbox": "usiPierce",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#AAAAFF",
-      "parent": "mv_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "ResCOLD",
-      "commands": "send('immucold')",
-      "checkbox": "usiImmuCold",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#FF3333",
-      "parent": "tick_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "ResFIRE",
-      "commands": "send('immufire')",
-      "checkbox": "usiImmuFire",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "parent": "tick_and_btn",
-      "color": "rgb(221 221 221)",
-      "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-      "w": 160,
-      "h": 20,
-      "type": 0,
-      "stack": 5,
-      "content": "Tick: %var(TickRemaining) sec.",
-      "commands": "tick",
-      "gauge": "TickRemaining,currentTickLenght",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-bottom",
-      "parent": "mv_and_btn",
-      "color": "rgb(210 151 90)",
-      "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-      "w": 160,
-      "h": 20,
-      "type": 0,
-      "stack": 5,
-      "content": "Move: %var(TSMov)/%var(TSMaxMov)",
-      "commands": "feast",
-      "gauge": "TSMov,TSMaxMov",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#33FF33",
-      "parent": "hp_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "ResACID",
-      "commands": "send('immuacid')",
-      "checkbox": "usiImmuAcid",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "parent": "hp_and_btn",
-      "color": "#33AA33",
-      "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,0,0,0.5) !important; color:white !important;",
-      "w": 160,
-      "h": 20,
-      "type": 0,
-      "stack": 5,
-      "content": "HP: %var(TSHp)/%var(TSMaxHp)",
-      "commands": "heal",
-      "gauge": "TSHp,TSMaxHp",
-      "blink": "TSHp<TSMaxHp/4",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-bottom",
-      "color": "#2222FF",
-      "parent": "mn_and_btn",
-      "h": 20,
-      "w": 70,
-      "type": 0,
-      "stack": 1,
-      "position": 0,
-      "css": "margin:1px;padding:1px;",
-      "content": "ResELE",
-      "commands": "send('immuele')",
-      "checkbox": "usiImmuEle",
-      "is_script": true
-    },
-    {
-      "paneId": "column-left-bottom",
-      "parent": "mn_and_btn",
-      "color": "rgb(129 129 210)",
-      "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(0,0,255,0.5) !important; color:white !important;",
-      "w": 160,
-      "h": 20,
-      "type": 0,
-      "stack": 5,
-      "content": "Mana: %var(TSMana)/%var(TSMaxMana)",
-      "commands": "cani",
-      "gauge": "TSMana,TSMaxMana",
-      "is_script": false
-    },
-    {
-      "paneId": "column-left-bottom",
-      "type": 2,
-      "position": 0,
-      "content": "Gruppo"
-    },
-    {
-      "paneId": "column-left-bottom",
-      "type": 2,
-      "position": 0,
-      "content": "Group Tell"
-    },
-    {
-      "id": "tap_ui",
-      "w": 150,
-      "h": 150,
-      "paneId": "row-bottom-right",
-      "type": 1,
-      "css": "margin:0;border:0;padding:0;position:absolute;top:-150px;right:0;background-image:url(css/images/clickUI-small.png) !important;opacity:0.7;",
-      "stack": 0,
-      "content": "",
-      "visible": "ClickControls"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 5,
-      "y": 5,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "attack",
-      "tooltip": "Assisti gruppo o attacca il primo mob"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 55,
-      "y": 5,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "nord"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 105,
-      "y": 5,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "up"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 5,
-      "y": 55,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "west"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 55,
-      "y": 55,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "stoporfleeorlook",
-      "tooltip": "Stoppa o flea, o se fuori combat guarda"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 105,
-      "y": 55,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "est"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 5,
-      "y": 105,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "casta",
-      "tooltip": "Cura o casta"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 55,
-      "y": 105,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "sud"
-    },
-    {
-      "parent": "tap_ui",
-      "background": "transparent",
-      "w": 40,
-      "h": 40,
-      "x": 105,
-      "y": 105,
-      "paneId": "row-bottom-right",
-      "type": 0,
-      "css": "position:absolute;margin:0;border:0;border:0 !important;outline:none !important;background-image:none !important;",
-      "stack": 0,
-      "content": "",
-      "commands": "down"
-    },
-    {
-      "id": "pannello_staffe_altodestra",
-      "h": 20,
-      "paneId": "row-top-right",
-      "type": 1,
-      "visible": "staffa",
-      "css": "z-index:2;margin:0;border:0;padding:0;position:absolute;top:5px;right:20px"
-    },
-    {
-      "paneId": "row-top-right",
-      "parent": "pannello_staffe_altodestra",
-      "color": "white",
-      "background": "darkgreen",
-      "type": 0,
-      "stack": 2,
-      "content": " Usa ",
-      "commands": "usastaffa",
-      "is_script": false
-    },
-    {
-      "paneId": "row-top-right",
-      "parent": "pannello_staffe_altodestra",
-      "color": "white",
-      "background": "darkred",
-      "type": 3,
-      "stack": 2,
-      "content": " Staffa: %var(staffa) ",
-      "commands": "staffe",
-      "is_script": true
-    }
-  ]
+  "items": []
 }

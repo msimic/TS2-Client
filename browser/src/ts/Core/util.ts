@@ -1593,6 +1593,9 @@ export function refreshApiInTern(cm: any, script: JsScript) {
         "api": {
             "!doc": "Funzioni di scripting parte dell'API del client.",
         },
+        "custom": {
+            "!doc": "Funzioni di scripting dichiarate dall'utente.",
+        },
     };
 
     let api = script.getApi()
@@ -1605,7 +1608,54 @@ export function refreshApiInTern(cm: any, script: JsScript) {
             defs.api[K] = K
         }
     }
+    if (api.private) {
 
+        function getFunctionParameters(func:string) {
+            const funcStr = func.toString();
+            const result = funcStr.match(/\(([^)]*)\)/);
+            if (result && result[1]) {
+                return result[1].split(',').map(param => param.trim());
+            }
+            return [];
+        }
+
+        let keys = Object.keys(api.private)
+
+        for (const K of keys) {
+            defs[K] = K
+            if (typeof api.private[K] == "function") {
+                let pr = getFunctionParameters(api.private[K]).map(v => v+ ": ?")
+                defs.custom[K] = {
+                    "!type": "fn("+pr+") -> ?",
+                    "!doc": "Funzione privata definita dalle proprie script."
+                }
+            } else if (typeof api.private[K] == "string") {
+                defs.custom[K] = {
+                    "!type": "string",
+                    "!doc": "Stringa definita dalle proprie script."
+                }
+            } else if (typeof api.private[K] == "number") {
+                defs.custom[K] = {
+                    "!type": "number",
+                    "!doc": "Numero definito dalle proprie script."
+                }
+            } else if (typeof api.private[K] == "object") {
+                defs.custom[K] = {
+                    "!type": "{}",
+                    "!doc": "Oggetto definito dalle proprie script."
+                }
+            } else if (typeof api.private[K] == "boolean") {
+                defs.custom[K] = {
+                    "!type": "bool",
+                    "!doc": "Booleano definito dalle proprie script."
+                }
+            } else {
+                defs.custom[K] = {
+                    "!doc": "Definito dalle proprie script."
+                }
+            }
+        }
+    }
     cm.Tern.server.addDefs(defs, false);
 }
 

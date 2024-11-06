@@ -769,7 +769,7 @@ function CreateFunction(name:string, args:any[], body:string, scope:any, values:
     return Function(scope, "function "+(name?name:"")+"("+args.join(", ")+") {\n"+body+"\n}\nreturn "+name+";").apply(scope, values);
 };
 export const API: { [key: string]: any} = {
-    
+    private: {}
 }
 
 function makeScript(owner:string, userScript: string, argSignature: string,
@@ -1106,6 +1106,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         const { ${Object.keys(publicApi).join(', ')} } = publicApi;
         const { ${Object.keys(privateApi).join(', ')} } = privateApi;
         const api = publicApi
+        const custom = privateFunctions
         with (this) {
             return async (${argSignature}) => {
                 "use strict";
@@ -1119,7 +1120,7 @@ ${userScript}
         }
     `;
     try {
-        return new Function('publicApi',"privateApi", scriptSource).call(this, publicApi, privateApi);
+        return new Function('publicApi',"privateApi", "privateFunctions", scriptSource).call(this, publicApi, privateApi, API.private);
     } catch (err) {
         EvtScriptEmitEvalError.fire(err); // script "compilation" exception
         return null;

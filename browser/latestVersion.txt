@@ -7,6 +7,7 @@ features:
 - consolidato l'uso di parametri e variabili in scripting (@variabile, $parametro)
 - si possono cancellare finestre dal bottone per opzioni (ingranaggio)
 - aggiunto debug per variabili in menu impostazioni avanzate
+- e' possibile importare e esportare il layout dalla finestra disposizione schermo
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()
@@ -16,6 +17,7 @@ scripting:
 - gli alias non script hanno ora funzionalita (limitate) di scripting (con comandi prefissati da #)
 - aggiunto intellisense per browser e per jquery
 - oggetto api: accedere all'API nelle script e' conveniente usare "api."
+- oggetto custom: si puo settare cose private nelle script che persistono il rilancio del client
 
 performance:
 - salvataggio profilo in IndexedDB
