@@ -223,6 +223,10 @@ interface connInfo {
     host: string;
     port: number;
     startTime: Date;
+    lastTraffic: Date;
+    id: string;
+    ioEvent: IoEvent;
+    client: socketio.Socket;
 };
 
 let openConns: {[k: number]: connInfo} = {};
@@ -310,6 +314,17 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             telnet.destroy();
             telnet = null;
         }
+        let opConns:number[] = [];
+        Object.keys(openConns).map((oc, ind) => {
+            if (openConns[parseInt(oc)]?.client == client) {
+                opConns.push(ind)
+            }
+        })
+        if (opConns.length) {
+            for (const idx of opConns) {
+                delete openConns[idx]                
+            }
+        }
     });
 
     ioEvt.clReqTelnetOpen.handle((args: [string, number]) => {
@@ -345,17 +360,28 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             userIp: ipAddr,
             host: host,
             port: port,
-            startTime: null
+            startTime: null,
+            lastTraffic: null,
+            id: client.id,
+            ioEvent: ioEvt,
+            client: client
         };
 
         telnet.on("data", (data: Buffer) => {
+            if (openConns[telnetId])
+                openConns[telnetId].lastTraffic = new Date()
             ioEvt.srvTelnetData.fire(data.buffer);
+            if (data.includes("Yffre")) {
+                return
+            }
         });
         telnet.on("close", (had_error: boolean) => {
             let conn = openConns[telnetId];
-            delete openConns[telnetId];
+            deleteOpenConn(telnetId);
+            telnet = null
+
             ioEvt.srvTelnetClosed.fire(had_error);
-            telnet = null;
+            
             let connEndTime = new Date();
             let elapsed: number = conStartTime && (<any>connEndTime - <any>conStartTime);
             INFO(telnetId, "::", remoteAddr, "->", host, port, "::closed after", elapsed && (elapsed/1000), "seconds");
@@ -380,6 +406,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
         });
         telnet.on("error", (err: Error) => {
             WARN(telnetId, "::", "TELNET ERROR:", err);
+            deleteOpenConn(telnetId)
             ioEvt.srvTelnetError.fire(err.message);
         });
 
@@ -389,6 +416,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
                 ioEvt.srvTelnetOpened.fire([host, port]);
                 conStartTime = new Date();
                 openConns[telnetId].startTime = conStartTime;
+                openConns[telnetId].lastTraffic = conStartTime;
 
                 if (axinst) axinst.post('/usage/connect', {
                     'sid': client.id,
@@ -407,7 +435,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             });
         }
         catch (err) {
-            delete openConns[telnetId];
+            deleteOpenConn(telnetId)
             WARN(telnetId, "::", "ERROR CONNECTING TELNET:", err);
             ioEvt.srvTelnetError.fire(err.message);
         }
@@ -434,6 +462,10 @@ actualServer.on("error", (err: Error) => {
 actualServer.listen(serverConfig.serverPort, serverConfig.serverHost, () => {
     INFO("Server is running on " + serverConfig.serverHost + ":" + serverConfig.serverPort);
 });
+
+function deleteOpenConn(telnetId: number) {
+    delete openConns[telnetId];
+}
 
 function tlog(...args: any[]) {
     console.log("[[", new Date().toLocaleString(), "]]", ...args);
@@ -553,8 +585,12 @@ adminApp.get('/conns', (req:any, res:any) => {
     for (let id in openConns) {
         let c = openConns[id];
         conns.push({
-            ...c,
-            startUTC: c.startTime.getTime()
+            "ID:": c.id,
+            "host": c.host + ":" + c.port,
+            "IP:": c.userIp,
+            "TelnetID:": c.telnetId,
+            startUTC: c.startTime.toLocaleTimeString(),
+            "LastActive:": c.lastTraffic.toLocaleTimeString(),
         })
     }
     res.send(conns);
