@@ -16,16 +16,16 @@
 
   <title>TS Client</title>
 
-  <link rel="icon" type="image/png" href="favicon.png?hash=v2.0.7">
-  <link rel="stylesheet" href="modules/modules.min.css?hash=v2.0.7">
-  <link rel="stylesheet" href="css/client.css?hash=v2.0.7">
-  <link rel="manifest" href="ts2client.webmanifest?hash=v2.0.7">
+  <link rel="icon" type="image/png" href="favicon.png?hash=v2.0.8">
+  <link rel="stylesheet" href="modules/modules.min.css?hash=v2.0.8">
+  <link rel="stylesheet" href="css/client.css?hash=v2.0.8">
+  <link rel="manifest" href="ts2client.webmanifest?hash=v2.0.8">
 
-  <script src="modules/corejs.min.js?hash=v2.0.7"></script>
-  <script src="modules/jquery.min.js?hash=v2.0.7" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
-  <script src="modules/jqwidgets_module.min.js?hash=v2.0.7"></script>
-  <script src="modules/codemirror_module.min.js?hash=v2.0.7"></script>
-  <script src="modules/tern_module.min.js?hash=v2.0.7"></script>
+  <script src="modules/corejs.min.js?hash=v2.0.8"></script>
+  <script src="modules/jquery.min.js?hash=v2.0.8" onload="if (typeof module != 'undefined') {window.$ = window.jQuery = module.exports;}"></script>
+  <script src="modules/jqwidgets_module.min.js?hash=v2.0.8"></script>
+  <script src="modules/codemirror_module.min.js?hash=v2.0.8"></script>
+  <script src="modules/tern_module.min.js?hash=v2.0.8"></script>
   
   <script>
     if (window.visualViewport) {
@@ -233,6 +233,8 @@
           <li data-option-name="layoutEditor">Disposizione schermo</li>
           <li type="separator"></li>
           <li data-option-name="mapper">Mapper</li>
+          <li type="separator"></li>
+          <li data-option-name="voice">Voice chat</li>
         </ul>
       </li>
       <li id="altro" class="focus" tabindex="404">Informazioni
@@ -335,5 +337,6 @@
     <h3 class="slideLeftRight">Caricamento in corso ...</h3>
   </div>
 </div>
+<div id="rtc" style="display:none;"></div>
 </body>
 </html>

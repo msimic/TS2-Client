@@ -26,6 +26,7 @@ import { Mapper } from "../Mapper/mapper";
 import { VersionsWin } from "./windows/versionsWindow";
 import { OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./windows/layoutWindow";
+import { VoiceWin } from "./windows/voiceWin";
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -217,7 +218,8 @@ export class MenuBar {
         private helpWin: HelpWin,
         private mapper: Mapper,
         private layoutWindowr: LayoutWindow,
-        private changelog: VersionsWin
+        private changelog: VersionsWin,
+        private voiceWin:VoiceWin
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -747,6 +749,10 @@ export class MenuBar {
 
         this.clickFuncs["base_events"] = (val) => {
             this.baseEventEditor.show();
+        };
+
+        this.clickFuncs["voice"] = (val) => {
+            this.voiceWin.show();
         };
 
         function hasDuplicates(array:any[]) {

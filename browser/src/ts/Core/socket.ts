@@ -12,6 +12,7 @@ import * as apiUtil from "./apiUtil";
 
 export class Socket {
     public EvtServerEcho = new EventHook<boolean>();
+    public EvtIdentified = new EventHook<string>();
     public EvtTelnetTryConnect = new EventHook<[string, number]>();
     public EvtTelnetConnect = new EventHook<[string, number]>();
     public EvtTelnetDisconnect = new EventHook<void>();
@@ -104,6 +105,10 @@ export class Socket {
             }, this.config);
             this.telnetClient.clientIp = this.clientIp;
 
+            this.telnetClient.EvtSetVariables.handle((data) => {
+                this.sendVariables(data)
+            });
+
             this.telnetClient.EvtData.handle((data) => {
                 // this.handleTelnetData(data);
                 this.outputManager.handleTelnetData(data, true);
@@ -177,6 +182,20 @@ export class Socket {
         return p;
     }
 
+    sendVariables(vars:Map<string,string>) {
+        let cmd = [...vars.keys()].map(k => {
+            return k + ":" + vars.get(k)
+        }).join(";");
+        let arr = new Uint8Array(cmd.length);
+        for (let i = 0; i < cmd.length; i++) {
+            arr[i] = cmd.charCodeAt(i);
+        }
+
+        this.ioEvt.clReqSetVars.fire(arr.buffer);
+        if (vars.get("NAME")) {
+            this.EvtIdentified.fire(vars.get("NAME"))
+        }
+    }
     sendCmd(cmd: string) {
         cmd += "\r\n";
         let arr: Uint8Array;

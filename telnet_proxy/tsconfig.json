@@ -3,8 +3,13 @@
         "outDir": "./dist",
         "sourceMap": true,
         "noImplicitAny": true,
-        "noImplicitReturns": true
+        "noImplicitReturns": true,
+        "downlevelIteration": true,
+        "target": "es5",
     },
+    "lib": [
+        "ES5"
+    ],
     "include": [
         "./src/*"
     ]

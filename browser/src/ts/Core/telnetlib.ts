@@ -15,6 +15,7 @@ export class Telnet {
     }
 
     public EvtData = new EventHook<ArrayBuffer>();
+    public EvtSetVariables = new EventHook<Map<string, string>>();
     public EvtNegotiation = new EventHook<NegotiationData>();
 
     protected writeFunc: (data: ArrayBuffer) => void;
@@ -45,9 +46,9 @@ export class Telnet {
             let c = view[i];
 
             if (this.iacSeq.length === 0) {
-                if (c === theNULL) {
-                    continue;
-                }
+                // if (c === theNULL) {
+                //     continue;
+                // }
                 if (c === 0o021) {
                     continue;
                 }

@@ -45,6 +45,8 @@ import { EvtLogExceeded, EvtLogWarning, OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./windows/layoutWindow";
 import { KeepAwake } from "../Core/keepAwake";
 import hotkeys from "hotkeys-js";
+import { WebRTC } from "../Core/webRTC";
+import { VoiceWin } from "./windows/voiceWin";
 
 declare global {
     interface JQuery {
@@ -82,11 +84,12 @@ export class Client {
     private aboutWin: AboutWin;
     private connectWin: ConnectWin;
     private contactWin: ContactWin;
+    private voiceWin: VoiceWin;
     private classManager: ClassManager;
     private mapper: Mapper;
     private layoutWindow: LayoutWindow;
     private serverEcho = false;
-
+    private rtc:WebRTC = null
     private _connected = false;
     windowManager: WindowManager;
     variableEditor: VariablesEditor;
@@ -150,7 +153,12 @@ export class Client {
 
     private manualDisconnect:boolean = false;
 
-    constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager) {
+    constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager, cfg:{[k:string]:any}) {
+        
+        let rtcHost = cfg.rtcHost || window.location.hostname
+        let rtcPort = cfg.rtcPort || 5678
+        this.rtc = new WebRTC(rtcHost, rtcPort, $("#rtc")) 
+
         let attachKeepawake = (ms:MouseEvent) => {
             KeepAwake.On();
             document.removeEventListener("click", attachKeepawake)
@@ -252,6 +260,9 @@ export class Client {
         this.windowManager.setLayoutManager(this.layoutManager);
         this.windowManager.setMapper(this.mapper);
 
+        this.windowManager.setCommandInput(this.commandInput);
+        this.windowManager.setRTC(this.rtc);
+
         this.profileManager.setLayoutManager(this.layoutManager)
         this.profileManager.setWindowManager(this.windowManager)
         this.windowManager.updateWindowList();
@@ -264,7 +275,9 @@ export class Client {
         this.changelog = new VersionsWin();
         this.layoutWindow = new LayoutWindow("Editor disposizione schermo", this.jsScript, this.profileManager, this.layoutManager, this.windowManager);
         
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.layoutWindow, this.changelog);
+        this.SetupRTC();   
+
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.layoutWindow, this.changelog, this.voiceWin);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
@@ -307,6 +320,10 @@ export class Client {
         this.profilesWin.EvtClosedClicked.handle(v => {
             this.manualDisconnect = v;
         });
+
+        this.socket.EvtIdentified.handle(s => {
+            this.rtc.setUsername(s)
+        })
 
         // Socket events
         this.socket.EvtServerEcho.handle((val: boolean) => {
@@ -698,6 +715,10 @@ export class Client {
         setTimeout(loadContrib, 2000);
     }
 
+    private SetupRTC() {
+        this.voiceWin = new VoiceWin(this.rtc, this.commandInput, true)
+    }
+
     copyAliasToOther(data: copyData) {
         var src = data.isBase ? this.baseAliasManager : this.aliasManager
         var dest = !data.isBase ? this.baseAliasManager : this.aliasManager
@@ -927,7 +948,8 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
             }
         }
         profileManager.setTitle();
-        client = new Client(null, baseConfig, profileManager);
+        let cfg = await apiUtil.apiGetClientConfig()
+        client = new Client(null, baseConfig, profileManager, cfg);
         profileManager.setClient(client)
         onPreloaded();
     }

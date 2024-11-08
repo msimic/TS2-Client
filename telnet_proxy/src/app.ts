@@ -11,6 +11,7 @@ import path = require("path");
 import * as yargs from "yargs";
 import { IoEvent } from "../../common/src/ts/ioevent";
 import * as os from "os"
+import { SignalingServer } from "./signaling-server";
 
 const argv = yargs
     .option('config', {
@@ -84,6 +85,18 @@ const argv = yargs
         alias: 'tp',
         description: 'If provided telnet requests will go only to this port and nowhere else. The client must give null on the telnet port. Can be multiples separated by comma.',
         type: 'string',
+        requiresArg: true
+    })
+    .option('webRTCSignalingHost', {
+        alias: 'rtcsh',
+        description: 'The hostname for starting the webRTC signaling to connect users p2p.',
+        type: 'string',
+        requiresArg: true
+    })
+    .option('webRTCSignalingPort', {
+        alias: 'rtcsp',
+        description: 'The port to start the webrtc signalling on.',
+        type: 'number',
         requiresArg: true
     })
     .option('privateKey', {
@@ -209,6 +222,8 @@ serverConfig.privateKey = argv.privateKey || serverConfig.privateKey;
 serverConfig.certificate = argv.certificate || serverConfig.certificate;
 serverConfig.certAuthority = argv.certAuthority || serverConfig.certAuthority;
 serverConfig.mudLibPath = argv.mudLibPath || serverConfig.mudLibPath;
+serverConfig.webRTCSignalingHost = argv.webRTCSignalingHost || serverConfig.webRTCSignalingHost;
+serverConfig.webRTCSignalingPort = argv.webRTCSignalingPort || serverConfig.webRTCSignalingPort;
 
 const isHttps = (serverConfig.privateKey && serverConfig.certificate);
 
@@ -227,11 +242,13 @@ interface connInfo {
     id: string;
     ioEvent: IoEvent;
     client: socketio.Socket;
+    vars: { [ varName: string ] : string }
 };
 
-let openConns: {[k: number]: connInfo} = {};
+let openConns = new Map<string, connInfo>();
 let io: socketio.Server;
 let actualServer : any;
+let credentials:https.ServerOptions = null;
 
 if (!isHttps) {
     let server: http.Server = http.createServer();
@@ -252,7 +269,7 @@ if (!isHttps) {
         process.exit(1);
     }
 
-    var credentials:https.ServerOptions = {
+    credentials = {
         ca:ca,
         key: hskey,
         cert: hscert,
@@ -314,17 +331,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             telnet.destroy();
             telnet = null;
         }
-        let opConns:number[] = [];
-        Object.keys(openConns).map((oc, ind) => {
-            if (openConns[parseInt(oc)]?.client == client) {
-                opConns.push(ind)
-            }
-        })
-        if (opConns.length) {
-            for (const idx of opConns) {
-                delete openConns[idx]                
-            }
-        }
+        openConns.delete(client.id)
     });
 
     ioEvt.clReqTelnetOpen.handle((args: [string, number]) => {
@@ -354,7 +361,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             port = parseInt((<string>serverConfig.fixedTelnetPort).split(",")[0]);
         }
 
-        openConns[telnetId] = {
+        openConns.set(client.id, {
             telnetId: telnetId,
             uuid: null,
             userIp: ipAddr,
@@ -364,20 +371,18 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             lastTraffic: null,
             id: client.id,
             ioEvent: ioEvt,
-            client: client
-        };
+            client: client,
+            vars: {}
+        });
 
         telnet.on("data", (data: Buffer) => {
-            if (openConns[telnetId])
-                openConns[telnetId].lastTraffic = new Date()
+            if (openConns.get(client.id))
+            openConns.get(client.id).lastTraffic = new Date()
             ioEvt.srvTelnetData.fire(data.buffer);
-            if (data.includes("Yffre")) {
-                return
-            }
         });
         telnet.on("close", (had_error: boolean) => {
-            let conn = openConns[telnetId];
-            deleteOpenConn(telnetId);
+            let conn = openConns.get(client.id);
+            deleteOpenConn(client.id);
             telnet = null
 
             ioEvt.srvTelnetClosed.fire(had_error);
@@ -406,7 +411,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
         });
         telnet.on("error", (err: Error) => {
             WARN(telnetId, "::", "TELNET ERROR:", err);
-            deleteOpenConn(telnetId)
+            deleteOpenConn(client.id)
             ioEvt.srvTelnetError.fire(err.message);
         });
 
@@ -415,8 +420,8 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             telnet.connect(port, host, () => {
                 ioEvt.srvTelnetOpened.fire([host, port]);
                 conStartTime = new Date();
-                openConns[telnetId].startTime = conStartTime;
-                openConns[telnetId].lastTraffic = conStartTime;
+                openConns.get(client.id).startTime = conStartTime;
+                openConns.get(client.id).lastTraffic = conStartTime;
 
                 if (axinst) axinst.post('/usage/connect', {
                     'sid': client.id,
@@ -425,7 +430,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
                     'to_port': port,
                     'time_stamp': conStartTime
                 }).then((resp) => {
-                    let conn = openConns[telnetId];
+                    let conn = openConns.get(client.id);
                     if (conn) {
                         conn.uuid = resp.data.uuid;
                     }
@@ -435,7 +440,7 @@ telnetNs.on("connection", (client: socketio.Socket) => {
             });
         }
         catch (err) {
-            deleteOpenConn(telnetId)
+            deleteOpenConn(client.id)
             WARN(telnetId, "::", "ERROR CONNECTING TELNET:", err);
             ioEvt.srvTelnetError.fire(err.message);
         }
@@ -452,6 +457,20 @@ telnetNs.on("connection", (client: socketio.Socket) => {
         writeData(data);
     });
 
+    ioEvt.clReqSetVars.handle((data) => {
+        if (telnet == null) { return; }
+        let con = openConns.get(client.id)
+        if (!con) return;
+        let decoder = new TextDecoder('utf-8');
+        let str = decoder.decode(data);
+        str.split(";").forEach(s => {
+            let val = s.split(":")
+            if (val && val.length == 2) {
+                con.vars[val[0]] = val[1]
+            }
+        })
+    });
+
     ioEvt.srvSetClientIp.fire(ipAddr);
 });
 
@@ -463,8 +482,8 @@ actualServer.listen(serverConfig.serverPort, serverConfig.serverHost, () => {
     INFO("Server is running on " + serverConfig.serverHost + ":" + serverConfig.serverPort);
 });
 
-function deleteOpenConn(telnetId: number) {
-    delete openConns[telnetId];
+function deleteOpenConn(clientId: string) {
+    openConns.delete(clientId);
 }
 
 function tlog(...args: any[]) {
@@ -513,7 +532,7 @@ adminFuncs["help"] = (sock: net.Socket, args: string[]) => {
 adminFuncs["ls"] = (sock: net.Socket, args: string[]) => {
     sock.write("Open connections:\n\n");
     for (let tnId in openConns) {
-        let o = openConns[tnId];
+        let o = openConns.get(tnId);
         sock.write( o.telnetId.toString() + 
                     ": " + o.userIp  +
                     " => " + o.host + "," + o.port.toString() +
@@ -582,8 +601,8 @@ let adminApp = express();
 
 adminApp.get('/conns', (req:any, res:any) => {
     let conns = [];
-    for (let id in openConns) {
-        let c = openConns[id];
+    for (let id of [...openConns.keys()]) {
+        let c = openConns.get(id);
         conns.push({
             "ID:": c.id,
             "host": c.host + ":" + c.port,
@@ -591,6 +610,7 @@ adminApp.get('/conns', (req:any, res:any) => {
             "TelnetID:": c.telnetId,
             startUTC: c.startTime.toLocaleTimeString(),
             "LastActive:": c.lastTraffic.toLocaleTimeString(),
+            "Vars:": c.vars
         })
     }
     res.send(conns);
@@ -689,3 +709,10 @@ adminApp.get('/approve', (req:any, res:any) => {
 if(serverConfig.adminWebHost && serverConfig.adminWebPort) adminApp.listen(serverConfig.adminWebPort, serverConfig.adminWebHost, () => {
     INFO("Admin API server is running on " + serverConfig.adminWebHost + ":" + serverConfig.adminWebPort);
 });
+
+let webRTCSignaller:SignalingServer;
+if (serverConfig.webRTCSignalingHost && serverConfig.webRTCSignalingPort) {
+    webRTCSignaller = new SignalingServer(serverConfig.webRTCSignalingHost,
+                                    serverConfig.webRTCSignalingPort,
+                                    credentials) 
+}

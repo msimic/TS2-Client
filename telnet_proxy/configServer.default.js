@@ -19,4 +19,8 @@ config.apiKey = "somekey";
 config.fixedTelnetHost = "";
 config.fixedTelnetPort = "";
 
+config.webRTCSignalingHost = "";
+config.webRTCSignalingPort = 0;
+
+
 module.exports = config;

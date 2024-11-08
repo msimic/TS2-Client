@@ -371,7 +371,7 @@ export class MapperDrawing {
         if (!this.mapmode) this.selected = room;
         if (room) {
             this.level = room.z;
-            if (room.zone_id && (!this.rooms || prevZone != room.zone_id || this.rooms.length <= 1)) {
+            if (room.zone_id && (!this.rooms || prevZone != room.zone_id || this.rooms.length <= 1 || this.rooms.indexOf(this.active)==-1)) {
                 console.log("map drawing changing zone")
                 this.rooms = this.mapper.getZoneRooms(this.active.zone_id)
                 this.$drawCache = {}

@@ -6,6 +6,9 @@ import { MapperWindow } from "../Mapper/windows/mapperWindow";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { throttle, waitForVariableValue } from "../Core/util";
+import { VoiceWin } from "./windows/voiceWin";
+import { WebRTC } from "../Core/webRTC";
+import { CommandInput } from "./commandInput";
 
 export interface IBaseWindow {
     destroy():void;
@@ -52,7 +55,15 @@ export class WindowManager {
     private layoutManager:LayoutManager
     private mapper:Mapper
     public updateWindowList:Function = null;
+    private cmdInput:CommandInput;
+    private rtc:WebRTC;
 
+    setCommandInput(cmdI:CommandInput) {
+        this.cmdInput = cmdI
+    }
+    setRTC(rtx:WebRTC){
+        this.rtc = rtx
+    }
     constructor(private profileManager:ProfileManager) {
         this.updateWindowList = throttle(this.updateWindowListImpl, 500);
 
@@ -80,7 +91,7 @@ export class WindowManager {
         this.loading = true;
         try {
             let cp:string;
-            this.cleanupWindows();
+            await this.cleanupWindows();
             if (!(cp = this.profileName)) {
                 console.log("wm: LOAD base profile windows")
                 //await this.deleteWindows();
@@ -175,7 +186,7 @@ export class WindowManager {
         //this.save()
     }
 
-    private cleanupWindows() {
+    private async cleanupWindows() {
         (this.windows as any).loadedFrom = "-"
         console.log("Cleaning up existing windows")
         for (const w of this.windows) {
@@ -190,7 +201,7 @@ export class WindowManager {
                 w[1].data.docked = wasDocked;
             }
         }
-        this.deleteWindows()
+        await this.deleteWindows()
     }
 
     async profileConnected(profileName:string) {
@@ -222,26 +233,42 @@ export class WindowManager {
         }
     }
 
-    private deleteWindows() {
-
-        let toDestroy:string[] = [];
-        this.windows.forEach((v, k) => {
-            console.log("deleteWindows " + v.data.name)
+    waitForElementRemoval(elementId:string) {
+        return new Promise((resolve) => {
+            const checkIfExists = () => {
+                if (!$('#' + elementId).length) {
+                    resolve(true);
+                    return;
+                }
+                requestAnimationFrame(checkIfExists);
+            };
+            checkIfExists();
+        });
+    }
+    
+    private async deleteWindows() {
+        for (const vv of this.windows) {
+            let v = vv[1]
+            console.log("deleteWindow " + v.data.name)
             if (v.output) {
                 v.output.destroy()
                 delete v.output;
                 v.output = null;
             }
             if (v.window) {
-                toDestroy.push(k);
                 const wasVisible = v.data.visible;
-                (<any>v.window).jqxWindow("close");
-                (<any>v.window).jqxWindow("destroy");
-                (<any>v.window).remove();
+                let jqw = (<any>v.window)
+                const id = jqw[0].id;
+                jqw.jqxWindow("close");
+                jqw.jqxWindow("destroy");
+                console.log("!! Deleted win " + id)
+                jqw.remove();
+                await this.waitForElementRemoval(id)
                 v.window = null;
                 v.data.visible = wasVisible;
             }
-        });
+        }
+            
         this.windows.clear()
     }
 
@@ -279,6 +306,10 @@ export class WindowManager {
         w.hide()
         var duration = (<any>$(w)).jqxWindow('collapseAnimationDuration')||100;
         setTimeout(() => {
+            let wd = this.windows.get(window)
+            if (!wd || !wd.window || !wd.initialized) {
+                return
+            }
             const vis = this.layoutManager.isDockingVisible(witm)
             w.css({
                 "position":"relative",
@@ -575,7 +606,7 @@ export class WindowManager {
 
         let win = null;
         let customOutput = null;
-        if (name != "Mapper") {
+        if (name != "Mapper" && name != "Voice chat") {
 
             win = document.createElement("div");
             win.style.display = "none";
@@ -591,7 +622,10 @@ export class WindowManager {
             </div>
             `;
 
-        } else {
+        } else if (name == "Voice chat") {
+            customOutput = new VoiceWin(this.rtc, this.cmdInput)
+            win = customOutput.Instance();
+        } else if (name == "Mapper") {
             customOutput = new MapperWindow(this.mapper, this)
             win = customOutput.Instance();
         }
@@ -695,15 +729,15 @@ export class WindowManager {
             observer.observe(w[0])
             if (!wd.initialized) {
                 wd.initialized = true;
-                setTimeout(() => {
-                    let wd = self.windows.get(name)
-                    if (!wd || !wd.window || !wd.initialized) {
-                        return
-                    }
+                //setTimeout(() => {
+                    // let wd = self.windows.get(name)
+                    // if (!wd || !wd.window || !wd.initialized) {
+                    //     return
+                    // }
                     self.addDockButton(w,name);
                     self.addSettingsButton(w,name);
                     $(".jqx-resize", $win).height('unset')
-                    if (collapse) {
+                    if (collapse && !dock) {
                          (<any>w).jqxWindow('collapse');
                         let padding = $(".jqx-window-content",(w)).css("padding")
                         $(".jqx-window-content",(w)).css("padding", "0")
@@ -711,7 +745,7 @@ export class WindowManager {
                     } 
                     if (dock) self.dock(name,$(".jqx-window-header", $win));
                     $("#cmdInput").focus();
-                }, 1);
+                //}, 1);
             }
             let data = self.windows.get(name).data;
             data.visible = true;

@@ -1,5 +1,7 @@
 {
 	"apiBaseUrl": null,
 	"socket_io_host": "localhost",
-	"socket_io_port": 4040
+	"socket_io_port": 4040,
+	"rtcHost": "localhost",
+	"rtcPort": 5678
 }

@@ -1916,7 +1916,7 @@ export class Mapper {
     public failWalk(reason:string):boolean {
         const ret = !!this.currentWalk
         this.mapDebug(reason ? "Fail walk " + reason : "End walk")
-        if (this.virtualCurrent) {
+        if (this.virtualCurrent && this.canConnectToCurrent(this.virtualCurrent)) {
             this.current = this.virtualCurrent;
             if (this.acknowledgingWalkStep) {
                 this.discardWalkStep = this.virtualCurrent.vnum;
@@ -1935,6 +1935,16 @@ export class Mapper {
         this.clearManualSteps();
         this.currentWalk = null;
         return ret;
+    }
+    canConnectToCurrent(virtualCurrent: Room) {
+        if (!this.current) return false
+        let ok = false
+        Object.keys(this.current.exits).forEach(k => {
+            if (this.current.exits[k as ExitDir].to_room == virtualCurrent.id) {
+                ok = true
+            }
+        })
+        return ok
     }
 
     public walkToId(id:number) {

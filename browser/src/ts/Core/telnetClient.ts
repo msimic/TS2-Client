@@ -16,6 +16,7 @@ export class TelnetClient extends Telnet {
 
     public clientIp: string;
     public _mxp: boolean = false;
+    public serverVars = new Map<string, string>()
 
     public get mxp():boolean{
         return this._mxp;
@@ -46,6 +47,16 @@ export class TelnetClient extends Telnet {
                 [NewEnv.VALUE],
                 arrayFromString(varVal),
                 [Cmd.IAC, Cmd.SE]));
+    }
+
+    private handleEnvSeqReceiveVar(seq: number[]): void {
+        let actions = parseNewEnvSeq(seq);
+        for (const act of actions) {
+            if (act && act.length > 3) {
+                this.serverVars.set(act[2], act[3])
+            }
+        }
+        this.EvtSetVariables.fire(this.serverVars)
     }
 
     private handleNewEnvSeq(seq: number[]): void {
@@ -100,6 +111,9 @@ export class TelnetClient extends Telnet {
                 this.EvtServerEcho.fire(true);
                 this.writeArr([Cmd.IAC, Cmd.DO, Opt.ECHO]);
                 ret = true
+            } else if (opt === Opt.NEW_ENVIRON) {
+                this.writeArr([Cmd.IAC, Cmd.DO, Opt.NEW_ENVIRON]);
+                ret = true
             } else if (opt === Opt.SGA) {
                 this.writeArr([Cmd.IAC, Cmd.DO, Opt.SGA]);
                 ret = true
@@ -144,6 +158,8 @@ export class TelnetClient extends Telnet {
                 ret = true
             }
         } else if (cmd === Cmd.SB) {
+            let sb = this.readSbArr();
+            ret = true
         } else if (cmd === Cmd.SE) {
             let sb = this.readSbArr();
 
@@ -176,6 +192,10 @@ export class TelnetClient extends Telnet {
                     arrayFromString(ttype),
                     [Cmd.IAC, Cmd.SE]
                 ));
+                ret = true
+            } else if (this.doNewEnviron && sb.length > 1 && sb[0] == Opt.NEW_ENVIRON && sb[1] == SubNeg.IS) {
+                let seq = sb.slice(1);
+                this.handleEnvSeqReceiveVar(seq);
                 ret = true
             } else if (this.doNewEnviron && sb.length > 0 && sb[0] == Opt.NEW_ENVIRON) {
                 let seq = sb.slice(1);
@@ -222,8 +242,8 @@ function arrayFromString(str: string): number[] {
     return arr;
 }
 
-export function parseNewEnvSeq(seq: number[]): [number, number, string][] {
-    let rtn: [number, number, string][] = [];
+export function parseNewEnvSeq(seq: number[]): [number, number, string, string?][] {
+    let rtn: [number, number, string, string?][] = [];
 
     let i: number = 0;
 
@@ -231,13 +251,19 @@ export function parseNewEnvSeq(seq: number[]): [number, number, string][] {
     let act: number = null;
     let varType: number = null;
     let varName: string = null;
+    let varVal: string = null;
     
     while (true) {
         if (act !== null && varType !== null && varName !== null) {
-            rtn.push([act, varType, varName]);
+            if (act == SubNeg.IS && varVal) {
+                rtn.push([act, varType, varName, varVal]);
+            } else {
+                rtn.push([act, varType, varName]);
+            }
             act = null;
             varType = null;
             varName = null;
+            varVal = null;
         }
 
         if (i >= seq.length) {
@@ -255,8 +281,8 @@ export function parseNewEnvSeq(seq: number[]): [number, number, string][] {
                 firstAct = act;
                 i++;
 
-                if (act !== NewEnv.SEND) {
-                    console.error("Only NEW-ENVIRON SEND is supported but got", act);
+                if (act !== NewEnv.SEND && act != NewEnv.IS) {
+                    console.error("Only NEW-ENVIRON SEND or IS is supported but got", act);
                     break;
                 }
             } else if (first === firstAct) {
@@ -283,6 +309,17 @@ export function parseNewEnvSeq(seq: number[]): [number, number, string][] {
             }
             let varNameArr = seq.slice(start, i);
             varName = String.fromCharCode.apply(String, varNameArr);
+
+            if (act == SubNeg.IS) {
+                i++;
+                start = i;
+                while (i < seq.length && seq[i] >=32 && seq[i] <= 127) {
+                    i++;
+                }
+                varNameArr = seq.slice(start, i);
+                varVal = String.fromCharCode.apply(String, varNameArr);
+                i++;
+            }
         }
     }
 

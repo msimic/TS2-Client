@@ -1,4 +1,4 @@
-v2.0.7
+v2.0.8
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 
 features:
@@ -9,6 +9,7 @@ features:
 - si possono cancellare finestre dal bottone per opzioni (ingranaggio)
 - aggiunto debug per variabili in menu impostazioni avanzate
 - e' possibile importare e esportare il layout dalla finestra disposizione schermo
+- aggiunto voice chat (in menu finestre)
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()

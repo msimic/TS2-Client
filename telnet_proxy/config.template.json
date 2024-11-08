@@ -11,5 +11,7 @@
     "fixedTelnetPort": "6000,4000",
     "privateKey": "",
     "certificate": "",
-    "certAuthority": ""
+    "certAuthority": "",
+    "webRTCSignalingHost": "",
+    "webRTCSignalingPort": 0
 }
