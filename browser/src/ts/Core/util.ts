@@ -1626,7 +1626,7 @@ export function refreshApiInTern(cm: any, script: JsScript) {
             if (typeof api.private[K] == "function") {
                 let pr = getFunctionParameters(api.private[K]).map(v => v+ ": ?")
                 defs.custom[K] = {
-                    "!type": "fn("+pr+") -> ?",
+                    "!type": "fn("+pr.join(", ")+") -> ?",
                     "!doc": "Funzione privata definita dalle proprie script."
                 }
             } else if (typeof api.private[K] == "string") {
