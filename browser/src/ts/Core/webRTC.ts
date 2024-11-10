@@ -77,6 +77,7 @@ export class WebRTC {
     microphoneEnabled = false
     webcamEnabled = false
     lastChannel: string = null;
+    connectionError: boolean = false
 
     public EvtVoiceActivity = new EventHook<string>();
     public EvtAuthenticated = new EventHook<string>();
@@ -208,6 +209,7 @@ export class WebRTC {
 
     isConnected() {
         return !!(this.signaling_socket &&
+               this.signaling_socket.connected &&
                this.localMedia.mediaAllowed &&
                this.localMedia.streamsByType.size)
     }
@@ -284,6 +286,9 @@ export class WebRTC {
         this.EvtDisconnected.fire(true)
     }
 
+    didConnectionFail() {
+        return this.connectionError
+    }
     didAllowMedia() {
         return this.localMedia.mediaAllowed
     }
@@ -355,6 +360,7 @@ export class WebRTC {
         if (this.signaling_socket && this.signaling_socket.connected) {
             return
         }
+        this.connectionError = false
         this.removePeers()
         let cfg = <any>{
             serveClient: false,
@@ -369,6 +375,12 @@ export class WebRTC {
               }
         }
         this.signaling_socket = ioc.io(this.host + ":" + this.port, cfg);
+
+        this.signaling_socket.on('connect_error', (err) => {
+            this.connectionError = true
+            this.Disconnect()
+             console.error('Initial connection failed:', err.message);
+        });
 
         this.signaling_socket.on("channelchange", (channel:string) => {
             this.EvtChannelChange.fire(channel)

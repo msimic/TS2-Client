@@ -283,13 +283,11 @@ export class VoiceWin implements IBaseWindow {
     }
 
     Connect(room:string) {
-        this.$toolbar.show()
         this.requestedRoom = room
         this.setRoom(room)
         this.rtc.Connect();
         this.rtc.Join(this.requestedRoom)
         this.refreshChannelData();
-        this.updateStatus()
     }
 
     private refreshChannelData() {
@@ -321,7 +319,6 @@ export class VoiceWin implements IBaseWindow {
         let li = $("p",this.$rooms)
         let l = li.filter((v,e) => $(e).data("room")==rm)
         l.addClass("toggled")
-        this.$toolbar.show()
         if (nomic) {
             this.DisableMicrophone()
         }
@@ -487,6 +484,8 @@ export class VoiceWin implements IBaseWindow {
         if (this.rtc.didAllowMedia()) {
             Notification.Show("Disconnesso da Voice chat")
             this.NotifyText("Disconnessione da canali audio")
+        } else if (this.rtc.didConnectionFail()) {
+            Notification.Show("Il server del Voice chat non e' raggiungibile")    
         } else {
             Notification.Show("Impossibile connettersi al Voice chat senza consentire l'uso del microfono")    
         }
@@ -562,8 +561,14 @@ export class VoiceWin implements IBaseWindow {
 
     async updateStatus() {
         if (await this.enableUIOrShowMessage() != true) {
+            this.$toolbar.hide();
             return
         }
+        if (this.rtc.didConnectionFail() || !this.rtc.isConnected())
+            this.$toolbar.hide();
+        else
+            this.$toolbar.show();
+        
         let str = "Scegli un canale..."
         let audio = ""
         if (this.rtc.IsMicEnabled() && this.rtc.IsAudioEnabled()) {
