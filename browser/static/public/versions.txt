@@ -1,4 +1,4 @@
-v2.0.8
+v2.0.9
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 
 features:
