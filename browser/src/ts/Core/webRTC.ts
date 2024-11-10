@@ -59,8 +59,20 @@ export type ActiveChannels = {
 };
 
 export class WebRTC {
-    audioContext = new (window.AudioContext)();
-    audioAnalyser = this.audioContext.createAnalyser();
+    private _audioContext: AudioContext = null;
+    public get audioContext(): AudioContext {
+        return this._audioContext;
+    }
+    public set audioContext(value: AudioContext) {
+        this._audioContext = value;
+    }
+    private _audioAnalyser: AnalyserNode = null;
+    public get audioAnalyser(): AnalyserNode {
+        return this._audioAnalyser;
+    }
+    public set audioAnalyser(value: AnalyserNode) {
+        this._audioAnalyser = value;
+    }
     defaultChannel = channels[0];
     globalMutePeers = false;
     voiceActivityThreshold = 30
@@ -94,6 +106,13 @@ export class WebRTC {
     public EvtDisconnected = new EventHook<boolean>();
 
     constructor(private host:string, private port:number, private peerContainer:HTMLElement, private localContainer:HTMLElement) {
+        window.addEventListener("mouseup", this.createAudioContext)
+    }
+
+    createAudioContext = () => {
+        window.removeEventListener("mouseup", this.createAudioContext)
+        this.audioContext = new window.AudioContext()
+        this.audioAnalyser = this.audioContext.createAnalyser()
         this.audioAnalyser.fftSize = 32
     }
 

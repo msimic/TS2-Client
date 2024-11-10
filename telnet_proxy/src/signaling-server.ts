@@ -66,17 +66,12 @@ export class SignalingServer {
                     return;
                 }
 
-                // if ("Lobby" in sigServer.getSocketChannel(socket))
-                //     part("Lobby")
-
-                // if (config.channel == "Lobby") {
-                    for (let c in sigServer.getSocketChannel(socket)) {
-                        part(c)
-                        for (const k of Object.keys(sigServer.sockets)) {
-                            if (sigServer.sockets[k].connected) sigServer.sockets[k].emit("channelchange", c)
-                        }
+                for (let c in sigServer.getSocketChannel(socket)) {
+                    part(c)
+                    for (const k of Object.keys(sigServer.sockets)) {
+                        if (sigServer.sockets[k].connected) sigServer.sockets[k].emit("channelchange", c)
                     }
-                // }
+                }
 
                 if (channel in sigServer.getSocketChannel(socket)) {
                     console.log("["+ socket.id + "] ERROR: already joined ", channel);
