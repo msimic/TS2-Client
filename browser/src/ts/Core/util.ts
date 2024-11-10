@@ -1741,6 +1741,7 @@ export function parseShortcutString(key:string) {
             keys[i] = inverseShortcutRep[k]
         }
     }
+    console.log("Creata macro: "+ keys.join("+"))
     return keys.join("+")
 }
 

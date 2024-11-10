@@ -1538,11 +1538,30 @@ input:focus,button:focus,textarea:focus {
     color: #fff;
     background: #556b2f9e;
 }
-
+.winVoice .toggled {
+    text-decoration: none !important;
+}
 .content-wrapper .yellowbutton:hover {
     background-image: linear-gradient( rgb(255, 246, 116)  0%, rgb(128, 121, 28)  100%) !important;
 }
-
+@keyframes fade {
+     0% { opacity: 1; }
+      80% { opacity: 0.50; }
+       100% { opacity: 1; } 
+}
+.voiceActivity { animation: fade 0.3s 1; }
+.voiceChatAccept {
+    margin: 30px;
+}
+.voiceChatOverlayMessage {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
 .voicetoolbar button {
     float: left;
     color: white;

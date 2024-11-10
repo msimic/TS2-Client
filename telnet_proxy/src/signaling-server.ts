@@ -72,6 +72,9 @@ export class SignalingServer {
                 // if (config.channel == "Lobby") {
                     for (let c in sigServer.getSocketChannel(socket)) {
                         part(c)
+                        for (const k of Object.keys(sigServer.sockets)) {
+                            if (sigServer.sockets[k].connected) sigServer.sockets[k].emit("channelchange", c)
+                        }
                     }
                 // }
 

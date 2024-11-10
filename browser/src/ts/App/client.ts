@@ -157,7 +157,10 @@ export class Client {
         
         let rtcHost = cfg.rtcHost || window.location.hostname
         let rtcPort = cfg.rtcPort || 5678
-        this.rtc = new WebRTC(rtcHost, rtcPort, $("#rtc")) 
+        this.rtc = new WebRTC(rtcHost,
+                              rtcPort,
+                              $("#peerElements","#rtc")[0] as HTMLElement,
+                              $("#localElements","#rtc")[0] as HTMLElement) 
 
         let attachKeepawake = (ms:MouseEvent) => {
             KeepAwake.On();

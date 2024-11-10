@@ -41,14 +41,14 @@ export class Telnet {
     public handleData(data: ArrayBuffer) {
         let view = new Uint8Array(data);
         let rxLen = view.length;
-
+        let in_IAC_SE = false
         for (let i = 0; i < rxLen; i++) {
             let c = view[i];
 
             if (this.iacSeq.length === 0) {
-                // if (c === theNULL) {
-                //     continue;
-                // }
+                if (!in_IAC_SE && c === theNULL) {
+                    continue;
+                }
                 if (c === 0o021) {
                     continue;
                 }
@@ -57,6 +57,7 @@ export class Telnet {
                     continue;
                 } else {
                     this.iacSeq.push(c);
+                    in_IAC_SE = false
                 }
             } else if (this.iacSeq.length === 1) {
                 if ([Cmd.DO, Cmd.DONT, Cmd.WILL, Cmd.WONT].indexOf(c) !== -1) {
@@ -64,23 +65,24 @@ export class Telnet {
                     continue;
                 }
 
-                this.iacSeq = [];
                 if (c === Cmd.IAC) {
                     this.buf[this.sb].push(c);
                 } else if (c === Cmd.SB) {
                     this.sb = 1;
                     this.buf[1] = [];
+                    in_IAC_SE = true
                     this.EvtNegotiation.fire({cmd: c, opt: null});
                 } else if (c === Cmd.SE) {
+                    in_IAC_SE = false
                     this.sb = 0;
                     this.EvtNegotiation.fire({cmd: c, opt: null});
                     this.buf[1] = [];
                 } else {
                     console.log("IAC " + c + " not recognized");
                 }
+                this.iacSeq = [];
             } else if (this.iacSeq.length === 2) {
                 let cmd = this.iacSeq[1];
-                this.iacSeq = [];
 
                 let opt = c;
 
@@ -103,6 +105,7 @@ export class Telnet {
                         this.writeArr([Cmd.IAC, Cmd.DONT, opt]);
                     }
                 }
+                this.iacSeq = [];
             }
         }
 
