@@ -143,8 +143,11 @@ export class VoiceWin implements IBaseWindow {
         (<any>$('.jqxTabs',this.$win)).jqxTabs({ height: '100%', width: '100%' });
         
         (<any>this.$win).jqxWindow({showAnimationDuration: 0, width: w, height: h, showCollapseButton: true, isModal: false});
-        (<any>this.$win).jqxWindow("close")
-
+        (<any>this.$win).jqxWindow("close");
+        (<any>this.$win).on("open", () => {
+            this.rtc.checkAutentication()
+        })
+        
         if (this.autoconnect) this.room = this.autoconnectRoom
         this.$toolbar = $(".voicetoolbar", this.$win)
         this.$status = $(".status", this.$win)
@@ -198,6 +201,7 @@ export class VoiceWin implements IBaseWindow {
         this.initRTC()
         this.rtc.EvtAuthenticated.handle(async name => {
             if (name) {
+                console.log("Authenticated for voice " + name)
                 if (await this.enableUIOrShowMessage()) {
                     if (this.autoconnect && this.autoconnectRoom) {
                         this.rtc.Connect()
@@ -345,7 +349,7 @@ export class VoiceWin implements IBaseWindow {
             if (this.rtc.isConnected()) {
                 this.loadRoomInfo(ut, r)
             } else {
-                ut.text("(?)")
+                ut.text("")
             }
         })
     }
@@ -546,7 +550,11 @@ export class VoiceWin implements IBaseWindow {
             ui.empty()
 
             if (!okAuth) {
-                ui.append("<span class='voiceChatNeedAuth'>Per usare il voice chat serve conettersi a un personaggio nel gioco</span>")
+                let msg = $("<span class='voiceChatNeedAuth' style='cursor:pointer;'>Per usare il voice chat serve conettersi a un personaggio nel gioco. Se nel frattempo ti sei loggato premi qui per riprovare.</span>")
+                msg.on("click", async () => {
+                    this.rtc.checkAutentication()
+                })
+                ui.append(msg)
             } else {
                 const acconsenti = $("<a href='#' class='voiceChatAccept'>Per usare il voice chat serve acconsentire l'uso del microfono.<br>🎤<br> Premi qui' per farlo.</a>")
                 acconsenti.on("click", async () => {

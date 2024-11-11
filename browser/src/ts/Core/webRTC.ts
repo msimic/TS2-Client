@@ -187,7 +187,8 @@ export class WebRTC {
     async isMicAllowed(noprompt:boolean) {
         let ok = false
 
-        if (!navigator.mediaDevices.getSupportedConstraints ||
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getSupportedConstraints ||
             !navigator.mediaDevices.getSupportedConstraints() ||
             !navigator.permissions) {
             return false;
@@ -209,7 +210,8 @@ export class WebRTC {
     async isCameraAllowed(noprompt:boolean) {
         let ok = false
 
-        if (!navigator.mediaDevices.getSupportedConstraints ||
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getSupportedConstraints ||
             !navigator.mediaDevices.getSupportedConstraints() ||
             !navigator.permissions) {
             return false;
@@ -449,7 +451,11 @@ export class WebRTC {
         this.signaling_socket.on('addPeer', (config) => {
             console.log('Signaling server said to add peer:', config);
             let peer_id = config.peer_id;
-            if (peer_id in this.peers) {
+            if (!peer_id) {
+                console.log("Got null peerid ");
+                return;
+            }
+            if (peer_id in [...this.peers.keys()]) {
                 /* This could happen if the user joins multiple channels where the other peer is also in. */
                 console.log("Already connected to peer ", peer_id);
                 return;
@@ -1008,9 +1014,12 @@ export class WebRTC {
             const averageCurrent = sumcurrent / (dataArray.length);
 
             if (averageCurrent > average && average > this.voiceActivityThreshold) { // Adjust the threshold as needed
-                if ((peerId && !this.peers.get(peerId)?.muted) ||
-                     this.IsMicEnabled()) {
+                if ((peerId && !this.peers.get(peerId)?.muted)) {
+                    console.log("Voice activity peer " + peerId)
                     this.EvtVoiceActivity.fire(peerId);
+                } else if (peerId == null && this.IsMicEnabled()) {
+                    console.log("Voice activity local")
+                    this.EvtVoiceActivity.fire(null);
                 }
             }
 

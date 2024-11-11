@@ -325,6 +325,7 @@ export class Client {
         });
 
         this.socket.EvtIdentified.handle(s => {
+            console.log("Got player name " + s)
             this.rtc.setUsername(s)
         })
 

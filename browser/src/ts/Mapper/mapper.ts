@@ -2046,7 +2046,7 @@ export class Mapper {
         if (stepVnum &&
             stepVnum != vnum) {
             if (wasRecalculating) {
-                this.failWalk("Non posso ricalcolare percorso");
+                this.failWalk("Percorso fallito");
                 return;
             }
             const lastStepDir = this.currentWalk.steps[this.currentWalk.steps.length-1].direction;
@@ -2054,8 +2054,8 @@ export class Mapper {
             const nextId = endRoom.exits[lastStepDir].to_room
             this.mapDebug("Ricalcolo " + stepVnum + " - " + nextId)
             this.recalculating = true;
-            this.failWalk("");
-            EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${nextId}`})
+            //this.failWalk("");
+            //EvtScriptEmitPrint.fire({owner:"Mapper", message: `Ricalcolo percorso a ${nextId}`})
             this.walkToId(nextId);
             //this.failWalk( `Percorso fallito. Sei in ${vnum} ma il percorso aspettava ${stepVnum}`)
             return;
