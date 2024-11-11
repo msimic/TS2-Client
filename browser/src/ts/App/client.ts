@@ -154,9 +154,9 @@ export class Client {
     private manualDisconnect:boolean = false;
 
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager, cfg:{[k:string]:any}) {
-        
-        let rtcHost = cfg.rtcHost || window.location.hostname
-        let rtcPort = cfg.rtcPort || 5678
+        console.log(cfg)
+        let rtcHost = cfg.data.rtcHost || window.location.hostname
+        let rtcPort = cfg.data.rtcPort || 4050
         this.rtc = new WebRTC(rtcHost,
                               rtcPort,
                               $("#peerElements","#rtc")[0] as HTMLElement,
@@ -370,8 +370,10 @@ export class Client {
                     EvtScriptEvent.fire({event: ScripEventTypes.ConnectionState, condition: 'websocket', value: false});
                 }
 
-                this.windowManager.profileDisconnected();
-                this.layoutManager.profileDisconnected();
+                if (telnetWasConnected || socketWasConnected) {
+                    this.windowManager.profileDisconnected();
+                    this.layoutManager.profileDisconnected();
+                }
                 this.commandInput.SplitScroll(false);
 
                 if (!this.manualDisconnect) this.profilesWin.show(true);

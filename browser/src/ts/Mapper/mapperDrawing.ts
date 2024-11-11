@@ -145,7 +145,7 @@ export class MapperDrawing {
         return null
     }
 
-    cachedImg: HTMLImageElement
+    cachedImg: Map<number, HTMLImageElement> = new Map()
     cachedImgUrl: string;
     cachedImgOffsetX: number = 0;
     cachedImgOffsetY: number = 0;
@@ -157,12 +157,12 @@ export class MapperDrawing {
                 this.setZoneImage(imgurl);
                 this.cachedImgOffsetX = z.imageOffset?.x ?? 0
                 this.cachedImgOffsetY = z.imageOffset?.y ?? 0
-                return this.cachedImg
-            } else if (imgurl && imgurl == this.cachedImgUrl && this.cachedImg) {
-                return this.cachedImg
+                return this.cachedImg.get(this.level) ?? this.cachedImg.get(0)
+            } else if (imgurl && imgurl == this.cachedImgUrl && this.cachedImg.size) {
+                return this.cachedImg.get(this.level) ?? this.cachedImg.get(0)
             } else {
                 this.cachedImgUrl = null
-                this.cachedImg = null
+                this.cachedImg.clear()
                 return null
             }
         }
@@ -174,12 +174,38 @@ export class MapperDrawing {
     private _selectedExit: RoomExit;
     private static readonly _defaultRoomFillColorLight = "rgb(220,220,220)";
     private static readonly _defaultRoomFillColorDark = "rgb(155,155,155)";
-    private static readonly zoneImages:Map<string, HTMLImageElement> = new Map()
+    private static readonly zoneImages:Map<string, Map<number, HTMLImageElement>> = new Map()
     private setZoneImage(imgurl: string) {
+        if (!imgurl) {
+            this.cachedImgUrl = null
+            this.cachedImg.clear()
+            return
+        }
+        if (MapperDrawing.zoneImages.get(imgurl)?.size) {
+            return
+        }
         this.cachedImgUrl = imgurl;
-        const img = MapperDrawing.zoneImages.get(imgurl) ?? preloadImage(imgurl)
-        this.cachedImg = img;
-        MapperDrawing.zoneImages.set(imgurl, img)
+        let lvl = 0
+        let url = ""
+        this.cachedImg.clear()
+        imgurl.split(";").map(u => {
+            let uu = u.split("#")
+            if (uu.length == 2) {
+                lvl = parseInt(uu[0])
+                url = uu[1]
+            } else {
+                url = uu[0]
+            }
+            let zi2l = MapperDrawing.zoneImages.get(imgurl)
+            if (!zi2l) {
+                zi2l = new Map<number, HTMLImageElement>()
+                MapperDrawing.zoneImages.set(imgurl, zi2l)
+            }
+            let img = preloadImage(url)
+            this.cachedImg.set(lvl, img)
+            zi2l.set(lvl, img)
+            lvl++
+        })
     }
 
     public static get defaultRoomFillColor() {
@@ -333,7 +359,7 @@ export class MapperDrawing {
         this.$drawCache = {}
         this.$wallsCache = {}
         this.cachedImgUrl = null
-        this.cachedImg = null
+        this.cachedImg.clear()
         this.cachedImgOffsetX = 0
         this.cachedImgOffsetY = 0
         this.readOptions()
@@ -2211,7 +2237,7 @@ export class MapperDrawing {
         }
     }
     shouldDrawWalls() {
-        if (this.cachedImg && this.drawWalls == undefined) {
+        if (this.cachedImg.size && this.drawWalls == undefined) {
             return false
         }
         return this.drawWalls == undefined ? true : this.drawWalls
@@ -2828,7 +2854,7 @@ export class MapperDrawing {
         }
     }
     shouldDrawRoomType() {
-        if (this.cachedImg && this.drawRoomType == undefined) {
+        if (this.cachedImg.size && this.drawRoomType == undefined) {
             return false
         }
         return this.drawRoomType == undefined ? true : this.drawRoomType

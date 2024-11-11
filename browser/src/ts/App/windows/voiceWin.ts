@@ -283,6 +283,7 @@ export class VoiceWin implements IBaseWindow {
     }
 
     Connect(room:string) {
+        this.lastActive = new Date()
         this.requestedRoom = room
         this.setRoom(room)
         this.rtc.Connect();

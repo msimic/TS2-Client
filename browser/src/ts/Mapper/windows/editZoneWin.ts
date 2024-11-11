@@ -81,13 +81,13 @@ export class EditZoneWin {
                             Colore sfondo
                         </div>
                         <div style="display:flex;flex-direction:row;padding:5px;">
-                            <input type="color" class="zoneedit-color" title="Il colore di sfondo nel mapper"> <span>(nero puro disabilita colore)</span>
+                            <input type="color" class="zoneedit-color" title="Il colore di sfondo nel mapper">&nbsp;<span>(nero puro disabilita colore)</span>
                         </div>
                         <div style="flex:none;">
                             Immagine (URL)
                         </div>
                         <div style="display:flex;flex-direction:row;padding:5px;">
-                            <input style="flex:1" type="text" class="zoneedit-image" title="L'immagine di sfondo della zona nel mapper (centrata a 0,0)">
+                            <input style="flex:1" type="text" class="zoneedit-image" title="L'immagine di sfondo della zona nel mapper (centrata a 0,0). Per immagini a piu livelli usare sintasse: lvl#url;lvl2#url2">
                         </div>
                         <div style="flex:none;">
                             Offset immagine (x,y)
