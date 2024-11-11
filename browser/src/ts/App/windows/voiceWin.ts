@@ -214,10 +214,6 @@ export class VoiceWin implements IBaseWindow {
         })
         this.rtc.checkAutentication()
         this.drawRooms()
-
-        this.rtc.EvtVoiceActivity.handle(peerid => {
-            this.signalPeerActivity(peerid)
-        })
     }
     signalPeerActivity(peerid: string) {
         let element:HTMLElement = null;
@@ -226,7 +222,7 @@ export class VoiceWin implements IBaseWindow {
         } else {
             element = $('span.user[data-id="'+peerid+'"]', this.$win)[0] as HTMLElement
         }
-        if (element) {
+        if (element && !('voiceActivity' in element.classList.keys())) {
             element.classList.add('voiceActivity');
             element.addEventListener('animationend', () => {
                  element.classList.remove('voiceActivity'); 
@@ -363,7 +359,6 @@ export class VoiceWin implements IBaseWindow {
         let users = cd.users.map(u => u.name).join(",")
         $users.text("("+num+")")
         $users.attr("title", users)
-        console.log("setting users for " + rm)
         if (rm == this.room) {
             this.setUsers(cd);
         }
@@ -433,6 +428,8 @@ export class VoiceWin implements IBaseWindow {
         this.rtc.EvtPeersCame.release(this.onPeersCame);
         this.rtc.EvtMicChanged.release(this.onMicChanged);
         this.rtc.EvtAudioChanged.release(this.onAudioChanged)
+        this.rtc.EvtVoiceActivity.release(this.OnSignalPeerActivity)
+        window.removeEventListener("mousedown", this.onMousePressed)
     }
 
     initRTC() {
@@ -447,6 +444,11 @@ export class VoiceWin implements IBaseWindow {
         this.rtc.EvtPeersCame.handle(this.onPeersCame);
         this.rtc.EvtMicChanged.handle(this.onMicChanged);
         this.rtc.EvtAudioChanged.handle(this.onAudioChanged);
+        this.rtc.EvtVoiceActivity.handle(this.OnSignalPeerActivity)
+        window.addEventListener("mousedown", this.onMousePressed)
+    }
+    onMousePressed = () => {
+        this.lastActive = new Date()
     }
     onAudioChanged = async (v: boolean) => {
         if (!v) {
@@ -457,6 +459,9 @@ export class VoiceWin implements IBaseWindow {
             this.$muteAudio.addClass("toggled")
         }
         this.updateStatus()
+    }
+    OnSignalPeerActivity = (peerid:string) => {
+        this.signalPeerActivity(peerid)
     }
     onMicChanged = async (v: boolean) => {
         if (!v) {

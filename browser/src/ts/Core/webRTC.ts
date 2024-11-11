@@ -22,6 +22,8 @@ export interface PeerData {
     videoEnabled: boolean;
     muted: boolean;
     volume: number;
+    iceCandidateQueue: any[],
+    isRemoteDescriptionSet: boolean,
     connection:RTCPeerConnection,
     streamsByType: Map<"audio/video"|"screenshare", WebRTCStream>,
 }
@@ -75,7 +77,7 @@ export class WebRTC {
     }
     defaultChannel = channels[0];
     globalMutePeers = false;
-    voiceActivityThreshold = 30
+    voiceActivityThreshold = 40
 
     signaling_socket:ioc.Socket = null;   /* our socket.io connection to our webserver */
     private localMedia: LocalMedia = {
@@ -468,6 +470,8 @@ export class WebRTC {
                 volume: 1,
                 audioEnabled: true,
                 videoEnabled: false,
+                isRemoteDescriptionSet: false,
+                iceCandidateQueue: [],
                 muted: this.globalMutePeers,
                 streamsByType: new Map<"audio/video"|"screenshare", WebRTCStream>()
             });
@@ -535,7 +539,8 @@ export class WebRTC {
         this.signaling_socket.on('sessionDescription', (config) => {
             console.log('Remote description received: ', config);
             let peer_id = config.peer_id;
-            if (!this.peers.get(peer_id)) return
+            let peerData = this.peers.get(peer_id)
+            if (!peerData) return
             let peer = this.peers.get(peer_id).connection;
             let remote_description = config.session_description;
             console.log(config.session_description);
@@ -550,7 +555,16 @@ export class WebRTC {
                             (local_description) => {
                                 console.log("Answer description is: ", local_description);
                                 peer.setLocalDescription(local_description).then(
-                                    () => { 
+                                    () => {
+                                        if (!peerData.isRemoteDescriptionSet && peerData.iceCandidateQueue.length) {
+                                            peerData.isRemoteDescriptionSet = true
+                                            const queue = peerData.iceCandidateQueue
+                                            while (queue.length) {
+                                                const candidate = queue.shift();
+                                                peer.addIceCandidate(new RTCIceCandidate(candidate))
+                                                    .catch(e => { console.error('Error adding queued ICE candidate:', e); });
+                                            }
+                                        }
                                         this.signaling_socket.emit('relaySessionDescription', 
                                             {'peer_id': peer_id, 'session_description': local_description});
                                         console.log("Answer setLocalDescription succeeded");
@@ -574,13 +588,20 @@ export class WebRTC {
          * can begin trying to find the best path to one another on the net.
          */
         this.signaling_socket.on('iceCandidate', (config) => {
-            if (!this.peers.get(config.peer_id)) return
+            let peerData = this.peers.get(config.peer_id)
+            if (!peerData) return
             let peer = this.peers.get(config.peer_id).connection;
             let ice_candidate = config.ice_candidate;
             if (!ice_candidate) {
                 console.log("Run out of ice candidates")
             } else {
-                peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+                if (peer.remoteDescription && peer.remoteDescription.type) {
+                        // If the remote description is set, add the candidate immediately
+                        // Queue the candidate until the remote description is set 
+                    peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+                } else {
+                    peerData.iceCandidateQueue.push(ice_candidate);
+                }
             }
         });
 
@@ -958,7 +979,7 @@ export class WebRTC {
         source.connect(this.audioAnalyser);
         rtcStream.audioSourceNode = source;
 
-        const bufferLength = 1;
+        const bufferLength = 3;
         const dataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
         const circularBuffer = new Array(bufferLength).fill(new Uint8Array(this.audioAnalyser.frequencyBinCount));
         let bufferIndex = 0;
@@ -970,25 +991,28 @@ export class WebRTC {
             }
             this.audioAnalyser.getByteFrequencyData(dataArray);
             circularBuffer[bufferIndex] = new Uint8Array(dataArray);
-            bufferIndex = (bufferIndex + 1) % bufferLength;
-
-            let sum = 0;
+            
+            let sum = 0; let sumcurrent = 0
             for (let i = 0; i < bufferLength; i++) {
                 for (let j = 0; j < dataArray.length; j++) {
                     sum += circularBuffer[i][j];
+                    if (i == bufferIndex) {
+                        sumcurrent += circularBuffer[i][j]
+                    }
                 }
             }
-            const average = sum / (bufferLength * dataArray.length);
 
-            if (average > this.voiceActivityThreshold) { // Adjust the threshold as needed
+            bufferIndex = (bufferIndex + 1) % bufferLength;
+
+            const average = sum / (bufferLength * dataArray.length);
+            const averageCurrent = sumcurrent / (dataArray.length);
+
+            if (averageCurrent > average && average > this.voiceActivityThreshold) { // Adjust the threshold as needed
                 if ((peerId && !this.peers.get(peerId)?.muted) ||
                      this.IsMicEnabled()) {
-                    console.log("Voice activity "+peerId);
                     this.EvtVoiceActivity.fire(peerId);
                 }
             }
-
-            console.log((peerId ?? "local") + ": " + average);
 
             setTimeout(detectVoiceActivity, 150);
         };
