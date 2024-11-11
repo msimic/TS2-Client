@@ -263,7 +263,7 @@ export class WebRTC {
 
         for (const st of [...peer.streamsByType.values()]) {
             st.audioSourceNode = null
-            for (const tracks of [...st.tracksByType.values()] || []) {
+            for (const tracks of [...st.tracksByType.values()]) {
                 for (const track of tracks) {
                     this.removePeerTrack(peer, st, track)
                 }
