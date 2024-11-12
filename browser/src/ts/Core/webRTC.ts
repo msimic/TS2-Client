@@ -5,9 +5,7 @@ import * as ioc from "socket.io-client";
 let ICE_SERVERS = [
     {urls: [
         "stun:stun.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
         "stun:stun2.l.google.com:19302",
-        "stun:stun3.l.google.com:19302",
         "stun:stun4.l.google.com:19302",
         "stun:stun.ekiga.net"
     ]}
@@ -111,7 +109,7 @@ export class WebRTC {
     getChannelDatas() {
         return this.all_channels
     }
-    
+
     createAudioContext = (stream:WebRTCStream) => {
         stream.audioContext = new window.AudioContext()
         stream.audioAnalizer = stream.audioContext.createAnalyser()

@@ -71,7 +71,7 @@ export class Telnet {
                     this.sb = 1;
                     this.buf[1] = [];
                     in_IAC_SE = true
-                    this.EvtNegotiation.fire({cmd: c, opt: null});
+                    this.EvtNegotiation.fire({cmd: c, opt: view[i+1]});
                 } else if (c === Cmd.SE) {
                     in_IAC_SE = false
                     this.sb = 0;
@@ -97,12 +97,15 @@ export class Telnet {
                         this.writeArr([Cmd.IAC, Cmd.WONT, opt]);
                     }
                 } else if ([Cmd.WILL, Cmd.WONT].indexOf(cmd) !== -1) {
-                    let abc = <any>this.EvtNegotiation;
-
+                    
                     let handled = this.EvtNegotiation.fire({cmd: cmd, opt: opt});
 
                     if (!handled) {
-                        this.writeArr([Cmd.IAC, Cmd.DONT, opt]);
+                        if (cmd == Cmd.WILL) {
+                            this.writeArr([Cmd.IAC, Cmd.WONT, opt]);
+                        } else {
+                            this.writeArr([Cmd.IAC, Cmd.DONT, opt]);
+                        }
                     }
                 }
                 this.iacSeq = [];
@@ -144,11 +147,72 @@ export let CmdName = (() => {
     }
 
     return (cmd: number): string => {
-        return (<any>dict)[cmd];
+        return (<any>dict)[cmd] ?? "";
     };
 })();
 
 const theNULL = 0;
+
+
+export namespace ExtOpt {
+    export const MSDP = 69;
+    export const MCCP = 70;
+    export const MSP = 90;
+    export const MXP = 91;
+    export const ATCP = 200;
+}
+
+export namespace SubNeg {
+    export const IS = 0;
+    export const SEND = 1;
+    export const ACCEPTED = 2;
+    export const REJECTED = 3;
+}
+
+export let SubnegName = (() => {
+    let dict: {[k: number]: string} = {};
+    for (let k in SubNeg) {
+        dict[(<any>SubNeg)[k]] = k;
+    }
+
+    return (cmd: number): string => {
+        return (<any>dict)[cmd] ?? "";
+    };
+})();
+
+export namespace NewEnv {
+    export const IS = 0;
+    export const SEND = 1;
+    export const INFO = 2;
+}
+export namespace NewEnvOpt {
+    export const VAR = 0;
+    export const VALUE = 1;
+    export const ESC = 2;
+    export const USERVAR = 3;
+}
+
+export let NewEnvName = (() => {
+    let dict: {[k: number]: string} = {};
+    for (let k in NewEnv) {
+        dict[(<any>NewEnv)[k]] = k;
+    }
+
+    return (cmd: number): string => {
+        return (<any>dict)[cmd] ?? "";
+    };
+})();
+
+export let NewEnvOptName = (() => {
+    let dict: {[k: number]: string} = {};
+    for (let k in NewEnvOpt) {
+        dict[(<any>NewEnvOpt)[k]] = k;
+    }
+
+    return (cmd: number): string => {
+        return (<any>dict)[cmd] ?? "";
+    };
+})();
 
 // Telnet protocol options code (don't change)
 export namespace Opt {
@@ -218,8 +282,11 @@ export let OptName = (() => {
     for (let k in Opt) {
         dict[(<any>Opt)[k]] = k;
     }
+    for (let k in ExtOpt) {
+        dict[(<any>ExtOpt)[k]] = k;
+    }
 
     return (opt: number): string => {
-        return (<any>dict)[opt];
+        return (<any>dict)[opt] ?? "";
     };
 })();

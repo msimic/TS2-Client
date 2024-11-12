@@ -1,4 +1,4 @@
-import { Telnet, NegotiationData, Cmd, CmdName, Opt, OptName } from "./telnetlib";
+import { Telnet, NegotiationData, Cmd, CmdName, Opt, OptName, SubNeg, NewEnv, ExtOpt, NewEnvOpt, NewEnvName, NewEnvOptName, SubnegName } from "./telnetlib";
 import { EventHook } from "./event";
 import { UserConfig } from "../App/userConfig";
 import { AppInfo } from "../appInfo";
@@ -31,6 +31,7 @@ export class TelnetClient extends Telnet {
     private ttypeIndex: number = 0;
 
     private doNewEnviron: boolean = false;
+    private debugTelnet = localStorage.getItem("debugTelnet")=="true"
 
     constructor(writeFunc: (data: ArrayBuffer) => void, private config:UserConfig) {
         super(writeFunc);
@@ -41,15 +42,15 @@ export class TelnetClient extends Telnet {
     private writeNewEnvVar(varName: string, varVal: string) {
         this.writeArr([
             Cmd.IAC, Cmd.SB, Opt.NEW_ENVIRON,
-            NewEnv.IS, NewEnv.VAR
+            NewEnv.IS, NewEnvOpt.VAR
             ].concat(
                 arrayFromString(varName),
-                [NewEnv.VALUE],
+                [NewEnvOpt.VALUE],
                 arrayFromString(varVal),
                 [Cmd.IAC, Cmd.SE]));
     }
 
-    private handleEnvSeqReceiveVar(seq: number[]): void {
+    private handleEnvSeqReceiveVar(seq: number[]): [number, number, string, string?][] {
         let actions = parseNewEnvSeq(seq);
         for (const act of actions) {
             if (act && act.length > 3) {
@@ -57,9 +58,10 @@ export class TelnetClient extends Telnet {
             }
         }
         this.EvtSetVariables.fire(this.serverVars)
+        return actions
     }
 
-    private handleNewEnvSeq(seq: number[]): void {
+    private handleNewEnvSeq(seq: number[]): [number, number, string, string?][] {
         let actions = parseNewEnvSeq(seq);
 
         let varFuncs: {[k: string]: () => string} = {
@@ -84,82 +86,84 @@ export class TelnetClient extends Telnet {
                         this.writeNewEnvVar(k, varFuncs[k]());
                     }
                     /* we don't support any USERVAR */
-                } else if (varType === NewEnv.VAR) {
+                } else if (varType === NewEnvOpt.VAR) {
                     /* send all VAR */
                     for (let k in varFuncs) {
                         this.writeNewEnvVar(k, varFuncs[k]());
                     }
-                } else if (varType === NewEnv.USERVAR) {
+                } else if (varType === NewEnvOpt.USERVAR) {
                     /* we don't support any USERVAR */
                 }
-            } else if (varType === NewEnv.VAR) {
+            } else if (varType === NewEnvOpt.VAR) {
                 if (varName in varFuncs) {
                     this.writeNewEnvVar(varName, varFuncs[varName]());
                 }
-            } else if (varType === NewEnv.USERVAR) {
+            } else if (varType === NewEnvOpt.USERVAR) {
                 /* we don't support any USERVAR */
             }
         }
+        return actions
     }
 
     private onNegotiation(data: NegotiationData):boolean {
         let {cmd, opt} = data;
-        // console.log(CmdName(cmd), OptName(opt));
-        let ret = false
+        if (this.debugTelnet) console.log("Telnet server negotiate: ", CmdName(cmd), OptName(opt));
+        let ret = null
         if (cmd === Cmd.WILL) {
             if (opt === Opt.ECHO) {
                 this.EvtServerEcho.fire(true);
-                this.writeArr([Cmd.IAC, Cmd.DO, Opt.ECHO]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.DO, Opt.ECHO]
+                this.writeArr(ret);
             } else if (opt === Opt.NEW_ENVIRON) {
-                this.writeArr([Cmd.IAC, Cmd.DO, Opt.NEW_ENVIRON]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.DO, Opt.NEW_ENVIRON]
+                this.writeArr(ret);
             } else if (opt === Opt.SGA) {
-                this.writeArr([Cmd.IAC, Cmd.DO, Opt.SGA]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.DO, Opt.SGA]
+                this.writeArr(ret);
             } else if (opt === ExtOpt.MXP) {
                 if (this.config.getDef("mxpEnabled", true)) {
-                  this.writeArr([Cmd.IAC, Cmd.DO, ExtOpt.MXP]);
+                    ret = [Cmd.IAC, Cmd.DO, ExtOpt.MXP]
+                    this.writeArr(ret);
                 } else {
-                    this.writeArr([Cmd.IAC, Cmd.WONT, ExtOpt.MXP]);
+                    ret = [Cmd.IAC, Cmd.WONT, ExtOpt.MXP]
+                    this.writeArr(ret);
                 }
-                ret = true
             } else {
-                this.writeArr([Cmd.IAC, Cmd.DONT, opt]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.WONT, opt]
+                this.writeArr(ret);
             }
         } else if (cmd === Cmd.WONT) {
             if (opt === Opt.ECHO) {
                 this.EvtServerEcho.fire(false);
-                this.writeArr([Cmd.IAC, Cmd.DONT, Opt.ECHO]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.DONT, Opt.ECHO]
+                this.writeArr(ret);
             }
         } else if (cmd === Cmd.DO) {
             if (opt === Opt.TTYPE) {
-                this.writeArr([Cmd.IAC, Cmd.WILL, Opt.TTYPE]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.WILL, Opt.TTYPE]
+                this.writeArr(ret);
             } else if (opt == Opt.NEW_ENVIRON) {
-                this.writeArr([Cmd.IAC, Cmd.WILL, Opt.NEW_ENVIRON]);
+                ret = [Cmd.IAC, Cmd.WILL, Opt.NEW_ENVIRON]
+                this.writeArr(ret);
                 this.doNewEnviron = true;
-                ret = true
             } else if (opt === ExtOpt.MXP && this.config.getDef("mxpEnabled", true) === true) {
-                this.writeArr([Cmd.IAC, Cmd.WILL, ExtOpt.MXP]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.WILL, ExtOpt.MXP]
+                this.writeArr(ret);
             } else if (opt === ExtOpt.MXP && !this.config.getDef("mxpEnabled", true)) {
-                this.writeArr([Cmd.IAC, Cmd.WONT, ExtOpt.MXP]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.WONT, ExtOpt.MXP]
+                this.writeArr(ret);
             } else {
-                this.writeArr([Cmd.IAC, Cmd.WONT, opt]);
-                ret = true
+                ret = [Cmd.IAC, Cmd.WONT, opt]
+                this.writeArr(ret);
             }
         } else if (cmd === Cmd.DONT) {
             if (opt === Opt.NEW_ENVIRON) {
+                ret = [Cmd.IAC, Cmd.WONT, opt]
                 this.doNewEnviron = false;
-                ret = true
             }
         } else if (cmd === Cmd.SB) {
             let sb = this.readSbArr();
-            ret = true
+            ret = sb.length ? sb : ["OK"]
         } else if (cmd === Cmd.SE) {
             let sb = this.readSbArr();
 
@@ -173,65 +177,67 @@ export class TelnetClient extends Telnet {
                 } else {
                     this.mxp = false;
                 }
-                ret = true
+                opt = ExtOpt.MXP
+                ret = [Cmd.WILL, ExtOpt.MXP]
             }
             else if (sb.length === 2 && sb[0] === Opt.TTYPE && sb[1] === SubNeg.SEND) {
+                opt = Opt.TTYPE
                 let ttype: string;
                 if (this.ttypeIndex > 0)
                     return false; // support only one TType by joinging all ttypes, legacy telnet clients are not supporter anymore
                 ttype = TTYPES.join(", ") + ", IP<" + (this.clientIp || "Missing-IP") + ">";
                 this.ttypeIndex++;
                 
-                /*if (this.ttypeIndex >= TTYPES.length) {
-                    ttype = this.clientIp || "UNKNOWNIP";
-                } else {
-                    ttype = TTYPES[this.ttypeIndex];
-                    this.ttypeIndex++;
-                }*/
-                this.writeArr( ([Cmd.IAC, Cmd.SB, Opt.TTYPE, SubNeg.IS]).concat(
+                ret = ([Cmd.IAC, Cmd.SB, Opt.TTYPE, SubNeg.IS]).concat(
                     arrayFromString(ttype),
                     [Cmd.IAC, Cmd.SE]
-                ));
-                ret = true
+                )
+                this.writeArr(ret);
+                ret = [Cmd.IAC, Cmd.SB, Opt.TTYPE, SubNeg.IS]
+                    .concat([ttype as any])
+                    .concat([Cmd.IAC, Cmd.SE])
             } else if (this.doNewEnviron && sb.length > 1 && sb[0] == Opt.NEW_ENVIRON && sb[1] == SubNeg.IS) {
+                opt = Opt.NEW_ENVIRON
                 let seq = sb.slice(1);
-                this.handleEnvSeqReceiveVar(seq);
-                ret = true
+                ret = this.handleEnvSeqReceiveVar(seq);
             } else if (this.doNewEnviron && sb.length > 0 && sb[0] == Opt.NEW_ENVIRON) {
+                opt = Opt.NEW_ENVIRON
                 let seq = sb.slice(1);
-                this.handleNewEnvSeq(seq);
-                ret = true
+                ret = this.handleNewEnvSeq(seq);
             }
         }
-        return ret
+        if (ret && this.debugTelnet) {
+            console.log("Telnet response: "+this.logNegotiationResponse(ret, cmd, opt))
+        }
+        return ret != null
+    }
+    logNegotiationResponse(rsp: any[], cmd:number, opt:number) {
+        let str = ""
+        let did1 = false
+        for (const v of rsp) {
+            if (typeof v == "number") {
+                let c = "";
+                if (cmd == Cmd.SE && opt == Opt.NEW_ENVIRON) {
+                    c = (!did1 ? NewEnvName(v) : NewEnvOptName(v)) || CmdName(v) || OptName(v)
+                    did1 = true
+                } else if (cmd == Cmd.SE && opt == Opt.TTYPE) {
+                    c = SubnegName(v) || CmdName(v) || OptName(v)
+                } else {
+                    c = CmdName(v) || OptName(v)
+                }
+                str += c + " "
+            } else if (typeof v == "string") {
+                str += v + " "
+            } else if (typeof v == "object") {
+                str += this.logNegotiationResponse(v as any, cmd, opt)
+            } else {
+                str += "?"
+            }
+        }
+        return str
     }
 }
 
-export namespace ExtOpt {
-    export const MSDP = 69;
-    export const MCCP = 70;
-    export const MSP = 90;
-    export const MXP = 91;
-    export const ATCP = 200;
-}
-
-export namespace SubNeg {
-    export const IS = 0;
-    export const SEND = 1;
-    export const ACCEPTED = 2;
-    export const REJECTED = 3;
-}
-
-export namespace NewEnv {
-    export const IS = 0;
-    export const SEND = 1;
-    export const INFO = 2;
-
-    export const VAR = 0;
-    export const VALUE = 1;
-    export const ESC = 2;
-    export const USERVAR = 3;
-}
 
 function arrayFromString(str: string): number[] {
     let arr = new Array(str.length);
@@ -296,7 +302,7 @@ export function parseNewEnvSeq(seq: number[]): [number, number, string, string?]
             }
         } else if (varType === null) {
             varType = seq[i];
-            if (varType !== NewEnv.VAR && varType !== NewEnv.USERVAR) {
+            if (varType !== NewEnvOpt.VAR && varType !== NewEnvOpt.USERVAR) {
                 console.error("Only NEW-ENVIRON VAR and USERVAR are supported but got", varType);
                 break;
             }
