@@ -219,6 +219,13 @@ export class VoiceWin implements IBaseWindow {
             }
         })
         this.rtc.checkAutentication()
+        this.setTitle()
+        const cdatas = this.rtc.getChannelDatas()
+        for (const cd of Object.keys(cdatas)) {
+            this.cDatas.set(cdatas[cd].name, cdatas[cd])
+        }
+        this.room = this.requestedRoom = this.rtc.lastChannel
+        this.updateStatus()
         this.drawRooms()
     }
     signalPeerActivity(peerid: string) {
@@ -272,13 +279,14 @@ export class VoiceWin implements IBaseWindow {
         //     (<any>window).audio.src="";
         // }
         (<any>window).audio = new Audio("sounds/"+sound);
-        await (<any>window).audio.play();
+        (<any>window).audio.play();
     }
     async Disconnect(soft:boolean) {
         if (!soft) {
             if (this.audible) await VoiceWin.playSound("disconnect-voice.mp3")
         }
         this.room = null
+        this.requestedRoom = null
         this.$users.empty()
         this.$toolbar.hide()
         this.rtc.Leave()
@@ -288,6 +296,9 @@ export class VoiceWin implements IBaseWindow {
         this.lastActive = new Date()
         this.requestedRoom = room
         this.setRoom(room)
+        if (this.autoconnect) {
+            this.autoconnectRoom = room
+        }
         this.rtc.Connect();
         this.rtc.Join(this.requestedRoom)
         this.refreshChannelData();
@@ -339,7 +350,7 @@ export class VoiceWin implements IBaseWindow {
             let li = $(`<span style="cursor:pointer;"></span>`, this.$win).on("click", () => {
                 this.Connect(r)
             })
-            if (r == this.room) {
+            if (r == this.room || r == this.requestedRoom) {
                 li.addClass("toggled")
             }
             li.data("room", r)
@@ -423,6 +434,7 @@ export class VoiceWin implements IBaseWindow {
         });
     }
     release() {
+        this.rtc.EvtRequestingChannel.release(this.onRequestingChannel)
         this.rtc.EvtNewChannelData.release(this.newChannelData)
         this.rtc.EvtChannelChange.release(this.onChannelChange)
         this.rtc.EvtPeersChanged.release(this.onPeersChanged);
@@ -439,6 +451,7 @@ export class VoiceWin implements IBaseWindow {
     }
 
     initRTC() {
+        this.rtc.EvtRequestingChannel.handle(this.onRequestingChannel)
         this.rtc.EvtNewChannelData.handle(this.newChannelData)
         this.rtc.EvtChannelChange.handle(this.onChannelChange)
         this.rtc.EvtPeersChanged.handle(this.onPeersChanged);
@@ -489,9 +502,16 @@ export class VoiceWin implements IBaseWindow {
         this.room = null
         this.refreshChannelData()
     }
+    setTitle = () => {
+        if (this.rtc.isConnected()) {
+            (<any>this.$win).jqxWindow("setTitle", "Voice chat [" + this.rtc.userName + "]")
+        } else {
+            (<any>this.$win).jqxWindow("setTitle", "Voice chat [Non connesso]")
+        }
+    }
     onDisconnected = (onDisconnected: boolean) => {
-        (<any>this.$win).jqxWindow("setTitle", "Voice chat [Non connesso]")
         this.Disconnect(true)
+        this.setTitle()
         this.refreshUI()
         if (this.audible) {
             if (this.rtc.didAllowMedia()) {
@@ -506,10 +526,14 @@ export class VoiceWin implements IBaseWindow {
         this.enableUIOrShowMessage()
     }
     onConnected = (name: string) => {
-        (<any>this.$win).jqxWindow("setTitle", "Voice chat [" + name + "]")
+        this.setTitle()
         if (this.room || this.requestedRoom || this.autoconnect && this.autoconnectRoom) this.enterRoom()
         this.updateStatus()
         this.refreshChannelData()
+    }
+    onRequestingChannel = (channel:string) => {
+        this.room = null
+        this.requestedRoom = channel
     }
     onPeersChanged = (peer: any) => {
         if (this.room)
@@ -533,11 +557,14 @@ export class VoiceWin implements IBaseWindow {
         if (d != this.room) {
             this.room = d
             this.refreshChannelData();
+            this.drawRooms()
             if (this.audible) 
             {
                 this.NotifyText("Connesso a canale audio '" + d + "'")
                 await VoiceWin.playSound("connect-voice.ogg");
             }
+        } else {
+            this.drawRooms()
         }
     }
 

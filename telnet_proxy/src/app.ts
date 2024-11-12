@@ -588,7 +588,7 @@ let adminServer = net.createServer((socket: net.Socket) => {
     socket.write("admin> ");
 });
 
-if (serverConfig.adminHost !== "localhost") {
+if (serverConfig.adminHost && serverConfig.adminHost !== "localhost") {
     throw "Auth for Admin CLI is not implemented. Must use localhost.";
 }
 
@@ -714,5 +714,5 @@ let webRTCSignaller:SignalingServer;
 if (serverConfig.webRTCSignalingHost && serverConfig.webRTCSignalingPort) {
     webRTCSignaller = new SignalingServer(serverConfig.webRTCSignalingHost,
                                     serverConfig.webRTCSignalingPort,
-                                    credentials) 
+                                    credentials, DEBUG) 
 }

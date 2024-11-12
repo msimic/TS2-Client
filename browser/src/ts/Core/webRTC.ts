@@ -58,8 +58,8 @@ export interface LocalMedia {
     mediaAllowed: boolean
 }
 
-export type ActiveChannels = {
-    [key: string]: number;
+export type Channels = {
+    [key: string]: ChannelData;
 };
 
 export class WebRTC {
@@ -73,14 +73,23 @@ export class WebRTC {
         mediaAllowed: false
     }
     peers = new Map<string, PeerData>();                /* keep track of our peer connections, indexed by peer_id (aka socket.io id) */
-    active_channels:ActiveChannels = { };
+    active_channels:Channels = { };
+    all_channels:Channels = {}; 
     public userName:string = null;
     autojoin: boolean = false;
     microphoneEnabled = false
     webcamEnabled = false
-    lastChannel: string = null;
+    private _lastChannel: string = null;
+    public get lastChannel(): string {
+        return this._lastChannel;
+    }
+    public set lastChannel(value: string) {
+        this._lastChannel = value;
+        this.EvtRequestingChannel.fire(value)
+    }
     connectionError: boolean = false
 
+    public EvtRequestingChannel = new EventHook<string>();
     public EvtVoiceActivity = new EventHook<string>();
     public EvtAuthenticated = new EventHook<string>();
     public EvtPeersChanged = new EventHook<string[]>();
@@ -99,6 +108,10 @@ export class WebRTC {
         
     }
 
+    getChannelDatas() {
+        return this.all_channels
+    }
+    
     createAudioContext = (stream:WebRTCStream) => {
         stream.audioContext = new window.AudioContext()
         stream.audioAnalizer = stream.audioContext.createAnalyser()
@@ -398,6 +411,10 @@ export class WebRTC {
         })
 
         this.signaling_socket.on("channeldata", (cd:ChannelData) => {
+            this.all_channels[cd.name] = {
+                name: cd.name,
+                users: cd.users
+            }
             this.EvtNewChannelData.fire(cd)
         })
 
@@ -415,12 +432,22 @@ export class WebRTC {
         });
         this.signaling_socket.on('located', (data) => {
             if (data.channels) {
-                this.active_channels = Object.fromEntries((data.channels as string).split(",").map((value:string, index:number) => [value, index])) ;
-                Object.keys(this.active_channels).forEach(k => {
-                    this.EvtEnteredChannel.fire(k)
+                const newChannels = Object.fromEntries((data.channels as string).split(",").map((value:string, index:number) => [value, {name: value, users: [] as UserData[]}]))
+                if (data.cdatas) {
+                    Object.keys(newChannels).forEach(k => {
+                        newChannels[k].users = data.cdatas[k].users as UserData[] || []
+                    })
+                }
+                Object.keys(newChannels).forEach(k => {
+                    if (newChannels[k] && !this.active_channels[k]) {
+                        console.log("RTC now located in ", k);
+                        this.EvtEnteredChannel.fire(k)
+                    }
                 })
+                this.active_channels = newChannels         
             } else {
                 this.active_channels = {}
+                console.log("RTC now located nowhere ");
                 this.EvtExitedChannel.fire("")
             }
         })

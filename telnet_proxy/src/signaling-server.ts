@@ -3,14 +3,155 @@ import * as https from "https";
 import * as socketio from "socket.io";
 import * as express from "express";
 
-export class SignalingServer {
-    channels: { [k:string]:{ [k:string]:socketio.Socket } } = {};
-    sockets:{[id:string]: socketio.Socket} = {};
-    socketChannels = new Map<string, { [k:string]:string }>()
-    socketNames = new Map<string, string>()
-    allowed_channels = {"Lobby":0,"Locanda":1, "Quest":2, "RPG":3, "Offtopic": 4, "Chat":5};
+interface SocketData {
+    id: string;
+    channels: Map<string, ChannelData>;
+    socket: socketio.Socket;
+    name: string;
+}
 
-    constructor(host:string, port:number, credentials:https.ServerOptions) {
+interface ChannelData {
+    name: string;
+    sockets: Map<string, SocketData>
+}
+
+export type logger = (...arg: any[]) => void;
+
+export class SignalingServer {
+    socketData: Map<string, SocketData> = new Map()
+    allowedChannels = new Map<string, ChannelData>([
+        ["Lobby", {name: "Lobby", sockets: new Map<string, SocketData>()}],
+        ["Locanda", {name: "Locanda", sockets: new Map<string, SocketData>()}],
+        ["Quest", {name: "Quest", sockets: new Map<string, SocketData>()}],
+        ["RPG", {name: "RPG", sockets: new Map<string, SocketData>()}],
+        ["Offtopic", {name: "Offtopic", sockets: new Map<string, SocketData>()}],
+        ["Chat", {name: "Chat", sockets: new Map<string, SocketData>()}]
+    ])
+    
+    removeSocketFromChannel = (sckId:string, channel:string) => {
+        let sd = this.socketData.get(sckId)
+        if (sd && this.allowedChannels.has(channel)) {
+            let ch = sd.channels.get(channel)
+            if (ch) {
+                ch.sockets.delete(sckId)
+                sd.channels.delete(channel)
+            }
+            this.allowedChannels.get(channel).sockets.delete(sckId)
+        }
+    }
+
+    addSocketToChannel = (sckId:string, channel:string) => {
+        let sd = this.socketData.get(sckId)
+        if (sd && this.allowedChannels.get(channel) && !sd.channels.get(channel)) {
+            let ch = this.allowedChannels.get(channel)
+            sd.channels.set(channel, ch)
+            ch.sockets.set(sckId, sd)
+        }
+    }
+
+    deleteSocket = (sckId: string) => {
+        let sd = this.socketData.get(sckId)
+        if (sd) {
+            for (const chk of sd.channels.keys()) {
+                this.removeSocketFromChannel(sckId, chk)
+            }
+            if (sd.socket && sd.socket.connected) {
+                sd.socket.disconnect()
+                sd.socket = null
+            }
+            this.socketData.delete(sckId)
+        }
+    }
+
+    addSocket = (sckId:string, socket: socketio.Socket) => {
+        this.socketData.set(sckId, {
+            id: sckId,
+            name: null,
+            socket: socket,
+            channels: new Map<string, ChannelData>()
+        })
+    }
+
+    leaveChannel = (socket:socketio.Socket, channel:string) => {
+        this.log("["+ socket.id + "] leaveChannel ");
+
+        if (!this.socketData.has(socket.id)) {
+            this.log("["+ socket.id + "] ERROR: no socket to leave channel ", socket.id);
+            return;
+        }
+
+        if (!(this.socketData.get(socket.id).channels.has(channel))) {
+            this.log("["+ socket.id + "] ERROR: not in ", channel);
+            return;
+        }
+
+        this.removeSocketFromChannel(socket.id, channel)
+
+        for (const otherSocket of this.allowedChannels.get(channel).sockets.values()) {
+            if (otherSocket.socket && otherSocket.socket.connected) {
+                otherSocket.socket.emit('removePeer', {'peer_id': socket.id});
+            }
+            socket.emit('removePeer', {'peer_id': otherSocket.id});
+        }
+
+        const allowedChannel = this.allowedChannels.get(channel);
+        if (allowedChannel) {
+            // notify this channel changed
+            for (const sd of allowedChannel.sockets.values()) {
+                if (sd.socket && sd.socket.connected) 
+                    sd.socket.emit("channelchange", channel)
+            }
+        }
+        this.locateSocket(socket);
+    }
+
+    joinToChannel = (socket:socketio.Socket, channel:string) => {
+        
+        const thisData = this.socketData.get(socket.id)
+
+        if (!thisData) {
+            this.log("["+ socket.id + "] ERROR: does not exist so cannot join");
+            return
+        }
+
+        this.addSocketToChannel(socket.id, channel)
+
+        for (const sckData of this.allowedChannels.get(channel).sockets.values()) {
+            if (sckData.id != thisData.id && sckData.socket && sckData.socket.connected) {
+                sckData.socket.emit('addPeer', {
+                    'peer_id': socket.id,
+                    'should_create_offer': false,
+                    name: thisData.name
+                });
+                socket.emit('addPeer', {
+                    'peer_id': sckData.id, 
+                    'should_create_offer': true, 
+                    name: sckData.name
+                });
+            }
+        }
+
+
+        this.locateSocket(socket)
+
+        for (const sk of this.socketData.values()) {
+            if (sk.socket && sk.socket.connected)
+                sk.socket.emit("channelchange", channel)
+        }
+    }
+
+    removeStaleSockets = () => {
+        for (const sd of this.socketData.values()) {
+            if (sd.socket && !sd.socket.connected) {
+                for (const ch of sd.channels.keys()) {
+                    this.removeSocketFromChannel(sd.id, ch)
+                }
+                this.deleteSocket(sd.id)
+            }
+        }
+    }
+
+    constructor(host:string, port:number, credentials:https.ServerOptions, private log:logger = console.log) {
         let cfg = <any>{
             serveClient: false,
             pingTimeout: 120000,
@@ -26,10 +167,9 @@ export class SignalingServer {
         const webapi = express()
         const server = credentials ? https.createServer(credentials, webapi) : http.createServer();
         const io = new socketio.Server(server, cfg);
-        const sigServer = this
 
-        server.listen(port, host, function() {
-            console.log("WebRTC Listening on port " + port);
+        server.listen(port, host, () => {
+            this.log("WebRTC Listening on port " + port);
         });
 
         /**
@@ -42,148 +182,139 @@ export class SignalingServer {
          * information. After all of that happens, they'll finally be able to complete
          * the peer connection and will be streaming audio/video between eachother.
          */
-        io.sockets.on('connection', function (socket: socketio.Socket) {
-            sigServer.sockets[socket.id] = socket;
+        io.sockets.on('connection', (socket: socketio.Socket) => {
+            this.log("["+ socket.id + "] connection accepted");
 
-            console.log("["+ socket.id + "] connection accepted");
-            socket.on('disconnect', function () {
-                for (let channel in sigServer.getSocketChannel(socket)) {
-                    part(channel);
-                }
-                console.log("["+ socket.id + "] disconnected");
-                delete sigServer.sockets[socket.id];
-                sigServer.socketChannels.delete(socket.id)
-            });
+            this.removeStaleSockets()
+            this.addSocket(socket.id, socket);
 
-
-            socket.on('join', function (config) {
-                console.log("["+ socket.id + "] join ", config);
-                let channel:string = config.channel;
-                let userdata:any = config.userdata;
-
-                if (!(channel in sigServer.allowed_channels)) {
-                    console.log("["+ socket.id + "] ERROR: no channel ", channel);
-                    return;
-                }
-
-                if (channel in sigServer.getSocketChannel(socket)) {
-                    console.log("["+ socket.id + "] ERROR: already joined ", channel);
-                    return;
-                }
+            socket.on('disconnect', () => {
                 
-                for (let c in sigServer.getSocketChannel(socket)) {
-                    part(c)
-                    for (const k of Object.keys(sigServer.sockets)) {
-                        if (sigServer.sockets[k].connected) sigServer.sockets[k].emit("channelchange", c)
-                    }
+                if (!this.socketData.has(socket.id)) {
+                    this.log("["+ socket.id + "] ERROR: no socket to disconnect ", socket.id);
+                    return;
                 }
 
-                if (!(channel in sigServer.channels)) {
-                    sigServer.channels[channel] = {};
+                for (let channel of this.socketData.get(socket.id).channels.keys()) {
+                    this.leaveChannel(socket, channel);
                 }
 
-                sigServer.getSocketChannel(socket)[channel] = channel;
-                for (let id in sigServer.channels[channel]) {
-                    sigServer.channels[channel][id].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false, name: sigServer.socketNames.get(socket.id)});
-                    socket.emit('addPeer', {'peer_id': id, 'should_create_offer': true, name: sigServer.socketNames.get(id)});
-                }
-
-                sigServer.locateSocket(socket)
-                sigServer.channels[channel][socket.id] = socket;
-
-                for (const k of Object.keys(sigServer.sockets)) {
-                    if (sigServer.sockets[k].connected) sigServer.sockets[k].emit("channelchange", channel)
-                }
+                this.log("["+ socket.id + "] disconnected");
+                this.deleteSocket(socket.id)
             });
 
-            socket.on('identify', function (config) {
-                console.log("["+ socket.id + "] identify ", config);
-                if (!sigServer.socketNames.get(config.name) && config.name) {
-                    sigServer.socketNames.set(socket.id, config.name)
+
+            socket.on('join', (config) => {
+                this.log("["+ socket.id + "] join ", config);
+                let channel:string = config.channel;
+
+                if (!this.socketData.has(socket.id)) {
+                    this.log("["+ socket.id + "] ERROR: no socket ", socket.id);
+                    return;
+                }
+
+                if (!this.allowedChannels.has(channel)) {
+                    this.log("["+ socket.id + "] ERROR: no channel ", channel);
+                    return;
+                }
+
+                if (this.socketData.get(socket.id).channels.has(channel)) {
+                    this.log("["+ socket.id + "] ERROR: already joined ", channel);
+                    return;
+                }
+
+                for (let channel of this.socketData.get(socket.id).channels.keys()) {
+                    // remove from existing channels
+                    this.leaveChannel(socket, channel);
+                }
+
+                this.joinToChannel(socket, channel)
+            });
+
+            socket.on('identify', (config) => {
+                this.log("["+ socket.id + "] identify ", config);
+                if (this.socketData.get(socket.id) && config.name) {
+                    this.socketData.get(socket.id).name = config.name
                     socket.emit('identified')
                 }
             });
 
-            socket.on('getchanneldata', function (config:string) {
-                console.log("["+ socket.id + "] getchanneldata ", config);
-                if (sigServer.channels[config]) {
-                    let ret = {
-                        name: config,
-                        users: [] as any
-                    }
-                    let ks = Object.keys(sigServer.channels[config])
-                    for (const k of ks) {
-                        let name = sigServer.socketNames.get(k)
-                        ret.users.push({
-                            name: name,
-                            muted: false
-                        })
-                    }
+            socket.on('getchanneldata', (channel:string) => {
+                this.log("["+ socket.id + "] getchanneldata ", channel);
+                if (this.allowedChannels.has(channel)) {
+                    let ret = this.getChannelData(channel);
                     socket.emit("channeldata", ret)
                 } else {
                     socket.emit("channeldata", {
-                        name: config,
+                        name: channel,
                         users: []
                     })
                 }
             });
 
-            socket.on('locate', function (config) {
-                console.log("["+ socket.id + "] locate ", config);
-                sigServer.locateSocket(socket);
+            socket.on('locate', (config) => {
+                this.log("["+ socket.id + "] locate ");
+                this.locateSocket(socket);
             });
 
-            function part(channel: string) {
-                console.log("["+ socket.id + "] part ");
+            socket.on('part', (channel: string) => {
+                this.log("["+ socket.id + "] part ", channel);
+                this.leaveChannel(socket, channel)
+            });
 
-                if (!(channel in sigServer.getSocketChannel(socket))) {
-                    console.log("["+ socket.id + "] ERROR: not in ", channel);
-                    return;
-                }
-
-                delete sigServer.socketChannels.get(socket.id)[channel];
-                delete sigServer.channels[channel][socket.id];
-
-                for (const id in sigServer.channels[channel]) {
-                    sigServer.channels[channel][id].emit('removePeer', {'peer_id': socket.id});
-                    socket.emit('removePeer', {'peer_id': id});
-                }
-                sigServer.locateSocket(socket);
-            }
-            socket.on('part', part);
-
-            socket.on('relayICECandidate', function(config) {
+            socket.on('relayICECandidate', (config) => {
                 let peer_id = config.peer_id;
                 let ice_candidate = config.ice_candidate;
-                console.log("["+ socket.id + "] relaying ICE candidate to [" + peer_id + "] ", ice_candidate);
+                this.log("["+ socket.id + "] relaying ICE candidate to [" + peer_id + "] ", ice_candidate);
 
-                if (peer_id in sigServer.sockets) {
-                    sigServer.sockets[peer_id].emit('iceCandidate', {'peer_id': socket.id, 'ice_candidate': ice_candidate});
+                if (this.socketData.has(peer_id)) {
+                    const peer = this.socketData.get(peer_id)
+                    if (peer.socket && peer.socket.connected) {
+                        peer.socket.emit('iceCandidate', {'peer_id': socket.id, 'ice_candidate': ice_candidate});
+                    }
                 }
             });
 
-            socket.on('relaySessionDescription', function(config) {
+            socket.on('relaySessionDescription', (config) => {
                 let peer_id = config.peer_id;
                 let session_description = config.session_description;
-                console.log("["+ socket.id + "] relaying session description to [" + peer_id + "] ", session_description);
+                this.log("["+ socket.id + "] relaying session description to [" + peer_id + "] ", session_description);
 
-                if (peer_id in sigServer.sockets) {
-                    sigServer.sockets[peer_id].emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
+                if (this.socketData.has(peer_id)) {
+                    const peer = this.socketData.get(peer_id)
+                    if (peer.socket && peer.socket.connected) {
+                        peer.socket.emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
+                    }
                 }
             });
         });
     }
 
-    getSocketChannel(s:socketio.Socket) {
-        let sc = this.socketChannels.get(s.id)
-        if (!sc) {
-            this.socketChannels.set(s.id, {})
+    locateSocket = (socket:socketio.Socket) => {
+        const sd = this.socketData.get(socket.id)
+        if (sd) {
+            const socket_channels = [...sd.channels.keys()].join(",");
+            this.log("["+ socket.id + "] located ", socket_channels);
+
+            const cdatas: { [k:string]:{name:string}} = {}
+            for (const k of sd.channels.keys()) {
+                cdatas[k] = this.getChannelData(k)
+            }
+            socket.emit('located', { channels: socket_channels, chanelDatas: cdatas });
         }
-        return this.socketChannels.get(s.id)
     }
 
-    locateSocket(socket:socketio.Socket) {
-        let socket_channels = Object.getOwnPropertyNames(this.getSocketChannel(socket)).join(",");
-        socket.emit('located', { channels: socket_channels });
+    private getChannelData(channel: string) {
+        let ret = {
+            name: channel,
+            users: [] as {name:string}[]
+        };
+        const cd = this.allowedChannels.get(channel);
+        for (const sd of cd.sockets.values()) {
+            ret.users.push({
+                name: sd.name
+            });
+        }
+        return ret;
     }
 }
