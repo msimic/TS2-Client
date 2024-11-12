@@ -390,7 +390,7 @@ export class WebRTC {
         this.signaling_socket.on('connect_error', (err) => {
             this.connectionError = true
             this.Disconnect()
-             console.error('Initial connection failed:', err.message);
+             console.error('RTC Initial connection failed:', err.message);
         });
 
         this.signaling_socket.on("channelchange", (channel:string) => {
@@ -409,7 +409,7 @@ export class WebRTC {
             this.EvtConnected.fire(this.userName)
         })
         this.signaling_socket.on('connect', async () => {
-            console.log("Connected to signaling server");
+            console.log("RTC Connected to signaling server");
             await this.setup_local_media(this.userName);
             if (this.userName) this.identify(this.userName);
         });
@@ -425,7 +425,7 @@ export class WebRTC {
             }
         })
         this.signaling_socket.on('disconnect', () => {
-            console.log("Disconnected from signaling server");
+            console.log("RTC Disconnected from signaling server");
             /* Tear down all of our peer connections and remove all the
             * media divs when we disconnect */
             this.Disconnect()
@@ -437,15 +437,15 @@ export class WebRTC {
         * connections in the network). 
         */
         this.signaling_socket.on('addPeer', (config) => {
-            console.log('Signaling server said to add peer:', config);
+            console.log('RTC Signaling server said to add peer:', config);
             let peer_id = config.peer_id;
             if (!peer_id) {
-                console.log("Got null peerid ");
+                console.error("RTC Got null peerid ");
                 return;
             }
             if (peer_id in [...this.peers.keys()]) {
                 /* This could happen if the user joins multiple channels where the other peer is also in. */
-                console.log("Already connected to peer ", peer_id);
+                console.log("RTC Already connected to peer ", peer_id);
                 return;
             }
             let rtcPc = RTCPeerConnection as any;
@@ -469,9 +469,9 @@ export class WebRTC {
                 muted: this.globalMutePeers,
                 streamsByType: new Map<"audio/video"|"screenshare", WebRTCStream>()
             });
-            console.log(config.active_channels)
-
+            
             peer_connection.onicecandidate = (event) => {
+                console.log("RTC On ice candidate ", event.candidate)
                 if (event.candidate) {
                     this.signaling_socket.emit('relayICECandidate', {
                         'peer_id': peer_id, 
@@ -483,7 +483,7 @@ export class WebRTC {
                 }
             }
             peer_connection.ontrack = (event) => {
-                console.log("ontrack", event);
+                console.log("RTC ontrack", event);
                 
                 this.addPeerTrack(peer_id, event.streams[0], event.track)
                 
@@ -503,21 +503,21 @@ export class WebRTC {
             * create an offer, then send back an answer 'sessionDescription' to us
             */
             if (config.should_create_offer) {
-                console.log("Creating RTC offer to ", peer_id);
+                console.log("RTC Creating RTC offer to ", peer_id);
                 peer_connection.createOffer().then(
                     (local_description) => { 
-                        console.log("Local offer description is: ", local_description);
+                        console.log("RTC Local offer description is: ", local_description);
                         peer_connection.setLocalDescription(local_description).then(
                             () => { 
                                 this.signaling_socket.emit('relaySessionDescription', 
                                     {'peer_id': peer_id, 'session_description': local_description});
-                                console.log("Offer setLocalDescription succeeded"); 
+                                console.log("RTC Offer setLocalDescription succeeded"); 
                             }).catch(
-                            () => { console.log("Offer setLocalDescription failed!"); }
+                            () => { console.error("RTC Offer setLocalDescription failed!"); }
                         );
                     }).catch(
                     (error) => {
-                        console.log("Error sending offer: ", error);
+                        console.error("RTC Error sending offer: ", error);
                     });
             }
 
@@ -531,23 +531,22 @@ export class WebRTC {
          * "offer"), then the answerer sends one back (with type "answer").  
          */
         this.signaling_socket.on('sessionDescription', (config) => {
-            console.log('Remote description received: ', config);
+            console.log('RTC Remote description received: ', config);
             let peer_id = config.peer_id;
             let peerData = this.peers.get(peer_id)
             if (!peerData) return
             let peer = this.peers.get(peer_id).connection;
             let remote_description = config.session_description;
-            console.log(config.session_description);
-
+            
             let desc = new RTCSessionDescription(remote_description);
             peer.setRemoteDescription(desc) 
                 .then(() => {
-                    console.log("setRemoteDescription succeeded");
+                    console.log("RTC setRemoteDescription succeeded");
                     if (remote_description.type == "offer") {
-                        console.log("Creating answer");
+                        console.log("RTC Creating answer");
                         peer.createAnswer().then(
                             (local_description) => {
-                                console.log("Answer description is: ", local_description);
+                                console.log("RTC Answer description is: ", local_description);
                                 peer.setLocalDescription(local_description).then(
                                     () => {
                                         if (!peerData.isRemoteDescriptionSet && peerData.iceCandidateQueue.length) {
@@ -555,27 +554,28 @@ export class WebRTC {
                                             const queue = peerData.iceCandidateQueue
                                             while (queue.length) {
                                                 const candidate = queue.shift();
+                                                console.log("RTC Adding queued ice candidate ", candidate)
                                                 peer.addIceCandidate(new RTCIceCandidate(candidate))
-                                                    .catch(e => { console.error('Error adding queued ICE candidate:', e); });
+                                                    .catch(e => { console.error('RTC Error adding queued ICE candidate:', e); });
                                             }
                                         }
                                         this.signaling_socket.emit('relaySessionDescription', 
                                             {'peer_id': peer_id, 'session_description': local_description});
-                                        console.log("Answer setLocalDescription succeeded");
+                                        console.log("RTC Answer setLocalDescription succeeded");
                                     }).catch(
-                                    () => { console.log("Answer setLocalDescription failed!"); }
+                                    () => { console.error("RTC Answer setLocalDescription failed!"); }
                                 )
                             }).catch(
                             (error) => {
-                                console.log("Error creating answer: ", error);
+                                console.error("RTC Error creating answer: ", error);
                                 console.log(peer);
                             })
                     }
                 }).catch(
                 (error) => {
-                    console.log("setRemoteDescription error: ", error);
+                    console.error("RTC setRemoteDescription error: ", error);
                 })
-            console.log("Description Object: ", desc);
+            console.log("RTC Description Object: ", desc);
         });
         /**
          * The offerer will send a number of ICE Candidate blobs to the answerer so they 
@@ -587,13 +587,15 @@ export class WebRTC {
             let peer = this.peers.get(config.peer_id).connection;
             let ice_candidate = config.ice_candidate;
             if (!ice_candidate) {
-                console.log("Run out of ice candidates")
+                console.log("RTC Run out of ice candidates")
             } else {
                 if (peer.remoteDescription && peer.remoteDescription.type) {
-                        // If the remote description is set, add the candidate immediately
-                        // Queue the candidate until the remote description is set 
+                    // If the remote description is set, add the candidate immediately
+                    // Queue the candidate until the remote description is set 
+                    console.log("RTC Adding ice candidate immediately ", ice_candidate)
                     peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
                 } else {
+                    console.log("RTC Queueing ice candidate ", ice_candidate)
                     peerData.iceCandidateQueue.push(ice_candidate);
                 }
             }
@@ -611,7 +613,7 @@ export class WebRTC {
          * all the peer sessions.
          */
         this.signaling_socket.on('removePeer', (config) => {
-            console.log('Signaling server said to remove peer:', config);
+            console.log('RTC Signaling server said to remove peer:', config);
             let peer_id = config.peer_id;
             let name = this.peers.get(peer_id)?.name
             this.removePeer(peer_id)
@@ -864,6 +866,7 @@ export class WebRTC {
         if (!this.signaling_socket) {
             return;
         }
+        console.log("RTC Request join channel " + channel)
         this.signaling_socket.emit('join', {"channel": channel, "userdata": userdata});
     }
 
@@ -877,14 +880,14 @@ export class WebRTC {
         }
         /* Ask user for permission to use the computers microphone and/or camera, 
          * attach it to an <audio> or <video> tag if they give us access. */
-        console.log("Requesting access to local audio / video inputs");
+        console.log("RTC Requesting access to local audio / video inputs");
     
         let userStream:MediaStream
 
         userStream = await this.getLocalMicrophoneStream();
         
         if (userStream) {
-            console.log("Access granted to audio/video");
+            console.log("RTC Access granted to audio/video");
             this.addLocalStream("audio/video", userStream);
         }
     }
@@ -911,7 +914,7 @@ export class WebRTC {
             );
             this.localMedia.mediaAllowed = true;
         } catch (err) {
-            console.log("Access denied for audio/video");
+            console.log("RTC Access denied for audio/video");
             this.microphoneEnabled = false;
             this.localMedia.mediaAllowed = false;
             this.Disconnect();
@@ -919,8 +922,14 @@ export class WebRTC {
         return userStream;
     }
 
-    signalVoiceActivity(peer_id:string) {
-
+    signalVoiceActivity(peerId:string) {
+        if ((peerId && !this.peers.get(peerId)?.muted)) {
+            //console.log("RTC Voice activity peer " + peerId)
+            this.EvtVoiceActivity.fire(peerId);
+        } else if (peerId == null && this.IsMicEnabled()) {
+            //console.log("RTC Voice activity local")
+            this.EvtVoiceActivity.fire(null);
+        }
     }
 
     addLocalStream(type:"audio/video"|"screenshare", stream:MediaStream) {
@@ -1013,13 +1022,7 @@ export class WebRTC {
             const averageCurrent = sumcurrent / (dataArray.length);
 
             if (averageCurrent > average && average > this.voiceActivityThreshold) { // Adjust the threshold as needed
-                if ((peerId && !this.peers.get(peerId)?.muted)) {
-                    console.log("Voice activity peer " + peerId)
-                    this.EvtVoiceActivity.fire(peerId);
-                } else if (peerId == null && this.IsMicEnabled()) {
-                    console.log("Voice activity local")
-                    this.EvtVoiceActivity.fire(null);
-                }
+                this.signalVoiceActivity(peerId)
             }
 
             setTimeout(detectVoiceActivity, 150);

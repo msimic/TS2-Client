@@ -206,14 +206,14 @@ export class VoiceWin implements IBaseWindow {
                 console.log("Authenticated for voice " + name)
                 if (await this.enableUIOrShowMessage()) {
                     if (this.autoconnect && this.autoconnectRoom) {
-                        this.rtc.Connect()
+                        if (this.audible) this.rtc.Connect()
                     } else if (this.requestedRoom) {
-                        this.Connect(this.requestedRoom)
+                        if (this.audible) this.Connect(this.requestedRoom)
                     }
                 }
             } else {
                 if (this.rtc.isConnected()) {
-                    this.rtc.Leave()
+                    if (this.audible) this.rtc.Leave()
                 }
                 await this.enableUIOrShowMessage()
             }
@@ -493,13 +493,15 @@ export class VoiceWin implements IBaseWindow {
         (<any>this.$win).jqxWindow("setTitle", "Voice chat [Non connesso]")
         this.Disconnect(true)
         this.refreshUI()
-        if (this.rtc.didAllowMedia()) {
-            Notification.Show("Disconnesso da Voice chat")
-            this.NotifyText("Disconnessione da canali audio")
-        } else if (this.rtc.didConnectionFail()) {
-            Notification.Show("Il server del Voice chat non e' raggiungibile")    
-        } else {
-            Notification.Show("Impossibile connettersi al Voice chat senza consentire l'uso del microfono")    
+        if (this.audible) {
+            if (this.rtc.didAllowMedia()) {
+                Notification.Show("Disconnesso da Voice chat")
+                this.NotifyText("Disconnessione da canali audio")
+            } else if (this.rtc.didConnectionFail()) {
+                Notification.Show("Il server del Voice chat non e' raggiungibile")    
+            } else {
+                Notification.Show("Impossibile connettersi al Voice chat senza consentire l'uso del microfono")    
+            }
         }
         this.enableUIOrShowMessage()
     }
@@ -531,8 +533,11 @@ export class VoiceWin implements IBaseWindow {
         if (d != this.room) {
             this.room = d
             this.refreshChannelData();
-            this.NotifyText("Connesso a canale audio '" + d + "'")
-            if (this.audible) await VoiceWin.playSound("connect-voice.ogg");
+            if (this.audible) 
+            {
+                this.NotifyText("Connesso a canale audio '" + d + "'")
+                await VoiceWin.playSound("connect-voice.ogg");
+            }
         }
     }
 
