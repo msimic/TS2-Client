@@ -47,6 +47,8 @@ export interface WebRTCTrack {
 export interface WebRTCStream {
     type: "audio/video" | "screenshare";
     stream: MediaStream;
+    audioContext: AudioContext;
+    audioAnalizer: AnalyserNode;
     tracksByType: Map<"audio" | "video", WebRTCTrack[]>;
     audioSourceNode: MediaStreamAudioSourceNode;
 }
@@ -61,20 +63,6 @@ export type ActiveChannels = {
 };
 
 export class WebRTC {
-    private _audioContext: AudioContext = null;
-    public get audioContext(): AudioContext {
-        return this._audioContext;
-    }
-    public set audioContext(value: AudioContext) {
-        this._audioContext = value;
-    }
-    private _audioAnalyser: AnalyserNode = null;
-    public get audioAnalyser(): AnalyserNode {
-        return this._audioAnalyser;
-    }
-    public set audioAnalyser(value: AnalyserNode) {
-        this._audioAnalyser = value;
-    }
     defaultChannel = channels[0];
     globalMutePeers = false;
     voiceActivityThreshold = 40
@@ -108,14 +96,13 @@ export class WebRTC {
     public EvtDisconnected = new EventHook<boolean>();
 
     constructor(private host:string, private port:number, private peerContainer:HTMLElement, private localContainer:HTMLElement) {
-        window.addEventListener("mouseup", this.createAudioContext)
+        
     }
 
-    createAudioContext = () => {
-        window.removeEventListener("mouseup", this.createAudioContext)
-        this.audioContext = new window.AudioContext()
-        this.audioAnalyser = this.audioContext.createAnalyser()
-        this.audioAnalyser.fftSize = 32
+    createAudioContext = (stream:WebRTCStream) => {
+        stream.audioContext = new window.AudioContext()
+        stream.audioAnalizer = stream.audioContext.createAnalyser()
+        stream.audioAnalizer.fftSize = 32
     }
 
     Join(channel?:string) {
@@ -294,6 +281,7 @@ export class WebRTC {
                     l.mediaPlayer.remove()
                 })
             }
+            ls.audioSourceNode = null
         }
         this.localMedia.streamsByType.clear(); 
     }
@@ -792,7 +780,9 @@ export class WebRTC {
                 tracksByType: new Map<"audio"|"video", WebRTCTrack[]>(),
                 type: streamType,
                 stream: stream,
-                audioSourceNode: null
+                audioSourceNode: null,
+                audioContext: null,
+                audioAnalizer: null
             }
             peer.streamsByType.set(streamType, str)
         }
@@ -942,11 +932,19 @@ export class WebRTC {
             stream: stream,
             type: type,
             tracksByType: new Map<"audio"|"video", WebRTCTrack[]>(),
-            audioSourceNode: null
+            audioSourceNode: null,
+            audioContext: null,
+            audioAnalizer: null
         }
 
         this.setupAudioAnalyzer(localStream, null);
 
+        if (this.localMedia.streamsByType.get(type)) {
+            this.localMedia.streamsByType.get(type).audioSourceNode = null
+            for (const st of this.localMedia.streamsByType.get(type).tracksByType.get("audio")) {
+                this.removeLocalTrack(type, st.type, st.track)
+            }
+        }
         this.localMedia.streamsByType.set(type, localStream)
 
         let tracks = [...videoTracks, ...audioTracks]
@@ -981,13 +979,14 @@ export class WebRTC {
         
         if (rtcStream.audioSourceNode) return;
 
-        const source = this.audioContext.createMediaStreamSource(rtcStream.stream);
-        source.connect(this.audioAnalyser);
+        this.createAudioContext(rtcStream)
+        const source = rtcStream.audioContext.createMediaStreamSource(rtcStream.stream);
+        source.connect(rtcStream.audioAnalizer);
         rtcStream.audioSourceNode = source;
 
         const bufferLength = 3;
-        const dataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
-        const circularBuffer = new Array(bufferLength).fill(new Uint8Array(this.audioAnalyser.frequencyBinCount));
+        const dataArray = new Uint8Array(rtcStream.audioAnalizer.frequencyBinCount);
+        const circularBuffer = new Array(bufferLength).fill(new Uint8Array(rtcStream.audioAnalizer.frequencyBinCount));
         let bufferIndex = 0;
 
         const detectVoiceActivity = () => {
@@ -995,7 +994,7 @@ export class WebRTC {
                 source.disconnect()
                 return;
             }
-            this.audioAnalyser.getByteFrequencyData(dataArray);
+            rtcStream.audioAnalizer.getByteFrequencyData(dataArray);
             circularBuffer[bufferIndex] = new Uint8Array(dataArray);
             
             let sum = 0; let sumcurrent = 0

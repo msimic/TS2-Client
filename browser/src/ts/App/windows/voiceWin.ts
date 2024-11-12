@@ -155,10 +155,12 @@ export class VoiceWin implements IBaseWindow {
             if (this.$afk.prop("checked")) {
                 localStorage.setItem("voiceDisconnectOnAfk", "true")
             } else {
-                localStorage.removeItem("voiceDisconnectOnAfk")
+                localStorage.setItem("voiceDisconnectOnAfk", "false")
             }
         })
-        this.$afk.prop("checked", localStorage.getItem("voiceDisconnectOnAfk") == undefined ? true : localStorage.getItem("voiceDisconnectOnAfk"))
+        let shouldAfk:boolean|string = localStorage.getItem("voiceDisconnectOnAfk")
+        shouldAfk = shouldAfk == undefined ? true : (shouldAfk == "true")
+        this.$afk.prop("checked", shouldAfk)
         
         this.$autoconnect = $(".autoconnect", this.$win)
         this.$autoconnect.prop("checked", this.autoconnect)

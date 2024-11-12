@@ -143,7 +143,6 @@ export class SignalingServer {
 
                 delete sigServer.socketChannels.get(socket.id)[channel];
                 delete sigServer.channels[channel][socket.id];
-                sigServer.socketNames.delete(socket.id)
 
                 for (const id in sigServer.channels[channel]) {
                     sigServer.channels[channel][id].emit('removePeer', {'peer_id': socket.id});
