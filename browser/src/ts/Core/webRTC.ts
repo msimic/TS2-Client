@@ -1,4 +1,3 @@
-import { Stream } from 'stream';
 import { EventHook } from '../Core/event';
 import * as ioc from "socket.io-client";
 
@@ -61,22 +60,23 @@ export type Channels = {
 };
 
 export class WebRTC {
-    defaultChannel = channels[0];
-    globalMutePeers = false;
-    voiceActivityThreshold = 40
-
-    signaling_socket:ioc.Socket = null;   /* our socket.io connection to our webserver */
+    private defaultChannel = channels[0];
+    private globalMutePeers = false;
+    private voiceActivityThreshold = 40
+    private serverConnection:ioc.Socket = null;
     private localMedia: LocalMedia = {
         streamsByType: new Map<"audio/video"|"screenshare", WebRTCStream>,
         mediaAllowed: false
     }
-    peers = new Map<string, PeerData>();                /* keep track of our peer connections, indexed by peer_id (aka socket.io id) */
-    active_channels:Channels = { };
-    all_channels:Channels = {}; 
+    private peers = new Map<string, PeerData>(); // key: socketid
+    private active_channels:Channels = { }; // key:channel name
+    private all_channels:Channels = { };  // key:channel name
     public userName:string = null;
-    autojoin: boolean = false;
-    microphoneEnabled = false
-    webcamEnabled = false
+    private autojoin: boolean = false;
+    private microphoneEnabled = false
+    private webcamEnabled = false
+    private connectionError: boolean = false
+
     private _lastChannel: string = null;
     public get lastChannel(): string {
         return this._lastChannel;
@@ -85,8 +85,7 @@ export class WebRTC {
         this._lastChannel = value;
         this.EvtRequestingChannel.fire(value)
     }
-    connectionError: boolean = false
-
+    
     public EvtRequestingChannel = new EventHook<string>();
     public EvtVoiceActivity = new EventHook<string>();
     public EvtAuthenticated = new EventHook<string>();
@@ -102,25 +101,25 @@ export class WebRTC {
     public EvtConnected = new EventHook<string>();
     public EvtDisconnected = new EventHook<boolean>();
 
-    constructor(private host:string, private port:number, private peerContainer:HTMLElement, private localContainer:HTMLElement) {
-        
+    constructor(private host:string,
+                private port:number,
+                private peerContainer:HTMLElement,
+                private localContainer:HTMLElement) {
     }
 
-    getChannelDatas() {
+    GetChannelDatas() {
         return this.all_channels
     }
 
-    createAudioContext = (stream:WebRTCStream) => {
-        stream.audioContext = new window.AudioContext()
-        stream.audioAnalizer = stream.audioContext.createAnalyser()
-        stream.audioAnalizer.fftSize = 32
+    GetPeers() {
+        return this.peers
     }
 
     Join(channel?:string) {
         channel = channel || this.lastChannel || this.defaultChannel
-        if ((channels.indexOf(channel)<0) || !this.userName || !this.signaling_socket) return
+        if ((channels.indexOf(channel)<0) || !this.userName || !this.serverConnection) return
         this.lastChannel = channel
-        this.join_chat_channel(channel, {})
+        this.requestJoinChannel(channel, {})
     }
 
     IsMicEnabled() {
@@ -129,6 +128,7 @@ export class WebRTC {
         
         return true
     }
+
     ToggleMicrophone(val:boolean) {
         const stream:MediaStream = this.localMedia.streamsByType.get("audio/video")?.stream
         if (!stream) return
@@ -144,7 +144,7 @@ export class WebRTC {
         this.globalMutePeers = !val
         let ks = [...this.peers.keys()]
         for (const k of ks) {
-            this.togglePeerAudio(k, val)
+            this.TogglePeerAudio(k, val)
         }
         this.EvtAudioChanged.fire(val)
     }
@@ -161,28 +161,28 @@ export class WebRTC {
         this.webcamEnabled = val
         let ks = [...this.peers.keys()]
         for (const k of ks) {
-            this.togglePeerVideo(k, val)
+            this.TogglePeerVideo(k, val)
         }
     }
 
     Leave() {
-        if (!this.userName || !this.signaling_socket) return
+        if (!this.userName || !this.serverConnection) return
         Object.keys(this.active_channels).forEach(k => {
-            this.part_chat_channel(k)
+            this.requestLeaveChannel(k)
             delete this.active_channels[k]
         })
         this.Disconnect()
     }
 
     Connect() {
-        this.init()
+        this.initServerConnection()
     }
 
-    getChannels():string[] {
+    GetAllowedChannels():string[] {
         return channels
     }
 
-    async isMicAllowed(noprompt:boolean) {
+    async IsMicAllowed(noprompt:boolean) {
         let ok = false
 
         if (!navigator.mediaDevices ||
@@ -197,7 +197,7 @@ export class WebRTC {
         })
         ok = pm.state == "granted"
         if (ok && !noprompt) try {
-            await this.tryGetMicrophone()
+            await this.TryGetMicrophone()
         } catch {
             ok = false
         }
@@ -205,7 +205,7 @@ export class WebRTC {
         return ok
     }
 
-    async isCameraAllowed(noprompt:boolean) {
+    async IsCameraAllowed(noprompt:boolean) {
         let ok = false
 
         if (!navigator.mediaDevices ||
@@ -220,7 +220,7 @@ export class WebRTC {
         })
         ok = pm.state == "granted"
         if (ok && !noprompt) try {
-            await this.tryGetWebcam()    
+            await this.TryGetWebcam()    
         } catch {
             ok = false
         }
@@ -228,21 +228,202 @@ export class WebRTC {
         return ok
     }
 
-    isConnected() {
-        return !!(this.signaling_socket &&
-               this.signaling_socket.connected &&
+    IsConnected() {
+        return !!(this.serverConnection &&
+               this.serverConnection.connected &&
                this.localMedia.mediaAllowed &&
                this.localMedia.streamsByType.size)
     }
 
-    getChannelData(channel:string) {
-        if (!this.signaling_socket) {
+    GetChannelData(channel:string) {
+        if (!this.serverConnection) {
             return
         }
-        this.signaling_socket.emit("getchanneldata", channel)
+        this.serverConnection.emit("getchanneldata", channel)
     }
 
-    removePeerTrack(peer:PeerData, stream: WebRTCStream, track: WebRTCTrack) {
+    Disconnect() {
+        this.clearLocalStreams()
+        this.active_channels = {};
+        this.removePeers()
+        if (!this.serverConnection) return
+        const socket = this.serverConnection
+        this.serverConnection = null;
+        socket.offAny()
+        socket.disconnect()
+        this.EvtDisconnected.fire(true)
+    }
+
+    DidConnectionFail() {
+        return this.connectionError
+    }
+
+    DidAllowMedia() {
+        return this.localMedia.mediaAllowed
+    }
+
+    CheckAuthentication() {
+        this.EvtAuthenticated.fire(this.userName)
+        return !!this.userName
+    }
+
+    GetUsername() {
+        return this.userName
+    }
+
+    SetUsername(name:string) {
+        if (name) {
+            this.userName = name
+            this.EvtAuthenticated.fire(name)
+        } else {
+            this.Leave()
+            this.userName = null
+            this.EvtAuthenticated.fire(null)
+        }
+    }
+
+    async TryGetMicrophone() {
+        let ret:MediaStream;
+        try {
+            ret = await navigator.mediaDevices.getUserMedia({"audio":true, "video":false});
+        } catch {
+            return false
+        }
+        if (ret) {
+            // so the browser doesn't show the icon indefinitely after we try
+            ret.getAudioTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+            ret.getVideoTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+            ret.getTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+        }
+        return ret
+    }
+
+    async TryGetWebcam() {
+        let ret:MediaStream;
+        try {
+            ret = await navigator.mediaDevices.getUserMedia({"audio":false, "video":true});
+        } catch {
+            return false
+        }
+        if (ret) {
+            // so the browser doesn't show the icon indefinitely after we try
+            ret.getAudioTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+            ret.getVideoTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+            ret.getTracks().forEach(t => {
+                t.stop()
+                ret.removeTrack(t) 
+            })
+        }
+        return ret
+    }
+
+    public IsPeerMuted(peer:string) {
+        let p = this.peers.get(peer)
+        return p.muted || false
+    }
+
+    public HasPeer(peer:string) {
+        return this.peers.has(peer)
+    }
+
+    public GetPeerVolume(peer:string) {
+        let p = this.peers.get(peer)
+        return p.volume || 0
+    }
+
+    public SetPeerMuted(peer:string, muted?:boolean) {
+        let p = this.peers.get(peer)
+        p.muted = muted ?? !p.muted
+
+        const ps = p.streamsByType.get("audio/video")
+        if (!ps) return
+
+        const as = ps.tracksByType.get("audio")
+        if (!as) return
+        as.forEach(at => {
+            at.mediaPlayer.muted = p.muted
+            at.mediaPlayer.volume = p.muted ? 0 : p.volume
+        })
+    }
+
+    public SetPeerVolume(peer:string, vol:number) {
+        let p = this.peers.get(peer)
+
+        let nv = vol
+        if (nv < 0) {
+            nv = 0
+        } else if (nv > 1) {
+            nv = 1
+        }
+        p.volume = nv
+        p.muted = nv > 0 ? false : true
+        
+        const ps = p.streamsByType.get("audio/video")
+        if (!ps) return
+
+        const as = ps.tracksByType.get("audio")
+        if (!as) return
+        as.forEach(at => {
+            at.mediaPlayer.volume = nv
+            at.mediaPlayer.muted = p.muted
+        })
+    }
+    
+    TogglePeerVideo(peer_id:string, val:boolean) {
+        const peer = this.peers.get(peer_id)
+        if (!peer) return
+
+        const avStream = peer.streamsByType.get("audio/video")
+
+        if (!avStream) return
+        peer.videoEnabled = val
+        const videoTracks = avStream.tracksByType.get("video") || []
+        for (const track of videoTracks) {
+            track.track.enabled = val
+        }
+    }
+    
+    IsPeerAudioEnabled(peer_id:string) {
+        const peer = this.peers.get(peer_id);
+        if (!peer) return false
+        return peer.audioEnabled
+    }
+
+    TogglePeerAudio(peer_id:string, val:boolean) {
+        const peer = this.peers.get(peer_id);
+        if (!peer) return
+        const str = peer.streamsByType.get("audio/video")
+        if (!str) return
+        const tracks = str.tracksByType.get("audio")
+        if (!tracks || !tracks.length) return
+        peer.audioEnabled = val
+        tracks.forEach(t => {
+            t.track.enabled = val
+        })
+    }
+    
+    private createAudioContext = (stream:WebRTCStream) => {
+        stream.audioContext = new window.AudioContext()
+        stream.audioAnalizer = stream.audioContext.createAnalyser()
+        stream.audioAnalizer.fftSize = 32
+    }
+
+    private removePeerTrack(peer:PeerData, stream: WebRTCStream, track: WebRTCTrack) {
         const tracks = stream.tracksByType.get(track.type)
         if (!tracks) return
         const ti = tracks.indexOf(track)
@@ -259,7 +440,7 @@ export class WebRTC {
         }
     }
 
-    removePeer(peer_id:string) {
+    private removePeer(peer_id:string) {
         const peer = this.peers.get(peer_id)
         if (!peer) return
 
@@ -276,15 +457,15 @@ export class WebRTC {
         this.peers.delete(peer_id)
     }
 
-    removePeers() {
-        for (const p1 of [...this.peers.keys()]) {
-            this.removePeer(p1)
+    private removePeers() {
+        for (const peerId of [...this.peers.keys()]) {
+            this.removePeer(peerId)
         }
         this.peers.clear();  
         this.peerContainer.replaceChildren()           
     }
 
-    clearLocalStreams() {
+    private clearLocalStreams() {
         for (const ls of this.localMedia.streamsByType.values()) {
             for (const lt of ls.tracksByType.values()) {
                 lt.forEach(l => {
@@ -296,94 +477,16 @@ export class WebRTC {
         }
         this.localMedia.streamsByType.clear(); 
     }
-    Disconnect() {
-        this.clearLocalStreams()
-        this.active_channels = {};
-        this.removePeers()
-        if (!this.signaling_socket) return
-        const socket = this.signaling_socket
-        this.signaling_socket = null;
-        socket.offAny()
-        socket.disconnect()
-        this.EvtDisconnected.fire(true)
-    }
 
-    didConnectionFail() {
-        return this.connectionError
-    }
-    didAllowMedia() {
-        return this.localMedia.mediaAllowed
-    }
-    checkAutentication() {
-        this.EvtAuthenticated.fire(this.userName)
-        return !!this.userName
-    }
+    private initServerConnection() {
 
-    setUsername(name:string) {
-        if (name) {
-            this.userName = name
-            this.EvtAuthenticated.fire(name)
-        } else {
-            this.Leave()
-            this.userName = null
-            this.EvtAuthenticated.fire(null)
-        }
-    }
-
-    async tryGetMicrophone() {
-        let ret:MediaStream;
-        try {
-            ret = await navigator.mediaDevices.getUserMedia({"audio":true, "video":false});
-        } catch {
-            return false
-        }
-        if (ret) {
-            ret.getAudioTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-            ret.getVideoTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-            ret.getTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-        }
-        return ret
-    }
-
-    async tryGetWebcam() {
-        let ret:MediaStream;
-        try {
-            ret = await navigator.mediaDevices.getUserMedia({"audio":false, "video":true});
-        } catch {
-            return false
-        }
-        if (ret) {
-            ret.getAudioTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-            ret.getVideoTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-            ret.getTracks().forEach(t => {
-                t.stop()
-                ret.removeTrack(t) 
-            })
-        }
-        return ret
-    }
-
-    init() {
-        if (this.signaling_socket && this.signaling_socket.connected) {
+        if (this.serverConnection && this.serverConnection.connected) {
             return
         }
+
         this.connectionError = false
         this.removePeers()
+
         let cfg = <any>{
             serveClient: false,
             pingTimeout: 120000,
@@ -396,19 +499,21 @@ export class WebRTC {
                 credentials: true
               }
         }
-        this.signaling_socket = ioc.io(this.host + ":" + this.port, cfg);
+        this.serverConnection = ioc.io(this.host + ":" + this.port, cfg);
 
-        this.signaling_socket.on('connect_error', (err) => {
+        this.serverConnection.on('connect_error', (err) => {
             this.connectionError = true
             this.Disconnect()
              console.error('RTC Initial connection failed:', err.message);
         });
 
-        this.signaling_socket.on("channelchange", (channel:string) => {
+        this.serverConnection.on("channelchange", (channel:string) => {
+            // a channel changed, app can refresh ui
             this.EvtChannelChange.fire(channel)
         })
 
-        this.signaling_socket.on("channeldata", (cd:ChannelData) => {
+        this.serverConnection.on("channeldata", (cd:ChannelData) => {
+            // remember for this channel the last state of users
             this.all_channels[cd.name] = {
                 name: cd.name,
                 users: cd.users
@@ -416,19 +521,18 @@ export class WebRTC {
             this.EvtNewChannelData.fire(cd)
         })
 
-        this.signaling_socket.on("identified", async (data) => {
-            /* once the user has given us access to their
-            * microphone/camcorder, join the channel and start peering up */
+        this.serverConnection.on("identified", async (data) => {
+            /* when logged we could autojoin */
             if (this.localMedia.mediaAllowed && this.autojoin)
                 this.Join();
             this.EvtConnected.fire(this.userName)
         })
-        this.signaling_socket.on('connect', async () => {
+        this.serverConnection.on('connect', async () => {
             console.log("RTC Connected to signaling server");
-            await this.setup_local_media(this.userName);
-            if (this.userName) this.identify(this.userName);
+            await this.setupLocalMedia(this.userName);
+            if (this.userName) this.requestIdentify(this.userName);
         });
-        this.signaling_socket.on('located', (data) => {
+        this.serverConnection.on('located', (data) => {
             if (data.channels) {
                 const newChannels = Object.fromEntries((data.channels as string).split(",").map((value:string, index:number) => [value, {name: value, users: [] as UserData[]}]))
                 if (data.cdatas) {
@@ -449,7 +553,7 @@ export class WebRTC {
                 this.EvtExitedChannel.fire("")
             }
         })
-        this.signaling_socket.on('disconnect', () => {
+        this.serverConnection.on('disconnect', () => {
             console.log("RTC Disconnected from signaling server");
             /* Tear down all of our peer connections and remove all the
             * media divs when we disconnect */
@@ -461,7 +565,7 @@ export class WebRTC {
         * in the channel you will connect directly to the other 5, so there will be a total of 15 
         * connections in the network). 
         */
-        this.signaling_socket.on('addPeer', (config) => {
+        this.serverConnection.on('addPeer', (config) => {
             console.log('RTC Signaling server said to add peer:', config);
             let peer_id = config.peer_id;
             if (!peer_id) {
@@ -473,15 +577,17 @@ export class WebRTC {
                 console.log("RTC Already connected to peer ", peer_id);
                 return;
             }
+
             let rtcPc = RTCPeerConnection as any;
             let peer_connection:RTCPeerConnection = new rtcPc(
                 {"iceServers": ICE_SERVERS},
                 {"optional": [
                     {"DtlsSrtpKeyAgreement": true}
                 ]} /* this will no longer be needed by chrome
-                    * eventually (supposedly), but is necessary 
+                    * eventually, but is necessary 
                     * for now to get firefox to talk to chrome */
             );
+
             this.peers.set(peer_id, {
                 id: peer_id,
                 name: config.name,
@@ -498,7 +604,7 @@ export class WebRTC {
             peer_connection.onicecandidate = (event) => {
                 console.log("RTC On ice candidate ", event.candidate)
                 if (event.candidate) {
-                    this.signaling_socket.emit('relayICECandidate', {
+                    this.serverConnection.emit('relayICECandidate', {
                         'peer_id': peer_id, 
                         'ice_candidate': {
                             'sdpMLineIndex': event.candidate.sdpMLineIndex,
@@ -507,13 +613,11 @@ export class WebRTC {
                     });
                 }
             }
+
             peer_connection.ontrack = (event) => {
                 console.log("RTC ontrack", event);
-                
                 this.addPeerTrack(peer_id, event.streams[0], event.track)
-                
             }
-
 
             /* Add our local stream */            
             for (const ls of this.localMedia.streamsByType.values()) {
@@ -534,7 +638,7 @@ export class WebRTC {
                         console.log("RTC Local offer description is: ", local_description);
                         peer_connection.setLocalDescription(local_description).then(
                             () => { 
-                                this.signaling_socket.emit('relaySessionDescription', 
+                                this.serverConnection.emit('relaySessionDescription', 
                                     {'peer_id': peer_id, 'session_description': local_description});
                                 console.log("RTC Offer setLocalDescription succeeded"); 
                             }).catch(
@@ -555,7 +659,7 @@ export class WebRTC {
          * the 'offerer' sends a description to the 'answerer' (with type
          * "offer"), then the answerer sends one back (with type "answer").  
          */
-        this.signaling_socket.on('sessionDescription', (config) => {
+        this.serverConnection.on('sessionDescription', (config) => {
             console.log('RTC Remote description received: ', config);
             let peer_id = config.peer_id;
             let peerData = this.peers.get(peer_id)
@@ -584,7 +688,7 @@ export class WebRTC {
                                                     .catch(e => { console.error('RTC Error adding queued ICE candidate:', e); });
                                             }
                                         }
-                                        this.signaling_socket.emit('relaySessionDescription', 
+                                        this.serverConnection.emit('relaySessionDescription', 
                                             {'peer_id': peer_id, 'session_description': local_description});
                                         console.log("RTC Answer setLocalDescription succeeded");
                                     }).catch(
@@ -603,15 +707,17 @@ export class WebRTC {
             console.log("RTC Description Object: ", desc);
         });
         /**
-         * The offerer will send a number of ICE Candidate blobs to the answerer so they 
+         * The offerer will send a number of ICE Candidate to the answerer so they 
          * can begin trying to find the best path to one another on the net.
          */
-        this.signaling_socket.on('iceCandidate', (config) => {
+        this.serverConnection.on('iceCandidate', (config) => {
             let peerData = this.peers.get(config.peer_id)
             if (!peerData) return
             let peer = this.peers.get(config.peer_id).connection;
             let ice_candidate = config.ice_candidate;
             if (!ice_candidate) {
+                // this is normal at the end but chrome doesnt handle null as per spec
+                // maybe it would be better to try and catch ?
                 console.log("RTC Run out of ice candidates")
             } else {
                 if (peer.remoteDescription && peer.remoteDescription.type) {
@@ -630,24 +736,24 @@ export class WebRTC {
         /**
          * When a user leaves a channel (or is disconnected from the
          * signaling server) everyone will recieve a 'removePeer' message
-         * telling them to trash the media channels they have open for those
+         * telling them to trash the media channels they have open for
          * that peer. If it was this client that left a channel, they'll also
          * receive the removePeers. If this client was disconnected, they
          * wont receive removePeers, but rather the
          * signaling_socket.on('disconnect') code will kick in and tear down
          * all the peer sessions.
          */
-        this.signaling_socket.on('removePeer', (config) => {
+        this.serverConnection.on('removePeer', (config) => {
             console.log('RTC Signaling server said to remove peer:', config);
             let peer_id = config.peer_id;
             let name = this.peers.get(peer_id)?.name
             this.removePeer(peer_id)
             this.EvtPeersLeft.fire(name)
-            this.notifyPeers();
+            this.notifyPeersChanged();
         });
     }
 
-    public addLocalTrack(streamType: "audio/video"|"screenshare",
+    private addLocalTrack(streamType: "audio/video"|"screenshare",
                          trackType: "audio" | "video",
                          track: MediaStreamTrack,
                          element: HTMLMediaElement) {
@@ -674,13 +780,13 @@ export class WebRTC {
             if (pc.connection.addTrack) {
                 pc.connection.addTrack(track, localStream.stream);
               } else {
-                // If you have code listening for negotiationneeded events:
+                // old browsers need to re-negotiate
                 setTimeout(() => pc.connection.dispatchEvent(new Event("negotiationneeded")));
               }
         }
     }
 
-    removeLocalTrack(streamType:"audio/video"|"screenshare",
+    private removeLocalTrack(streamType:"audio/video"|"screenshare",
                      trackType: "audio" | "video",
                      track:MediaStreamTrack) {
         
@@ -689,7 +795,7 @@ export class WebRTC {
 
         let localTracks = localStream.tracksByType.get(trackType);
         if (!localTracks || localTracks.length == 0) {
-            return // doesnt exist
+            return
         }
 
         const ti = localTracks.findIndex(t => t.track == track)
@@ -717,64 +823,17 @@ export class WebRTC {
         for (const pc of this.peers.values()) {
             if (!pc.connection) continue;
             if (pc.connection.removeTrack) {
-                pc.connection.removeTrack(pc.connection.getSenders().find((sender) => sender.track === track));
+                pc.connection.removeTrack(
+                    pc.connection.getSenders().find((sender) => sender.track === track)
+                );
             } else {
-                // If you have code listening for negotiationneeded events:
+                // old browsers need to re-negotiate
                 setTimeout(() => pc.connection.dispatchEvent(new Event("negotiationneeded")));
             }
         }
     }
 
-    public getPeerMuted(peer:string) {
-        let p = this.peers.get(peer)
-        return p.muted || false
-    }
-    public hasPeer(peer:string) {
-        return this.peers.has(peer)
-    }
-    public getPeerVolume(peer:string) {
-        let p = this.peers.get(peer)
-        return p.volume || 0
-    }
-    public setPeerMuted(peer:string, muted?:boolean) {
-        let p = this.peers.get(peer)
-        p.muted = muted ?? !p.muted
-
-        const ps = p.streamsByType.get("audio/video")
-        if (!ps) return
-
-        const as = ps.tracksByType.get("audio")
-        if (!as) return
-        as.forEach(at => {
-            at.mediaPlayer.muted = p.muted
-            at.mediaPlayer.volume = p.muted ? 0 : p.volume
-        })
-    }
-
-    public setPeerVolume(peer:string, vol:number) {
-        let p = this.peers.get(peer)
-
-        let nv = vol
-        if (nv<0) {
-            nv = 0
-        } else if (nv > 1) {
-            nv = 1
-        }
-        p.volume = nv
-        p.muted = nv > 0 ? false : true
-        
-        const ps = p.streamsByType.get("audio/video")
-        if (!ps) return
-
-        const as = ps.tracksByType.get("audio")
-        if (!as) return
-        as.forEach(at => {
-            at.mediaPlayer.volume = nv
-            at.mediaPlayer.muted = p.muted
-        })
-    }
-
-    createPeerMediaPlayer(str:WebRTCStream, tr:WebRTCTrack) {
+    private createPeerMediaPlayer(str:WebRTCStream, tr:WebRTCTrack) {
         let mediaEl:HTMLMediaElement = tr.track.kind == "video" ?
              document.createElement("video") :
              document.createElement("audio");
@@ -789,7 +848,7 @@ export class WebRTC {
         this.peerContainer.append(tr.mediaPlayer)
     }
 
-    deduceTrackStreamType(track: MediaStreamTrack):"audio/video"|"screenshare" {
+    private deduceTrackStreamType(track: MediaStreamTrack):"audio/video"|"screenshare" {
         if (track.kind == "audio") return "audio/video"
         if (track.label?.match(/screen/))
             return "screenshare"
@@ -825,7 +884,6 @@ export class WebRTC {
         peerTracks.push(rtcTrack)
 
         if (trackType == "audio") {
-            
             this.setupAudioAnalyzer(str, peerId);
             peer.muted = !this.IsAudioEnabled()
             peer.volume = 1
@@ -842,73 +900,43 @@ export class WebRTC {
             this.removePeerTrack(peer, str, rtcTrack)
         };
 
-        this.notifyPeers();
+        this.notifyPeersChanged();
     }
 
-    private notifyPeers() {
-        this.EvtPeersChanged.fire([...this.peers.keys()].map(p => this.peers.get(p).name));
+    private notifyPeersChanged() {
+        this.EvtPeersChanged.fire(
+            [...this.peers.keys()].map(p => this.peers.get(p).name)
+        );
     }
 
-    togglePeerVideo(peer_id:string, val:boolean) {
-        const peer = this.peers.get(peer_id)
-        if (!peer) return
-
-        const avStream = peer.streamsByType.get("audio/video")
-
-        if (!avStream) return
-        peer.videoEnabled = val
-        const videoTracks = avStream.tracksByType.get("video") || []
-        for (const track of videoTracks) {
-            track.track.enabled = val
-        }
-    }
-    
-    isPeerAudioEnabled(peer_id:string) {
-        const peer = this.peers.get(peer_id);
-        if (!peer) return false
-        return peer.audioEnabled
-    }
-    togglePeerAudio(peer_id:string, val:boolean) {
-        const peer = this.peers.get(peer_id);
-        if (!peer) return
-        const str = peer.streamsByType.get("audio/video")
-        if (!str) return
-        const tracks = str.tracksByType.get("audio")
-        if (!tracks || !tracks.length) return
-        peer.audioEnabled = val
-        tracks.forEach(t => {
-            t.track.enabled = val
-        })
+    private requestIdentify(name:string) {
+        if (!this.serverConnection) return;
+        this.serverConnection.emit('identify', {"name": name});
+        this.serverConnection.emit('locate', null);
     }
 
-    identify(name:string) {
-        if (!this.signaling_socket) return;
-        this.signaling_socket.emit('identify', {"name": name});
-        this.signaling_socket.emit('locate', null);
-    }
-
-    join_chat_channel(channel:string, userdata:{ [k:string]:string}) {
-        if (!this.signaling_socket) {
+    private requestJoinChannel(channel:string, userdata:{ [k:string]:string}) {
+        if (!this.serverConnection) {
             return;
         }
         console.log("RTC Request join channel " + channel)
-        this.signaling_socket.emit('join', {"channel": channel, "userdata": userdata});
+        this.serverConnection.emit('join', {"channel": channel, "userdata": userdata});
     }
 
-    part_chat_channel(channel:string) {
-        this.signaling_socket.emit('part', channel);
+    private requestLeaveChannel(channel:string) {
+        this.serverConnection.emit('part', channel);
     }
 
-    async setup_local_media(name:string) {
+    private async setupLocalMedia(name:string) {
         if (this.localMedia.streamsByType.size) {  /* ie, if we've already been initialized */
             return; 
         }
-        /* Ask user for permission to use the computers microphone and/or camera, 
-         * attach it to an <audio> or <video> tag if they give us access. */
         console.log("RTC Requesting access to local audio / video inputs");
     
         let userStream:MediaStream
-
+        
+        /* Ask user for permission to use the computers microphone and/or camera, 
+         * attach it to an <audio> or <video> tag if they give us access. */
         userStream = await this.getLocalMicrophoneStream();
         
         if (userStream) {
@@ -947,17 +975,16 @@ export class WebRTC {
         return userStream;
     }
 
-    signalVoiceActivity(peerId:string) {
+    private signalVoiceActivity(peerId:string) {
+        // null peerId means ourselves
         if ((peerId && !this.peers.get(peerId)?.muted)) {
-            //console.log("RTC Voice activity peer " + peerId)
             this.EvtVoiceActivity.fire(peerId);
         } else if (peerId == null && this.IsMicEnabled()) {
-            //console.log("RTC Voice activity local")
             this.EvtVoiceActivity.fire(null);
         }
     }
 
-    addLocalStream(type:"audio/video"|"screenshare", stream:MediaStream) {
+    private addLocalStream(type:"audio/video"|"screenshare", stream:MediaStream) {
         
         let videoTracks = stream.getVideoTracks()
         let audioTracks = stream.getVideoTracks()
@@ -1005,7 +1032,6 @@ export class WebRTC {
             })
             this.localContainer.append(mediaElement)
         }
-
     }
     
 
@@ -1025,6 +1051,7 @@ export class WebRTC {
 
         const detectVoiceActivity = () => {
             if (!rtcStream.audioSourceNode) {
+                // to not leak, audioSourceNode is removed when removing the stream
                 source.disconnect()
                 return;
             }
@@ -1046,6 +1073,8 @@ export class WebRTC {
             const average = sum / (bufferLength * dataArray.length);
             const averageCurrent = sumcurrent / (dataArray.length);
 
+            // we have three buffers (3*150ms), if the average of all
+            // is lower than the average in the last 150ms we have voice activity
             if (averageCurrent > average && average > this.voiceActivityThreshold) { // Adjust the threshold as needed
                 this.signalVoiceActivity(peerId)
             }

@@ -135,7 +135,7 @@ export class VoiceWin implements IBaseWindow {
         this.refreshUI = throttle(this.refreshUI, 250) as any;
 
         
-        this.rooms = rtc.getChannels()
+        this.rooms = rtc.GetAllowedChannels()
         this.$win = $(win);
 
         const w = Math.min($(window).width()-20, 300);
@@ -145,7 +145,7 @@ export class VoiceWin implements IBaseWindow {
         (<any>this.$win).jqxWindow({showAnimationDuration: 0, width: w, height: h, showCollapseButton: true, isModal: false});
         (<any>this.$win).jqxWindow("close");
         (<any>this.$win).on("open", () => {
-            this.rtc.checkAutentication()
+            this.rtc.CheckAuthentication()
         })
         
         if (this.autoconnect) this.room = this.autoconnectRoom
@@ -212,15 +212,15 @@ export class VoiceWin implements IBaseWindow {
                     }
                 }
             } else {
-                if (this.rtc.isConnected()) {
+                if (this.rtc.IsConnected()) {
                     if (this.audible) this.rtc.Leave()
                 }
                 await this.enableUIOrShowMessage()
             }
         })
-        this.rtc.checkAutentication()
+        this.rtc.CheckAuthentication()
         this.setTitle()
-        const cdatas = this.rtc.getChannelDatas()
+        const cdatas = this.rtc.GetChannelDatas()
         for (const cd of Object.keys(cdatas)) {
             this.cDatas.set(cdatas[cd].name, cdatas[cd])
         }
@@ -306,7 +306,7 @@ export class VoiceWin implements IBaseWindow {
 
     private refreshChannelData() {
         for (const r of this.rooms) {
-            this.rtc.getChannelData(r);
+            this.rtc.GetChannelData(r);
         }
     }
 
@@ -359,7 +359,7 @@ export class VoiceWin implements IBaseWindow {
             this.$rooms.append(li)
             let ut = $("span", li).last()
             
-            if (this.rtc.isConnected()) {
+            if (this.rtc.IsConnected()) {
                 this.loadRoomInfo(ut, r)
             } else {
                 ut.text("")
@@ -384,7 +384,7 @@ export class VoiceWin implements IBaseWindow {
     private setUsers(cd: ChannelData) {
         if (cd.name != this.room) return
         let idName = new Map<string, string>();
-        [...this.rtc.peers.values()].map(v => {
+        [...this.rtc.GetPeers().values()].map(v => {
             idName.set(v.name, v.id)
         })
         this.$users.empty()
@@ -392,31 +392,31 @@ export class VoiceWin implements IBaseWindow {
         if (usr.length) {
             for (const u of usr) {
                 let id = idName.get(u)
-                if (!this.rtc.hasPeer(id)) continue;
+                if (!this.rtc.HasPeer(id)) continue;
 
                 let uspan = $(`<span class="user">${u} <button class="voldown" title="Abassa volume dell'utente">🔉</button><span class="volvalue" style="cursor:pointer;" title="Muta o abilita audio"></span><button class="volup" title="Alza volume dell'utente">🔊</button></span>`)
                 let val = $(".volvalue", uspan);
                 uspan.attr("data-id", id)
                 
                 let showVol = () => {
-                    let vol = this.rtc.getPeerVolume(id)
-                    if (this.rtc.getPeerMuted(id)) {
+                    let vol = this.rtc.GetPeerVolume(id)
+                    if (this.rtc.IsPeerMuted(id)) {
                         val.text("🔇")
                     } else {
                         val.text((Math.round((vol||0)*100) ?? "?") + " %")
                     }
                 }
                 val.on("click", ()=> {
-                    this.rtc.setPeerMuted(id)
+                    this.rtc.SetPeerMuted(id)
                     showVol()
                 })
                 showVol()
                 $(".volup", uspan).on("click", () => {
-                    this.rtc.setPeerVolume(id, this.rtc.getPeerVolume(id)+.05)
+                    this.rtc.SetPeerVolume(id, this.rtc.GetPeerVolume(id)+.05)
                     showVol()
                 })
                 $(".voldown", uspan).on("click", () => {
-                    this.rtc.setPeerVolume(id, this.rtc.getPeerVolume(id)-.05)
+                    this.rtc.SetPeerVolume(id, this.rtc.GetPeerVolume(id)-.05)
                     showVol()
                 })
                 this.$users.append(uspan)
@@ -493,17 +493,17 @@ export class VoiceWin implements IBaseWindow {
         this.updateStatus()
     }
     onPeersCame = (onPeersCame: any) => {
-        if (this.room) this.rtc.getChannelData(this.room)
+        if (this.room) this.rtc.GetChannelData(this.room)
     }
     onPeersLeft =(onPeersLeft: any) => {
-        if (this.room) this.rtc.getChannelData(this.room)
+        if (this.room) this.rtc.GetChannelData(this.room)
     }
     onExitedChannel =(onExitedChannel: any) => {
         this.room = null
         this.refreshChannelData()
     }
     setTitle = () => {
-        if (this.rtc.isConnected()) {
+        if (this.rtc.IsConnected()) {
             (<any>this.$win).jqxWindow("setTitle", "Voice chat [" + this.rtc.userName + "]")
         } else {
             (<any>this.$win).jqxWindow("setTitle", "Voice chat [Non connesso]")
@@ -514,10 +514,10 @@ export class VoiceWin implements IBaseWindow {
         this.setTitle()
         this.refreshUI()
         if (this.audible) {
-            if (this.rtc.didAllowMedia()) {
+            if (this.rtc.DidAllowMedia()) {
                 Notification.Show("Disconnesso da Voice chat")
                 this.NotifyText("Disconnessione da canali audio")
-            } else if (this.rtc.didConnectionFail()) {
+            } else if (this.rtc.DidConnectionFail()) {
                 Notification.Show("Il server del Voice chat non e' raggiungibile")    
             } else {
                 Notification.Show("Impossibile connettersi al Voice chat senza consentire l'uso del microfono")    
@@ -537,10 +537,10 @@ export class VoiceWin implements IBaseWindow {
     }
     onPeersChanged = (peer: any) => {
         if (this.room)
-             this.rtc.getChannelData(this.room)
+             this.rtc.GetChannelData(this.room)
     }
     onChannelChange = (c: any) => {
-        this.rtc.getChannelData(c)
+        this.rtc.GetChannelData(c)
     }
     newChannelData = (cd: ChannelData) => {
         this.cDatas.set(cd.name, cd)
@@ -572,7 +572,7 @@ export class VoiceWin implements IBaseWindow {
 
     async enableUIOrShowMessage() {
         const okAuth = this.rtc.userName
-        const okMic = okAuth && await this.rtc.isMicAllowed(true)
+        const okMic = okAuth && await this.rtc.IsMicAllowed(true)
         const ok = okAuth && okMic
 
         if (ok) {
@@ -586,16 +586,16 @@ export class VoiceWin implements IBaseWindow {
             if (!okAuth) {
                 let msg = $("<span class='voiceChatNeedAuth' style='cursor:pointer;'>Per usare il voice chat serve conettersi a un personaggio nel gioco. Se nel frattempo ti sei loggato premi qui per riprovare.</span>")
                 msg.on("click", async () => {
-                    this.rtc.checkAutentication()
+                    this.rtc.CheckAuthentication()
                 })
                 ui.append(msg)
             } else {
                 const acconsenti = $("<a href='#' class='voiceChatAccept'>Per usare il voice chat serve acconsentire l'uso del microfono.<br>🎤<br> Premi qui' per farlo.</a>")
                 acconsenti.on("click", async () => {
-                    if (!(await this.rtc.tryGetMicrophone())) {
+                    if (!(await this.rtc.TryGetMicrophone())) {
                         Messagebox.Show("Errore", "L'uso del microfono non e' stato concesso.\nSe lo hai rifiutato in precedenza allora devi riabilitarlo dal tuo navigatore\noppure ripristinare i permessi al sito.\nQuesto si puo' generalmente fare con il bottoncino davanti all inidirizzo del sito.")
                     } else {
-                        this.rtc.checkAutentication()
+                        this.rtc.CheckAuthentication()
                     }
                 })
                 ui.append(acconsenti)
@@ -612,7 +612,7 @@ export class VoiceWin implements IBaseWindow {
             this.$toolbar.hide();
             return
         }
-        if (this.rtc.didConnectionFail() || !this.rtc.isConnected())
+        if (this.rtc.DidConnectionFail() || !this.rtc.IsConnected())
             this.$toolbar.hide();
         else
             this.$toolbar.show();

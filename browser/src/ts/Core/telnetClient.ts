@@ -31,8 +31,7 @@ export class TelnetClient extends Telnet {
     private ttypeIndex: number = 0;
 
     private doNewEnviron: boolean = false;
-    private debugTelnet = localStorage.getItem("debugTelnet")=="true"
-
+    
     constructor(writeFunc: (data: ArrayBuffer) => void, private config:UserConfig) {
         super(writeFunc);
 
@@ -207,7 +206,8 @@ export class TelnetClient extends Telnet {
             }
         }
         if (ret && this.debugTelnet) {
-            console.log("Telnet response: "+this.logNegotiationResponse(ret, cmd, opt))
+            let line = ("Telnet response: "+this.logNegotiationResponse(ret, cmd, opt))
+            console.log(line)
         }
         return ret != null
     }

@@ -9,6 +9,7 @@ export class Telnet {
     private iacSeq: number[] = [];
     private buf: Array<Array<number>> = [[], []];
     private sb: number = 0;
+    protected debugTelnet = localStorage.getItem("debugTelnet")=="true"
 
     constructor(writeFunc: (data: ArrayBuffer) => void) {
         this.writeFunc = writeFunc;
@@ -38,18 +39,25 @@ export class Telnet {
         return sb;
     }
 
+    private insideASubNegotiation = false
     public handleData(data: ArrayBuffer) {
         let view = new Uint8Array(data);
         let rxLen = view.length;
-        let in_IAC_SE = false
+        if (this.debugTelnet && this.insideASubNegotiation) {
+            console.log("A buffer break inside a subnegotiation")
+        }
         for (let i = 0; i < rxLen; i++) {
             let c = view[i];
-
+            if (c == 10) {
+                //negotiations cannot span lines
+                this.insideASubNegotiation = false
+            }
             if (this.iacSeq.length === 0) {
-                if (!in_IAC_SE && c === theNULL) {
+                if (!this.insideASubNegotiation && c === theNULL) {
                     continue;
                 }
                 if (c === 0o021) {
+                    // ascii device control
                     continue;
                 }
                 if (c !== Cmd.IAC) {
@@ -57,7 +65,7 @@ export class Telnet {
                     continue;
                 } else {
                     this.iacSeq.push(c);
-                    in_IAC_SE = false
+                    this.insideASubNegotiation = false
                 }
             } else if (this.iacSeq.length === 1) {
                 if ([Cmd.DO, Cmd.DONT, Cmd.WILL, Cmd.WONT].indexOf(c) !== -1) {
@@ -70,10 +78,10 @@ export class Telnet {
                 } else if (c === Cmd.SB) {
                     this.sb = 1;
                     this.buf[1] = [];
-                    in_IAC_SE = true
+                    this.insideASubNegotiation = true
                     this.EvtNegotiation.fire({cmd: c, opt: view[i+1]});
                 } else if (c === Cmd.SE) {
-                    in_IAC_SE = false
+                    this.insideASubNegotiation = false
                     this.sb = 0;
                     this.EvtNegotiation.fire({cmd: c, opt: null});
                     this.buf[1] = [];
