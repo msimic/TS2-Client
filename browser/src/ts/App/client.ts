@@ -9,7 +9,7 @@ import { AliasManager } from "../Scripting/aliasManager";
 import { CommandInput, ScrollType } from "./commandInput";
 import { JsScript, EvtScriptEmitCmd, EvtScriptEmitPrint, EvtScriptEmitEvalError, EvtScriptEmitError, EvtScriptEmitCls, EvtScriptEvent, ScripEventTypes } from "../Scripting/jsScript";
 import { JsScriptWin } from "../Scripting/windows/jsScriptWin";
-import { MenuBar } from "./menuBar";
+import { clientConfig, MenuBar } from "./menuBar";
 import { ClassManager } from "../Scripting/classManager";
 import { Mxp } from "../Core/mxp";
 import { OutputManager } from "./outputManager";
@@ -153,10 +153,10 @@ export class Client {
 
     private manualDisconnect:boolean = false;
 
-    constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager, cfg:{[k:string]:any}) {
-        console.log(cfg)
-        let rtcHost = cfg.data.rtcHost || window.location.hostname
-        let rtcPort = cfg.data.rtcPort || 4050
+    constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager, public config:{[k:string]:any}) {
+        console.log(config)
+        let rtcHost = config.rtcHost || window.location.hostname
+        let rtcPort = config.rtcPort || 4050
         this.rtc = new WebRTC(rtcHost,
                               rtcPort,
                               $("#peerElements","#rtc")[0] as HTMLElement,
@@ -280,7 +280,7 @@ export class Client {
         
         this.SetupRTC();   
 
-        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.layoutWindow, this.changelog, this.voiceWin);
+        this.menuBar = new MenuBar(this.aliasEditor, this.triggerEditor, this.baseTriggerEditor, this.baseAliasEditor, this.jsScriptWin, this.aboutWin, this.profilesWin, this.profileManager.activeConfig, this.variableEditor, this.classEditor, this.eventsEditor, this.baseEventsEditor, this.numpadWin, this.jsScript, this.outputWin, this.baseConfig, this.helpWin, this.mapper, this.layoutWindow, this.changelog, this.voiceWin, this.config);
         this.menuBar.setWIndowManager(this.windowManager);
         this.profileWin.setWindowManager(this.windowManager);
 
@@ -793,23 +793,32 @@ function makeCbLocalConfigSave(): (val: string) => string {
     };
 }
 
-export async function setupWorkers() {
+export async function setupWorkers(clientConfig: clientConfig) {
     if ((<any>window).ipcRenderer || window.location.host.indexOf("localhost")!=-1) return Promise.resolve(null);
 
     if ('serviceWorker' in navigator) {
-        return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
-          // Registration was successful. Now, check to see whether the service worker is controlling the page.
-          if (navigator.serviceWorker.controller) {
-            // If .controller is set, then this page is being actively controlled by the service worker.
-            console.log('Cache service worker installed.');
-          } else {
-            // If .controller isn't set, then prompt the user to reload the page so that the service worker can take
-            // control. Until that happens, the service worker's fetch handler won't be used.
-            console.log('Cache service worker installed: Please reload this page to allow the service worker to handle network operations.');
-          }
-        }).catch(function(error) {
-          console.log("Error installing cache service worker.")
-        });
+        if (!clientConfig.useServiceWorker) {
+            let regs = await navigator.serviceWorker.getRegistrations()
+            for(let registration of regs) {
+                if(registration.active.scriptURL.indexOf("cacheServiceWorker")>-1){
+                     await registration.unregister(); 
+                }
+            }
+        } else {
+            return navigator.serviceWorker.register('./cacheServiceWorker.js', {scope: './'}).then(function() {
+            // Registration was successful. Now, check to see whether the service worker is controlling the page.
+            if (navigator.serviceWorker.controller) {
+                // If .controller is set, then this page is being actively controlled by the service worker.
+                console.log('Cache service worker installed.');
+            } else {
+                // If .controller isn't set, then prompt the user to reload the page so that the service worker can take
+                // control. Until that happens, the service worker's fetch handler won't be used.
+                console.log('Cache service worker installed: Please reload this page to allow the service worker to handle network operations.');
+            }
+            }).catch(function(error) {
+                console.log("Error installing cache service worker.")
+            });
+        }
       } else {
         console.log("No support for cache service worker.")
       }
@@ -955,7 +964,7 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
         }
         profileManager.setTitle();
         let cfg = await apiUtil.apiGetClientConfig()
-        client = new Client(null, baseConfig, profileManager, cfg);
+        client = new Client(null, baseConfig, profileManager, cfg.data);
         profileManager.setClient(client)
         onPreloaded();
     }

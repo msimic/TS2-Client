@@ -28,6 +28,8 @@ import { OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./windows/layoutWindow";
 import { VoiceWin } from "./windows/voiceWin";
 
+export type clientConfig = {[k:string]:any};
+
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
     public EvtChangeDefaultBgColor = new EventHook<[string, string]>();
@@ -219,7 +221,8 @@ export class MenuBar {
         private mapper: Mapper,
         private layoutWindowr: LayoutWindow,
         private changelog: VersionsWin,
-        private voiceWin:VoiceWin
+        private voiceWin:VoiceWin,
+        private clientConfig:clientConfig
         ) 
     {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -345,7 +348,7 @@ export class MenuBar {
             this.setConfig(config)
         }, 0);
 
-        setupWorkers();
+        setupWorkers(clientConfig);
     }
 
     public setWIndowManager(windowM:WindowManager) {
