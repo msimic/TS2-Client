@@ -335,12 +335,7 @@ export class WindowManager {
             });
             w.insertAfter(dockPos);
             $(".jqx-window-pin-button",w).addClass("jqx-window-pin-button-pinned");
-            if (vis) {
-                (w[0] as HTMLElement).style.removeProperty("display");              
-                w.show();
-            } else {
-                (w[0] as HTMLElement).style.setProperty("display", "none", "important");              
-            }
+            this.toggleWinVisibility(vis, w);
             w.data("docked", true);
             windowDef.data.docked = true;
             if ((<any>$(w))[0] && (<any>$(w))[0].sizeChanged) {
@@ -350,6 +345,15 @@ export class WindowManager {
             this.save();
             w.trigger("docked", true);
         }, duration);
+    }
+
+    public toggleWinVisibility(vis: boolean, w: JQuery) {
+        if (vis) {
+            (w[0] as HTMLElement).style.removeProperty("display");
+            w.show();
+        } else {
+            (w[0] as HTMLElement).style.setProperty("display", "none", "important");
+        }
     }
 
     public async unDock(window:string, ui:JQuery) {

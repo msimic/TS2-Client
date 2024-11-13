@@ -143,7 +143,7 @@ export class MapperMoveToZoneWin {
         this.saveAddedZones();
         const selIndex = (<any>this.$zoneList).jqxDropDownList('getSelectedItem')
         const zones = this.getAllZones()
-        if (selIndex && selIndex.index && selIndex.index < zones.length) {
+        if (selIndex && selIndex.index != undefined && selIndex.index < zones.length) {
             this.appliedCb(zones[selIndex.index])
         } else {
             this.appliedCb(null)

@@ -822,7 +822,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
     }
 
     parseVariables(v: string):string[] {
-        let ret = v.split(/==|!=|<=|>=|<|>|\/|\*|\+|-/);
+        let ret = v.split(/!|==|!=|<=|>=|<|>|\/|\*|\+|-/);
         ret = ret.filter(v => v.length && !isNumeric(v) && isAlphaNumeric(v));
         return ret;
     }
@@ -842,16 +842,29 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
 
     checkVisible(c: Control) {
         this.checkExpression(c, c.visible, (ui, passed) => {
-            if (passed) {
-                ui.css({
-                    "display": "block"
-                });
+            if (c.type == ControlType.Window) {
+                this.toggleDockedWindow(c.content, passed)
             } else {
-                ui.css({
-                    "display": "none"
-                });
+                if (passed) {
+                    ui.css({
+                        "display": "block"
+                    });
+                } else {
+                    ui.css({
+                        "display": "none"
+                    });
+                }
             }
         });
+    }
+    toggleDockedWindow(name: string, visible: boolean) {
+        let wm = this.profileManager?.windowManager
+        if (!wm) return
+
+        let w = wm.windows.get(name)
+        if (!w || !w.window || !w.data.docked || !w.data.visible) return
+
+        wm.toggleWinVisibility(visible, w.window)
     }
 
     getSubExpression(sthis:any, varExpression:string):any {
