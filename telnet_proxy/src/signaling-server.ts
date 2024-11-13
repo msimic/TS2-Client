@@ -61,7 +61,17 @@ export class SignalingServer {
                 ch.sockets.delete(sckId)
                 sd.channels.delete(channel)
             }
+            for (const otherSocket of this.allowedChannels.get(channel).sockets.values()) {
+                if (otherSocket.socket && otherSocket.socket.connected) {
+                    otherSocket.socket.emit('removePeer', {'peer_id': sd.socket.id});
+                }
+                sd.socket.emit('removePeer', {'peer_id': otherSocket.id});
+            }
             this.allowedChannels.get(channel).sockets.delete(sckId)
+            
+            for (const sk of this.socketData.values()) {
+                sk.socket.emit("channelchange", channel)
+            }
         }
     }
 
@@ -111,22 +121,6 @@ export class SignalingServer {
         }
 
         this.removeSocketFromChannel(socket.id, channel)
-
-        for (const otherSocket of this.allowedChannels.get(channel).sockets.values()) {
-            if (otherSocket.socket && otherSocket.socket.connected) {
-                otherSocket.socket.emit('removePeer', {'peer_id': socket.id});
-            }
-            socket.emit('removePeer', {'peer_id': otherSocket.id});
-        }
-
-        const allowedChannel = this.allowedChannels.get(channel);
-        if (allowedChannel) {
-            // notify this channel changed
-            for (const sd of allowedChannel.sockets.values()) {
-                if (sd.socket && sd.socket.connected) 
-                    sd.socket.emit("channelchange", channel)
-            }
-        }
         this.locateSocket(socket);
     }
 

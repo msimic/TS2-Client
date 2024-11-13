@@ -2,7 +2,7 @@
 	"apiBaseUrl": null,
 	"socket_io_host": "localhost",
 	"socket_io_port": 4040,
-	"rtcHost": "https://mud.temporasanguinis.it",
+	"rtcHost": "localhost",
 	"rtcPort": 4050,
 	"useServiceWorker": true
 }
