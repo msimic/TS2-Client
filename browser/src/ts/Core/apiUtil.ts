@@ -39,7 +39,7 @@ let axinst = axios.create({
 
 export async function apiGetClientConfig() {
     if (!enabled)
-        return axinst.get('./client.config.json');
+        return axinst.get('./client.config.json?rnd='+Math.random());
     else
         return axinst.get(createApiUrl('client/client_config'));
 }
