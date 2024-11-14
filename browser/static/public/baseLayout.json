@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "customized": false,
   "color": "",
   "background": "",
@@ -60,6 +60,13 @@
       "autoexpand": false,
       "items": [
         {
+          "type": 2,
+          "paneId": "",
+          "content": "Voice chat",
+          "h": 170,
+          "visible": "voiceChat"
+        },
+        {
           "paneId": null,
           "type": 2,
           "position": 0,
@@ -92,19 +99,37 @@
       "autoexpand": false,
       "items": [
         {
-          "paneId": null,
-          "color": "rgb(255, 255, 255)",
           "type": 1,
-          "content": "%var(TSPersonaggio) %color(white)%var(TSHp)/%var(TSMaxHp)%closecolor %var(afk,%color(black)[AFK],)",
-          "css": "margin:1px;margin-left:4px;padding:1px;font-size:12px;color:lightgray !important;"
+          "paneId": "",
+          "content": "",
+          "gauge": "TSSigDivini-riservaDivini,traguardoDivini",
+          "css": "position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;",
+          "background": "rgba(0,255,0,0.0)",
+          "color": "rgba(0,0,0,0.55)",
+          "blink": "TSSigDivini>traguardoDivini*0.975",
+          "tooltip": "Indica la percentuale al traguardo di divini assegnato",
+          "visible": "traguardoDivini",
+          "commands": null,
+          "checkbox": "TSSigDivini-riservaDivini>=traguardoDivini"
+        },
+        {
+          "paneId": null,
+          "color": "lightgray",
+          "type": 1,
+          "content": "%var(TSPersonaggio) %var(TSHp)/%var(TSMaxHp) %var(afk,%color(black)[AFK],)",
+          "css": "position:relative;margin:1px;margin-left:4px;padding:1px;font-size:12px;",
+          "gauge": null,
+          "style": null,
+          "background": null,
+          "commands": "aa"
         },
         {
           "paneId": null,
           "color": "rgb(255, 255, 255)",
-          "background": "rgba(0,0,0,0.5)",
+          "background": null,
           "type": 1,
           "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NON SANCATO!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
-          "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
         },
         {
           "paneId": null,
@@ -112,7 +137,7 @@
           "background": "rgba(0,0,0,0.5)",
           "type": 1,
           "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NON Scudato!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
-          "css": "margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
         },
         {
           "paneId": null,
@@ -120,7 +145,7 @@
           "background": "red",
           "type": 0,
           "content": "%color(white,transparent,true)%var(tankKey): %var(tankPercent<50,%color(yellow,transparent,true,false,true)%var(TSTankCond),%color(white,transparent,true)%var(TSTankCond))",
-          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
+          "css": "position:relative;text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
           "gauge": "tankPercent,tankMax",
           "commands": "if (this.TSTank!=this.TSPersonaggio) send('assist ' + this.tankKey)",
           "visible": "TSTank!='*'",
@@ -132,7 +157,7 @@
           "background": "black",
           "type": 0,
           "content": "%color(white,transparent,true)%var(mobKey): %var(TSMobCond)",
-          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
+          "css": "position:relative;text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:11px;min-width:160px;",
           "gauge": "mobPercent,mobMax",
           "commands": "send('attack ' + this.mobKey)",
           "visible": "TSMob!='*'",
@@ -141,10 +166,10 @@
         {
           "paneId": null,
           "color": "rgb(185, 185, 185)",
-          "background": "rgba(0,0,0,0.5)",
+          "background": "transparent",
           "type": 0,
           "content": "Spell:(%var(spells))",
-          "css": "text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
+          "css": "position:relative;text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
           "commands": "attr"
         }
       ]
@@ -160,26 +185,29 @@
           "paneId": null,
           "color": "rgb(255, 255, 255, 0.3)",
           "type": 0,
-          "content": "%var(TSSettore==Chiuso,%color(white)Al CHIUSO,%color(black,yellowgreen)All'APERTO)",
-          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+          "content": "%var(TSSettore==Chiuso,%color(white) Chiuso ,%color(black,yellowgreen) Aperto )",
+          "css": "margin:2px;margin-left:3px;margin-bottom: 2px;margin-top: 2px;padding:1px;font-size:12px;",
           "commands": "if (this.healtype==\"C\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } } else if (this.healtype==\"D\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } else { send(\"bloom\") } }",
-          "is_script": true
+          "is_script": true,
+          "background": "transparent",
+          "style": null
         },
         {
           "paneId": null,
-          "background": "blue",
+          "background": "transparent",
           "type": 0,
-          "content": "%var(TSPosizione!=In piedi,%color(white)Seduto,%color(yellowgreen)In piedi)",
-          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:1px;font-size:12px;",
+          "content": "%var(TSPosizione!=In piedi,%color(yellow)Seduto,%color(white)In piedi)",
+          "css": "margin:2px;margin-left:3px;margin-bottom: 2px;margin-top: 2px;padding:1px;font-size:12px;",
           "commands": "if (this.TSPosizione!='In piedi') { send('stand') } else { send('sit') }",
-          "is_script": true
+          "is_script": true,
+          "style": null
         },
         {
           "paneId": null,
-          "background": "blue",
+          "background": null,
           "type": 1,
           "content": "%var(TSLag==+,%color(white)Laggato,%color(yellowgreen)Reattivo)",
-          "css": "margin:2px;margin-left:3px;margin-bottom: 0;margin-top: 4px;padding:3px !important;font-size:12px;"
+          "css": "margin:2px;margin-left:3px;margin-bottom: 2px;margin-top: 2px;font-size:12px;"
         },
         {
           "id": "tap_ui",

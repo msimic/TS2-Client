@@ -333,7 +333,7 @@ export class JsScript {
         
         let tmp = stack.split('\n').map(function (line:string) { return line.trim(); });
 
-        const firefoxIndex = tmp.findIndex(l => l.startsWith("JsScript.prototype.makeScript"))
+        const firefoxIndex = tmp.findIndex(l => l.startsWith("makeScript/"))
         if (firefoxIndex>-1) {
             let startI = tmp.findIndex(l => l.startsWith("wrapFunction"))
             tmp = tmp.slice(startI+1, firefoxIndex)
@@ -346,11 +346,11 @@ export class JsScript {
 
         if (firefoxIndex>-1) {
             stack = stack.replace(/\/?\<?\@.+Function:(\d+)\:(\d+)/g, (v,v1, v2) => {
-                return " (line:" + (parseInt(v1)-11).toString() + ", col:" + v2 + ")"
+                return " (line:" + (parseInt(v1)-12).toString() + ", col:" + v2 + ")"
             })
         } else {
             stack = stack.replace(/ \(eval at .+\:(\d+)\:(\d+)/g, (v,v1, v2) => {
-                return " (line:" + (parseInt(v1)-11).toString() + ", col:" + v2
+                return " (line:" + (parseInt(v1)-12).toString() + ", col:" + v2
             })
         }
 

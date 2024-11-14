@@ -9,6 +9,7 @@ features:
 - aggiunto debug per variabili in menu impostazioni avanzate
 - e' possibile importare e esportare il layout dalla finestra disposizione schermo
 - aggiunto voice chat (in menu finestre)
+- aggiunto import/export per eventi
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()

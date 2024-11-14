@@ -831,10 +831,12 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         let ui = this.controls.get(c);
         let color = c.color || "red";
         let sthis = this.scripting.getScriptThis();
-        const vars = c.gauge.split(",");
-        const max = Number(sthis[vars[1]]);
-        const val = Number(sthis[vars[0]]);
-        const percent = Math.ceil((val/max)*100);
+        let vars = c.gauge.split(",");
+        vars = vars.map(v => this.evalExpression(v, sthis))
+        const max = parseInt(vars[1]);
+        const val = parseInt(vars[0]);
+        let percent = Math.ceil((val/max)*100);
+        percent = Math.max(0, Math.min(100, percent))
         ui.css({
             "background-image": `linear-gradient(90deg, ${color} 0 ${percent}%, transparent ${percent}% 100%)`
         });
@@ -867,13 +869,36 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         wm.toggleWinVisibility(visible, w.window)
     }
 
+    getValue(obj:any, path:string) {
+
+        const pathParts = path.split(/\.|(\[[^\]]+\])/).filter(Boolean);
+    
+        return pathParts.reduce((acc:Object, part:string) => {
+            if (part.startsWith('[') && part.endsWith(']')) {
+                part = part.slice(1, -1);
+    
+                if (part.startsWith('"') && part.endsWith('"') ||
+                    part.startsWith("'") && part.endsWith("'")) {
+                    part = part.slice(1, -1);
+                } else {
+                    part = this.getValue(obj, part);
+                }
+            }
+    
+            if (acc && (acc.hasOwnProperty(part) || isNumeric(part))) {
+                return (acc as any)[part];
+            }
+            return undefined;
+        }, obj);
+    }
+    
     getSubExpression(sthis:any, varExpression:string):any {
         const parts = varExpression.split(/\.|\[/g);
         let val = sthis[parts[0]];
         if (val == undefined) return val;
+
         if (parts.length>1) {
-            const p2 = parts[1].replace(/\.|\[|\]|\"|\'/g, "")
-            val = val[p2];
+            val = this.getValue(sthis, varExpression)
         }
         return val;
     }
@@ -905,22 +930,27 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                 let res = sthis[v] && sthis[v]()
                 allTrue = allTrue && isNegated[i] ? !res : res;
             } else {
-                let vr = this.parseVariables(v);
-                let expr = v;
-                vr.forEach(vrb => {
-                    let value = this.getSubExpression(sthis,vrb);
-                    if (typeof value == "string") {
-                        value = "\""+value+"\"";
-                    }
-                    expr = expr.replace(vrb, value)
-                });
-                const res = eval(expr)
+                const res = this.evalExpression(v, sthis);
                 allTrue = allTrue && isNegated[i] ? !res : res;
             }
             if (!allTrue) break;
             i++;
         }
         func(ui, allTrue);
+    }
+
+    private evalExpression(v: string, sthis: any) {
+        let vr = this.parseVariables(v);
+        let expr = v;
+        vr.forEach(vrb => {
+            let value = this.getSubExpression(sthis, vrb);
+            if (typeof value == "string") {
+                value = "\"" + value + "\"";
+            }
+            expr = expr.replace(vrb, value);
+        });
+        const res = eval(expr);
+        return res;
     }
 
     checkBlink(c: Control) {
@@ -1316,6 +1346,10 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             style+= ctrl.css +";";
         }
 
+        if (ctrl.commands) {
+            style += "cursor:pointer;"
+        }
+
         const btn = `<div tabindex="-1" style="${style}" class="${cls}"><div class="ui-control-content" style="white-space: pre;${containerStyle}">${this.createContent(ctrl,true)}</div></div>`;
         const b = $(btn);
         if (ctrl.commands) {
@@ -1425,7 +1459,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     return (compare ? (compareOP(val,compare)) : val);
                 }
             };
-            let replacement = content.substr(varPos+1, endPos-varPos-1);
+            let replacement = content.substring(varPos+1, endPos-1);
             if (endPos>-1 && endPos!=varPos) {
                 replacement = replaceWith(content.substr(varPos+1, endPos-varPos-1))
             } else {

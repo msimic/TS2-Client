@@ -98,7 +98,8 @@ export class LayoutWindow {
                                 <label>&nbsp;Colore: <span><input type="color" class="top-left-color" title="Il colore di sfondo del pannello"></span></label>
                                  <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
-                            <div class="pane-content" style="flex:3;background-color:black;">
+                            <div class="pane-content" style="flex:3;background-color:black;align-content: center;text-align: right;">
+                                Output del
                             </div>
                             <div class="pane-content" data-panel="row-bottom-left" style="position: relative;margin:2px; border: 1px solid ${foreColor}; background-color: ${panelColor};">
                                 <label>&nbsp;Altezza: <input type="text" class="bottom-left-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
@@ -114,8 +115,7 @@ export class LayoutWindow {
                                 <label>&nbsp;Colore: <span><input type="color" class="top-right-color" title="Il colore di sfondo del pannello"></span></label>
                                  <a href="#" style="font-weight:bold;text-decoration:underline;" class="align-bottom-right">Personalizza&nbsp;contenuto...</a>
                             </div>
-                            <div class="pane-content" style="flex:3;background-color:black;">
-                            </div>
+                            <div class="pane-content" style="flex:3;background-color:black;;align-content: center;white-space: pre;"> gioco ...</div>
                             <div class="pane-content" data-panel="row-bottom-right" style="position: relative;margin:2px; border: 1px solid ${foreColor}; background-color: ${panelColor};">
                                 <label>&nbsp;Altezza: <input type="text" class="bottom-right-height" title="La larghezza fissa che vuoi per il pannello, vuoto per un pannello che e' variabile"></label>
                                 <label>&nbsp;Dinamico: <input type="checkbox" class="bottom-right-expand" title="Se abilitato il pannello si espande dinamicamente al contenuto.\nLa grandezza impostata e' la grandezza massima concessa."></label>

@@ -257,11 +257,13 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
 
 .note {
     display: block;
-    text-shadow: #000;
     font-style: italic;
     font-size: smaller;
     margin: 10px;
     color: #00588b8f;
+}
+.dark .note {
+    color: #acff4c8f
 }
 .content-wrapper {
     position: absolute;
@@ -355,6 +357,7 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
   #row-bottom,#column-left,#row-top,#column-right {
     font-family: Consolas, monospace;
     font-size:12px;
+    position: relative;
   }
 
   #row-top-left {
@@ -1541,6 +1544,9 @@ input:focus,button:focus,textarea:focus {
 .winVoice .toggled {
     text-decoration: none !important;
 }
+.dark .winLayout-mainSplit .pane-content a {
+    color: #b3d5e6e7;
+}
 .content-wrapper .yellowbutton:hover {
     background-image: linear-gradient( rgb(255, 246, 116)  0%, rgb(128, 121, 28)  100%) !important;
 }
@@ -1552,6 +1558,13 @@ input:focus,button:focus,textarea:focus {
 .voiceActivity { animation: fade 0.3s 1; }
 .voiceChatAccept {
     margin: 30px;
+}
+.voiceChatNeedAuth {
+    padding: 25px;
+}
+.content-wrapper .voiceChatNeedAuth {
+    padding: 25px;
+    color: lightgray;
 }
 .voiceChatOverlayMessage {
     width: 100%;
@@ -1650,6 +1663,12 @@ input:focus,button:focus,textarea:focus {
     box-shadow: 0px 0px 2px 2px rgba(127, 127, 127, 0.4), 
                 0px 0px 2px 2px rgba(127, 127, 127, 0.4);
 }
+.content-wrapper div.toggled {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.5)) !important;
+    opacity: 1 !important;
+    border: 1px solid rgba(255, 255, 0, 0.5);
+}
+
 .voicetoolbar .toggled {
     background-color: rgb(13 26 13) !important;
     color: white !important;

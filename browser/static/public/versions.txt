@@ -1,4 +1,4 @@
-v2.0.10
+v2.0.11
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 
 features:
@@ -10,6 +10,7 @@ features:
 - aggiunto debug per variabili in menu impostazioni avanzate
 - e' possibile importare e esportare il layout dalla finestra disposizione schermo
 - aggiunto voice chat (in menu finestre)
+- aggiunto import/export per eventi
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()

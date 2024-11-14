@@ -119,8 +119,8 @@ export class VoiceWin implements IBaseWindow {
                     </div>
                 </div>
                 <div class="voicetoolbar">
-                    <button class="microphone" title="Attiva o disattiva microfono"><span class="gray-emoji">🎤</span></button>
-                    <button class="speaker" title="Attiva o disattiva audio"><span class="gray-emoji">🔊</span></button>
+                    <button class="microphone toggled" title="Attiva o disattiva microfono"><span class="gray-emoji">🎤</span></button>
+                    <button class="speaker toggled" title="Attiva o disattiva audio"><span class="gray-emoji">🔊</span></button>
                     <span class="status"></span>
                     <button class="disconnect" title="Esci dai canali audio"><span class="gray-emoji">📞</span></button>
                 </div>
@@ -471,10 +471,10 @@ export class VoiceWin implements IBaseWindow {
     }
     onAudioChanged = async (v: boolean) => {
         if (!v) {
-            if (this.audible) await VoiceWin.playSound("plop.mp3")
+            if (this.audible && this.$muteAudio.hasClass("toggled")) await VoiceWin.playSound("plop.mp3")
             this.$muteAudio.removeClass("toggled")
         } else {
-            if (this.audible) await VoiceWin.playSound("plim.mp3")
+            if (this.audible && !this.$muteAudio.hasClass("toggled")) await VoiceWin.playSound("plim.mp3")
             this.$muteAudio.addClass("toggled")
         }
         this.updateStatus()
@@ -586,7 +586,9 @@ export class VoiceWin implements IBaseWindow {
             if (!okAuth) {
                 let msg = $("<span class='voiceChatNeedAuth' style='cursor:pointer;'>Per usare il voice chat serve conettersi a un personaggio nel gioco. Se nel frattempo ti sei loggato premi qui per riprovare.</span>")
                 msg.on("click", async () => {
-                    this.rtc.CheckAuthentication()
+                    if (!this.rtc.CheckAuthentication()) {
+                        Notification.Show("Autenticazione non riuscita")
+                    }
                 })
                 ui.append(msg)
             } else {

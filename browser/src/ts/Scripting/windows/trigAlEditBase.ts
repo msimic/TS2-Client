@@ -375,7 +375,6 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         const ans = await Messagebox.Question("Sei sicuro di voler sovrascrivere il trigger corrente?")
         if (ans.button == Button.Ok) {
             this.copyProperties(item);
-            this.handleListBoxChange();
         }
     }
 

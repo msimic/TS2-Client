@@ -1,9 +1,10 @@
 import * as Util from "../../Core/util";
 import { JsScript, ScriptEvent, ScripEventTypes, ScriptEventsIta } from "../jsScript";
-import { Messagebox } from "../../App/messagebox";
+import { Button, Messagebox } from "../../App/messagebox";
 import { CreateCodeMirror, circleNavigate } from "../../Core/util";
 import { TsClient } from "../../App/client";
 import { ProfileManager } from "../../App/profileManager";
+import { TrigAlItem } from "./trigAlEditBase";
 declare let CodeMirror: any;
 
 
@@ -27,6 +28,8 @@ export class EventsEditor {
     protected $className: JQuery;
     protected $enabled: JQuery;
     protected $newButton: JQuery;
+    protected $exportButton: JQuery;
+    protected $importButton: JQuery;
     protected $deleteButton: JQuery;
     protected $mainSplit: JQuery;
     protected $saveButton: JQuery;
@@ -189,6 +192,8 @@ export class EventsEditor {
                         <textarea class="winEvents-scriptArea" disabled></textarea>
                     </div>               
                     <div class="pane-footer">
+                        <button class="winEvents-btnImport" disabled style="min-width: 32px;float: left;" title="Importa da file">📄</button>
+                        <button class="winEvents-btnExport" disabled style="min-width: 32px;float: left;" title="Esporta in file">💾</button>
                         <button class="winEvents-btnSave bluebutton" disabled title="Accetta">&#10004;</button>
                         <button class="winEvents-btnCancel" disabled title="Annulla">&#10006;</button>
                     </div>
@@ -199,6 +204,8 @@ export class EventsEditor {
 
         this.$mainSplit = $(myDiv.getElementsByClassName("winEvents-mainSplit")[0]);
         this.$newButton = $(myDiv.getElementsByClassName("winEvents-btnNew")[0]);
+        this.$exportButton = $(myDiv.getElementsByClassName("winEvents-btnExport")[0]);
+        this.$importButton = $(myDiv.getElementsByClassName("winEvents-btnImport")[0]);
         this.$deleteButton = $(myDiv.getElementsByClassName("winEvents-btnDelete")[0]);
         this.$listBox = $(myDiv.getElementsByClassName("winEvents-listBox")[0]);
         this.$type = $(myDiv.getElementsByClassName("winEvents-type")[0]);
@@ -216,6 +223,9 @@ export class EventsEditor {
         this.$filter.keyup((e)=> {
             this.ApplyFilter();
         });
+
+        this.$importButton.click(this.handleImportButtonClick.bind(this));
+        this.$exportButton.click(this.handleExportButtonClick.bind(this));
 
         const win_w = $(window).innerWidth()-20;
         const win_h = $(window).innerHeight()-20;
@@ -276,7 +286,40 @@ export class EventsEditor {
         })
     }
 
+    copyProperties(item:TrigAlItem) {
+        if (!item) return;
+        Util.importFromFile((str) => {
+            if (str) {
+                const tr:TrigAlItem = JSON.parse(str)
+                if (tr) {
+                    for (var prop in item) {
+                        if (Object.prototype.hasOwnProperty.call(item, prop)) {
+                            (item as any)[prop] = (tr as any)[prop];
+                        }
+                    }
+                }
+                this.handleListBoxChange();
+            }
+        })
+    }
     
+    async handleImportButtonClick(ev: any) {
+        let item = this.$listBox.data("selected");
+        if (!item) {
+            return
+        }
+        const ans = await Messagebox.Question("Sei sicuro di voler sovrascrivere l'evento corrente?")
+        if (ans.button == Button.Ok) {
+            this.copyProperties(item);
+        }
+    }
+
+    async handleExportButtonClick(ev: any) {
+        let item = this.$listBox.data("selected");
+        if (!item) return;
+        Util.downloadJsonToFile(item, "event_export_" + (item.id ? item.id : "no_id") + ".json")
+    }
+
     private scrollIntoView(ti:jqwidgets.TreeItem) {
         var $container = this.$listBox;      // Only scrolls the first matched container
 
@@ -340,6 +383,8 @@ export class EventsEditor {
         this.$saveButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
         this.$codeMirrorWrapper.prop("disabled", state);
+        this.$importButton.prop("disabled", state);
+        this.$exportButton.prop("disabled", state);
         if (state) {
             this.$dummy.show();
             this.$codeMirrorWrapper.hide();
