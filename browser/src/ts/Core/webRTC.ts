@@ -715,21 +715,25 @@ export class WebRTC {
             if (!peerData) return
             let peer = this.peers.get(config.peer_id).connection;
             let ice_candidate = config.ice_candidate;
-            if (!ice_candidate) {
+            //if (!ice_candidate) {
                 // this is normal at the end but chrome doesnt handle null as per spec
                 // maybe it would be better to try and catch ?
-                console.log("RTC Run out of ice candidates")
-            } else {
+            //    console.log("RTC Run out of ice candidates")
+            //} else {
                 if (peer.remoteDescription && peer.remoteDescription.type) {
                     // If the remote description is set, add the candidate immediately
                     // Queue the candidate until the remote description is set 
                     console.log("RTC Adding ice candidate immediately ", ice_candidate)
-                    peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+                    try {
+                        peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+                    } catch {
+                        console.log("RTC Adding ice candidate immediately failed, cadidate was: ", ice_candidate)
+                    }
                 } else {
                     console.log("RTC Queueing ice candidate ", ice_candidate)
                     peerData.iceCandidateQueue.push(ice_candidate);
                 }
-            }
+            //}
         });
 
 

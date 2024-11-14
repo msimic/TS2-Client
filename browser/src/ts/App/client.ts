@@ -1024,6 +1024,11 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
     }
 
     export async function initClient() {
+        if (!window.structuredClone) {
+            window.structuredClone = function structuredClone(obj:any) {
+              return JSON.parse(JSON.stringify(obj))
+            }
+          }
         return GetLocalClientConfig().then(resp => {
             if (resp && resp.data) {
                 const cfg = resp.data;

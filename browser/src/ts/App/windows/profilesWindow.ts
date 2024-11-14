@@ -263,7 +263,7 @@ export class ProfilesWindow {
                 
                 if (p.layout && p.layout.items && p.layout.items.length) {
                     await this.setProfileLayout(false, p);
-                } else if (p.useLayout)
+                } else if (p.useLayout && (!p.layout || !p.layout.panes?.length))
                     await this.setProfileLayout(p.useLayout, p);
 
                 if (oldPass != p.pass) {

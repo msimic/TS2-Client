@@ -121,14 +121,14 @@
           "gauge": null,
           "style": null,
           "background": null,
-          "commands": "aa"
+          "commands": null
         },
         {
           "paneId": null,
           "color": "rgb(255, 255, 255)",
-          "background": null,
+          "background": "rgba(0,0,0,0.5)",
           "type": 1,
-          "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NON SANCATO!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
+          "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NO SANC!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
           "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
         },
         {
@@ -136,7 +136,7 @@
           "color": "rgb(255, 255, 255)",
           "background": "rgba(0,0,0,0.5)",
           "type": 1,
-          "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NON Scudato!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
+          "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NO Scudo!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
           "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
         },
         {
