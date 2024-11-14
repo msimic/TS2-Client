@@ -1377,7 +1377,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         let sthis = this.scripting.getScriptThis()
         if (content.indexOf("%color(")!=-1) {
             content = content.replace(/\%color\([^\)]+?\)/gi,(s,a)=>{
-                let colorStr = s.substr(7, s.length-8);
+                let colorStr = s.substring(7, s.length-1);
                 let params = colorStr.split(",");
                 return colorize.apply(this, ["", ...params]);
             });
@@ -1401,7 +1401,6 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                 }
             }
             let replaceWith = (s:string)=>{
-                //s = s.substr(5, s.length-6);
                 let params = s.split(",");
                 let variable=params[0];
                 let compare = null;
@@ -1418,26 +1417,27 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                 if (variable.indexOf("&lt;=")!=-1) {
                     compare = variable.split("&lt;=")[1];
                     variable = variable.split("&lt;=")[0];
-                    compareOP = (v1:any,v2:any)=>v1<=v2;
+                    compareOP = (v1:any,v2:any)=>parseFloat(v1)<=parseFloat(v2);
                 }
                 if (variable.indexOf("&gt;=")!=-1) {
                     compare = variable.split("&gt;=")[1];
                     variable = variable.split("&gt;=")[0];
-                    compareOP = (v1:any,v2:any)=>v1>=v2;
+                    compareOP = (v1:any,v2:any)=>parseFloat(v1)>=parseFloat(v2);
                 }
                 if (variable.indexOf("&lt;")!=-1) {
                     compare = variable.split("&lt;")[1];
                     variable = variable.split("&lt;")[0];
-                    compareOP = (v1:any,v2:any)=>v1<v2;
+                    compareOP = (v1:any,v2:any)=>parseFloat(v1)<parseFloat(v2);
                 }
                 if (variable.indexOf("&gt;")!=-1) {
                     compare = variable.split("&gt;")[1];
                     variable = variable.split("&gt;")[0];
-                    compareOP = (v1:any,v2:any)=>v1>v2;
+                    compareOP = (v1:any,v2:any)=>parseFloat(v1)>parseFloat(v2);
                 }
                 if (isNumeric(compare)) {
                     compare = Number(compare);
                 }
+                variable=variable.trim()
                 const isFunctionCall = variable.endsWith("()")
                 const fCall = variable.replace("()","")
                 const sub = isFunctionCall ? undefined : this.getSubExpression(sthis, variable);
@@ -1454,19 +1454,19 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                         return isTrue(val) ? params[1] : params[2];
                     }
                 } else if (params.length==2) {
-                    return (val==undefined?"-":val).toString().substr(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
+                    return (val==undefined?"-":val).toString().substring(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
                 } else {
                     return (compare ? (compareOP(val,compare)) : val);
                 }
             };
-            let replacement = content.substring(varPos+1, endPos-1);
+            let replacement = content.substring(varPos+1, endPos);
             if (endPos>-1 && endPos!=varPos) {
-                replacement = replaceWith(content.substr(varPos+1, endPos-varPos-1))
+                replacement = replaceWith(content.substring(varPos+1, endPos))
             } else {
                 EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid variable in template of Control: " + ctrl.content})
                 break;
             }
-            content = content.substr(0,varPos-4) + replacement + content.substr(endPos+1);
+            content = content.substring(0,varPos-4) + replacement + content.substring(endPos+1);
         }
         return content;
     }
