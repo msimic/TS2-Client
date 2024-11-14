@@ -1150,13 +1150,14 @@ export class Mapper {
             const dir = this.nextStep;
             const fromRoom = dir.room;
             if (dir?.dir && fromRoom) {
-                if (!fromRoom.exits[dir?.dir]) fromRoom.exits[dir?.dir] = {
-                    type: ExitType.Normal,
-                    to_room: mudSeenRoom.id,
-                    to_dir: ReverseExitDir.get(dir?.dir)
-                }
+                if (!fromRoom.exits[dir?.dir] || !fromRoom.exits[dir?.dir].to_room)
+                    fromRoom.exits[dir?.dir] = {
+                        type: ExitType.Normal,
+                        to_room: mudSeenRoom.id,
+                        to_dir: ReverseExitDir.get(dir?.dir)
+                    }
                 if (!mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] &&
-                    !(oldExits||{})[ReverseExitDir.get(dir?.dir)])
+                    !((oldExits||{})[ReverseExitDir.get(dir?.dir)]?.to_room))
                 mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] = {
                     type: ExitType.Normal,
                     to_room: fromRoom.id,
