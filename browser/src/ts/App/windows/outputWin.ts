@@ -24,7 +24,7 @@ export class OutputWin extends OutWinBase {
         });
 
         triggerManager.EvtEmitTriggerOutputChanged.handle((data)=> {
-            this.outputChanged([data.line, data.buffer]);
+            return this.outputChanged([data.line, data.buffer]);
         });
     }
 

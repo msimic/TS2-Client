@@ -856,9 +856,16 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         (<any>window).audio?.pause();
         (<any>window).audio = null;
     };
-    const highlight = function(fore: string, back:string, blink:boolean = false) {
-        if (triggerManager) triggerManager.subBuffer(triggerManager.line.split("\n")[0], color(triggerManager.line.split("\n")[0], fore, back, true, false, blink));
+    const highlight = function(fore: string, back:string,
+                               blink:boolean = false,
+                               bold:boolean = true,
+                               underline:boolean = false) {
+        if (triggerManager)
+            triggerManager.subBuffer(triggerManager.line.split("\n")[0],
+                color(triggerManager.line.split("\n")[0],
+                      fore, back, bold, underline, blink));
     };
+
     const delay = function(id: string, time:number, func:Function) {
         if (!window.timeouts) {
             window.timeouts = {};

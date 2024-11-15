@@ -1246,8 +1246,8 @@ export function refreshApiInTern(cm: any, script: JsScript) {
             "!doc": "Visualizza nella finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale.\n\rIl testo verra mandato puro senza parsing e html."
             },
             "highlight": {
-            "!type": "fn(foreground: string, background: string, blink?: bool)",
-            "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink."
+            "!type": "fn(foreground: string, background: string, blink?: bool, bold?: bool, underline?: bool)",
+            "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink, bold e underline."
             },
             "sub": {
             "!type": "fn(regex: string, conCosa: string)",
@@ -1756,7 +1756,7 @@ export function formatShortcutString(keys:string[]) {
 }
 
 export function getVersionNumbers(ver:string):number[] {
-    const rx = new RegExp("(\\d+)\\.(\\d+)\\.(\\d+)(beta(\\d*))?");
+    const rx = new RegExp("(\\d+)\\.(\\d+)\\.(\\d+)( ?beta(\\d*))?");
 
     let m:RegExpMatchArray = null;
     if (!(m = ver.match(rx)))

@@ -1,5 +1,5 @@
 import { EventHook } from "../Core/event";
-import { denyClientVersion, throttle } from "../Core/util";
+import { denyClientVersion, getVersionNumbers, throttle } from "../Core/util";
 import { AppInfo } from '../appInfo'
 import { Button, ButtonOK, Messagebox } from "./messagebox";
 import { Favorite, Mapper } from "../Mapper/mapper";
@@ -195,10 +195,11 @@ export class UserConfig {
                 jso.favorites = favorites;
             }
         }
-        const ver = AppInfo.Version.split(".")
-        jso.requiresClientMajor = parseInt(ver[0]);
-        jso.requiresClientMinor = parseInt(ver[1]);
-        jso.requiresClientRevision = parseInt(ver[2]);
+        const ver = getVersionNumbers(AppInfo.Version)
+            
+        jso.requiresClientMajor = (ver[0]);
+        jso.requiresClientMinor = (ver[1]);
+        jso.requiresClientRevision = (ver[2]);
         let json = JSON.stringify(jso, null, 2);
         let blob = new Blob([json], {type: "octet/stream"});
         let url = window.URL.createObjectURL(blob);

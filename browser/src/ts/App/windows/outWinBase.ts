@@ -22,7 +22,7 @@ export class OutWinBase {
     protected colorsEnabled: boolean;
     private copyOnMouseUp: boolean;
     private logTime: boolean;
-
+    private outputHasChanged: boolean
     private lineCount: number = 0;
     private maxLines: number = 500;
     private animatescroll: boolean = true;
@@ -228,7 +228,7 @@ export class OutWinBase {
     // elem is the actual jquery element
     public pushElem(elem: JQuery) {
         //this.writeBuffer();
-
+        this.appendBuffer += elem[0].outerHTML
         this.appendToCurrentTarget(elem[0]);
         this.$targetElems.push(elem);
         this.$target = elem;
@@ -239,7 +239,11 @@ export class OutWinBase {
     }
 
     public popElem() {
-        //this.writeBuffer();
+        
+        if (this.$targetElems[this.$targetElems.length - 1] == this.$rootElem) {
+            // questo romperebbe ogni cosa
+            return null
+        }
 
         let popped = this.$targetElems.pop();
         this.$target = this.$targetElems[this.$targetElems.length - 1];
@@ -307,41 +311,49 @@ export class OutWinBase {
         spanText += ">";
         spanText += html;
         spanText += "</span>";
-
+  
         this.lineText += txt;
         this.appendBuffer += spanText;
-        this.appendToCurrentTarget(spanText);
-        
-        if (txt.endsWith("\n")) {
-            // firo i trigger qua prima che venga a schermo
-            // cosi per il futuro posso manipulare il buffer
-            let data:[string,string] = [this.lineText, this.appendBuffer];
-            this.EvtLine.fire(data);
-            //if (data[1] != this.appendBuffer) {
-                //this.outputChanged(data);
-            //}
 
-            this.newLine();
-        } else {
-            let data:[string,string] = [this.lineText, this.appendBuffer];
-            this.EvtBuffer.fire(data);
-            //if (data[1] != this.appendBuffer) {
-                //this.outputChanged(data);
-            //}
+        this.outputHasChanged = false
+        
+        let data:[string,string] = [this.lineText, this.appendBuffer];
+        
+        // firo i trigger qua prima che venga a schermo
+        // cosi posso manipulare il buffer
+        this.EvtBuffer.fire(data);
+        
+        if (!this.outputHasChanged) {
+            this.appendToCurrentTarget(spanText);
         }
+
+        this.outputHasChanged = false
+
+        if (txt.endsWith("\n")) {
+            this.EvtLine.fire(data);
+            this.newLine();
+        }
+            
     };
 
     newLineReceived() {
-        this.appendBuffer = "";
+        this.lineText = "";
+        this.appendBuffer = ""
     }
 
-    protected outputChanged(data: [string, string]) {
+    protected outputChanged(data: [string, string]):boolean {
+        this.outputHasChanged = true
         this.lineText = data[0];
         this.appendBuffer = data[1];
+        console.log("CHange line\n", this.$target.text(), $(this.appendBuffer).text())
         this.$target.html(this.appendBuffer);
         if (this.appendBuffer == "") {
-            this.popElem().remove();
+            if (this.$target != this.$rootElem) {
+                this.popElem().remove();
+                return true
+            }
         }
+        return false
     }
 
     public markCurrentTargetAsPrompt(promptClass:string) {
@@ -355,11 +367,13 @@ export class OutWinBase {
         if (this.$target == this.$rootElem) {
             this.lineCount++;
         }
-        //try {
-        (this.$target)[0].appendChild((o instanceof jQuery) ? (<any>o)[0] : (o instanceof Node) ? o : $("<span>"+o+"</span>")[0]);
-        // } catch (err) {
-        //     (this.$target)[0].appendChild($("<span>"+err.toString()+"</span>")[0])
-        // }
+
+        (this.$target)[0].appendChild(
+            (o instanceof jQuery) ? 
+                (<any>o)[0] :
+                    (o instanceof Node) ?
+                         o :
+                         $("<span>"+o+"</span>")[0]);
     }
 
     protected line() {
@@ -426,7 +440,7 @@ export class OutWinBase {
         }*/
 
         this.logLine();
-        this.lineText = "";
+        this.newLineReceived()
 
         //this.lineCount += 1;
         

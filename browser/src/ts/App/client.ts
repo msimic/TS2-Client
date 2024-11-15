@@ -641,6 +641,7 @@ export class Client {
                 data[1] = newBuffer;
                 data[0] = this.triggerManager.line;
             }
+            this.triggerManager.buffer = ""
         });
 
         this.outputWin.EvtBuffer.handle((data:[string, string]) => {

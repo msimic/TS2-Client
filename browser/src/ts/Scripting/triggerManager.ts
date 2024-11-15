@@ -408,12 +408,14 @@ export class TriggerManager {
 
     public buffer:string;
     public line:string;
+    private lineDeleted:boolean = false
 
     public handleBuffer(line: string, raw:string): string {
         if (this.config.getDef("triggersEnabled", true) !== true) return null;
-        this.buffer += raw;
+        this.buffer = raw;
         this.line = line;
         this.handleAutologin(line);
+        this.lineDeleted = false
 
         for (let i = 0; i < this.allTriggers.length; i++) {
             let trig = this.allTriggers[i];
@@ -451,6 +453,7 @@ export class TriggerManager {
         if (this.config.getDef("triggersEnabled", true) !== true) return null;
         this.buffer = raw;
         this.line = line;
+        this.lineDeleted = false
 
         for (let i = 0; i < this.allTriggers.length; i++) {
             let trig = this.allTriggers[i];
@@ -462,10 +465,39 @@ export class TriggerManager {
         return this.buffer;
     }
 
-    private doReplace(sBuffer:string, positions:number[], positionsText:number[], sText:string, sWhat:string, sWith:string) {
-        let rx = new RegExp(sWhat, 'gi');
-        let matches = rx.exec(sText);
-        if (matches && matches.length) {
+    private doReplace(sBuffer:string, sText:string, sWhat:string, sWith:string) {
+        let rx = new RegExp(sWhat, 'g');
+        let matches:RegExpExecArray | null = null;
+        while ((matches = rx.exec(sText)) && matches.length) {
+
+            let intag = false;
+            let text=sText
+            let buffer = sBuffer
+            let positions = [];
+            let positionsText = [];
+            let offset = 0;
+            let htmltext = "";
+
+            for (var i = 0; i < text.length; i++) {
+                const val = this.htmlEncode(text, i);
+                if (val) {
+                    htmltext += val[0];
+                    positionsText.push(i+offset);
+                    offset+=val[0].length-1;
+                } else {
+                    htmltext += text[i];
+                    positionsText.push(i+offset);
+                }
+            }
+
+            for (var i = 0; i < buffer.length; i++) {
+                if (buffer[i] == "<") intag = true;
+                if (!intag) {
+                    positions.push(i);
+                }
+                if (buffer[i] == ">") intag = false;
+            }
+            
             let start = matches.index;
             let end = start + matches[0].length-1;
             let closeTags = [];
@@ -481,7 +513,6 @@ export class TriggerManager {
                 charsBefore.push(sBuffer[i]);
             }
             
-            let intag = false;
             let closingTag = false;
             let tag = "";
             let spaceFound = false;
@@ -531,7 +562,9 @@ export class TriggerManager {
                 chars.push(sBuffer[i]);
             }
             
-            return [...charsBefore,...chars].join("");
+            sBuffer = [...charsBefore,...chars].join("");
+            sText = sText.replace(matches[0], sWith)
+            rx.lastIndex += sWith.length-sWhat.length
         }
         return sBuffer;
     }
@@ -561,7 +594,7 @@ export class TriggerManager {
         for (const key in this.htmlEscapes) {
             if (Object.prototype.hasOwnProperty.call(this.htmlEscapes, key)) {
                 const element = <string>((<any>this.htmlEscapes)[key]);
-                  const sub = s.substr(i, 1);
+                  const sub = s.substring(i, i+1);
                   if (sub == element) {
                       return [key, element];
                   }
@@ -572,58 +605,57 @@ export class TriggerManager {
 
     public subBuffer(sWhat: string, sWith: string) {
         
+        if (this.lineDeleted) return
+
+        //console.log(">"+$(this.buffer).text())
+
         sWhat = escapeRegExp(sWhat)
         sWith = escapeRegexReplacement(sWith)
 
         let buffer = this.buffer;
         let text = this.line.split("\n")[0];
-        let intag = false;
-        let positions = [];
-        let positionsText = [];
-        let offset = 0;
-        let htmltext = "";
-
-        for (var i = 0; i < text.length; i++) {
-            const val = this.htmlEncode(text, i);
-            if (val) {
-                htmltext += val[0];
-                positionsText.push(i+offset);
-                offset+=val[0].length-1;
-            } else {
-                htmltext += text[i];
-                positionsText.push(i+offset);
-            }
-        }
-
-        for (var i = 0; i < buffer.length; i++) {
-            if (buffer[i] == "<") intag = true;
-            if (!intag) {
-                positions.push(i);
-            }
-            if (buffer[i] == ">") intag = false;
-        }
+        
 
         this.line = text.replace(new RegExp((sWhat), 'gi'), (sWith.indexOf("<span")!=-1 ? stripHtml(sWith) : sWith));
-        this.buffer = this.doReplace(buffer, positions, positionsText, text, sWhat, sWith);
-        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+        this.buffer = this.doReplace(buffer, text, sWhat, sWith);
+        this.lineDeleted = this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+        //console.log("<"+$(this.buffer).text())
     }
     
     gag() {
+        if (this.lineDeleted) return
+        
         this.buffer = "";
         this.line = "";
-        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+        this.lineDeleted = this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
     }
 
     prepend(sWith: string) {
+        if (this.lineDeleted) return
+        
         this.buffer = "<span>" + sWith + "</span>" + this.buffer;
-        this.line = "<span>" + sWith + "</span>" + this.line;
-        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+        this.line = "" + sWith + "" + this.line;
+        this.lineDeleted = this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
     }
 
     append(sWith: string) {
-        this.buffer = this.buffer.replace("<br>", "<span>" + sWith + "</span><br>");
-        this.line = this.line.endsWith('\n') ? this.line.replace("\n", sWith + "\n") : this.line + sWith;
-        this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
+        if (this.lineDeleted) return
+        
+        const bufWith = "<span>" + sWith + "</span>"
+
+        let breakIndex = this.buffer.indexOf("<br>")
+        if (breakIndex > -1) {
+            this.buffer = this.buffer.slice(0, breakIndex) +
+                          bufWith + "<br>" +
+                          this.buffer.slice(breakIndex + 4);
+        } else {
+            this.buffer += bufWith
+        }
+
+        this.line = this.line.endsWith('\n') ? 
+                        this.line.slice(0, this.line.length-1) + sWith + "\n" :
+                        this.line + sWith;
+        this.lineDeleted = this.EvtEmitTriggerOutputChanged.fire({line: this.line, buffer:this.buffer});
     }
 }
 

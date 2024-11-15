@@ -12,7 +12,7 @@ import { WindowManager } from "./windowManager";
 import { VariablesEditor } from "../Scripting/windows/variablesEditor";
 import { ClassEditor } from "../Scripting/windows/classEditor";
 import { EventsEditor } from "../Scripting/windows/eventsEditor";
-import { AskReload, circleNavigate, denyClientVersion, downloadJsonToFile, downloadString, importFromFile, isTrue } from "../Core/util";
+import { AskReload, circleNavigate, denyClientVersion, downloadJsonToFile, downloadString, getVersionNumbers, importFromFile, isTrue } from "../Core/util";
 import { LayoutManager } from "./layoutManager";
 import { EvtScriptEmitPrint, JsScript, ScriptEvent, Variable } from "../Scripting/jsScript";
 import { OutputWin } from "./windows/outputWin";
@@ -807,7 +807,7 @@ export class MenuBar {
                 }
             }
 
-            const ver = AppInfo.Version.split(".")
+            const ver = getVersionNumbers(AppInfo.Version)
             const dt = new Date();
             const exportObj = {
                 aliases: als,
@@ -815,9 +815,9 @@ export class MenuBar {
                 events: evs,
                 classes: cls,
                 variables: vars,
-                requiresClientMajor: parseInt(ver[0]),
-                requiresClientMinor: parseInt(ver[1]),
-                requiresClientRevision: parseInt(ver[2]),
+                requiresClientMajor: (ver[0]),
+                requiresClientMinor: (ver[1]),
+                requiresClientRevision: (ver[2]),
                 description: response.results[1],
                 datetime: dt.toDateString() + " " + dt.getHours() + ":" + dt.getMinutes() 
             }
