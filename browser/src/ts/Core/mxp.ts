@@ -242,7 +242,7 @@ export class Mxp {
                     const url = match[4] && match[3] ? match[4] + match[3] : match[4]
 
                     //let elem = $("<img style=\"width:"+mw+";height:"+mh+";float:"+va+";\" src=\"" + url + "\">");
-                    let elem = $(`<img style="width:${mw};height:${mh};float:${va};clear:both;${va=="unset"?"margin:10px;display:block;":"display:inline;margin-left:1px;margin-right:4px;vertical-align:middle;"}" src='${url}'/>`)
+                    let elem = $(`<img style="width:${mw};height:${mh};float:${va.toLowerCase()};clear:both;${va=="unset"?"margin:10px;display:block;":"display:inline;margin-left:1px;margin-right:4px;vertical-align:middle;"}" src='${url}'/>`)
                     this.outputManager.pushMxpElem(elem);
                     this.outputManager.popMxpElem();
                     EvtScriptEvent.fire({event: ScripEventTypes.MXP_EntityArrived, condition: match[1], value:

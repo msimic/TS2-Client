@@ -101,10 +101,7 @@ export class AliasEditor extends TrigAlEditBase {
     }
 
     protected deleteItem(item:TrigAlItem) {
-        let index = this.aliasManager.aliases.indexOf(item)
-        if (index < 0)
-            return;
-        this.aliasManager.aliases.splice(index, 1);
+        this.aliasManager.deleteAlias(item)
         this.aliasManager.saveAliases();
     }
 }

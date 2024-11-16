@@ -43,12 +43,13 @@ export class ClassManager {
             name: id,
             enabled: val
         });
+        EvtScriptEvent.fire({event: ScripEventTypes.ClassChanged, condition: id, value: val});
+        
         this.saveClasses();
     }
     public Toggle(id: string, val:boolean):void {
         if (!this.classes.has(id)) {
             this.Create(id, val == undefined ? true : val);
-            this.saveClasses();
             return;
         }
         const cls = this.classes.get(id);

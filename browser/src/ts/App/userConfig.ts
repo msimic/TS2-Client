@@ -3,6 +3,7 @@ import { denyClientVersion, getVersionNumbers, throttle } from "../Core/util";
 import { AppInfo } from '../appInfo'
 import { Button, ButtonOK, Messagebox } from "./messagebox";
 import { Favorite, Mapper } from "../Mapper/mapper";
+import { EvtScriptEvent, ScripEventTypes } from "../Scripting/jsScript";
 
 export class UserConfigData {
     name:string;
@@ -126,6 +127,15 @@ export class UserConfig {
         const prev = this.data.cfgVals[key];
         this.data.cfgVals[key] = val;
         if (!nosave) this.saveConfig();
+        if (!nosave && 
+            !["triggers", "variables","events","classes"].includes(key) &&
+            ((typeof prev == "object" || typeof val == "object") ?
+                (JSON.stringify(prev) != JSON.stringify(val)) :
+                (prev != val))
+        ) {
+            EvtScriptEvent.fire({event: ScripEventTypes.SettingChanged, condition: key, value: val});
+        }
+
         if (prev != val && key in this.setHandlers) {
             this.firing = true;
             try {

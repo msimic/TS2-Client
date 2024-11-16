@@ -241,7 +241,7 @@ export class Client {
         })
 
 
-        this.classEditor = new ClassEditor(this.classManager, this.profileManager);
+        this.classEditor = new ClassEditor(this.classManager, this.profileManager, this.triggerManager, this.aliasManager, this.jsScript);
         this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false, this.jsScript);
         this.eventsEditor = new EventsEditor(this.jsScript, false, this.profileManager);
         this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false, this.jsScript);
@@ -928,7 +928,7 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
                 const { outcome } = await prompt.userChoice;
                 console.log("User responded to prompt: " + outcome)
             }
-        }, "Si", "No", false, [""], 400, null, false, "");
+        }, "Si", "No", null, false, [""], 400, null, false, "");
     }
 
     export async function runClient() {

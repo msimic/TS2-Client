@@ -1,9 +1,11 @@
 import * as Util from "../../Core/util";
 import { JsScript, Variable } from "../jsScript";
 import { Class, ClassManager } from "../classManager";
-import { Messagebox } from "../../App/messagebox";
+import { Button, Messagebox } from "../../App/messagebox";
 import { circleNavigate } from "../../Core/util";
 import { ProfileManager } from "../../App/profileManager";
+import { TriggerManager } from "../triggerManager";
+import { AliasManager } from "../aliasManager";
 declare let CodeMirror: any;
 
 export class ClassEditor {
@@ -82,7 +84,11 @@ export class ClassEditor {
         (<any>this.$win).jqxWindow("bringToFront");
     }
 
-    constructor(private classManager:ClassManager, private profileManager:ProfileManager) {
+    constructor(private classManager:ClassManager,
+                private profileManager:ProfileManager,
+                private trigManager:TriggerManager,
+                private alManager:AliasManager,
+                private script:JsScript) {
         this.setProfileManager(profileManager)
         const title: string = "Classi";
         let myDiv = document.createElement("div");
@@ -285,7 +291,7 @@ export class ClassEditor {
         }
 
         v.name = this.$name.val();
-        v.enabled = this.$value.is(":checked");
+        this.classManager.Toggle(v.name, this.$value.is(":checked"));
         this.saveItem(v);
 
         this.selectNone();
@@ -306,11 +312,38 @@ export class ClassEditor {
         this.selectNone();
     }
 
-    private handleDeleteButtonClick() {
-        let v = this.$listBox.data("selected");
+    private async handleDeleteButtonClick() {
+        let v:Class = this.$listBox.data("selected");
         if (!v) return;
 
+        let trC = [...this.trigManager.getTriggersOfClass(v.name)].length
+        let alC = [...this.alManager.getAliasesOfClass(v.name)].length
+        let evC = [...this.script.getEventsOfClass(v.name)].length
+        let vrC = [...this.script.getVariablesOfClass(v.name)].length
+        let cnt = alC + evC+ trC + vrC
+        const q = await Messagebox.ShowTriple(
+            "Cancella classe",
+            "Sei sicuro di voler cancellare la classe?\n\n"+
+            (cnt > 0 ? ("La classe contiene:\n" +
+                " -> " + trC + " trigger \n" +
+                " -> " + alC + " alias \n" +
+                " -> " + evC + " eventi \n" +
+                " -> " + vrC + " variabili \n"
+            ) :
+            "La classe sembra non avere contenuto."),
+            "Solo classe", "Annulla", "Anche contenuto"
+        )
+
+        if (q.button == Button.Cancel) return
+
         this.deleteItem(v);
+
+        if (q.button == Button.Else) {
+            this.trigManager.deleteTriggersWithClass(v.name)
+            this.alManager.deleteAliasesWithClass(v.name)
+            this.script.delEventsWithClass(v.name)
+            this.script.delVariablesWithClass(v.name)
+        }
 
         this.clearEditor();
         this.selectNone();

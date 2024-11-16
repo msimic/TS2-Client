@@ -561,7 +561,7 @@ export function Acknowledge(ack:string, str:string) {
     const w = Math.min($(window).width()-20, 400);
     messagebox("Informazione", str, () => {
         localStorage.setItem('ack_'+ack, "true");
-    }, "OK", "", false, [""], w, null, false, "");
+    }, "OK", "", null, false, [""], w, null, false, "");
 }
 
 export interface Color {

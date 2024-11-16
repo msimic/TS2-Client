@@ -18,6 +18,7 @@ export interface ScriptIf {
 }
 
 export class AliasManager {
+    
     public aliases: Array<TrigAlItem> = null;
     public allAliases: Array<TrigAlItem> = null;
     private aliasLog = new Array<{key:string, time:number}>();
@@ -127,6 +128,22 @@ export class AliasManager {
           });
     }
 
+    deleteAlias(alias:TrigAlItem) {
+        let index = this.aliases.indexOf(alias)
+        if (index < 0)
+            return;
+        this.aliases.splice(index, 1);
+    }
+    deleteAliasesWithClass(name: string) {
+        for (const tr of [...this.aliases]) {
+            if (tr.class == name) this.deleteAlias(tr)
+        }
+    }
+    *getAliasesOfClass(name:string) {
+        for (const tr of [...this.aliases]) {
+            if (tr.class == name) yield(tr)
+        }
+    }
     public precompileAliases() {
         hotkeys.deleteScope('macro','macro');
 

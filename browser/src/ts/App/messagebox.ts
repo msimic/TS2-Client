@@ -3,10 +3,12 @@ import { htmlEscape } from "../Core/util";
 
 export const ButtonOK = 1;
 export const ButtonCancel = 0;
+export const ButtonElse = 2;
 
 export enum Button {
     Cancel = ButtonCancel,
     Ok = ButtonOK,
+    Else = ButtonElse
 }
 
 export interface MessageboxResult {
@@ -62,130 +64,135 @@ export class Notification {
 
 export class Messagebox {
     public static async Show(title: string, text: string, labelStyle:string = "") {
-        return await messagebox(title, text, null, "OK", "", false, [""], null, null, false, labelStyle);
+        return await messagebox(title, text, null, "OK", "", null, false, [""], null, null, false, labelStyle);
     }
     public static async ShowWithButtons(title: string, text: string, okButton:string, cancelButton:string): Promise<MessageboxResult> {
-        return await messagebox(title, text, null, okButton, cancelButton, false, [""], null, null, false, "");
+        return await messagebox(title, text, null, okButton, cancelButton, null, false, [""], null, null, false, "");
     }
     public static async Question(text: string): Promise<MessageboxResult> {
-        return await messagebox("Domanda", text, null, "Si", "No", false, [""], null, null, false, "");
+        return await messagebox("Domanda", text, null, "Si", "No", null, false, [""], null, null, false, "");
     }
     public static async ShowWithWithCallback(title: string, text: string, callback:(val:string)=>void): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, "OK", "", false, [""], null, null, false, "");
+        return await messagebox(title, text, callback, "OK", "", null, false, [""], null, null, false, "");
     }
     public static async ShowWithWithButtonsAndCallback(title: string, text: string, okButton:string, cancelButton:string, callback:(val:string)=>void): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], null, null, false, "");
+        return await messagebox(title, text, callback, okButton, cancelButton, null, false, [""], null, null, false, "");
     }
     public static async ShowFull(title: string, text: string, okButton:string, cancelButton:string, callback:(val:string)=>void, width:number, height:number): Promise<MessageboxResult> {
-        return await messagebox(title, text, callback, okButton, cancelButton, false, [""], width, height, false, "");
+        return await messagebox(title, text, callback, okButton, cancelButton, null, false, [""], width, height, false, "");
+    }
+    public static async ShowTriple(title: string, text: string, okButton:string, cancelButton:string, thirdButton:string, width?:number, height?:number): Promise<MessageboxResult> {
+        return await messagebox(title, text, null, okButton, cancelButton, thirdButton, false, [""], width, height, false, "");
     }
     public static async ShowInputWithButtons(title: string, text: string, defaultText:string, okButton:string, cancelButton:string): Promise<MessageboxResult> {
-        return await messagebox(title, text, null, okButton, cancelButton, true, [defaultText], null, null, false, "");
+        return await messagebox(title, text, null, okButton, cancelButton, null, true, [defaultText], null, null, false, "");
     }
     public static async ShowInput(title: string, text: string, defaultText:string, multiline:boolean=false): Promise<MessageboxResult> {
-        let res = await messagebox(title||"Domanda", text, null, "OK", "Annulla", true, [defaultText], null, null, false, "", multiline);
+        let res = await messagebox(title||"Domanda", text, null, "OK", "Annulla", null, true, [defaultText], null, null, false, "", multiline);
         return res;
     }
     public static async ShowMultiInput(title: string, labels: string[], defaultValues:any[]): Promise<MessageboxResult> {
-        let res = await messagebox(title||"Domanda", labels.join('\n'), null, "OK", "Annulla", true, defaultValues, null, null, true, "");
+        let res = await messagebox(title||"Domanda", labels.join('\n'), null, "OK", "Annulla", null, true, defaultValues, null, null, true, "");
         return res;
     }
 }
 
-export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, labelStyle:string, multiline:boolean=false): Promise<MessageboxResult> {
+export async function messagebox(title: string, text: string, callback:(val:string)=>void, okbuttontext:string, cancelbuttontext:string, thirdbuttontext:string, input:boolean, inputDefault:any[], width:number, height:number, multiinput:boolean, labelStyle:string, multiline:boolean=false): Promise<MessageboxResult> {
     let wData = null;
     try {
 
-    let resolveFunc:Function = null;
-    let rejectFunc:Function = null;
-    let ret:MessageboxResult = {
-        button: ButtonCancel,
-        result: "",
-        results: []
-    };
-    let promise = new Promise<MessageboxResult>((resolve,reject) => {
-        resolveFunc = resolve;
-        rejectFunc = reject;
-    });
+        let resolveFunc:Function = null;
+        let rejectFunc:Function = null;
+        let ret:MessageboxResult = {
+            button: ButtonCancel,
+            result: "",
+            results: []
+        };
+        let promise = new Promise<MessageboxResult>((resolve,reject) => {
+            resolveFunc = resolve;
+            rejectFunc = reject;
+        });
 
-    let win = document.createElement("div");
-    win.style.display = "none";
-    win.className = "winMessagebox";
-    document.body.appendChild(win);
-    okbuttontext = okbuttontext == undefined ? "OK" : okbuttontext;
-    cancelbuttontext = cancelbuttontext == undefined ? "Annulla" : cancelbuttontext;
+        let win = document.createElement("div");
+        win.style.display = "none";
+        win.className = "winMessagebox";
+        document.body.appendChild(win);
+        okbuttontext = okbuttontext == undefined ? "OK" : okbuttontext;
+        cancelbuttontext = cancelbuttontext == undefined ? "Annulla" : cancelbuttontext;
 
-    const numInputs = multiinput ? text.split('\n').length : 1
-    const inputLabels = multiinput ? text.split('\n') : [typeof text != "string" ? "" : text]
+        const numInputs = multiinput ? text.split('\n').length : 1
+        const inputLabels = multiinput ? text.split('\n') : [typeof text != "string" ? "" : text]
 
-    let innserMessageboxBody = ""
+        let innserMessageboxBody = ""
 
-    if (typeof text != "string") {
-        innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;' class='customjq'></div>"
-    } else {
-        innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;'>"
-        for (let index = 0; index < inputLabels.length; index++) {
-            const label = inputLabels[index];
-            let type = "text"
-            if (inputDefault && typeof inputDefault[index] == "boolean") {
-                type = "checkbox"
-            }
-            let inputTemplate = `<input type="${type}" style="box-sizing:border-box;width:${numInputs>1?"auto":"100%"};" id="messageboxinput${index}">`
-            let rowOrCell = "row"
-            let tableorRow = "table;width:100%"
-            let innercell = "display: table-cell;"
-            let align = "left"
-            if (numInputs > 1) {
-                align = "right"
-                rowOrCell = "cell"
-                innercell = ""
-                tableorRow = "table-row"
-            }
-            if (multiline) {
-                inputTemplate = `<textarea style="min-height:200px;height:100%;box-sizing:border-box;width:100%;" id="messageboxinput${index}"></textarea>`
-            }
-            const template =`
-            <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
-                <div style="display: table-${rowOrCell};height:auto;">
-                    <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};padding:5px" id="message${index}"></div>
+        if (typeof text != "string") {
+            innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;' class='customjq'></div>"
+        } else {
+            innserMessageboxBody = "<div style='display: table-cell;vertical-align: middle;text-align:center;'>"
+            for (let index = 0; index < inputLabels.length; index++) {
+                const label = inputLabels[index];
+                let type = "text"
+                if (inputDefault && typeof inputDefault[index] == "boolean") {
+                    type = "checkbox"
+                }
+                let inputTemplate = `<input type="${type}" style="box-sizing:border-box;width:${numInputs>1?"auto":"100%"};" id="messageboxinput${index}">`
+                let rowOrCell = "row"
+                let tableorRow = "table;width:100%"
+                let innercell = "display: table-cell;"
+                let align = "left"
+                if (numInputs > 1) {
+                    align = "right"
+                    rowOrCell = "cell"
+                    innercell = ""
+                    tableorRow = "table-row"
+                }
+                if (multiline) {
+                    inputTemplate = `<textarea style="min-height:200px;height:100%;box-sizing:border-box;width:100%;" id="messageboxinput${index}"></textarea>`
+                }
+                const template =`
+                <div style="display: ${tableorRow};height:${multiline?'100%':'auto'};">
+                    <div style="display: table-${rowOrCell};height:auto;">
+                        <div class="messageboxtext" style="${innercell}vertical-align: middle;text-align:${align};padding:5px" id="message${index}"></div>
+                    </div>
+                    <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
+                        ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
+                            ${inputTemplate}
+                        ${rowOrCell=="row"?"</div>":""}
+                    </div>
                 </div>
-                <div style="display: table-${rowOrCell};height:${multiline?100:1}%;padding:5px;">
-                    ${rowOrCell=="row"?"<div style='display: table-cell;padding: 5px;'>":""}
-                        ${inputTemplate}
-                    ${rowOrCell=="row"?"</div>":""}
-                </div>
-            </div>
-                `;
-            innserMessageboxBody += template
+                    `;
+                innserMessageboxBody += template
+            }
+            innserMessageboxBody += "</div>"
         }
-        innserMessageboxBody += "</div>"
-    }
 
-    win.innerHTML = `
-    <!--header-->
-    <div id="title"></div>
-    <!--content-->
-    <div id="msgboxcontent">
-        <div style="display: table;height: 100%;width: 100%;box-sizing: border-box;position:relative;">
-            <div style="display: table-row;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
-            ${innserMessageboxBody}
-            </div>
-            <div style="display: table-row;height:auto">
-                <div class="messageboxbuttons" style="display: table-cell">
-                    <button id="accept" class="acceptbutton greenbutton"></button>
-                    <button id="cancel" class="cancelbutton redbutton"></button>
+        win.innerHTML = `
+        <!--header-->
+        <div id="title"></div>
+        <!--content-->
+        <div id="msgboxcontent">
+            <div style="display: table;height: 100%;width: 100%;box-sizing: border-box;position:relative;">
+                <div style="display: table-row;width: 100%;box-sizing: border-box;position:relative;height:${multiline?'100%':'auto'};">
+                ${innserMessageboxBody}
+                </div>
+                <div style="display: table-row;height:auto">
+                    <div class="messageboxbuttons" style="display: table-cell">
+                        <button id="third" style="display:none;" class="thirdbutton yellowbutton"></button>
+                        <button id="accept" class="acceptbutton greenbutton"></button>
+                        <button id="cancel" class="cancelbutton redbutton"></button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    `;
-    
-    let $win = $(win);
+        `;
+        
+        let $win = $(win);
 
-    if (typeof text != "string") {
-        $(".customjq", $win).append(text)
-    }
+        if (typeof text != "string") {
+            $(".customjq", $win).append(text)
+        }
 
+        const thirdButton = $("#third", $win);
         const acceptButton = $("#accept", $win);
         const cancelButton = $("#cancel", $win);
         const titleText = $("#title", $win);
@@ -220,6 +227,10 @@ export async function messagebox(title: string, text: string, callback:(val:stri
                 resizable: true};
         (<any>$win).jqxWindow(wData);
 
+        if (thirdbuttontext != undefined) {
+            $(thirdButton).text(thirdbuttontext);
+            $(thirdButton).show()
+        }
         $(acceptButton).text(okbuttontext);
         if (!okbuttontext) $(acceptButton).hide();
         $(cancelButton).text(cancelbuttontext);
@@ -235,6 +246,13 @@ export async function messagebox(title: string, text: string, callback:(val:stri
             ret.button = ButtonCancel;
             (<any>$win).jqxWindow("close");
         });
+
+        $(thirdButton).click(() => {
+            ret.result = (thirdbuttontext);
+            ret.button = ButtonElse;
+            (<any>$win).jqxWindow("close");
+        });
+
         $(titleText).text(title);
         messageText.map((v,i) => v.html(`<span style='${labelStyle?labelStyle+";":""}margin:0;padding:0;'>` + inputLabels[i].replace(/\n/g, "<br/>") +"</span>"));
 

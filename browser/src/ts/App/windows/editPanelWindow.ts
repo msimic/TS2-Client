@@ -406,7 +406,7 @@ export class EditPanelWindow {
             bc ||= LayoutManager.getBackcolor(this.layout)
             pr.css("backgroundColor", bc)
             let jc = $("<div style='min-height:32px;'>").append(pr)
-            await messagebox("Anteprima", jc as any, null, "OK", "", false, [""], null, null, false, "");    
+            await messagebox("Anteprima", jc as any, null, "OK", "", null, false, [""], null, null, false, "");    
          } catch (ex) {
              Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
          }

@@ -345,7 +345,7 @@ export class OutWinBase {
         this.outputHasChanged = true
         this.lineText = data[0];
         this.appendBuffer = data[1];
-        console.log("CHange line\n", this.$target.text(), $(this.appendBuffer).text())
+        //console.log("CHange line\n", this.$target.text(), $(this.appendBuffer).text())
         this.$target.html(this.appendBuffer);
         if (this.appendBuffer == "") {
             if (this.$target != this.$rootElem) {

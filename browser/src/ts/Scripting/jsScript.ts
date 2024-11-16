@@ -20,7 +20,7 @@ export let EvtScriptEmitToggleTrigger = new EventHook<{owner:string, id:string, 
 export let EvtScriptEmitToggleClass = new EventHook<{owner:string, id:string, state:boolean}>();
 export let EvtScriptEmitToggleEvent = new EventHook<{owner:string, id:string, state:boolean}>();
 
-export let EvtScriptEvent = new EventHook<{event:ScripEventTypes, condition:string, value:any}>();
+export let EvtScriptEvent = new EventHook<{event:ScripEventTypes, condition:string, value:PropertyChanged|string|boolean|{type:string,element:any,value:string}|{command:string,script:boolean}}>();
 export let IsNumeric = isNumeric
 
 declare global {
@@ -159,15 +159,7 @@ export interface ScriptEvent {
 }
 
 export class JsScript {
-    forceVariable(varName: string, arg1: string) {
-        this.getScriptThis()[varName] = arg1
-        //this.checkChanges(this.getScriptThis())
-    }
-
-    notifyVariableChanges() {
-        this.checkChanges(this.getScriptThis())
-    }
-    
+        
     checkChanges = (self:any) => {
         const oldKeys = new Map<string,boolean>(Object.keys(self._oldValues).map(v => [v ,true]));
         for (var propName in self) {
@@ -255,6 +247,33 @@ export class JsScript {
             this.makeScript("dummy", "", "")()
         }
         return API
+    }
+    *getEventsOfClass(name:string) {
+        for (const tr of [...this.eventList]) {
+            if (tr.class == name) yield(tr)
+        }
+    }
+    *getVariablesOfClass(name:string) {
+        for (const tr of [...this.variables.values()]) {
+            if (tr.class == name) yield(tr)
+        }
+    }
+    delVariablesWithClass(name: string) {
+        for (const tr of [...this.variables.values()]) {
+            if (tr.class == name) this.delVariable(tr)
+        }
+    }
+    delEventsWithClass(name: string) {
+        for (const ev of [...this.eventList]) {
+            if (ev.class == name) this.delEvent(ev)
+        }
+    }
+    forceVariable(varName: string, arg1: string) {
+        this.getScriptThis()[varName] = arg1
+    }
+
+    notifyVariableChanges() {
+        this.checkChanges(this.getScriptThis())
     }
 
     public unlinkEvent = (ev:string, lev:string) => {
@@ -452,9 +471,9 @@ export class JsScript {
         return (!ev.condition) || ev.condition == condition || (ev.type == ScripEventTypes[ScripEventTypes.VariableChanged] && ev.condition.split(",").indexOf(condition)!=-1);
     }
 
-    triggerEvent(ev:ScriptEvent, param:any) {
+    triggerEvent(ev:ScriptEvent, param:any, condition:string) {
         let match = {
-            0: ev.condition
+            0: condition
         }
         if (!ev.script) {
             
@@ -470,7 +489,7 @@ export class JsScript {
             const evts = this.events.get(type);
             for (const ev of evts) {
                 if (ev.enabled && this.checkEventCondition(ev, condition) && (!ev.class || this.classManager.isEnabled(ev.class))) {
-                    this.triggerEvent(ev, param);
+                    this.triggerEvent(ev, param, condition);
                 }
             }
         }
@@ -481,7 +500,7 @@ export class JsScript {
             const evts = this.baseEvents.get(type);
             for (const ev of evts) {
                 if (ev.enabled && this.checkEventCondition(ev, condition) && (!ev.class || this.classManager.isEnabled(ev.class))) {
-                    this.triggerEvent(ev, param);
+                    this.triggerEvent(ev, param, condition);
                 }
             }
         }

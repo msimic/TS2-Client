@@ -14,6 +14,7 @@ import { Point } from "../mapperDrawing"
 import { MapperMoveToZoneWin } from "./mapperMoveToZoneWin"
 import { EditZoneWin } from "./editZoneWin"
 import { MoveRoomsWin } from "./moveRoomsWin"
+import { PropertyChanged } from "../../Scripting/jsScript"
 
 export enum UpdateType { none = 0, draw = 1 }
 export function createZoneLabel(useLabels: boolean, useId: boolean, item: Zone) {
@@ -189,7 +190,8 @@ export class MapperWindow implements IBaseWindow {
                  d.condition == me.mapper.roomDescVariable ||
                  d.condition == me.mapper.exitsVariable)) {
                 me.roomSeen = true
-                if (me.requestRemap && d.value?.newValue) {
+                const val = d.value as PropertyChanged
+                if (me.requestRemap && val?.newValue != undefined) {
                     if (finishRoomRemapTimeout) {
                         clearTimeout(finishRoomRemapTimeout)
                     }

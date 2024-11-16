@@ -5,6 +5,7 @@ import { CreateCodeMirror, circleNavigate } from "../../Core/util";
 import { TsClient } from "../../App/client";
 import { ProfileManager } from "../../App/profileManager";
 import { TrigAlItem } from "./trigAlEditBase";
+import { optionMappingToStorage } from "../../App/menuBar";
 declare let CodeMirror: any;
 
 
@@ -234,6 +235,15 @@ export class EventsEditor {
         script.eventChanged.handle(e => {
             if (this.isOpen()) this.refresh();
         });
+
+        this.$type.on("change", () => {
+            if (this.$type.val()) {
+                const title = this.getEventTypeCOnditionTooltip();
+                (this.$condition[0] as HTMLElement).title = title
+            } else {
+                (this.$condition[0] as HTMLElement).title = ""    
+            }
+        });
         
         (<any>this.$mainSplit).jqxSplitter({
             width: "100%",
@@ -284,6 +294,64 @@ export class EventsEditor {
         this.$win.on('open', (event) => {
             this.$win.focusable().focus()
         })
+    }
+
+    private getEventTypeCOnditionTooltip() {
+        let ret = ""
+        const t = ScripEventTypes[this.$type.val()] as unknown as ScripEventTypes
+        switch (t) {
+            case ScripEventTypes.VariableChanged:
+                ret = "Un nome di variabile o lista di nomi separate da virgola\n"
+                ret += "Il parametro 'args' della script sara un oggetto con le proprieta'\n"
+                ret += "propName: nome variabile, oldValue: valore precedente, newValue: valore attuale\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.ConnectionState:
+                ret = "Uno tra: telnet, websocket o vuoto\n"
+                ret += "Il parametro 'args' della script sara un boolean che indica lo stato di connessione\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.SettingChanged:
+                ret = "Un nome di setting del client (o vuoto - ma perche' mai...)\n"
+                ret += "Valori possibili: " + [...new Set(optionMappingToStorage.values())].join(", ") + "\n"
+                ret += "Il parametro 'args' della script sara il nuovo valore del setting\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.ClassChanged:
+                ret = "Un nome di classe del scripting (o vuoto - ma perche' mai...)\n"
+                ret += "Il parametro 'args' della script sara un boolean che indica lo stato di attivazione\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.TriggerFired:
+                ret = "L'ID di un trigger (o vuoto - ma perche' mai...)\n"
+                ret += "Il parametro 'args' della script sara la riga sulla quale ha scattato\n"
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.CommandExecuted:
+                ret = "Vuoto o stringa true o false che indica se il comando e' stato dato da utente o da script\n"
+                ret += "Il parametro 'args' della script sara un oggetto con le proprieta'\n"
+                ret += "command: il comando dato, script: booleano che indica se dato da script\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.MXP_VariableArrived:
+                ret = "Un nome di variabile MXP (o vuoto)\n"
+                ret += "Il parametro 'args' della script sara un oggetto con le proprieta'\n"
+                ret += "type: nome variabile, element: array elementi html sui quali puo agire, value: nuovo valore\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.MXP_EntityArrived:
+                ret = "Un nome di entita' MXP (o vuoto)\n"
+                ret += "Il parametro 'args' della script sara un oggetto con le proprieta'\n"
+                ret += "type: nome entita', element: array elementi html sui quali puo agire, value: nuovo valore\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+            case ScripEventTypes.ScriptingInitialized:
+                ret = "Non richiede condizioni, scatta al load delle script del profilo\n"
+                ret += "args e' sempre un booleano true\n"    
+                ret += "Il parametro $0 e' la condizione sulla quale e' scattato l'evento."
+                break;
+        }
+        return ret;
     }
 
     copyProperties(item:TrigAlItem) {
@@ -395,6 +463,7 @@ export class EventsEditor {
     }
 
     private selectNone(): void {
+        (this.$condition[0] as HTMLElement).title = ""
         this.$listBox.data("selected", null);
         this.$filter.focus();
         this.jqList.selectItem(null);

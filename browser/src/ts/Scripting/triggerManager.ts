@@ -213,6 +213,24 @@ export class TriggerManager {
         return true
     }
 
+    *getTriggersOfClass(name:string) {
+        for (const tr of [...this.tempTriggers]) {
+            if (tr.class == name) yield (tr)
+        }
+        for (const tr of [...this.triggers]) {
+            if (tr.class == name) yield (tr)
+        }
+    }
+
+    deleteTriggersWithClass(name: string) {
+        for (const tr of [...this.tempTriggers]) {
+            if (tr.class == name) this.deleteTempTrigger(tr)
+        }
+        for (const tr of [...this.triggers]) {
+            if (tr.class == name) this.deleteTrigger(tr)
+        }
+    }
+
     public precompileTriggers() {
         //console.log("precompile triggers")
         this.precompiledRegex.clear()

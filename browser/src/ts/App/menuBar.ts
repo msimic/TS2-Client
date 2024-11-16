@@ -14,7 +14,7 @@ import { ClassEditor } from "../Scripting/windows/classEditor";
 import { EventsEditor } from "../Scripting/windows/eventsEditor";
 import { AskReload, circleNavigate, denyClientVersion, downloadJsonToFile, downloadString, getVersionNumbers, importFromFile, isTrue } from "../Core/util";
 import { LayoutManager } from "./layoutManager";
-import { EvtScriptEmitPrint, JsScript, ScriptEvent, Variable } from "../Scripting/jsScript";
+import { EvtScriptEmitPrint, EvtScriptEvent, JsScript, ScripEventTypes, ScriptEvent, Variable } from "../Scripting/jsScript";
 import { OutputWin } from "./windows/outputWin";
 import { Button, Messagebox, Notification } from "./messagebox";
 import { Class } from "../Scripting/classManager";
@@ -29,6 +29,59 @@ import { LayoutWindow } from "./windows/layoutWindow";
 import { VoiceWin } from "./windows/voiceWin";
 
 export type clientConfig = {[k:string]:any};
+export let optionMappingToStorage = new Map([
+    ["connect", ""],
+    ["log", ""],
+    ["use-profile", ""],
+    ["aliases", ""],
+    ["variables", ""],
+    ["triggers", ""],
+    ["base_triggers", ""],
+    ["classes", ""],
+    ["script", ""],
+    ["config", ""],
+    ["text-color", ""],
+    ["white-on-black", "text-color"],
+    ["green-on-black", "text-color"],
+    ["black-on-gray", "text-color"],
+    ["black-on-white", "text-color"],
+    ["wrap-lines", "wrap-lines"],
+    ["enable-color", "colorsEnabled"],
+    ["enable-utf8", "utf8Enabled"],
+    ["enable-mxp", "mxpEnabled"],
+    ["enable-mxp-images", "mxpImagesEnabled"],
+    ["enable-aliases", "aliasesEnabled"],
+    ["enable-triggers", "triggersEnabled"],
+    ["enable-sounds", "soundsEnabled"],
+    ["smallest-font", "font-size"],
+    ["extra-small-font", "font-size"],
+    ["small-font", "font-size"],
+    ["normal-font", "font-size"],
+    ["large-font", "font-size"],
+    ["extra-large-font", "font-size"],
+    ["courier", "font"],
+    ["consolas", "font"],
+    ["monospace", "font"],
+    ["lucida", "font"],
+    ["vera", "font"],
+    ["reset-settings", ""],
+    ["import-settings", ""],
+    ["export-settings", ""],
+    ["splitScrolling", "splitScrolling"],
+    ["import-layout", ""],
+    ["export-layout", ""],
+    ["log-time", "logTime"],
+    ["prompt-style", "prompt-style"],
+    ["debug-scripts", "debugScripts"],
+    ["debug-variables", "debugVariables"],
+    ["about", ""],
+    ["docs", ""],
+    ["contact", ""],
+    ["profiles", ""],
+    ["scrollbuffer", "maxLines"],
+    ["animatescroll", "animatescroll"],
+    ["copyOnMouseUp", "copyOnMouseUp"],
+]); 
 
 export class MenuBar {
     public EvtChangeDefaultColor = new EventHook<[string, string]>();
@@ -41,63 +94,10 @@ export class MenuBar {
     private windowManager:WindowManager;
     private layout:LayoutManager;
     private config:UserConfig;
-    private optionMappingToStorage = new Map([
-        ["connect", ""],
-        ["log", ""],
-        ["use-profile", ""],
-        ["aliases", ""],
-        ["variables", ""],
-        ["triggers", ""],
-        ["base_triggers", ""],
-        ["classes", ""],
-        ["script", ""],
-        ["config", ""],
-        ["text-color", ""],
-        ["white-on-black", "text-color"],
-        ["green-on-black", "text-color"],
-        ["black-on-gray", "text-color"],
-        ["black-on-white", "text-color"],
-        ["wrap-lines", "wrap-lines"],
-        ["enable-color", "colorsEnabled"],
-        ["enable-utf8", "utf8Enabled"],
-        ["enable-mxp", "mxpEnabled"],
-        ["enable-mxp-images", "mxpImagesEnabled"],
-        ["enable-aliases", "aliasesEnabled"],
-        ["enable-triggers", "triggersEnabled"],
-        ["enable-sounds", "soundsEnabled"],
-        ["smallest-font", "font-size"],
-        ["extra-small-font", "font-size"],
-        ["small-font", "font-size"],
-        ["normal-font", "font-size"],
-        ["large-font", "font-size"],
-        ["extra-large-font", "font-size"],
-        ["courier", "font"],
-        ["consolas", "font"],
-        ["monospace", "font"],
-        ["lucida", "font"],
-        ["vera", "font"],
-        ["reset-settings", ""],
-        ["import-settings", ""],
-        ["export-settings", ""],
-        ["splitScrolling", "splitScrolling"],
-        ["import-layout", ""],
-        ["export-layout", ""],
-        ["log-time", "logTime"],
-        ["prompt-style", "prompt-style"],
-        ["debug-scripts", "debugScripts"],
-        ["debug-variables", "debugVariables"],
-        ["about", ""],
-        ["docs", ""],
-        ["contact", ""],
-        ["profiles", ""],
-        ["scrollbuffer", "maxLines"],
-        ["animatescroll", "animatescroll"],
-        ["copyOnMouseUp", "copyOnMouseUp"],
-    ]); 
 
     private attachMenuOption(name:string, value:string, element:Element, checkbox:Element) {
         const clickable = name in this.clickFuncs;
-        const storageKey = this.optionMappingToStorage.get(name);
+        const storageKey = optionMappingToStorage.get(name);
         if (checkbox && storageKey) {
             const storageVal = this.config.get(storageKey);
             const onStorageChanged:(val:string)=>void = (storageValNew) => {
@@ -112,6 +112,7 @@ export class MenuBar {
                     $(element)[0].setAttribute("data-checked", "false");
                     if (clickable) this.clickFuncs[name](storageValNew);
                 }
+                
                 if (storageValNew != undefined) {
                     //console.log(`${name} set to ${storageValNew}`);
                     //Notification.Show(`${name}: ${storageValNew}`, true)
@@ -172,7 +173,7 @@ export class MenuBar {
 
     private detachMenuOption(name:string, element:Element, checkbox:Element) {
         if (element) $(element).off("click");
-        const storageKey = this.optionMappingToStorage.get(name);
+        const storageKey = optionMappingToStorage.get(name);
         if (storageKey) this.config.onSet(storageKey, null);
         if (checkbox) $(checkbox).off("change");
     }

@@ -10,6 +10,7 @@ features:
 - e' possibile importare e esportare il layout dalla finestra disposizione schermo
 - aggiunto voice chat (in menu finestre)
 - aggiunto import/export per eventi
+- nell'editor delle classi a rimozione classe ora e' possibile includere il contenuto
 
 scripting:
 - aggiunta funzione printRaw() e sendRaw()

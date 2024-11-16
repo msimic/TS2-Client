@@ -1013,6 +1013,10 @@ div:focus-visible {
     padding:5px;
 }
 
+.messageboxtext span {
+    white-space: pre;
+}
+
 .acceptbutton {
     min-width: 100px;
 }
