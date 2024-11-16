@@ -850,7 +850,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         if (triggerManager) triggerManager.prepend(sWith);
     }
     const sub = function(sWhat: string, sWith:string) {
-        if (triggerManager) triggerManager.subBuffer(sWhat.split("\n")[0], sWith);
+        if (triggerManager) triggerManager.subBuffer(typeof sWhat == "string" ? sWhat.split("\n")[0] : sWhat, sWith);
     };
     const link = function(text: string, func:Function, hover?:string) {
         let rnd = Math.floor(Math.random()*10000)

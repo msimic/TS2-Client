@@ -561,7 +561,7 @@ export class VoiceWin implements IBaseWindow {
             if (this.audible) 
             {
                 this.NotifyText("Connesso a canale audio '" + d + "'")
-                await VoiceWin.playSound("connect-voice.ogg");
+                await VoiceWin.playSound("connect-voice.mp3");
             }
         } else {
             this.drawRooms()

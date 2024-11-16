@@ -187,14 +187,14 @@ export class WebRTC {
 
         if (!navigator.mediaDevices ||
             !navigator.mediaDevices.getSupportedConstraints ||
-            !navigator.mediaDevices.getSupportedConstraints() ||
-            !navigator.permissions) {
+            !navigator.mediaDevices.getSupportedConstraints() /*||
+            !navigator.permissions*/) {
             return false;
         }
 
-        let pm = await navigator.permissions.query({
+        let pm = {state: "granted"}/*await navigator.permissions.query({
             name: "microphone" as any
-        })
+        })*/
         ok = pm.state == "granted"
         if (ok && !noprompt) try {
             await this.TryGetMicrophone()
@@ -210,14 +210,14 @@ export class WebRTC {
 
         if (!navigator.mediaDevices ||
             !navigator.mediaDevices.getSupportedConstraints ||
-            !navigator.mediaDevices.getSupportedConstraints() ||
-            !navigator.permissions) {
+            !navigator.mediaDevices.getSupportedConstraints() /*||
+            !navigator.permissions*/) {
             return false;
         }
 
-        let pm = await navigator.permissions.query({
+        let pm = {state: "granted"}/*await navigator.permissions.query({
             name: "camera" as any
-        })
+        })*/
         ok = pm.state == "granted"
         if (ok && !noprompt) try {
             await this.TryGetWebcam()    
@@ -847,6 +847,7 @@ export class WebRTC {
         }
         mediaEl.controls = false;
         mediaEl.autoplay = true;
+        (mediaEl as HTMLVideoElement).playsInline = true
         tr.mediaPlayer = mediaEl
         tr.mediaPlayer.srcObject = str.stream;
         this.peerContainer.append(tr.mediaPlayer)

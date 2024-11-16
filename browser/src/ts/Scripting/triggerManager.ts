@@ -486,7 +486,17 @@ export class TriggerManager {
     private doReplace(sBuffer:string, sText:string, sWhat:string, sWith:string) {
         let rx = new RegExp(sWhat, 'g');
         let matches:RegExpExecArray | null = null;
-        while ((matches = rx.exec(sText)) && matches.length) {
+        let max = 120
+        let plainWith = $("<span>"+sWith+"</span>").text() || sWith
+
+        function replaceBetween(str:string, start:number, end:number, newSubStr:string) { 
+            if (start < 0 || end > str.length || start > end) {
+                 throw new Error('Invalid indices'); 
+            }
+            return str.slice(0, start) + newSubStr + str.slice(end);
+        }
+
+        while (--max > 0 && (matches = rx.exec(sText)) && matches.length) {
 
             let intag = false;
             let text=sText
@@ -581,8 +591,11 @@ export class TriggerManager {
             }
             
             sBuffer = [...charsBefore,...chars].join("");
-            sText = sText.replace(matches[0], sWith)
-            rx.lastIndex += sWith.length-sWhat.length
+            sText = replaceBetween(sText, start, end+1, plainWith)
+            rx.lastIndex = end+plainWith.length
+        }
+        if (max<1) {
+            EvtScriptEmitPrint.fire({owner:"triggerManager", message: "Replace " + sWhat + " con " + sWith + " fallito in loop."})
         }
         return sBuffer;
     }
@@ -627,7 +640,7 @@ export class TriggerManager {
 
         //console.log(">"+$(this.buffer).text())
 
-        sWhat = escapeRegExp(sWhat)
+        sWhat = typeof sWhat == "string" ? escapeRegExp(sWhat) : sWhat
         sWith = escapeRegexReplacement(sWith)
 
         let buffer = this.buffer;

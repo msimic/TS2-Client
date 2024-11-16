@@ -107,9 +107,13 @@ export class CommandInput {
         
         this.$cmdInput.on("focus", () => {
             hotkeys.setScope('macro');
+            let codes = hotkeys.getAllKeyCodes().filter(c => c.scope == hotkeys.getScope())
+            console.log("Scope hotkey settato per macro. ", codes)
         })
         this.$cmdInput.on("blur", () => {
             hotkeys.setScope('app');
+            let codes = hotkeys.getAllKeyCodes().filter(c => c.scope == hotkeys.getScope())
+            console.log("Scope hotkey settato per app.", codes)
         })
 
         this.chkCmdStack = $("#chkCmdStack");

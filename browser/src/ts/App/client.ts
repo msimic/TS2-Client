@@ -47,6 +47,7 @@ import { KeepAwake } from "../Core/keepAwake";
 import hotkeys from "hotkeys-js";
 import { WebRTC } from "../Core/webRTC";
 import { VoiceWin } from "./windows/voiceWin";
+const corejsClone = require("core-js-pure/actual/structured-clone")
 
 declare global {
     interface JQuery {
@@ -389,7 +390,7 @@ export class Client {
             console.log("Telnet connected for profile: " + profileManager.getCurrent())
 
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
-                new Audio("./sounds/connect.ogg").play()
+                new Audio("./sounds/connect.mp3").play()
             }
 
             this.serverEcho = false;
@@ -410,7 +411,7 @@ export class Client {
             handleConnectionState(false, "telnet");
 
             if (profileManager.activeConfig.getDef("soundsEnabled", true)) {
-                new Audio("./sounds/disconnect.ogg").play()
+                new Audio("./sounds/disconnect.mp3").play()
             }
 
             apiUtil.clientInfo.telnetHost = null;
@@ -934,7 +935,10 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
     export async function runClient() {
         let connectionTarget: ConnectionTarget;
         let params = new URLSearchParams(location.search);
-
+        if (!window.structuredClone) {
+            console.log("Adding corejs structuredClone polyfill")
+            window.structuredClone = corejsClone
+        }
         baseConfig.init("", localStorage.getItem("userConfig"), makeCbLocalConfigSave());
         setDefaults(baseConfig);
         profileManager = new ProfileManager(baseConfig);
@@ -961,7 +965,7 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
             connectionTarget = {
                 host: "mud.temporasanguinis.it",
                 port: 4000
-            }
+        	}
         }
         profileManager.setTitle();
         let cfg = await apiUtil.apiGetClientConfig()
@@ -1025,11 +1029,6 @@ Se vorrai farlo in futuro puoi farlo dal menu Informazioni.`, async (v) => {
     }
 
     export async function initClient() {
-        if (!window.structuredClone) {
-            window.structuredClone = function structuredClone(obj:any) {
-              return JSON.parse(JSON.stringify(obj))
-            }
-          }
         return GetLocalClientConfig().then(resp => {
             if (resp && resp.data) {
                 const cfg = resp.data;
