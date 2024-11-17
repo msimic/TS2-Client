@@ -112,16 +112,25 @@ export abstract class TrigAlEditBase {
         }
         let items = this.jqList.getItems()
         for (const itm of items) {
-            if (str) {
+            if (str)
                 $(itm.element).hide()
-            } else {
+            else
                 $(itm.element).show()
-            }
+        }
+        for (const itm of items) {
             if (itm.value && str) {
                 const txt = (<any>itm.value).id + "" + (<any>itm.value).pattern;
                 const visible = txt.match(rx) != null;
                 if (!!visible) {
                     this.expandItem(itm);
+                    $(itm.element).show()
+                }
+            } else if (itm.label && str) {
+                const visible = itm.label.match(rx) != null;
+                if (!!visible) {
+                    this.expandItem(itm);
+                    $(itm.element).show()
+                    $(".jqx-tree-item-li", itm.element).show()
                 }
             }
         }
@@ -256,7 +265,7 @@ export abstract class TrigAlEditBase {
 
         this.$win.on('open', (event) => {
             this.$win.focusable().focus()
-            this.ApplyFilter()
+            if (this.$filter.val()) this.ApplyFilter()
         })
 
         this.$win.on('close', (event) => {

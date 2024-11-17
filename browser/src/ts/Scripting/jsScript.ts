@@ -352,15 +352,15 @@ export class JsScript {
         
         let tmp = stack.split('\n').map(function (line:string) { return line.trim(); });
 
-        const firefoxIndex = tmp.findIndex(l => l.startsWith("makeScript/"))
+        const firefoxIndex = tmp.findIndex(l => l.includes("/makeScript/"))
         if (firefoxIndex>-1) {
             let startI = tmp.findIndex(l => l.startsWith("wrapFunction"))
             tmp = tmp.slice(startI+1, firefoxIndex)
         } else {
-            tmp = tmp.filter(l => l.indexOf("makeScript")>-1)
+            tmp = tmp.filter(l => l.indexOf("(eval")>-1)
         }
         tmp.push("at Script.execute('"+ owner + "')")
-        //tmp = tmp.slice(tmp[0] == 'Error' ? 2 : 1);
+        
         stack = "  " + tmp.join("\n  ")
 
         if (firefoxIndex>-1) {

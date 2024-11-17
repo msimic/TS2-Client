@@ -357,7 +357,7 @@
       "position": 7,
       "id": "column-left-top",
       "background": "",
-      "width": "310px",
+      "width": "280px",
       "autoexpand": false,
       "items": [
         {
@@ -648,7 +648,7 @@
       "position": 8,
       "id": "column-left-bottom",
       "background": "",
-      "width": "310px",
+      "width": "280px",
       "autoexpand": false,
       "items": [
         {

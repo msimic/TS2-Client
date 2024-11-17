@@ -235,7 +235,8 @@ export function parseScriptVariableAndParameters(value: string, match: RegExpMat
             return m;
         let ret = "this." + d;
         if (evaluate) {
-            ret = script.getVariableValue(d)
+            const val = script.getVariableValue(d)
+            ret = val != null ? val : m
         }
         return ret
     });

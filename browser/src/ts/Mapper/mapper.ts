@@ -360,7 +360,7 @@ export class Mapper {
         if (newRoom) this.roomChanged.fire({ id: newRoom.id, vnum: newRoom.vnum, room: newRoom})
     
     }
-    deleteRooms(rooms: Room[]) {
+    deleteRooms(rooms: Room[], noPrepare = false) {
         let old = (this.current?.zone_id || rooms[0].zone_id)
         for (const rm of rooms) {
             let index = this.db.rooms.findIndex((r,i) => r == rm)
@@ -372,11 +372,13 @@ export class Mapper {
                 this.db.rooms.splice(index, 1)
             }
         }
-        this.prepare()
-        if (old) {
-            this.zoneChanged.fire({ id: old, zone: this.idToZone.get(old)})
-        } else {
-            this.zoneChanged.fire({ id: null, zone: null})
+        if (!noPrepare) {
+            this.prepare()
+            if (old) {
+                this.zoneChanged.fire({ id: old, zone: this.idToZone.get(old)})
+            } else {
+                this.zoneChanged.fire({ id: null, zone: null})
+            }
         }
     }
     deleteExitsReferencing(rm: Room) {
@@ -1149,7 +1151,7 @@ export class Mapper {
         if (this.nextStep) {
             const dir = this.nextStep;
             const fromRoom = dir.room;
-            if (dir?.dir && fromRoom) {
+            if (dir?.dir && fromRoom && fromRoom.id > 0) {
                 if (!fromRoom.exits[dir?.dir] || !fromRoom.exits[dir?.dir].to_room)
                     fromRoom.exits[dir?.dir] = {
                         type: ExitType.Normal,
@@ -1164,6 +1166,8 @@ export class Mapper {
                     to_dir: (dir?.dir)
                 }
                 this.prepareRoom(fromRoom)
+            } else if (fromRoom && fromRoom.id < 0) {
+                this.deleteRooms([fromRoom], true)
             }
         }
         const sett = this.scripting.getVariableValue("TSSettore")
@@ -1210,7 +1214,7 @@ export class Mapper {
             this.prepareRoom(mudSeenRoom)
             this.createGraph()
             this.roomChanged.fire({ id: mudSeenRoom.id, vnum: mudSeenRoom.vnum, room: mudSeenRoom})
-            Notification.Show("Stanza con ID " + mudSeenRoom.id + " si differenzia dal MUD. Rimappata.")
+            Notification.Show("Stanza con ID " + mudSeenRoom.id + " si differenzia dal MUD. Rimappata.", true)
         }
         if (this.countManualSteps()) {
             //this.manualSteps.shift()

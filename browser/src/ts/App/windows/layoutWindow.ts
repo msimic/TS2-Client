@@ -292,6 +292,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$cancelButton.click(this.handleCancelButtonClick.bind(this));
 
     }
+
     DownloadLayout() {
         if (this.isDirty()) {
             Messagebox.Show("Ehm..", "Serve prima salvare/applicare per poter scaricare")

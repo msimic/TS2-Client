@@ -359,6 +359,14 @@ export class EditPanelWindow {
 
         circleNavigate(this.$win, this.$backButton, null, this.$win);
         
+        this.$win.on("keyup", (k) => {
+            if (k.key.toLowerCase() == "c" && k.ctrlKey) {
+                this.copyItem()
+            } else if (k.key.toLowerCase() == "v" && k.ctrlKey) {
+                this.pasteItem()
+            }
+        })
+
         this.unloadUiElement()
         this.startEditing(this.panel)
     }
@@ -407,10 +415,33 @@ export class EditPanelWindow {
             pr.css("backgroundColor", bc)
             let jc = $("<div style='min-height:32px;'>").append(pr)
             await messagebox("Anteprima", jc as any, null, "OK", "", null, false, [""], null, null, false, "");    
-         } catch (ex) {
+            this.Focus()
+        } catch (ex) {
              Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
          }
         pr.remove()
+    }
+    Focus() {
+        this.$win.focus()
+    }
+
+    copyItem() {
+        if (navigator.clipboard && this.editing)
+        navigator.clipboard.writeText(JSON.stringify(this.editing, null, 2)).then(()=>{
+            Notification.Show("Elemento copiato", true);
+        });
+    }
+    
+    pasteItem() {
+        if (navigator.clipboard)
+        navigator.clipboard.readText().then((v)=>{
+            if (v && isControl(v)) {
+                this.AddElement(JSON.parse(v) as Control)
+                Notification.Show("Elemento incollato", true);
+            } else {
+                Notification.Show("La clipboard non contiene elementi validi", true);
+            }
+        });
     }
 
     private initFields() {
@@ -535,12 +566,12 @@ export class EditPanelWindow {
         if (ind>-1) this.current.items.splice(ind, 1)
         this.startEditing(this.current)
     }
-    AddElement() {
-        let itm:Control = {
-            type: ControlType.Button,
-            paneId: "",
-            content: ""
-        }
+    AddElement(itm:Control = {
+        type: ControlType.Button,
+        paneId: "",
+        content: ""
+    }) {
+        itm.paneId = null;
         this.current.items = this.current.items || []
         this.current.items.push(itm)
         this.startEditing(this.current)
@@ -632,6 +663,7 @@ export class EditPanelWindow {
         }
 
         this.fillSubElements();
+        this.Focus()
     }
 
     private fillSubElements() {
@@ -698,5 +730,16 @@ export class EditPanelWindow {
         (<any>this.$win).jqxWindow("destroy");
     }
     
+}
+
+function isControl(v: string) {
+    try {
+        let c = JSON.parse(v) as Control
+        if (c && Object.getOwnPropertyNames(c).includes("type") &&
+            Object.getOwnPropertyNames(c).includes("content")) {
+            return true
+        }
+    } catch {}
+    return false
 }
 
