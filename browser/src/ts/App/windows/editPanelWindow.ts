@@ -19,6 +19,8 @@ export class EditPanelWindow {
     private $moveup: JQuery;
     private $movedown: JQuery;
     private $backButton: JQuery;
+    private $copy: JQuery;
+    private $paste: JQuery;
 
     private $ui_type: JQuery;
     private $ui_content: JQuery;
@@ -67,11 +69,14 @@ export class EditPanelWindow {
                     <div class="pane-content ui-items" style="flex:1;padding:5px;border: 1px solid #0000003b;border-radius: 5px;overflow-y: auto;">
                         
                     </div>
-                    <div class="pane-footer" style="padding: 5px;">
-                        <button title="Crea nuovo" class="editPanel-btnNew greenbutton">✚</button>
-                        <button title="Elimina selezionato" class="editPanel-btnDelete redbutton">&#10006;</button>
+                    <div class="pane-footer" style="padding: 5px;text-align:center;">
+                        <button title="Crea nuovo" class="editPanel-btnNew greenbutton">✚ Nuovo</button>
+                        <button title="Elimina selezionato" class="editPanel-btnDelete redbutton">&#10006; Cancella</button>
+                        <br>
                         <button title="Muovi in alto" class="editPanel-moveup">⬆️</button>
                         <button title="Muovi in basso" class="editPanel-movedown">⬇️</button>
+                        <button title="Copia elemento selezionato" class="editPanel-copy">📄</button>
+                        <button title="Incolla in questo elemento" class="editPanel-paste">📋</button>
                     </div>
                 </div>
                 <div class="right-pane" style="flex:3;">
@@ -185,6 +190,7 @@ export class EditPanelWindow {
                                                     <option value="">Predefinito</option>
                                                     <option value="0">Relativo</option>
                                                     <option value="1">Assoluto</option>
+                                                    <option value="2">Riempi spazio</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -199,7 +205,6 @@ export class EditPanelWindow {
                                                     <option value="2">Destra -&gt; sinistra</option>
                                                     <option value="3">Alto -&gt; basso</option>
                                                     <option value="4">Basso -&gt; alto</option>
-                                                    <option value="5">Riempi</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -306,6 +311,11 @@ export class EditPanelWindow {
         this.$delete = $(".editPanel-btnDelete", this.$win)
         this.$moveup = $(".editPanel-moveup", this.$win)
         this.$movedown = $(".editPanel-movedown", this.$win);
+        this.$copy = $(".editPanel-copy", this.$win);
+        this.$paste = $(".editPanel-paste", this.$win);
+
+        this.$copy.on("click", this.copyItem)
+        this.$paste.on("click", this.pasteItem)
         
         this.initFields();
         
@@ -359,12 +369,19 @@ export class EditPanelWindow {
 
         circleNavigate(this.$win, this.$backButton, null, this.$win);
         
-        this.$win.on("keyup", (k) => {
+        this.$win.on("keyup", async (k) => {
             if (k.key.toLowerCase() == "c" && k.ctrlKey) {
-                this.copyItem()
+                if (await this.copyItem()) {
+                    k.preventDefault()
+                    return false
+                }
             } else if (k.key.toLowerCase() == "v" && k.ctrlKey) {
-                this.pasteItem()
+                if (await this.pasteItem()) {
+                    k.preventDefault()
+                    return false
+                }
             }
+            return true
         })
 
         this.unloadUiElement()
@@ -404,7 +421,9 @@ export class EditPanelWindow {
                 pr.append(pw)
                 pr.append("<div style='display:block;position:relative;width:0;height:0;clear:both;'>")
             } else {
+                lm.release()
                 Notification.Show("Impossibile creare l'anteprima per qualche errore nel rendering")
+                return
             }
             let cc = (this.current as any)?.color
             cc ||= LayoutManager.getForecolor(this.layout)
@@ -415,6 +434,7 @@ export class EditPanelWindow {
             pr.css("backgroundColor", bc)
             let jc = $("<div style='min-height:32px;'>").append(pr)
             await messagebox("Anteprima", jc as any, null, "OK", "", null, false, [""], null, null, false, "");    
+            lm.release()
             this.Focus()
         } catch (ex) {
              Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
@@ -425,21 +445,41 @@ export class EditPanelWindow {
         this.$win.focus()
     }
 
-    copyItem() {
-        if (navigator.clipboard && this.editing)
-        navigator.clipboard.writeText(JSON.stringify(this.editing, null, 2)).then(()=>{
+    isInputElement() {
+        if (document.activeElement?.tagName == "INPUT" ||
+            document.activeElement?.tagName == "TEXTAREA" ||
+            document.activeElement?.tagName == "SELECT") {
+                return true
+            }
+        return false
+    }
+    copyItem = async () => {
+        if (!navigator.clipboard || this.isInputElement()) {
+            return false
+        }
+        if (!this.editing) {
+            Notification.Show("Seleziona prima un elemento", true);
+            return false
+        }
+        
+        return await navigator.clipboard.writeText(JSON.stringify(this.editing, null, 2)).then(()=>{
             Notification.Show("Elemento copiato", true);
+            return true
         });
     }
     
-    pasteItem() {
-        if (navigator.clipboard)
-        navigator.clipboard.readText().then((v)=>{
+    pasteItem = async () =>  {
+        if (!navigator.clipboard || this.isInputElement()) {
+            return false
+        }
+        return navigator.clipboard.readText().then((v)=>{
             if (v && isControl(v)) {
                 this.AddElement(JSON.parse(v) as Control)
                 Notification.Show("Elemento incollato", true);
+                return true
             } else {
                 Notification.Show("La clipboard non contiene elementi validi", true);
+                return false
             }
         });
     }

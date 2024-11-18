@@ -12,6 +12,7 @@ export class EditZoneWin {
     private $cancelButton: JQuery;
     private $id: JQuery;
     private $name: JQuery;
+    private $music: JQuery;
     private $label: JQuery;
     private $desc: JQuery;
     private $backColor: JQuery;
@@ -37,6 +38,7 @@ export class EditZoneWin {
         this.zone.backColor = inZone?.backColor
         this.zone.image = inZone.image
         this.zone.imageOffset = {x: inZone.imageOffset?.x??0, y: inZone.imageOffset?.y??0}
+        this.zone.musicUrl = inZone.musicUrl
 
         let win = document.createElement("div");
         win.style.display = "none";
@@ -52,6 +54,7 @@ export class EditZoneWin {
                 <ul>
                     <li>Dati</li>
                     <li>Stile</li>
+                    <li>Altro</li>
                 </ul>
                 <div>
                     <div class="tab-content">
@@ -99,6 +102,16 @@ export class EditZoneWin {
                         </div>    
                     </div>
                 </div>
+                <div>
+                    <div class="tab-content">
+                        <div style="flex:none;">
+                            Musica (URL)
+                        </div>
+                        <div style="display:flex;flex-direction:row;padding:5px;">
+                            <input style="flex:1" type="text" class="zoneedit-music" title="Link a eventuale MP3 da suonare nella zona">
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="window-buttonbar">
                 <span class="nrzona">nr. zona: </span><span class="zoneedit-id"></span>
@@ -118,9 +131,10 @@ export class EditZoneWin {
         this.$backColor = $(win.getElementsByClassName("zoneedit-color")[0]);
         this.$imgurl = $(win.getElementsByClassName("zoneedit-image")[0]);
         this.$imgoffset = $(win.getElementsByClassName("zoneedit-offset")[0]);
+        this.$music = $(win.getElementsByClassName("zoneedit-music")[0]);
         
         const w = 360
-        const h = 270
+        const h = 273
         const left = ($(window).width()-w)/2;
         const top = ($(window).height()-h)/2;
         (<any>this.$win).jqxWindow({isModal: true, width: w, height: h, minHeight: h, minWidth: w, position: { x: left, y: top }});
@@ -172,6 +186,7 @@ export class EditZoneWin {
         this.setUiValue(this.$desc, this.zone.description);
         this.setUiValue(this.$label, this.zone.label);
         this.setUiValue(this.$imgurl, this.zone.image ?? "");
+        this.setUiValue(this.$music, this.zone.musicUrl ?? "");
         this.setUiValue(this.$imgoffset, this.zone.imageOffset ?
             this.zone.imageOffset.x + "," + this.zone.imageOffset.y : "");
         
@@ -196,6 +211,7 @@ export class EditZoneWin {
         this.setValue<typeof this.zone>("description", this.$desc.val())
         this.setValue<typeof this.zone>("label", this.$label.val())
         this.setValue<typeof this.zone>("image", this.$imgurl.val())
+        this.setValue<typeof this.zone>("musicUrl", this.$music.val())
         if (this.$imgoffset.val()) {
             let of = this.$imgoffset.val().split(",")
             if (of.length!=2) {

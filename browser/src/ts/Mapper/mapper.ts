@@ -19,7 +19,10 @@ export interface MapperOptions {
     drawWalls: boolean,
     drawRoomType: boolean,
     preferZoneAbbreviations: boolean;
-    drawAdjacentLevel: boolean
+    drawAdjacentLevel: boolean;
+    zoneImages: boolean;
+    zoneMusic: boolean;
+    zoneVolume: number;
 };
 
 export interface Zone {
@@ -29,7 +32,8 @@ export interface Zone {
     label?: string;
     backColor?: string
     image?:string,
-    imageOffset?: {x: number, y:number}
+    imageOffset?: {x: number, y:number},
+    musicUrl?:string
 }
 
 export enum ExitType {
@@ -452,7 +456,10 @@ export class Mapper {
                 toolboxY: 0,
                 drawRoomType: true,
                 preferZoneAbbreviations: false,
-                 drawAdjacentLevel: true
+                drawAdjacentLevel: true,
+                zoneImages: true,
+                zoneMusic: true,
+                zoneVolume: 30
             }
         }
 

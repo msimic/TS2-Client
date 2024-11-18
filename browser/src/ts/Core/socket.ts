@@ -8,6 +8,7 @@ import { TelnetClient } from "./telnetClient";
 import { utf8decode, utf8encode } from "./util";
 import { UserConfig } from "../App/userConfig";
 import * as apiUtil from "./apiUtil";
+import { AppInfo } from "../appInfo";
 
 
 export class Socket {
@@ -75,7 +76,9 @@ export class Socket {
             (port) +
             "/telnet";
         console.log("Connecting to telnet proxy server at", ioUrl);
-        this.ioConn = ioc.io(ioUrl);
+        this.ioConn = ioc.io(ioUrl, {
+            auth: {token: AppInfo.Token}
+        });
 
         this.ioConn.on("connect", () => {
             this.EvtWsConnect.fire({sid: this.ioConn.id});

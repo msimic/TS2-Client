@@ -1,3 +1,4 @@
+import { AppInfo } from '../appInfo';
 import { EventHook } from '../Core/event';
 import * as ioc from "socket.io-client";
 
@@ -487,7 +488,7 @@ export class WebRTC {
         this.connectionError = false
         this.removePeers()
 
-        let cfg = <any>{
+        let cfg = <ioc.SocketOptions>{
             serveClient: false,
             pingTimeout: 120000,
             allowEIO3: true,
@@ -497,7 +498,8 @@ export class WebRTC {
                 methods: ["GET", "POST"],
                 allowedHeaders: [],
                 credentials: true
-              }
+              },
+            auth: {token: AppInfo.Token}
         }
         this.serverConnection = ioc.io(this.host + ":" + this.port, cfg);
 

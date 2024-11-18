@@ -547,25 +547,21 @@ input:disabled::placeholder {
   #column-right-top > * {
     float: left;
     clear: both;
-    margin: 2px;
   }
 
   #column-left-top > * {
     float: left;
     clear: both;
-    margin: 2px;
   }
 
   #column-right-bottom > * {
     float: left;
     clear: both;
-    margin: 2px;
   }
 
   #column-left-bottom > * {
     float: left;
     clear: both;
-    margin: 2px;
   }
   
   #column-center {
@@ -611,7 +607,6 @@ input:disabled::placeholder {
   #row-bottom {
     flex-direction: row;
     display: flex;
-    overflow: hidden;
   }
   #row-input {
     background-color: rgb(21 106 167 / 77%);
@@ -1767,6 +1762,7 @@ input:focus,button:focus,textarea:focus {
     border: 1px solid #0a0a0a21;
     cursor: pointer;
     font-weight: normal;
+    margin:1px;
     /*transform: translate3d(0, 0, 0);*/
     transition: all .2s ease-in-out;
     /*transition: color 300ms ease, background-color 300ms ease, opacity 300ms ease;*/

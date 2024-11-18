@@ -892,14 +892,11 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         if (!id) {
             throw "Devi specificare l'ID del delay";
         }
-        if (!func) {
-            throw "Devi provvedere la funzione da eseguire dopo il delay";
-        }
         if (window.timeouts[id]) {
             clearTimeout(window.timeouts[id]);
             delete window.timeouts[id];
         }
-        window.timeouts[id] = setTimeout(() => {
+        if (func) window.timeouts[id] = setTimeout(() => {
             func();
             delete window.timeouts[id];
         }, time);   

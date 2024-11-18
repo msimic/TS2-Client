@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "scripts": {
     "start": "set DEBUG=* && node dist/telnet_proxy/src/app.js -c ./dist/telnet_proxy/bundle/config.json",
-    "build": "tsc -p tsconfig.json",
+    "build": "node tools/genSecrets.js && tsc -p tsconfig.json",
     "postinstall": "node tools/postinstall.js",
     "webpack": "webpack --mode production",
     "webpack-start": "webpack --mode production && node ./dist/telnet_proxy/bundle/telnet_proxy.js"

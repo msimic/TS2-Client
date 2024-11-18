@@ -5,6 +5,7 @@ const pjson = require('../package.json');
 
 let build = process.argv[2];
 const { exec } = require("child_process");
+const { exit } = require("process");
 
 exec(build, (error, stdout, stderr) => {
     const buildhash = stdout.trim().toString();
@@ -16,6 +17,15 @@ exec(build, (error, stdout, stderr) => {
         console.log(`Could not fetch build version: ${stderr}`);
         process.exit(1);
     }
+    let token = process.env.CONNECTION_TOKEN
+    if (!token) {
+        try {
+            token = fs.readFileSync("token", {encoding: "utf8"})
+        } catch {
+            console.error("Se non usi l'environment variable CONNECTION_TOKEN, devi avere un file chiamato token nella cartella con il contenuto del CONNECTION_TOKEN per poter conetterti al proxy.")
+            exit(10)
+        }
+    }
     let txt = `export namespace AppInfo {
         export let AppTitle: string = "${pjson.description}";
         export let RepoUrl: string = "${pjson.repository.url}";
@@ -24,7 +34,7 @@ exec(build, (error, stdout, stderr) => {
         export let Build: string = "${buildhash}";
         export let Author: string = "${pjson.author}";
         export let Contributors: string[] = ["${pjson.contributors.join("\",\"")}"];
-        
+        export let Token: string = "${token}";
     }`;
     
     fs.writeFileSync('src/ts/appInfo.ts', txt);

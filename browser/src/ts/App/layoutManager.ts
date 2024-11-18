@@ -2,7 +2,7 @@ import { isNumeric, type } from "jquery";
 import { CommandInput } from "./commandInput";
 import { CustomWin } from "./windows/customWindow";
 import { EventHook } from "../Core/event";
-import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes } from "../Scripting/jsScript";
+import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes, API } from "../Scripting/jsScript";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
 import { isAlphaNumeric, isTrue, parseScriptVariableAndParameters, rawToHtml, throttle } from "../Core/util";
@@ -53,7 +53,8 @@ export enum ControlType {
 
 export enum Position {
     Relative,
-    Absolute
+    Absolute,
+    Fill
 }
 
 export enum Direction {
@@ -61,8 +62,7 @@ export enum Direction {
     Left,
     Right,
     Top,
-    Down,
-    Fill
+    Down
 }
 
 export interface Control {
@@ -198,11 +198,13 @@ export class LayoutManager {
         });
         if (profileManager) this.deleteLayout();
         if (profileManager) this.load();
-        EvtScriptEvent.handle((e) => this.handleEvent(e));
+        
     }
 
-    handleEvent(e:{event:ScripEventTypes, condition:string, value:any}) {
-        if (e.event != ScripEventTypes.VariableChanged) return;
+    handleEvent = (e:{event:ScripEventTypes, condition:string, value:any}) => {
+        if (e.event != ScripEventTypes.VariableChanged ||
+            !this.onVariableChangedThrottled)
+            return;
         let func = this.onVariableChangedThrottled.get(e.condition);
         if (!func) {
             func = throttle(this.onVariableChanged, 500, this);
@@ -215,7 +217,9 @@ export class LayoutManager {
         let ctrls;
         let numCtrl = 0;
         if (ctrls=this.variableChangedMap.get(variableName)) {
+            //console.log("layout variable " + variableName)
             for (const c of ctrls) {
+                //console.log(c.content)
                 numCtrl++;
                 //let t0 = performance.now();        
                 let cont = this.createContent(c, false);
@@ -229,6 +233,10 @@ export class LayoutManager {
                 //t0 = performance.now();        
                 const ccont = $(".ui-control-content", ui)
                 ccont[0].innerHTML = cont;
+                if (c.checkbox) this.checkCheckbox(c);
+                if (c.gauge) this.checkGauge(c);
+                if (c.visible) this.checkVisible(c);
+                if (c.blink) this.checkBlink(c);
                 //t1 = performance.now();
                 //if (variableName != "TickRemaining" && numCtrl>0) console.log(`VarChanged-${numCtrl}/${ccont.length} ${variableName} ${t1 - t0} ms.`);
             }
@@ -535,6 +543,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
 
     public unload() {
         this.deleteLayout();
+        this.release();
+    }
+
+    public release() {
+        EvtScriptEvent.release(this.handleEvent);
         this.layout = null;
         this.scripts.clear();
         this.parents.clear();
@@ -599,8 +612,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
     }
 
     loadLayout(layout: LayoutDefinition) {
+        this.variableChangedMap.clear();
+        this.variableStyleChangedMap.clear();
         if (!layout) return;
-
+        EvtScriptEvent.handle(this.handleEvent);
+        
         this.layout = layout;
         
         const foreColor = LayoutManager.getForecolor(layout)
@@ -682,10 +698,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         if (c.checkbox) {
             for (const v of c.checkbox.split(",")) {
                 let variables = this.parseVariables(v);
-                variables = variables.map(v => this.getVariableName(v));
-                for (const variable of variables) {
+                for (let variable of variables) {
+                    variable = this.getVariableName(v)
                     if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                    this.variableStyleChangedMap.get(variable).push(c);
+                    if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                        this.variableStyleChangedMap.get(variable).push(c);
                 }
             }
             this.checkCheckbox(c);
@@ -694,7 +711,8 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         if (c.gauge) {
             for (const v of c.gauge.split(",").map(v => this.getVariableName(v))) {
                 if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
-                this.variableStyleChangedMap.get(v).push(c);
+                if (this.variableStyleChangedMap.get(v).indexOf(c)==-1)
+                    this.variableStyleChangedMap.get(v).push(c);
             }
             this.checkGauge(c);
         }
@@ -702,10 +720,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         if (c.visible) {
             for (const v of c.visible.split(",")) {
                 let variables = this.parseVariables(v);
-                variables = variables.map(v => this.getVariableName(v));
-                for (const variable of variables) {
+                for (let variable of variables) {
+                    variable = this.getVariableName(v)
                     if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                    this.variableStyleChangedMap.get(variable).push(c);
+                    if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                        this.variableStyleChangedMap.get(variable).push(c);
                 }
             }
             this.checkVisible(c);
@@ -714,9 +733,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         if (c.blink) {
             for (const v of c.blink.split(",")) {
                 let variables = this.parseVariables(v);
-                for (const variable of variables) {
+                for (let variable of variables) {
+                    variable = this.getVariableName(v)
                     if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                    this.variableStyleChangedMap.get(variable).push(c);
+                    if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                        this.variableStyleChangedMap.get(variable).push(c);
                 }
             }
             this.checkBlink(c);
@@ -777,10 +798,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             if (c.checkbox) {
                 for (const v of c.checkbox.split(",")) {
                     let variables = this.parseVariables(v);
-                    variables = variables.map(v => this.getVariableName(v));
-                    for (const variable of variables) {
+                    for (let variable of variables) {
+                        variable = this.getVariableName(v)
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);
+                        if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                            this.variableStyleChangedMap.get(variable).push(c);
                     }
                 }
                 this.checkCheckbox(c);
@@ -789,7 +811,8 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             if (c.gauge) {
                 for (const v of c.gauge.split(",").map(v => this.getVariableName(v))) {
                     if (!this.variableStyleChangedMap.has(v)) this.variableStyleChangedMap.set(v, []);
-                    this.variableStyleChangedMap.get(v).push(c);
+                    if (this.variableStyleChangedMap.get(v).indexOf(c)==-1)
+                        this.variableStyleChangedMap.get(v).push(c);
                 }
                 this.checkGauge(c);
             }
@@ -797,10 +820,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             if (c.visible) {
                 for (const v of c.visible.split(",")) {
                     let variables = this.parseVariables(v);
-                    variables = variables.map(v => this.getVariableName(v));
-                    for (const variable of variables) {
+                    for (let variable of variables) {
+                        variable = this.getVariableName(v)
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);
+                        if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                            this.variableStyleChangedMap.get(variable).push(c);
                     }
                 }
                 this.checkVisible(c);
@@ -809,9 +833,11 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             if (c.blink) {
                 for (const v of c.blink.split(",")) {
                     let variables = this.parseVariables(v);
-                    for (const variable of variables) {
+                    for (let variable of variables) {
+                        variable = this.getVariableName(v)
                         if (!this.variableStyleChangedMap.has(variable)) this.variableStyleChangedMap.set(variable, []);
-                        this.variableStyleChangedMap.get(variable).push(c);
+                        if (this.variableStyleChangedMap.get(variable).indexOf(c)==-1)
+                            this.variableStyleChangedMap.get(variable).push(c);
                     }
                 }
                 this.checkBlink(c);
@@ -830,7 +856,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
     checkGauge(c: Control) {
         let ui = this.controls.get(c);
         let color = c.color || "red";
-        let sthis = this.scripting.getScriptThis();
+        let sthis = this.getScriptThis();
         let vars = c.gauge.split(",");
         vars = vars.map(v => this.evalExpression(v, sthis))
         const max = parseInt(vars[1]);
@@ -863,7 +889,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         let wm = this.profileManager?.windowManager
         if (!wm) return
 
-        let w = wm.windows.get(name)
+        let w = wm.windows.get(name) || (visible ? wm.createWindow(name) : null)
         if (!w || !w.window || !w.data.docked || !w.data.visible) return
 
         wm.toggleWinVisibility(visible, w.window)
@@ -874,6 +900,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         const pathParts = path.split(/\.|(\[[^\]]+\])/).filter(Boolean);
     
         return pathParts.reduce((acc:Object, part:string) => {
+            const isFunctionCall = part.endsWith(")") && part.lastIndexOf("(")>0
             if (part.startsWith('[') && part.endsWith(']')) {
                 part = part.slice(1, -1);
     
@@ -885,8 +912,17 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                 }
             }
     
+            let param = ""
+            if (isFunctionCall) {
+                param = part.substring(part.lastIndexOf("(")+1, part.length-1)
+                part = part.substring(0, part.lastIndexOf("("))
+            }
             if (acc && (acc.hasOwnProperty(part) || isNumeric(part))) {
-                return (acc as any)[part];
+                let ret = (acc as any)[part];
+                if (ret && isFunctionCall) {
+                    ret = ret(param)
+                }
+                return ret
             }
             return undefined;
         }, obj);
@@ -899,40 +935,36 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
 
         if (parts.length>1) {
             val = this.getValue(sthis, varExpression)
+        } else if (typeof val == "function") {
+            val = val()
         }
         return val;
     }
 
     getVariableName(varExpression:string):any {
         const parts = varExpression.split(/\.|\[/g);
-        return parts[0];
+        return parts[0].replace("()","");
     }
 
     checkExpression(c:Control, expression:string, func:(ui:JQuery, result:boolean)=>void) {
         if (!c || !expression) return;
         let ui = this.controls.get(c);
-        let sthis = this.scripting.getScriptThis();
+        let sthis = this.getScriptThis();
         const tmpExp = expression.split(",");
         const vars = tmpExp.map(v => {
-            let r = v.replace("()", "")
+            let r = v
             if (r[0] == "!") {
                 r = r.slice(1)
             }
             return r
         });
-        const isFunctionCall = tmpExp.map(v => v.endsWith("()"));
         const isNegated = tmpExp.map(v => v.startsWith("!"));
 
         let allTrue = true;
         let i = 0;
         for (const v of vars) {
-            if (isFunctionCall[i]) {
-                let res = sthis[v] && sthis[v]()
-                allTrue = allTrue && isNegated[i] ? !res : res;
-            } else {
-                const res = this.evalExpression(v, sthis);
-                allTrue = allTrue && isNegated[i] ? !res : res;
-            }
+            const res = this.evalExpression(v, sthis);
+            allTrue = allTrue && isNegated[i] ? !!!res : !!res;
             if (!allTrue) break;
             i++;
         }
@@ -944,13 +976,20 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         let expr = v;
         vr.forEach(vrb => {
             let value = this.getSubExpression(sthis, vrb);
-            if (typeof value == "string") {
-                value = "\"" + value + "\"";
+            value = (value ?? "")
+            if (typeof value == "string" &&
+                (!value.startsWith('"') || !!value.startsWith('"')) &&
+                (!value.endsWith("'") || !!value.endsWith("'"))) {
+                value = '"' + value + '"'
             }
             expr = expr.replace(vrb, value);
         });
-        const res = eval(expr);
-        return res;
+        try {
+            const res = eval(expr);
+            return res;
+        } catch {
+            return ""
+        }
     }
 
     checkBlink(c: Control) {
@@ -1013,11 +1052,6 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     break;
             }
         }
-        if (ctrl.stack) {
-            if (ctrl.stack == Direction.Fill) {
-                style+= "flex: 1;";
-            }
-        }
         if (ctrl.color) {
             style+= "color:"+ctrl.color+";";
         }
@@ -1040,14 +1074,26 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             style+= "height:"+ctrl.h+"px !important;";
         }
         if (ctrl.position) {
-            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+" !important;";
+            if (ctrl.position == Position.Fill) {
+                style+= "flex: 1;";
+            }
         }
 
         if ((ctrl.stack == Direction.None) || !ctrl.stack) {
             style+= "clear:both !important;";
-        }/* else {
-            style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
-        }*/
+        }
+
+        switch (ctrl.stack) {
+            case Direction.Right:
+                style+= "text-align:right !important;";
+                break;
+            case Direction.Left:
+                style+= "text-align:left !important;";
+                break;
+            default:
+                style+= "text-align:center !important;";
+        }
 
         if (ctrl.css) {
             style+= ctrl.css + ";";
@@ -1098,11 +1144,6 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     break;
             }
         }
-        if (ctrl.stack) {
-            if (ctrl.stack == Direction.Fill) {
-                style+= "flex: 1;";
-            }
-        }
         if (ctrl.color) {
             style+= "color:"+ctrl.color+";";
         }
@@ -1125,14 +1166,24 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             style+= "height:"+ctrl.h+"px !important;";
         }
         if (ctrl.position) {
-            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+"px !important;";
+            style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+" !important;";
+            if (ctrl.position == Position.Fill) {
+                style+= "flex: 1;";
+            }
         }
 
         if ((ctrl.stack == Direction.None) || !ctrl.stack) {
             style+= "clear:both !important;";
-        }/* else {
-            style+=(ctrl.stack == Direction.Left ? "float:left !important;" :"float:right !important;");
-        }*/
+        }
+
+        switch (ctrl.stack) {
+            case Direction.Right:
+                style+= "text-align:right !important;";
+            case Direction.Left:
+                style+= "text-align:left !important;";
+            default:
+                style+= "text-align:center !important;";
+        }
 
         if (ctrl.css) {
             style+= ctrl.css + ";";
@@ -1313,15 +1364,28 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         }
         if (ctrl.position) {
             style+= "position:"+(ctrl.position == Position.Absolute ? "absolute":"relative")+" !important;";
+            if (ctrl.position == Position.Fill) {
+                style+= "flex: 1;";
+                containerStyle+= "width: 100%;height: 100%;";
+            }
         }
+        
+        let align = "text-align:center;"
+            
         if (ctrl.stack != Direction.None && ctrl.stack) {
+            containerStyle += "font-family:inherit;"
+            containerStyle += "font-size:inherit;"
+            containerStyle += "font-weight:inherit;"
+            containerStyle += "color:inherit;"
 
             containerStyle+= "display:flex !important;";
             if (ctrl.stack == Direction.Left) {
                 containerStyle+= "flex-direction: row;";
+                align = "text-align:left;"
             }
             else if (ctrl.stack == Direction.Right) {
                 containerStyle+= "flex-direction: row-reverse;";
+                align = "text-align:right;"
             }
             else if (ctrl.stack == Direction.Top) {
                 containerStyle+= "flex-direction: column;";
@@ -1329,12 +1393,9 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             else if (ctrl.stack == Direction.Down) {
                 containerStyle+= "flex-direction: column-reverse;";
             }
-
-            if (ctrl.stack == Direction.Fill) {
-                style+= "flex: 1;";
-                containerStyle+= "width: 100%;height: 100%;";
-            }
         }
+
+        style += align;
 
         if (ctrl.stack == Direction.None) {
             style+= "clear:both !important;";
@@ -1374,7 +1435,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
     createContent(ctrl: Control, parseVariable:boolean) {
         let content = ctrl.content || "";
         content=rawToHtml(content);
-        let sthis = this.scripting.getScriptThis()
+        let sthis = this.getScriptThis();
         if (content.indexOf("%color(")!=-1) {
             content = content.replace(/\%color\([^\)]+?\)/gi,(s,a)=>{
                 let colorStr = s.substring(7, s.length-1);
@@ -1388,7 +1449,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             });
         }
         let varPos = -1;
-        while ((varPos = content.indexOf("%var("))!=-1) {
+        while ((varPos = content.lastIndexOf("%var("))!=-1) {
             varPos+= 4;
             let openBracket = 0;
             let endPos = -1;
@@ -1438,20 +1499,18 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     compare = Number(compare);
                 }
                 variable=variable.trim()
-                const isFunctionCall = variable.endsWith("()")
-                const fCall = variable.replace("()","")
-                const sub = isFunctionCall ? undefined : this.getSubExpression(sthis, variable);
-                let val = isFunctionCall && sthis[fCall] ? sthis[fCall]() : sub==undefined?'?':sub;
+                let val = this.getSubExpression(sthis, variable);
                 if (parseVariable) {
                     const realName = this.getVariableName(variable);
                     if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
-                    this.variableChangedMap.get(realName).push(ctrl);
+                    if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
+                        this.variableChangedMap.get(realName).push(ctrl);
                 }
                 if (params.length>2) {
                     if (compare) {
                         return ((compareOP(val,compare)) ? params[1] : params[2]);
                     } else {
-                        return isTrue(val) ? params[1] : params[2];
+                        return (val) ? params[1] : params[2];
                     }
                 } else if (params.length==2) {
                     return (val==undefined?"-":val).toString().substring(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
@@ -1466,9 +1525,17 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                 EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid variable in template of Control: " + ctrl.content})
                 break;
             }
+            replacement = replacement ?? "?"
             content = content.substring(0,varPos-4) + replacement + content.substring(endPos+1);
         }
         return content;
+    }
+
+    private getScriptThis() {
+        let sthis = Object.assign({}, this.scripting.getScriptThis());
+        sthis = Object.assign(sthis, {api: API.functions ?? {}});
+        sthis = Object.assign(sthis, {custom: API.private ?? {}});
+        return sthis;
     }
 
     public async loadBaseLayout(prof:Profile) {
@@ -1977,7 +2044,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             w: 180,
             h:20,
             type: ControlType.Button,
-            stack: Direction.Fill,
+            position: Position.Fill,
             content: `Tick: %var(TickRemaining) sec.`,
             commands: "tick",
             gauge: "TickRemaining,currentTickLenght",
@@ -1991,7 +2058,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             w: 180,
             h:20,
             type: ControlType.Button,
-            stack: Direction.Fill,
+            position: Position.Fill,
             content: `Move: %var(TSMov)/%var(TSMaxMov)`,
             commands: "feast",
             gauge: "TSMov,TSMaxMov",
@@ -2021,7 +2088,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             w: 180,
             h:20,
             type: ControlType.Button,
-            stack: Direction.Fill,
+            position: Position.Fill,
             content: `HP: %var(TSHp)/%var(TSMaxHp)`,
             commands: "heal",
             gauge: "TSHp,TSMaxHp",
@@ -2052,7 +2119,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             w: 180,
             h:20,
             type: ControlType.Button,
-            stack: Direction.Fill,
+            position: Position.Fill,
             content: `Mana: %var(TSMana)/%var(TSMaxMana)`,
             commands: "cani",
             gauge: "TSMana,TSMaxMana",

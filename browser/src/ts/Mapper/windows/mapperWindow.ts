@@ -15,6 +15,7 @@ import { MapperMoveToZoneWin } from "./mapperMoveToZoneWin"
 import { EditZoneWin } from "./editZoneWin"
 import { MoveRoomsWin } from "./moveRoomsWin"
 import { PropertyChanged } from "../../Scripting/jsScript"
+import { debounce } from "lodash";
 
 export enum UpdateType { none = 0, draw = 1 }
 export function createZoneLabel(useLabels: boolean, useId: boolean, item: Zone) {
@@ -39,7 +40,179 @@ interface ClipboardItem {
     new (itemData: ClipboardItemData): ClipboardItem;
   };
 
+
+  enum AudioStatus {
+    FadingIn,
+    Playing,
+    FadingOut,
+    Stopped
+  }
+
+  interface AudioState {
+    status: AudioStatus;
+    audio: HTMLAudioElement;
+    manager: (stop:boolean, volume?:number) => void;
+  }
+  class Fader {
+    private map:Map<HTMLAudioElement, AudioState> = new Map()
+    createState(audio:HTMLAudioElement) {
+        let st:AudioState = {
+            audio: audio,
+            status: AudioStatus.Stopped,
+            manager: null
+        }
+        this.map.set(audio, st)
+    }
+    constructor(private volume:number, ...audios:HTMLAudioElement[]) {
+        this.setVolume(this.volume);
+        this.load = debounce(this.load, 300)
+        for (const au of audios) {
+            this.createState(au)
+            au.loop = true
+            au.volume = 0
+        }
+        this.attach()
+    }
+
+      public setVolume(vol:number) {
+          this.volume = vol / 100;
+          for (const as of this.map.values()) {
+            if (as.status == AudioStatus.Playing) {
+                as.audio.volume = this.volume
+            }
+          }
+      }
+
+    destroy() {
+        this.release()
+    }
+
+    release() {
+        for (const as of this.map.keys()) {
+            as.removeEventListener("canplay", this.playAudio )
+        }
+    }
+
+    attach() {
+        for (const as of this.map.keys()) {
+            as.addEventListener("canplay", this.playAudio )
+        }
+    }
+
+    playAudio = (ev:Event) => {
+        let audio = (ev.target as HTMLAudioElement)
+        if (!audio || !this.map.get(audio)) return
+        audio.volume = 0
+        audio.play()
+        this.map.get(audio).manager(false, this.volume)
+    }
+
+    play(url:string) {
+
+        console.log("requesting play: " + url)
+            
+
+        if ([...this.map.values()].find(s => (s.status == AudioStatus.Playing || s.status == AudioStatus.FadingIn) && s.audio.src == url )) {
+            console.log("url already playing: " + url)
+            return
+        }
+
+        let st: AudioState = null
+        st = [...this.map.values()].find(s => s.status == AudioStatus.Stopped)
+        st ||= [...this.map.values()].find(s => s.status == AudioStatus.FadingOut)
+        st ||= [...this.map.values()].find(s => s.status == AudioStatus.FadingIn)
+
+        if (!st || !st.audio) {
+            throw Error("No suitable player")
+        }
+
+        let playing = [...this.map.values()].filter(s => s.status == AudioStatus.Playing || s.status == AudioStatus.FadingIn )
+        for (const pl of playing) {
+            if (pl.manager) {
+                pl.manager(true)
+                pl.manager = null
+            }    
+        }
+
+        if (st.manager) {
+            st.manager(true)
+        }
+
+        let fadeInFunc = (stop:boolean, val:number = 0.33) => {
+            let stopMe = stop
+            let myState = st
+            let fadeInterval:any = 0
+
+            let stopFunc = () => {
+                try {myState.audio.pause()} catch {}
+                try {myState.audio.src = ""} catch {}
+            }
+            if (stopMe) {
+                console.log("stopping " + myState.audio.classList + " on " + myState.audio.src)
+                myState.manager = null
+                myState.status = AudioStatus.Stopped
+                fadeInterval && clearInterval(fadeInterval);
+                stopFunc()
+                return
+            }
+            let step = val/20
+            console.log("starting " + myState.audio.classList + " on " + myState.audio.src)
+            fadeInterval = setInterval(() => {
+                if (stopMe || !myState.manager) {
+                    myState.manager = null
+                    myState.status = AudioStatus.Stopped
+                    stopFunc()
+                    clearInterval(fadeInterval);
+                    return
+                }
+                myState.status = AudioStatus.FadingIn
+                if (myState.audio.volume < val) {
+                    myState.audio.volume += Math.min(1-myState.audio.volume, step);
+                } else {
+                    myState.status = AudioStatus.Playing
+                    console.log("started " + myState.audio.classList + " on " + myState.audio.src)
+                    clearInterval(fadeInterval);
+                }
+            }, 200);
+        }
+        st.manager = fadeInFunc
+        st.status = AudioStatus.FadingIn
+        this.load(st, url)
+    }
+    load = (st:AudioState, url:string) => {
+        console.log("load audio")
+        st.audio.src = url
+        st.audio.load()
+    }
+    stopAll() {
+        for (const as of this.map.values()) {
+            if (as.manager) {
+                as.manager(true)
+                as.status = AudioStatus.Stopped
+            }
+        }
+    }
+  }
+
 export class MapperWindow implements IBaseWindow {
+    $audio:HTMLAudioElement;
+    $audio2:HTMLAudioElement;
+    fader:Fader = null;
+    setZoneMusic(zoneId: number) {
+        let opt = this.mapper.getOptions()
+        if (zoneId == null) {
+            this.fader?.stopAll()
+            return
+        }
+        if (!opt.zoneMusic) return;
+
+        let zone = this.mapper.idToZone.get(zoneId)
+        if (zone?.musicUrl) {
+            this.fader?.play(zone.musicUrl)
+        } else {
+            this.fader?.stopAll()
+        }
+    }
     optionsWindow: MapperOptionsWin;
     editMode: EditMode = EditMode.Drag;
     allowMove: boolean = false;
@@ -82,9 +255,11 @@ export class MapperWindow implements IBaseWindow {
             if (newSelItem && (<any>this.$zoneList).jqxDropDownList('selectedIndex')!=newSelItem.index) {
                 (<any>this.$zoneList).jqxDropDownList('selectIndex', newSelItem.index );
             }
+            this.setZoneMusic(this.zoneId)
         } else {
             let v = (<any>this.$zoneList).jqxDropDownList('getSelectedItem');
             if (v) (<any>this.$zoneList).jqxDropDownList('unselectItem', v ); 
+            this.setZoneMusic(null)
         }
         
     }
@@ -109,9 +284,12 @@ export class MapperWindow implements IBaseWindow {
         this.zoneId = d?.id
         if (this.drawing) {
             const rooms = this.mapper.zoneRooms.get(this.zoneId)
-            if (!rooms || !rooms.length) {
+            if (this.zoneId!=undefined && this.zoneId>=0 && (!rooms || !rooms.length)) {
                  this.drawing.clear()
                  this.setBottomMessage("La zona non contiene stanze")
+            } else if (this.zoneId == undefined || this.zoneId < 0) {
+                this.drawing.clear()
+                 this.setBottomMessage("Nessuna zona")
             }
             this.drawing.refresh();
         }
@@ -179,6 +357,7 @@ export class MapperWindow implements IBaseWindow {
             if (me.drawing) {
                 me.drawing.refresh()
             }
+            this.fader && this.fader.setVolume(this.mapper.getOptions().zoneVolume ?? 30)
             me.fillZonesDropDown(mapper.getZones())
             me.zoneId = currZone
         });
@@ -211,6 +390,8 @@ export class MapperWindow implements IBaseWindow {
         <div>${this.windowTitle}</div>
         <!--content-->
         <div id="win-Mapper" class="expand">
+            <audio autoplay="false" class="mapper-audio" style="display:none"></audio>
+            <audio autoplay="false" class="mapper-audio2" style="display:none"></audio>
             <div class="toprow">
                 <div id="mapperMenubar" class="menuBar">
                     <ul class='custom'>
@@ -312,7 +493,6 @@ export class MapperWindow implements IBaseWindow {
         </div>
         `;
 
-        
         this.$win = $(win);
         var userAgent = navigator.userAgent.toLowerCase();
         if (userAgent.indexOf(' electron/') > -1) {
@@ -375,6 +555,8 @@ export class MapperWindow implements IBaseWindow {
         (<any>this.$win).jqxWindow({showAnimationDuration: 0, width: ww, height: wh, showCollapseButton: true, isModal: false});
         const w = (<any>this.$win);
         this.$contextMenu = <JQuery>((<any>$("#mapperContextMenu", this.$win))).jqxMenu({ animationShowDelay: 0, animationShowDuration : 0, width: '100px', height: null, autoOpenPopup: false, mode: 'popup'});
+        this.$audio = $(".mapper-audio", this.$win)[0] as HTMLAudioElement
+        this.$audio2 = $(".mapper-audio2", this.$win)[0] as HTMLAudioElement
         
         this.refreshFavorites();
         var self = this;
@@ -714,6 +896,10 @@ export class MapperWindow implements IBaseWindow {
         mapper.favoritesChanged.handle(this.favoritesChanged);
         windowManager.EvtEmitWindowsChanged.handle(this.onEmitWindowsChanged);
         this.handleDraggingToolbox(this.$win)
+        if (this.fader) {
+            this.fader.destroy()
+        }
+        this.fader = new Fader(this.mapper.getOptions().zoneVolume ?? 30, this.$audio, this.$audio2)
     }
     private favoritesChanged = (favoritesChanged: any) => {
         this.refreshFavorites();
@@ -728,6 +914,10 @@ export class MapperWindow implements IBaseWindow {
         
         windowManager.EvtEmitWindowsChanged.release(this.onEmitWindowsChanged);
         this.detachToolbox();
+        if (this.fader) {
+            this.fader.destroy()
+            this.fader = null
+        }
     }
 
     onEmitWindowsChanged = (windows: string[]) => {
@@ -1104,6 +1294,7 @@ nel canale #mappe del Discord di Tempora Sanguinis.`, "display: block;unicode-bi
                         zone.backColor = z.backColor
                         zone.imageOffset = z.imageOffset
                         zone.image = z.image
+                        zone.musicUrl = z.musicUrl
                         this.mapper.saveZone(zone) 
                         this.mapper.zoneId = zone.id
                         this.mapper.OnZonesListChanged()

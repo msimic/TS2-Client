@@ -6,12 +6,14 @@ import * as readline from "readline";
 import axios, { AxiosInstance } from "axios";
 import * as express from "express";
 import * as fs from "fs";
-import * as util from "util";
 import path = require("path");
 import * as yargs from "yargs";
 import { IoEvent } from "../../common/src/ts/ioevent";
 import * as os from "os"
 import { SignalingServer } from "./signaling-server";
+import { Secrets } from "./secrets";
+
+const token = Secrets.Token
 
 const argv = yargs
     .option('config', {
@@ -302,8 +304,21 @@ io = new socketio.Server(actualServer, <any>{
 });
 
 let telnetNs = io.of("/telnet");
+INFO("Started proxy socket. Your socket connection token is: " + token);
+
 telnetNs.on("connection", (client: socketio.Socket) => {
+    INFO("Connecting client " + client.id + " with token " + (client.handshake.auth?.token || "N/A"))
     
+    if (token) {
+        let ctoken = client.handshake.auth?.token
+        if (ctoken != token) {
+            WARN("[" + client.id + "] not authorized (wrong token)");
+            client.emit('exception', {errorMessage: 'Not authorized'});
+            client.disconnect()
+            client.removeAllListeners()
+        }
+    }
+
     let telnet: net.Socket;
     let ioEvt = new IoEvent(client);
     let remoteAddr = client.request.headers['x-real-ip'] || client.conn.remoteAddress;
@@ -714,5 +729,5 @@ let webRTCSignaller:SignalingServer;
 if (serverConfig.webRTCSignalingHost && serverConfig.webRTCSignalingPort) {
     webRTCSignaller = new SignalingServer(serverConfig.webRTCSignalingHost,
                                     serverConfig.webRTCSignalingPort,
-                                    credentials, DEBUG) 
+                                    credentials, DEBUG, token) 
 }

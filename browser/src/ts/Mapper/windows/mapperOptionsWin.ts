@@ -16,6 +16,9 @@ export class MapperOptionsWin {
     private $backColor: JQuery;
     private $drawWalls: JQuery;
     private $drawRoomType: JQuery;
+    private $zoneImages: JQuery;
+    private $zoneMusic: JQuery;
+    private $zoneVolume: JQuery;
 
     constructor(public mapper:Mapper, private appliedCb: BooleanFunction) {
 
@@ -33,6 +36,7 @@ export class MapperOptionsWin {
                 <ul>
                     <li>Colori</li>
                     <li>Disegno</li>
+                    <li>Zone</li>
                     <li>Preferenze</li>
                 </ul>
                 <div>
@@ -100,6 +104,36 @@ export class MapperOptionsWin {
                         <table>
                             <tr style="height:28px;">
                                 <td style="width: 50%;text-align:right;padding-right:10px;">
+                                    Immagini zona:
+                                </td>
+                                <td>
+                                    <input type="checkbox" title="Se abilitato il mapper disegnera' le immagini sfondo per le zone" class="mapoptions-zoneimages">
+                                </td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
+                                    Musica zona:
+                                </td>
+                                <td>
+                                    <input type="checkbox" title="Se abilitato le zone possono suonare la loro musica" class="mapoptions-zonemusic">
+                                </td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
+                                    Volume musica:
+                                </td>
+                                <td>
+                                    <input type="number" title="Da 0 a 100" class="mapoptions-zonevolume">
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="tab-content">
+                        <table>
+                            <tr style="height:28px;">
+                                <td style="width: 50%;text-align:right;padding-right:10px;">
                                     Preferisci locale:
                                 </td>
                                 <td>
@@ -145,6 +179,9 @@ export class MapperOptionsWin {
         this.$backColor = $(win.getElementsByClassName("mapoptions-backcolor")[0]);
         this.$drawWalls = $(win.getElementsByClassName("mapoptions-drawwalls")[0]);
         this.$drawRoomType = $(win.getElementsByClassName("mapoptions-roomtype")[0]);
+        this.$zoneImages = $(win.getElementsByClassName("mapoptions-zoneimages")[0]);
+        this.$zoneMusic = $(win.getElementsByClassName("mapoptions-zonemusic")[0]);
+        this.$zoneVolume = $(win.getElementsByClassName("mapoptions-zonevolume")[0]);
         
         makeIndeterminate(this.$drawRoomType);
         makeIndeterminate(this.$drawWalls);
@@ -176,7 +213,10 @@ export class MapperOptionsWin {
         this.$useLocal.prop("checked", this.mapper.getOptions().preferLocalMap)
         this.$foreColor.val(this.mapper.getOptions().foregroundColor)
         this.$backColor.val(this.mapper.getOptions().backgroundColor)
+        this.$zoneVolume.val(this.mapper.getOptions().zoneVolume ?? 30)
         this.$adjacent.prop("checked", this.mapper.getOptions().drawAdjacentLevel)
+        this.$zoneImages.prop("checked", this.mapper.getOptions().zoneImages ?? true)
+        this.$zoneMusic.prop("checked", this.mapper.getOptions().zoneMusic ?? true)
         if (this.mapper.getOptions().drawWalls == undefined) {
             (this.$drawWalls[0] as HTMLInputElement).indeterminate = true
         } else {
@@ -197,6 +237,9 @@ export class MapperOptionsWin {
         opt.drawWalls = this.$drawWalls.prop("checked")
         opt.drawAdjacentLevel = this.$adjacent.prop("checked")
         opt.drawRoomType = this.$drawRoomType.prop("checked")
+        opt.zoneImages = this.$zoneImages.prop("checked")
+        opt.zoneMusic = this.$zoneMusic.prop("checked")
+        opt.zoneVolume = this.$zoneVolume.val()
         if ((this.$drawWalls[0] as HTMLInputElement).indeterminate) {
             delete opt.drawWalls
         }

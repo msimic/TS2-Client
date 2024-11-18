@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "customized": false,
   "color": "",
   "background": "",
@@ -9,7 +9,8 @@
       "id": "row-top-left",
       "background": "",
       "height": "",
-      "autoexpand": false
+      "autoexpand": false,
+      "items": []
     },
     {
       "position": 2,
@@ -106,7 +107,7 @@
           "css": "position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;",
           "background": "rgba(0,255,0,0.0)",
           "color": "rgba(0,0,0,0.55)",
-          "blink": "TSSigDivini-riservaDivini>traguardoDivini*0.975",
+          "blink": "TSSigDivini>traguardoDivini*0.975",
           "tooltip": "Indica la percentuale al traguardo di divini assegnato",
           "visible": "traguardoDivini",
           "commands": null,
@@ -121,7 +122,8 @@
           "gauge": null,
           "style": null,
           "background": null,
-          "commands": null
+          "commands": "afk",
+          "tooltip": "Premendo qui cambi lo stato di AFK"
         },
         {
           "paneId": null,
@@ -129,7 +131,9 @@
           "background": "rgba(0,0,0,0.5)",
           "type": 1,
           "content": "%var(sancato,%color(white)Sancato,%color(yellow,transparent,true,true,false)NO SANC!)%var(scadenzaSanc,%color(yellow,transparent,true,false,true)(!),)",
-          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;",
+          "commands": "sanc",
+          "tooltip": "Sanca"
         },
         {
           "paneId": null,
@@ -137,7 +141,9 @@
           "background": "rgba(0,0,0,0.5)",
           "type": 1,
           "content": "%var(scudato,%color(red)Scudato,%color(yellow,transparent,true,true,false)NO Scudo!)%var(scadenzaScudo,%color(yellow,transparent,true,false,true)(!),)",
-          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;"
+          "css": "position:relative;margin:1px;margin-left:3px;padding:1px;font-size:12px;color:lightgray !important;",
+          "commands": "fs",
+          "tooltip": "Scudati"
         },
         {
           "paneId": null,
@@ -170,7 +176,7 @@
           "type": 0,
           "content": "Spell:(%var(spells))",
           "css": "position:relative;text-align:center;margin:2px;margin-left:3px;padding:1px;font-size:13px;",
-          "commands": "attr"
+          "commands": "spells"
         }
       ]
     },
@@ -190,7 +196,8 @@
           "commands": "if (this.healtype==\"C\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } } else if (this.healtype==\"D\") { if (this.TSSettore!=\"Chiuso\") { send(\"cast 'control w' worse\") } else { send(\"bloom\") } }",
           "is_script": true,
           "background": "transparent",
-          "style": null
+          "style": null,
+          "tooltip": "Blooma o worsa"
         },
         {
           "paneId": null,
@@ -200,7 +207,8 @@
           "css": "margin:2px;margin-left:3px;margin-bottom: 2px;margin-top: 2px;padding:1px;font-size:12px;",
           "commands": "if (this.TSPosizione!='In piedi') { send('stand') } else { send('sit') }",
           "is_script": true,
-          "style": null
+          "style": null,
+          "tooltip": "Alzati o siediti"
         },
         {
           "paneId": null,
@@ -364,7 +372,7 @@
           "id": "btnrow1",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -372,34 +380,40 @@
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "Autoassist%color(black)%var(autoassist,%color(white) ON,%color(black) OFF)",
               "commands": "autoassist",
               "checkbox": "autoassist",
-              "is_script": false
+              "is_script": false,
+              "stack": null,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoStop%color(black)%var(autostop,%color(white) ON,%color(black) OFF)",
               "commands": "autostop",
               "checkbox": "autostop",
-              "is_script": false
+              "is_script": false,
+              "stack": null,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "AutoRescue%color(black)%var(autorescue,%color(white) ON,%color(black) OFF)",
               "commands": "autorescue",
               "checkbox": "autorescue",
-              "is_script": false
+              "is_script": false,
+              "stack": null,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -408,7 +422,7 @@
           "id": "btnrow2",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -417,33 +431,37 @@
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "AutoBash%color(black)%var(autobash,%color(white) ON,%color(black) OFF)",
               "commands": "autobash",
               "checkbox": "autobash",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "Auto%var(canPlay,Slam,Stab)%color(black)%var(autostab,%color(white) ON,%color(black) OFF)",
               "commands": "autostab",
               "checkbox": "autostab",
-              "is_script": false
+              "is_script": false,
+              "position": 2,
+              "stack": null
             },
             {
               "paneId": null,
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "%var(autofuryButton)%color(black)%var(autofuryEnabled(),%color(white) ON,%color(black) OFF)",
               "commands": "this.autofuryToggle()",
               "checkbox": "autofuryEnabled()",
-              "is_script": true
+              "is_script": true,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -452,7 +470,7 @@
           "id": "btnrow3",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -461,33 +479,36 @@
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "AutoCast%color(black)%var(autocast,%color(white) ON,%color(black) OFF)",
               "commands": "autocast",
               "checkbox": "autocast",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "AutoCleric%color(black)%var(autocleric,%color(white) %var(aclMinimum)%,%color(black) OFF)",
               "commands": "autocleric",
               "checkbox": "autocleric",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "type": 0,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "content": "AutoSanc%color(black)%var(autosanc,%color(white) ON,%color(black) OFF)",
               "commands": "autosanc",
               "checkbox": "autosanc",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -496,7 +517,7 @@
           "id": "btnrow4",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -504,37 +525,40 @@
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoGroup%color(black)%var(autogroup,%color(white) ON,%color(black) OFF)",
               "commands": "autogroup",
               "checkbox": "autogroup",
               "tooltip": "Nel momento quando qualcuno inizia a seguirti lo grupperai automaticamente",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoOrder%color(black)%var(autoorder,%color(white) ON,%color(black) OFF)",
               "commands": "autoorder",
               "checkbox": "autoorder",
               "tooltip": "Appena entri in gruppo il client ascoltera' gli ordini del capogruppo",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoFollow%color(black)%var(autofollow,%color(white) ON,%color(black) OFF)",
               "commands": "autofollow",
               "checkbox": "autofollow",
               "tooltip": "Segue in stagni e portali automaticamente",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -543,7 +567,7 @@
           "id": "btnrow5",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -551,37 +575,40 @@
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoLoot%color(black)%var(autoloot,%color(white) ON,%color(black) OFF)",
               "commands": "autoloot",
               "checkbox": "autoloot",
               "tooltip": "Raccoglie soldi e altro automaticamente dai corpi morti",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "Antispalm%color(black)%var(antispalm,%color(white) ON,%color(black) OFF)",
               "commands": "antispalm",
               "checkbox": "antispalm",
               "tooltip": "Cambia scudi automaticamente se vede che si sta spalmando su uno scudo elementale (o ci sono draghi vicino)",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoArmi%color(black)%var(autoarmi,%color(white) ON,%color(black) OFF)",
               "commands": "autoarmi",
               "checkbox": "autoarmi",
               "tooltip": "Cambia le armi automaticamente se vede che non colpiscono",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -590,7 +617,7 @@
           "id": "btnrow6",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;display:flex;flex-direction:column;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -598,37 +625,40 @@
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "AutoKill%color(black)%var(autokill,%color(white) ON,%color(black) OFF)",
               "commands": "autokill",
               "checkbox": "autokill",
               "tooltip": "Uccidi a vista",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "SelfSanc%color(black)%var(selfsanc,%color(white) ON,%color(black) OFF)",
               "commands": "selfsanc",
               "checkbox": "selfsanc",
               "tooltip": "Tieni sancato se stesso",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             },
             {
               "paneId": null,
               "parent": null,
               "style": "",
-              "css": "flex:1;white-space:pre;margin:2px;",
+              "css": null,
               "type": 0,
               "content": "SelfShield%color(black)%var(selfshield,%color(white) ON,%color(black) OFF)",
               "commands": "selfshield",
               "checkbox": "selfshield",
               "tooltip": "Tieniti scudato",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ],
           "visible": "!Immortal"
@@ -637,10 +667,14 @@
           "paneId": null,
           "type": 1,
           "style": "",
-          "content": "%color(lightgray) Divini:%closecolor %color(yellow)%var(TSSigDivini,5)%closecolor  PQ/h:  %color(white) %var(_stat_pqh,4)%closecolor   MXP/h:%color(white)  %var(_stat_xph,6)%closecolor\n%color(lightgray) Aria:  %closecolor %color(white)%var(TSSigAria,5)%closecolor  5 min: %color(yellow) %var(_stat_pq5m,4)%closecolor   5 min:%color(green)  %var(_stat_xp5m,6)%closecolor\n%color(lightgray) Acqua: %closecolor %color(lightblue)%var(TSSigAcqua,5)%closecolor  15 min:%color(yellow) %var(_stat_pq15m,4)%closecolor   15 min:%color(green) %var(_stat_xp15m,6)%closecolor\n%color(lightgray) Terra: %closecolor %color(brown)%var(TSSigTerra,5)%closecolor  1 ora: %color(yellow) %var(_stat_pq1h,4)%closecolor   1 ora:%color(green)  %var(_stat_xp1h,6)%closecolor\n%color(lightgray) Fuoco: %closecolor %color(red)%var(TSSigFuoco,5)%closecolor  Sess.: %color(yellow) %var(_stat_pqsess,4)%closecolor   Sess.:%color(green)  %var(_stat_xpsess,6)%closecolor\n%color(yellow) Gold:%closecolor %color(yellow)%var(TSGoldK,7)%closecolor  %color(orange)Bank:%closecolor%color(orange)%var(TSBankK,7)%closecolor",
-          "css": "background-color:rgba(0,0,0,0.3);box-shadow: 0px 0px 1px 1px rgba(0,0,255,0.3);color:lightgray;",
-          "stack": 0,
-          "visible": "!Immortal"
+          "content": "%color(lightgray) Divini:%closecolor %color(yellow)%var(TSSigDivini,6)%closecolor  PQ/h:  %color(white) %var(_stat_pqh,4)%closecolor  MXP/h:%color(white)  %var(_stat_xph,7)%closecolor\n%color(lightgray) Aria:  %closecolor %color(white)%var(TSSigAria,6)%closecolor  5 min: %color(yellow) %var(_stat_pq5m,4)%closecolor  5 min:%color(green)  %var(_stat_xp5m,7)%closecolor\n%color(lightgray) Acqua: %closecolor %color(lightblue)%var(TSSigAcqua,6)%closecolor  15 min:%color(yellow) %var(_stat_pq15m,4)%closecolor  15 min:%color(green) %var(_stat_xp15m,7)%closecolor\n%color(lightgray) Terra: %closecolor %color(brown)%var(TSSigTerra,6)%closecolor  1 ora: %color(yellow) %var(_stat_pq1h,4)%closecolor  1 ora:%color(green)  %var(_stat_xp1h,7)%closecolor\n%color(lightgray) Fuoco: %closecolor %color(red)%var(TSSigFuoco,6)%closecolor  Sess.: %color(yellow) %var(_stat_pqsess,4)%closecolor  Sess.:%color(green)  %var(_stat_xpsess,7)%closecolor\n%color(yellow) Gold:%closecolor %color(yellow)%var(TSGoldK,7)%closecolor  %color(orange)Bank:%closecolor%color(orange)%var(TSBankK,7)%closecolor  %color(white)%closecolor%color(white)%var(TSAlign,15)%closecolor",
+          "css": null,
+          "stack": null,
+          "visible": "!Immortal",
+          "background": "rgba(0,0,0,0.3)",
+          "color": "lightgray",
+          "position": 2,
+          "items": []
         }
       ]
     },
@@ -655,7 +689,7 @@
           "id": "tick_and_btn",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -663,12 +697,12 @@
               "paneId": null,
               "color": "#AAAAAA",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "EXTRA",
               "commands": "send('extra')",
               "checkbox": "usiExtra",
@@ -679,12 +713,12 @@
               "paneId": null,
               "color": "#FF3333",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "ResFIRE",
               "commands": "send('immufire')",
               "checkbox": "usiImmuFire",
@@ -695,15 +729,16 @@
               "paneId": null,
               "parent": null,
               "color": "rgb(221 221 221)",
-              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-              "w": 160,
-              "h": 20,
+              "css": "background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+              "w": null,
+              "h": null,
               "type": 0,
-              "stack": 5,
+              "stack": null,
               "content": "Tick: %var(TickRemaining) sec.",
               "commands": "tick",
               "gauge": "TickRemaining,currentTickLenght",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ]
         },
@@ -711,7 +746,7 @@
           "id": "mv_and_btn",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -719,12 +754,12 @@
               "paneId": null,
               "color": "#AAAAAA",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "PIERCE",
               "commands": "send('pierce')",
               "checkbox": "usiPierce",
@@ -735,12 +770,12 @@
               "paneId": null,
               "color": "#AAAAFF",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "ResCOLD",
               "commands": "send('immucold')",
               "checkbox": "usiImmuCold",
@@ -751,15 +786,16 @@
               "paneId": null,
               "parent": null,
               "color": "rgb(210 151 90)",
-              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,255,255,0.5) !important; color:black !important;",
-              "w": 160,
-              "h": 20,
+              "css": "background-color:rgba(255,255,255,0.5) !important; color:black !important;",
+              "w": null,
+              "h": null,
               "type": 0,
-              "stack": 5,
+              "stack": null,
               "content": "Move: %var(TSMov)/%var(TSMaxMov)",
               "commands": "feast",
               "gauge": "TSMov,TSMaxMov",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ]
         },
@@ -767,7 +803,7 @@
           "id": "mn_and_btn",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -775,12 +811,12 @@
               "paneId": null,
               "color": "#AAAAAA",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
               "position": 0,
-              "stack": 1,
-              "css": "margin:1px;padding:1px;",
+              "stack": null,
+              "css": null,
               "content": "SLASH",
               "commands": "send('slash')",
               "checkbox": "usiSlash",
@@ -789,14 +825,14 @@
             },
             {
               "paneId": null,
-              "color": "#2222FF",
+              "color": "blue",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "ResELE",
               "commands": "send('immuele')",
               "checkbox": "usiImmuEle",
@@ -807,15 +843,16 @@
               "paneId": null,
               "parent": null,
               "color": "rgb(129 129 210)",
-              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(0,0,255,0.5) !important; color:white !important;",
-              "w": 160,
-              "h": 20,
+              "css": "background-color:rgba(0,0,255,0.5) !important; color:white !important;",
+              "w": null,
+              "h": null,
               "type": 0,
-              "stack": 5,
+              "stack": null,
               "content": "Mana: %var(TSMana)/%var(TSMaxMana)",
               "commands": "cani",
               "gauge": "TSMana,TSMaxMana",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ]
         },
@@ -823,7 +860,7 @@
           "id": "hp_and_btn",
           "paneId": null,
           "type": 1,
-          "css": "margin:0;",
+          "css": null,
           "stack": 1,
           "content": "",
           "items": [
@@ -831,12 +868,12 @@
               "paneId": null,
               "color": "#AAAAAA",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "BLUNT",
               "commands": "send('blunt')",
               "checkbox": "usiBlunt",
@@ -847,12 +884,12 @@
               "paneId": null,
               "color": "#33FF33",
               "parent": null,
-              "h": 20,
+              "h": null,
               "w": 70,
               "type": 0,
-              "stack": 1,
+              "stack": null,
               "position": 0,
-              "css": "margin:1px;padding:1px;",
+              "css": null,
               "content": "ResACID",
               "commands": "send('immuacid')",
               "checkbox": "usiImmuAcid",
@@ -863,16 +900,17 @@
               "paneId": null,
               "parent": null,
               "color": "#33AA33",
-              "css": "margin:1px;padding:1px;font-size:11px;background-color:rgba(255,0,0,0.5) !important; color:white !important;",
-              "w": 160,
-              "h": 20,
+              "css": "background-color:rgba(255,0,0,0.5) !important; color:white !important;",
+              "w": null,
+              "h": null,
               "type": 0,
-              "stack": 5,
+              "stack": null,
               "content": "HP: %var(TSHp)/%var(TSMaxHp)",
               "commands": "heal",
               "gauge": "TSHp,TSMaxHp",
               "blink": "TSHp<TSMaxHp/4",
-              "is_script": false
+              "is_script": false,
+              "position": 2
             }
           ]
         },

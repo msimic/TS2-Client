@@ -31,7 +31,7 @@ export class SignalingServer {
     private socketData: Map<string, SocketData> = new Map()
     private allowedChannels = channelMap
     
-    constructor(host:string, port:number, credentials:https.ServerOptions, private log:logger = console.log) {
+    constructor(host:string, port:number, credentials:https.ServerOptions, private log:logger = console.log, private token: string = "") {
         let socketIoConfig = <any>{
             serveClient: false,
             pingTimeout: 60000,
@@ -187,6 +187,8 @@ export class SignalingServer {
     private initServer(server: http.Server | https.Server, port: number, host: string, io: socketio.Server) {
         server.listen(port, host, () => {
             this.log("WebRTC Listening on port " + port);
+            if (this.token)
+                this.log("Your WebRTC connection token is: " + this.token)
         });
 
         /**
@@ -200,6 +202,19 @@ export class SignalingServer {
          * the peer connection and will be streaming audio/video between eachother.
          */
         io.sockets.on('connection', (socket: socketio.Socket) => {
+            
+            this.log("[" + socket.id + "] connecting");
+
+            if (this.token) {
+                let ctoken = socket.handshake.auth?.token
+                if (ctoken != this.token) {
+                    this.log("[" + socket.id + "] not authorized (wrong token)");
+                    socket.emit('exception', {errorMessage: 'Not authorized'});
+                    socket.disconnect()
+                    socket.removeAllListeners()
+                }
+            }
+
             this.log("[" + socket.id + "] connection accepted");
 
             this.removeStaleSockets();

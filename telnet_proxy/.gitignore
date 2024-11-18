@@ -1,3 +1,5 @@
 /node_modules/
 /dist/
 /configServer.js
+token
+/src/secrets.ts

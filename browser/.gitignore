@@ -1,6 +1,6 @@
 /node_modules/
 /build/
-
+token
 /src/ts/appInfo.ts
 
 /static/public/codemirror/

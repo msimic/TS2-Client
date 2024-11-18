@@ -131,6 +131,7 @@ export enum EditMode {
 export class MapperDrawing {
     private _zoneId: number;
     lastDarkState: boolean;
+    drawZoneImages: boolean;
     public get zoneId(): number {
         return this._zoneId;
     }
@@ -150,7 +151,7 @@ export class MapperDrawing {
     cachedImgOffsetX: number = 0;
     cachedImgOffsetY: number = 0;
     public customZoneImage():HTMLImageElement {
-        if (this.zoneId) {
+        if (this.zoneId && this.drawZoneImages) {
             const z = this.mapper.idToZone.get(this.zoneId)
             const imgurl = z?.image||null;
             if (imgurl && imgurl != this.cachedImgUrl) {
@@ -176,6 +177,7 @@ export class MapperDrawing {
     private static readonly _defaultRoomFillColorDark = "rgb(155,155,155)";
     private static readonly zoneImages:Map<string, Map<number, HTMLImageElement>> = new Map()
     private setZoneImage(imgurl: string) {
+        if (!this.drawZoneImages) return
         if (!imgurl) {
             this.cachedImgUrl = null
             this.cachedImg.clear()
@@ -378,6 +380,7 @@ export class MapperDrawing {
         this.gridSize = this.mapperOptions.useGrid ? this.mapperOptions.gridSize : 1
         const savedScale = this.mapperOptions.mapperScale;
         this._scale = savedScale ? (savedScale) : 1.5;
+        this.drawZoneImages = this.mapperOptions.zoneImages ?? true
     }
     clear() {
         //this.zoneId = null
