@@ -25,6 +25,8 @@ jobs:
         run: cd browser && npm install
         
       - name: Build
+        env:
+          CONNECTION_TOKEN: ${{ secrets.CONNECTION_TOKEN }}
         run: cd browser && npm run build && cd ./../telnet_proxy && npm install && npm run build && npm run webpack
           
       - name: Archive Release
@@ -81,6 +83,8 @@ jobs:
           node-version: 16
 
       - name: Build/release Electron app
+        env:
+          CONNECTION_TOKEN: ${{ secrets.CONNECTION_TOKEN }}
         uses: ZacharyWin/z-electron-builder@v0.0.2
         with:
           build_script_name: build_for_electron
