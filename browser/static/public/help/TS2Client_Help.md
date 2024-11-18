@@ -266,15 +266,24 @@ Si possono creare 4 elementi:
 Elemento grafico.
 Il testo è definito all'interno del campo Modello. Può contenere variabili
 Per impostare il colore includere il testo tra i tag %color e %closecolor
-Per includere una variabile usare il tag %var(nomevariabile,numcaratteri)
+Per includere una variabile usare il tag %var che ha due sintassi
 
-**Esempio d'uso**:
+**Sintassi 1:**
+%var(nomevariabile,numcaratteri)
+
+**Sinassi 2:**
+Da usare con variabili booleane
+%var(nomevariabile,print_se_vero,print_se_falso)
+
+**Esempi d'uso**:
 ```
 %color(yellow)%var(TSSigDivini,5)%closecolor
+%var(autoassist,%color(white) ON,%color(black) OFF)
 ```
 
 E' possibile anche definire un comando da eseguire quando il pannello viene premuto all'interno del campo *Comandi*
-Nel tab *stile* si può impostare lo stile grafico del pannello
+Nel tab *stile* si può impostare lo stile grafico del pannello.
+Esempi possono essere trovati anche nel layout predefinito.
 
 ## Finestre
 
@@ -623,7 +632,7 @@ I trigger sono script attivati dalla ricezione dal server di gioco di particolar
 | Flags | Funzione |
 | ----- | -------- |
 | **Abilitato** | Definisce se il trigger è abilitato e quindi funzionante oppure disabilitato. |
-| **Prompt** | Da abilitare solo se il trigger deve intercettare un pattern presente nel prompt restituito dal MUD. Altrimenti lasciare disabilitato. |
+| **Prompt** | Da abilitare solo se il trigger deve intercettare un pattern prima che arrivi il fineriga. Necessario per le scritte dal mud che richiedono un prompt all'utente e che quindi non mandano un fineriga.|
 | **Regex** | Definisce se il pattern definito nel modello è un pattern che deve essere intercettato esattamente come scritto o se è una RegEx. Per approfondire e fere prove con le Regular Expression si consiglia il sito *https://regexr.com/* |
 | **Script** | Definisce se i comandi specificati nel riquadro Azioni sono da interpretare come codice JavaScript (flag attivo) o come lista di comandi da inviare al MUD (flag spento).|
 
@@ -1077,11 +1086,11 @@ hideWindow(window:string)
 
 ### highlight <a name="f_highlight"></a>
 
-Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il lampeggio.
+Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente lampeggio, grassetto e sottolineatura.
 
 **Sintassi**: 
 ```js
-highlight(foreground: string, background: string, blink?: bool)
+highlight(foreground: string, background: string, blink?: bool, bold?: bool, underline?: bool)
 ```
 
 ### link <a name="f_link"></a>
