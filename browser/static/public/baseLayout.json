@@ -107,7 +107,7 @@
           "css": "position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;",
           "background": "rgba(0,255,0,0.0)",
           "color": "rgba(0,0,0,0.55)",
-          "blink": "TSSigDivini>traguardoDivini*0.975",
+          "blink": "TSSigDivini-riservaDivini>traguardoDivini*0.975",
           "tooltip": "Indica la percentuale al traguardo di divini assegnato",
           "visible": "traguardoDivini",
           "commands": null,
