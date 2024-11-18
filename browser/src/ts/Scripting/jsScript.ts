@@ -1004,6 +1004,12 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     const printText = function(message: any, window?:string) {
         EvtScriptEmitPrint.fire({owner: own, message: (message).toString(), window: window});
     };
+    const getSetting = function (sett:string) {
+        return scriptManager?.profileManager?.activeConfig?.getDef(sett, "")
+    }
+    const setSetting = function (sett:string, val:any) {
+        scriptManager?.profileManager?.activeConfig?.set(sett, val)
+    }
     const cls = function(window?:string) {
         EvtScriptEmitCls.fire({owner: own, window: window});
     };
@@ -1063,6 +1069,8 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     }
 
     const publicApi = {
+        getSetting: getSetting,
+        setSetting: setSetting,
         append: append,
         prepend: prepend,
         clone: clone,
