@@ -207,14 +207,14 @@ export class MapperOptionsWin {
     }
 
     load() {
-        this.labelleZona.prop("checked", this.mapper.getOptions().preferZoneAbbreviations)
-        this.$gridSize.val(this.mapper.getOptions().gridSize)
-        this.$useGrid.prop("checked", this.mapper.getOptions().useGrid)
-        this.$useLocal.prop("checked", this.mapper.getOptions().preferLocalMap)
-        this.$foreColor.val(this.mapper.getOptions().foregroundColor)
-        this.$backColor.val(this.mapper.getOptions().backgroundColor)
+        this.labelleZona.prop("checked", this.mapper.getOptions().preferZoneAbbreviations ?? false)
+        this.$gridSize.val(this.mapper.getOptions().gridSize ?? 240)
+        this.$useGrid.prop("checked", this.mapper.getOptions().useGrid ?? true)
+        this.$useLocal.prop("checked", this.mapper.getOptions().preferLocalMap ?? false)
+        this.$foreColor.val(this.mapper.getOptions().foregroundColor ?? "#000000")
+        this.$backColor.val(this.mapper.getOptions().backgroundColor ?? "#000000")
         this.$zoneVolume.val(this.mapper.getOptions().zoneVolume ?? 30)
-        this.$adjacent.prop("checked", this.mapper.getOptions().drawAdjacentLevel)
+        this.$adjacent.prop("checked", this.mapper.getOptions().drawAdjacentLevel ?? true)
         this.$zoneImages.prop("checked", this.mapper.getOptions().zoneImages ?? true)
         this.$zoneMusic.prop("checked", this.mapper.getOptions().zoneMusic ?? true)
         if (this.mapper.getOptions().drawWalls == undefined) {

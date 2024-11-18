@@ -158,7 +158,12 @@ export class MapperDrawing {
                 this.setZoneImage(imgurl);
                 this.cachedImgOffsetX = z.imageOffset?.x ?? 0
                 this.cachedImgOffsetY = z.imageOffset?.y ?? 0
-                return this.cachedImg.get(this.level) ?? this.cachedImg.get(0)
+                let img = this.cachedImg.get(this.level) ?? this.cachedImg.get(0)
+                if (!img) {
+                    let imgs = MapperDrawing.zoneImages.get(imgurl)
+                    img = imgs.get(this.level) || imgs.get(0)
+                }
+                return img
             } else if (imgurl && imgurl == this.cachedImgUrl && this.cachedImg.size) {
                 return this.cachedImg.get(this.level) ?? this.cachedImg.get(0)
             } else {
@@ -183,7 +188,7 @@ export class MapperDrawing {
             this.cachedImg.clear()
             return
         }
-        if (MapperDrawing.zoneImages.get(imgurl)?.size) {
+        if (MapperDrawing.zoneImages.get(imgurl)?.size && this.cachedImg && this.cachedImg.size) {
             return
         }
         this.cachedImgUrl = imgurl;
@@ -1494,11 +1499,13 @@ export class MapperDrawing {
             context.lineTo(canvas.width, point.y);
         }
 
-        context.strokeStyle = '#aaa'; // Set the line color
+        context.strokeStyle = '#99999999'; // Set the line color
         const prevlw = context.lineWidth
         context.lineWidth = Math.max(1, Math.floor(1 * scale))
+        context.setLineDash([5, 5]); // [5, 15] means 5px dash, 15px gap
         context.stroke(); // Apply the lines to the canvas
         context.closePath()
+        context.setLineDash([])
         context.lineWidth = prevlw
         context.globalCompositeOperation = prevComposite
     }

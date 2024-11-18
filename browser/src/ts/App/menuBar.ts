@@ -27,6 +27,7 @@ import { VersionsWin } from "./windows/versionsWindow";
 import { OutputLogger } from "./outputLogger";
 import { LayoutWindow } from "./windows/layoutWindow";
 import { VoiceWin } from "./windows/voiceWin";
+import { debounce } from "lodash";
 
 export type clientConfig = {[k:string]:any};
 export let optionMappingToStorage = new Map([
@@ -115,7 +116,7 @@ export class MenuBar {
                 
                 if (storageValNew != undefined) {
                     //console.log(`${name} set to ${storageValNew}`);
-                    //Notification.Show(`${name}: ${storageValNew}`, true)
+                    //this.notify(`${name}: ${storageValNew}`, true)
                 }
             };
             onStorageChanged(storageVal);
@@ -125,7 +126,7 @@ export class MenuBar {
                 const val = (<any>event.target).checked;
                 config.set(storageKey, val);
                 if (!clickable) {
-                    Notification.Show(`${name}: ${val?"abilitato":"disabilitato"}`, true)
+                    this.notify(name, val);
                 }
                 this.closeMenues()
                 //if (clickable) this.clickFuncs[name]((<any>event.target).checked);
@@ -146,11 +147,11 @@ export class MenuBar {
                 if (!checkbox && storageKey) {
                     this.config.set(storageKey, value || name);
                     this.clickFuncs[name](name);
-                    //Notification.Show(`${name}: ${value|| name}`, true)
+                    //this.notify(`${name}: ${value|| name}`, true)
                 } else {
                     const checked = $(element)[0].getAttribute("data-checked");
                     this.clickFuncs[name](checked);
-                    //Notification.Show(`${name}: ${checked}`, true)
+                    //this.notify(`${name}: ${checked}`, true)
                 }
                 this.closeMenues()
             });
@@ -159,7 +160,7 @@ export class MenuBar {
                 if (!event.target || (event.target.tagName != "LI" /*&& event.target.tagName != "LABEL"*/)) return;
                 
                 this.config.set(storageKey, value);
-                Notification.Show(`${name}: ${value}`, true)
+                this.notify(name, value)
                 this.closeMenues()
             });
         } /*else if (name && storageKey) {
@@ -169,6 +170,10 @@ export class MenuBar {
                 this.config.set(storageKey, name);
             });
         };*/
+    }
+
+    private notify(name: string, val: any) {
+        Notification.Show(`${name}: ${typeof val == "boolean" ? (val ? "abilitato" : "disabilitato") : val}`, true, true);
     }
 
     private detachMenuOption(name:string, element:Element, checkbox:Element) {
@@ -226,6 +231,7 @@ export class MenuBar {
         private clientConfig:clientConfig
         ) 
     {
+        this.notify = debounce(this.notify, 250)
         var userAgent = navigator.userAgent.toLowerCase();
         function toggleFullscreen() {
             let elem = document.documentElement;
@@ -434,11 +440,11 @@ export class MenuBar {
         this.clickFuncs["connect"] = (val) => {
             if (isTrue(val)) {
                 this.EvtDisconnectClicked.fire();
-                Notification.Show(`Disconnessione`, true)
+                this.notify(`Disconnessione`, true)
             }
             else {
                 this.EvtConnectClicked.fire();
-                Notification.Show(`Connessione`, true)
+                this.notify(`Connessione`, true)
             }
         };
 
@@ -455,10 +461,10 @@ export class MenuBar {
                 localStorage.setItem("keepawake", "true")
                 val = true;
             }
-            Notification.Show("Prevenzione Sleep della finestra quando in sfondo: " + (val ? "ABILITATA" : "DISABILITATA"))
+            this.notify("Prevenzione Sleep della finestra quando in sfondo: ", (val))
             if (val) {
-                Notification.Show("Il computer non andra' in sleep mentre il client e' attivo.")
-                Notification.Show("Affinche' funzioni il client produrra' rumori inaudibili. Serve rilancio client.")
+                this.notify("Il computer non andra' in sleep mentre il client e' attivo.","")
+                this.notify("Affinche' funzioni il client produrra' rumori inaudibili. Serve rilancio client.","")
             }
         };
 
@@ -474,25 +480,25 @@ export class MenuBar {
             this.outWin.log = false
             logger.stop()
             EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Registrazione interrotta"})
-            Notification.Show(`Registrazione interrotta`, true)
+            this.notify(`Registrazione interrotta`, true)
         };
         this.clickFuncs["log"] = (val) => {
             logger.clear()
             logger.start()
             this.outWin.log = true
             EvtScriptEmitPrint.fire({owner:"TS2Client", message: "Inizio log. Cancello registrazioni precedenti."})
-            Notification.Show(`Inizio log. Cancello registrazioni precedenti.`, true)
+            this.notify(`Inizio log. Cancello registrazioni precedenti.`, true)
         };
 
         this.clickFuncs["downloadlog"] = async (val) => {
             if (logger.empty()) {
-                Notification.Show("Nessuna registrazione attiva da interrompere.")
+                this.notify("Nessuna registrazione attiva da interrompere.","")
                 return
             }
             if (val || !logger.empty()) {
                 downloadString(val || await logger.content(), `log-${this.jsScript.getVariableValue("TSPersonaggio")||"sconosciuto"}-${new Date().toLocaleDateString()}.txt`)
             } else {
-                Notification.Show("Sembra che la registrazione sia vuota...")
+                this.notify("Sembra che la registrazione sia vuota...","")
             }
             this.clickFuncs["stoplog"](true)
         };
@@ -525,7 +531,7 @@ export class MenuBar {
             i++;
             if (i>=opts.length) { i = 0 }
             localStorage.setItem("log-alerts",opts[i])
-            Notification.Show("Avvisi log: " + opts[i])
+            this.notify("Avvisi log: ", opts[i])
             new OutputLogger().setAlerts(opts[i])
         };
 
@@ -605,10 +611,10 @@ export class MenuBar {
         this.clickFuncs["wrap-lines"] = (val) => {
             if (!isTrue(val)) {
                 $(".outputText").addClass("output-prewrap");
-                Notification.Show(`Capolinea disabilitato`, true)
+                this.notify(`Capolinea disabilitato`, true)
             } else {
                 $(".outputText").removeClass("output-prewrap");
-                Notification.Show(`Capolinea abilitato`, true)
+                this.notify(`Capolinea abilitato`, true)
             }
         };
 
@@ -633,9 +639,9 @@ export class MenuBar {
             if (isTrue(val)) {
                 this.EvtChangeDefaultColor.fire(["white", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
-                Notification.Show(`Colori ANSI abilitati`, true)
+                this.notify(`Colori ANSI abilitati`, true)
             } else {
-                Notification.Show(`Colori ANSI disabilitati`, true)
+                this.notify(`Colori ANSI disabilitati`, true)
             }
         }
 
@@ -647,7 +653,7 @@ export class MenuBar {
             if (val == "courier") {
                 removeFonts();
                 $(".outputText").addClass("courier");
-                Notification.Show(`Font: Courier`, true)
+                this.notify(`Font: Courier`, true)
             }
         };
 
@@ -655,7 +661,7 @@ export class MenuBar {
             if (val == "consolas") {
                 removeFonts();
                 $(".outputText").addClass("consolas");
-                Notification.Show(`Font: Consolas`, true)
+                this.notify(`Font: Consolas`, true)
             }
         };
 
@@ -663,7 +669,7 @@ export class MenuBar {
             if (val == "lucida") {
                 removeFonts();
                 $(".outputText").addClass("lucida");
-                Notification.Show(`Font: Lucida Console`, true)
+                this.notify(`Font: Lucida Console`, true)
             }
         };
 
@@ -675,7 +681,7 @@ export class MenuBar {
             if (val == "monospace") {
                 removeFonts();
                 $(".outputText").addClass("monospace");
-                Notification.Show(`Font: Monospace`, true)
+                this.notify(`Font: Monospace`, true)
             }
         };
 
@@ -683,7 +689,7 @@ export class MenuBar {
             if (val == "vera") {
                 removeFonts();
                 $(".outputText").addClass("vera");
-                Notification.Show(`Font: Bitstream Vera Sans`, true)
+                this.notify(`Font: Bitstream Vera Sans`, true)
             }
         };
 
@@ -691,7 +697,7 @@ export class MenuBar {
             if (val == "extra-small-font") {
                 removeFontSizes();
                 $(".outputText").addClass("extra-small-text");
-                Notification.Show(`Font: minuscolo`, true)
+                this.notify(`Font: minuscolo`, true)
             }
         };
 
@@ -699,7 +705,7 @@ export class MenuBar {
             if (val == "smallest-font") {
                 removeFontSizes();
                 $(".outputText").addClass("smallest-text");
-                Notification.Show(`Font: microscopico`, true)
+                this.notify(`Font: microscopico`, true)
             }
         };
 
@@ -707,7 +713,7 @@ export class MenuBar {
             if (val == "small-font") {
                 removeFontSizes();
                 $(".outputText").addClass("small-text");
-                Notification.Show(`Font: piccolo`, true)
+                this.notify(`Font: piccolo`, true)
             }
         };
 
@@ -715,7 +721,7 @@ export class MenuBar {
             if (val == "normal-font") {
                 removeFontSizes();
                 $(".outputText").addClass("normal-text");
-                Notification.Show(`Font: normale`, true)
+                this.notify(`Font: normale`, true)
             }
         };
 
@@ -723,7 +729,7 @@ export class MenuBar {
             if (val == "large-font") {
                 removeFontSizes();
                 $(".outputText").addClass("large-text");
-                Notification.Show(`Font: grande`, true)
+                this.notify(`Font: grande`, true)
             }
         };
 
@@ -731,7 +737,7 @@ export class MenuBar {
             if (val == "extra-large-font") {
                 removeFontSizes();
                 $(".outputText").addClass("extra-large-text");
-                Notification.Show(`Font: enorme`, true)
+                this.notify(`Font: enorme`, true)
             }
         };
 
@@ -959,9 +965,9 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
         this.clickFuncs["colorsEnabled"] = (val) => {
             if (isTrue(val)) {
                 this.config.set("text-color", undefined);
-                Notification.Show(`Colori: abilitati`, true)
+                this.notify(`Colori: abilitati`, true)
             } else {
-                Notification.Show(`Colori: disabilitati`, true)
+                this.notify(`Colori: disabilitati`, true)
             }
         };
 
@@ -969,7 +975,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "green-on-black") {
                 this.EvtChangeDefaultColor.fire(["green", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
-                Notification.Show(`Testo: verde su nero`, true)
+                this.notify(`Testo: verde su nero`, true)
             }
         };
 
@@ -977,7 +983,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "white-on-black") {
                 this.EvtChangeDefaultColor.fire(["white", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["black", "low"]);
-                Notification.Show(`Testo: bianco su nero`, true)
+                this.notify(`Testo: bianco su nero`, true)
             }
         };
 
@@ -985,7 +991,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "black-on-gray") {
                 this.EvtChangeDefaultColor.fire(["black", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["white", "low"]);
-                Notification.Show(`Testo: nero su grigio (funziona solo senza colori ansi)`, true)
+                this.notify(`Testo: nero su grigio (funziona solo senza colori ansi)`, true)
             }
         };
 
@@ -1008,7 +1014,7 @@ ${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuo
             if (val == "black-on-white") {
                 this.EvtChangeDefaultColor.fire(["black", "low"]);
                 this.EvtChangeDefaultBgColor.fire(["white", "high"]);
-                Notification.Show(`Testo: nero su bianco (funziona solo senza colori ansi)`, true)
+                this.notify(`Testo: nero su bianco (funziona solo senza colori ansi)`, true)
             }
         };
 

@@ -582,7 +582,9 @@ export function isAlphaNumeric(str:string) {
           !(code > 96 && code < 123) &&
           !(code == 40 || code == 41) &&
           !(code == 91 || code == 93) &&
-          !(code == 46)) { // lower alpha (a-z)
+          !(code == 46) &&
+          !(code == "_".charCodeAt(0)) &&
+          !(code == "-".charCodeAt(0))) { // lower alpha (a-z)
         return false;
       }
     }

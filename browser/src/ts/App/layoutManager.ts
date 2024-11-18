@@ -1499,12 +1499,15 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     compare = Number(compare);
                 }
                 variable=variable.trim()
-                let val = this.getSubExpression(sthis, variable);
+                let val = this.evalExpression(variable, sthis); // this.getSubExpression(sthis, variable);
                 if (parseVariable) {
-                    const realName = this.getVariableName(variable);
-                    if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
-                    if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
-                        this.variableChangedMap.get(realName).push(ctrl);
+                    let vars = this.parseVariables(variable)
+                    for (const variable of vars) {
+                        const realName = this.getVariableName(variable);
+                        if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
+                        if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
+                            this.variableChangedMap.get(realName).push(ctrl);
+                    }
                 }
                 if (params.length>2) {
                     if (compare) {
