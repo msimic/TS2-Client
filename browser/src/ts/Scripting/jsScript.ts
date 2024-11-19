@@ -94,9 +94,9 @@ export function colorize(sText: string, sColor:string, sBackground?:string, bold
     /*if (underline) {
         styles += "border-bottom-style:solid;border-bottom-width:1px;border-bottom-color:" + (sColor || "white") + ";";
     }*/
-    let content = sText;
+    let content = sText ?? "";
     let span = "";
-    if (sText) {
+    if (sText != undefined) {
         span = `<span class="${classes}" style="${styles}">${content}</span>`;
     } else {
         span = `<span class="${classes}" style="${styles}">${content}`;

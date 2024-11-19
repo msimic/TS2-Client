@@ -5,8 +5,9 @@ import { EventHook } from "../Core/event";
 import { JsScript, colorize, EvtScriptEmitPrint, EvtScriptEvent, ScripEventTypes, API } from "../Scripting/jsScript";
 import { Button, Messagebox, messagebox } from "./messagebox";
 import { Profile, ProfileManager } from "./profileManager";
-import { isAlphaNumeric, isTrue, parseScriptVariableAndParameters, rawToHtml, throttle } from "../Core/util";
+import { escapeRegExp, isAlphaNumeric, isTrue, parseScriptVariableAndParameters, rawToHtml, throttle } from "../Core/util";
 import { WindowDefinition } from "./windowManager";
+import { parseColorToken } from "../Core/color";
 
 
 export let LayoutVersion = 1;
@@ -848,7 +849,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
     }
 
     parseVariables(v: string):string[] {
-        let ret = v.split(/!|==|!=|<=|>=|<|>|\/|\*|\+|-/);
+        let ret = v.split(/&&|&|!|==|!=|<=|>=|<|>|\/|\*|\+|-/).map(v => v.trim());
         ret = ret.filter(v => v.length && !isNumeric(v) && isAlphaNumeric(v));
         return ret;
     }
@@ -980,7 +981,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
             if (typeof value == "string" &&
                 (!value.startsWith('"') || !!value.startsWith('"')) &&
                 (!value.endsWith("'") || !!value.endsWith("'"))) {
-                value = '"' + value + '"'
+                value = '"' + (value.replaceAll('"','\\"')) + '"'
             }
             expr = expr.replace(vrb, value);
         });
@@ -1432,25 +1433,109 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
         return b;
     }
 
+    splitOutsideBrackets(str: string, delimiter: string, bracketOpen="(", bracketClose=")"): string[] {
+        let result: string[] = [];
+        let current: string = '';
+        let insideBrackets = 0;
+        let i = 0;
+    
+        while (i < str.length) {
+            if (str[i] === bracketOpen) {
+                insideBrackets++;
+            } else if (str[i] === bracketClose) {
+                insideBrackets--;
+            }
+    
+            if (insideBrackets === 0 && 
+                (delimiter.length === 1 ? str[i] === delimiter : str.substring(i, i + delimiter.length) === delimiter)) {
+                result.push(current);
+                current = '';
+                i += delimiter.length - 1; // Skip the delimiter
+            } else {
+                current += str[i];
+            }
+            i++;
+        }
+    
+        result.push(current);
+        return result;
+    }
+    
+    replaceExpression = (ctrl:Control, parseVariable:boolean, s:string, sthis:any)=>{
+        let params = this.splitOutsideBrackets(s, ",");
+        if (params.length > 3) {
+            EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid expression in template of Control: " + ctrl.content})
+            return "?"
+        }
+        let variable=params[0];
+        let compare = null;
+        let compareOP = (v1:any,v2:any)=>v1==v2;
+        if (variable.indexOf("==")!=-1) {
+            compare = variable.split("==")[1];
+            variable = variable.split("==")[0];
+        }
+        if (variable.indexOf("!=")!=-1) {
+            compare = variable.split("!=")[1];
+            variable = variable.split("!=")[0];
+            compareOP = (v1:any,v2:any)=>v1!=v2;
+        }
+        if (variable.indexOf("&lt;=")!=-1) {
+            compare = variable.split("&lt;=")[1];
+            variable = variable.split("&lt;=")[0];
+            compareOP = (v1:any,v2:any)=>parseFloat(v1)<=parseFloat(v2);
+        }
+        if (variable.indexOf("&gt;=")!=-1) {
+            compare = variable.split("&gt;=")[1];
+            variable = variable.split("&gt;=")[0];
+            compareOP = (v1:any,v2:any)=>parseFloat(v1)>=parseFloat(v2);
+        }
+        if (variable.indexOf("&lt;")!=-1) {
+            compare = variable.split("&lt;")[1];
+            variable = variable.split("&lt;")[0];
+            compareOP = (v1:any,v2:any)=>parseFloat(v1)<parseFloat(v2);
+        }
+        if (variable.indexOf("&gt;")!=-1) {
+            compare = variable.split("&gt;")[1];
+            variable = variable.split("&gt;")[0];
+            compareOP = (v1:any,v2:any)=>parseFloat(v1)>parseFloat(v2);
+        }
+        if (isNumeric(compare)) {
+            compare = Number(compare);
+        }
+        variable=variable.trim().replaceAll("&amp;","&")
+        let val = this.evalExpression(variable, sthis); // this.getSubExpression(sthis, variable);
+        if (parseVariable) {
+            let vars = this.parseVariables(variable)
+            for (const variable of vars) {
+                const realName = this.getVariableName(variable);
+                if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
+                if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
+                    this.variableChangedMap.get(realName).push(ctrl);
+            }
+        }
+        if (params.length>2) {
+            if (compare) {
+                return ((compareOP(val,compare)) ? params[1] : params[2]);
+            } else {
+                return (val) ? params[1] : params[2];
+            }
+        } else if (params.length==2) {
+            return (val==undefined?"-":val).toString().substring(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
+        } else {
+            return (compare ? (compareOP(val,compare)) : val);
+        }
+    };
+
     createContent(ctrl: Control, parseVariable:boolean) {
         let content = ctrl.content || "";
-        content=rawToHtml(content);
         let sthis = this.getScriptThis();
-        if (content.indexOf("%color(")!=-1) {
-            content = content.replace(/\%color\([^\)]+?\)/gi,(s,a)=>{
-                let colorStr = s.substring(7, s.length-1);
-                let params = colorStr.split(",");
-                return colorize.apply(this, ["", ...params]);
-            });
-        }
-        if (content.indexOf("%closecolor")!=-1) {
-            content = content.replace(/\%closecolor/gi,(s,a)=>{
-                return "</span>";
-            });
-        }
         let varPos = -1;
-        while ((varPos = content.lastIndexOf("%var("))!=-1) {
-            varPos+= 4;
+        let skip = 0
+        while ((varPos = content.lastIndexOf("%("))!=-1 ||
+               (varPos = content.lastIndexOf("%var("))!=-1) {
+            
+            skip = content[varPos+1] == "(" ? 1 : 4
+            varPos+= skip;
             let openBracket = 0;
             let endPos = -1;
             for (let index = varPos; index < content.length; index++) {
@@ -1461,76 +1546,65 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Dispisizione sch
                     break;
                 }
             }
-            let replaceWith = (s:string)=>{
-                let params = s.split(",");
-                let variable=params[0];
-                let compare = null;
-                let compareOP = (v1:any,v2:any)=>v1==v2;
-                if (variable.indexOf("==")!=-1) {
-                    compare = variable.split("==")[1];
-                    variable = variable.split("==")[0];
-                }
-                if (variable.indexOf("!=")!=-1) {
-                    compare = variable.split("!=")[1];
-                    variable = variable.split("!=")[0];
-                    compareOP = (v1:any,v2:any)=>v1!=v2;
-                }
-                if (variable.indexOf("&lt;=")!=-1) {
-                    compare = variable.split("&lt;=")[1];
-                    variable = variable.split("&lt;=")[0];
-                    compareOP = (v1:any,v2:any)=>parseFloat(v1)<=parseFloat(v2);
-                }
-                if (variable.indexOf("&gt;=")!=-1) {
-                    compare = variable.split("&gt;=")[1];
-                    variable = variable.split("&gt;=")[0];
-                    compareOP = (v1:any,v2:any)=>parseFloat(v1)>=parseFloat(v2);
-                }
-                if (variable.indexOf("&lt;")!=-1) {
-                    compare = variable.split("&lt;")[1];
-                    variable = variable.split("&lt;")[0];
-                    compareOP = (v1:any,v2:any)=>parseFloat(v1)<parseFloat(v2);
-                }
-                if (variable.indexOf("&gt;")!=-1) {
-                    compare = variable.split("&gt;")[1];
-                    variable = variable.split("&gt;")[0];
-                    compareOP = (v1:any,v2:any)=>parseFloat(v1)>parseFloat(v2);
-                }
-                if (isNumeric(compare)) {
-                    compare = Number(compare);
-                }
-                variable=variable.trim()
-                let val = this.evalExpression(variable, sthis); // this.getSubExpression(sthis, variable);
-                if (parseVariable) {
-                    let vars = this.parseVariables(variable)
-                    for (const variable of vars) {
-                        const realName = this.getVariableName(variable);
-                        if (!this.variableChangedMap.has(realName)) this.variableChangedMap.set(realName, []);
-                        if (this.variableChangedMap.get(realName).indexOf(ctrl)==-1)
-                            this.variableChangedMap.get(realName).push(ctrl);
-                    }
-                }
-                if (params.length>2) {
-                    if (compare) {
-                        return ((compareOP(val,compare)) ? params[1] : params[2]);
-                    } else {
-                        return (val) ? params[1] : params[2];
-                    }
-                } else if (params.length==2) {
-                    return (val==undefined?"-":val).toString().substring(0,parseInt(params[1])).padStart(parseInt(params[1]), ' ');
-                } else {
-                    return (compare ? (compareOP(val,compare)) : val);
-                }
-            };
-            let replacement = content.substring(varPos+1, endPos);
+
+            let replacement = null;
             if (endPos>-1 && endPos!=varPos) {
-                replacement = replaceWith(content.substring(varPos+1, endPos))
+                replacement = this.replaceExpression(
+                    ctrl,
+                    parseVariable,
+                    content.substring(varPos+1, endPos),
+                    sthis
+                )
             } else {
                 EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid variable in template of Control: " + ctrl.content})
                 break;
             }
             replacement = replacement ?? "?"
-            content = content.substring(0,varPos-4) + replacement + content.substring(endPos+1);
+            content = content.substring(0,varPos-skip) + replacement + content.substring(endPos+1);
         }
+
+        content=rawToHtml(content);
+        
+        let needClose = false
+        let lastColor = parseColorToken("%c0000")
+        content = content.replace(/\%color\([^\)]+?\)|\%c\d\d\d\d|\%closecolor|\%cc/gi,(s,a)=>{
+            let prefix = needClose ? "</span>" : ""
+            if (s.startsWith("%cc") || s.startsWith("%closecolor")) {
+                needClose = false
+                return prefix
+            } else if (s.startsWith("%color")) {
+                let colorStr = s.substring(7, s.length-1);
+                let params = colorStr.split(",");
+                needClose = true
+                return prefix + colorize.apply(this, [undefined, ...params]);
+            } else {
+                let token = parseColorToken(s)
+                let ret = "?"
+                if (token) {
+                    if (lastColor && s[1] == 'c') {
+                        token.blink ||= lastColor.blink
+                        token.underline ||= lastColor.underline
+                        token.bold ||= lastColor.bold
+                    }
+                    lastColor = token
+                    ret = colorize.apply(this, [
+                        undefined,
+                        token.color,
+                        ((token.background == "#000000" && s[1] == 'c') ? "transparent" : token.background),
+                        token.bold,
+                        token.underline,
+                        token.blink 
+                    ]);
+                }
+                needClose = true
+                return prefix + ret
+            }
+        });
+
+        if (needClose) {
+            content += "</span>"
+        }
+
         return content;
     }
 

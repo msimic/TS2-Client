@@ -1,3 +1,5 @@
+import { colorCssToRGB } from "./util";
+
 export type ansiName = "black" | "red" | "green" | "yellow" | "blue" | "magenta" | "cyan" | "white";
 export type ansiLevel = "low" | "high";
 
@@ -5,6 +7,134 @@ export type ansiColorTuple = [ansiName, ansiLevel];
 
 export function copyAnsiColorTuple(color: ansiColorTuple): ansiColorTuple {
     return [color[0], color[1]];
+}
+
+export function hexToRgb(hex: string): string {
+    // Remove the hash symbol if present
+    hex = hex.replace(/^#/, '');
+
+    // Parse the hex color code
+    let r: number, g: number, b: number, a: number | undefined;
+
+    if (hex.length === 3 || hex.length === 4) {
+        // Handle shorthand hex color code
+        r = parseInt(hex[0] + hex[0], 16);
+        g = parseInt(hex[1] + hex[1], 16);
+        b = parseInt(hex[2] + hex[2], 16);
+        if (hex.length === 4) {
+            a = parseInt(hex[3] + hex[3], 16);
+        }
+    } else if (hex.length === 6 || hex.length === 8) {
+        // Handle full hex color code
+        r = parseInt(hex.substring(0, 2), 16);
+        g = parseInt(hex.substring(2, 4), 16);
+        b = parseInt(hex.substring(4, 6), 16);
+        if (hex.length === 8) {
+            a = parseInt(hex.substring(6, 8), 16);
+        }
+    } else {
+        throw new Error("Invalid hex color code");
+    }
+
+    // Return RGB or RGBA format
+    if (a !== undefined) {
+        return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(2)})`;
+    } else {
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+}
+
+export function parseColorToken(token:string) : { color: string, background: string, bold: boolean, underline: boolean, blink:boolean} {
+    if (!token || !token.toLowerCase().startsWith("%c")) return null
+    token = token.substring(2, token.length)
+    let c = {
+        color: "",
+        background: "",
+        bold: false,
+        underline: false,
+        blink: false    
+    }
+
+    let faint = false
+    let reverse = false
+    let rgb = false
+    switch (token[0]) {
+        case '1' : c.bold = true; break;
+        case '2' : faint = true; break;
+        case '3' : rgb = true; break;
+        case '4' : c.underline = true; break;
+        case '5' : c.blink = true; break;
+        case '6' : reverse = true; break;
+    }
+
+    c.background = ansiToCssColor(parseInt(token[1]))
+    c.color = ansiToCssColor(parseInt(token.substring(2, token.length)))
+
+    
+    if (reverse) {
+        // switch c.color c.background
+        let tmp = c.color
+        c.color = c.background
+        c.background = tmp
+    }
+
+    if (faint) {
+        c.color += "88"
+        c.background += "88"
+    }
+
+    if (rgb) {
+        c.color = hexToRgb(c.color)
+        c.background = hexToRgb(c.background)
+    }
+
+    return c
+}
+export function ansiToCssColor(ansiCode: number): string {
+    const ansiColors: { [key: number]: string } = {
+        0: "black",
+        1: "red",
+        2: "green",
+        3: "yellow",
+        4: "blue",
+        5: "magenta",
+        6: "cyan",
+        7: "white",
+        8: "brightBlack",
+        9: "brightRed",
+        10: "brightGreen",
+        11: "brightYellow",
+        12: "brightBlue",
+        13: "brightMagenta",
+        14: "brightCyan",
+        15: "brightWhite"
+    };
+
+    const cssColors: { [key: string]: string } = {
+        black: "#000000",
+        red: "#FF0000",
+        green: "#00FF00",
+        yellow: "#FFFF00",
+        blue: "#0000FF",
+        magenta: "#FF00FF",
+        cyan: "#00FFFF",
+        white: "#FFFFFF",
+        brightBlack: "#808080",
+        brightRed: "#FF8080",
+        brightGreen: "#80FF80",
+        brightYellow: "#FFFF80",
+        brightBlue: "#8080FF",
+        brightMagenta: "#FF80FF",
+        brightCyan: "#80FFFF",
+        brightWhite: "#FFFFFF"
+    };
+
+    const ansiName = ansiColors[ansiCode];
+    if (ansiName) {
+        return cssColors[ansiName];
+    } else {
+        return "#000000";
+    }
 }
 
 export const ansiFgLookup: {[k: number]: ansiName} = {
