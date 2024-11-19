@@ -3,5 +3,5 @@
 	"socket_io_host": "http://localhost:4040",
 	"socket_io_port": 4040,
 	"rtcHost": "https://mud.temporasanguinis.it",
-	"rtcPort": 5678
+	"rtcPort": 4050
 }
