@@ -1,6 +1,6 @@
 import { AppInfo } from "../appInfo";
 import { EventHook } from "./event";
-import { Button, Messagebox, messagebox } from "../App/messagebox";
+import { Button, Messagebox, messagebox, Notification } from "../App/messagebox";
 import { TrigAlItem } from "../Scripting/windows/trigAlEditBase";
 import { TsClient } from "../App/client";
 import { UserConfigData } from "../App/userConfig";
@@ -1017,7 +1017,9 @@ export function addIntellisense(editor:CodeMirror.Editor, script:JsScript) {
                     "highlight": ["Evidenzia","Ctrl+."],
                     "collapse": ["Collassa","Ctrl+Q /Shift+Ctrl+Q"],
                     "rename": ["Rinomina","F2"],
-                    "info": ["Docs","Ctrl+O"],
+                    "info": ["Info","Ctrl+O"],
+                    "copy": ["Copia","Ctrl+C"],
+                    "paste": ["Incolla","Ctrl+V"],
                     "complete": ["Completa", "Ctrl-Space"]
                 }
                 let lis = Object.getOwnPropertyNames(menuData).map(n => {
@@ -1037,12 +1039,48 @@ export function addIntellisense(editor:CodeMirror.Editor, script:JsScript) {
                         editorMenu.remove()
                     }, 100)
                 });
-                editorMenu.on('itemclick', function (event:any)
+                editorMenu.on('itemclick', async function (event:any)
                 {
                     var val = $(event.args).data("value");
                     
                     editorMenu.jqxMenu('close')
                     switch (val) {
+                        case "copy": {
+                            var doc = cm.getDoc();
+                            let testo = doc.getSelection()
+                            if (testo) {
+                                if (!navigator.clipboard){
+                                    Notification.Show("Impossibile copiare dal menu. Non supportato dal browser.")
+                                } else {
+                                    navigator.clipboard.writeText(testo).then(()=>{
+                                        Notification.Show("Selezione copiata", true);
+                                    });
+                                }
+                            }
+                            break;
+                        }
+                        case "paste": {
+                            let selected:string = ""
+                            if (!navigator.clipboard){
+                                Notification.Show("Impossibile incollare dal menu. Non supportato dal browser.")
+                            } else {
+                                selected = await navigator.clipboard.readText().catch(()=>{
+                                    Notification.Show("Impossibile leggere la clipboard", true);
+                                    return ""
+                                }) as any;
+                            }
+                            if (selected.length > 0) {
+                                // Fetch the current CodeMirror document.
+                                var doc = cm.getDoc();
+                            
+                                // Insert the text at the cursor position.
+                                doc.replaceSelection(selected);
+                            
+                                // Clear the selection so it isn't copied repeatedly.
+                                selected = '';
+                              }
+                            break;
+                        }
                         case "goDef": {
                             server.jumpToDef(cm)
                             break;

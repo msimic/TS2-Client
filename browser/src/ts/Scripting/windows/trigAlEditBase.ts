@@ -436,6 +436,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
     private select(item: jqwidgets.TreeItem) {
         this.$listBox.data("selected", item.value);
+        this.$listBox.data("selectedListItem", item);
         this.jqList.selectItem(item);
         this.jqList.expandItem(item);
         this.scrollIntoView(item);
@@ -673,9 +674,13 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.setEditorDisabled(false);
         this.selectNone();
         this.$enabledCheckbox.prop("checked", true);
-        this.$pattern.val(this.defaultPattern || "Scrivi qui il modello (pattern)");
-        this.$textArea.val(this.defaultValue || "Scrivi qui il contenuto");
-        this.codeMirror.setValue(this.defaultScript || "// Scrivi qui il codice");
+        let item = this.$listBox.data("selectedListItem");
+        if (item && !item.value && item.label) {
+            this.$className.val(item.label)
+        }
+        this.$pattern.attr('placeholder', this.defaultPattern || "Scrivi qui il modello (pattern)");
+        this.$textArea.attr('placeholder', this.defaultValue || "Scrivi qui il contenuto");
+        this.codeMirror.setOption('placeholder', this.defaultScript);
     }
 
     private handleDeleteButtonClick() {

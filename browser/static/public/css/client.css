@@ -1664,8 +1664,7 @@ input:focus,button:focus,textarea:focus {
 .content-wrapper .toggled {   
     background-color: rgb(60, 60, 60, 0.5) !important;
     color: rgb(238, 255, 0) !important;
-    box-shadow: 0px 0px 2px 2px rgba(127, 127, 127, 0.4), 
-                0px 0px 2px 2px rgba(127, 127, 127, 0.4);
+    box-shadow: 0px 0px 1px 1px rgba(127, 127, 127, 0.4), 0px 0px 1px 1px rgba(127, 127, 127, 0.4);
 }
 .content-wrapper div.toggled {
     background-image: linear-gradient(rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.5)) !important;
@@ -2468,6 +2467,7 @@ ul.select {
     background-image: linear-gradient(#a5a5a557 0%, #43434363 100%) !important;
     opacity: 1;
 }
+.CodeMirror pre.CodeMirror-placeholder { color: #999; }
 .content-wrapper .maptoolbarbutton.music {
     opacity: 0.5;
     margin-top: 1px !important;

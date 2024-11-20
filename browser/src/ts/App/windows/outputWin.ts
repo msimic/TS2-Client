@@ -230,7 +230,7 @@ export class OutputWin extends OutWinBase {
     }
 
     handleScriptEvalError(err: any) {
-        let msg = Util.rawToHtml(err.toString());
+        //let msg = Util.rawToHtml(err.toString());
         let stack = Util.rawToHtml(err.stack);
 
         this.append(

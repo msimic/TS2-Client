@@ -40,25 +40,23 @@ export class TriggerEditor extends TrigAlEditBase {
 
     protected defaultValue: string =
          "Scrivi qui il valore del tuo trigger.\n"
-        + "Puo' essere 1 o piu' comandi, includento di parametri (e.g. $1) per trigger regex.\n\n"
-        + "Per trigger regex, usa $numero per rappresentare i match della tua regex.\n"
-        + "Esempio: Trigger pattern '(\\w+) e' arrivato.', trigger value 'say Ciao $1', "
-        + "in seguito se 'Vodur e' arrivato.' arriva dal mud, 'say Ciao Vodur' verra' mandato.";
+        + "Puo' essere 1 o piu' comandi con certe espressioni (vedi help).\n\n"
+        + "Usa $1 $2 etc per catturare pezzi dal mud tra il testo nel pattern.\n"
+        + "$1 $2 etc poi possono essere usati nelle azioni. Per riferire a variabili usa @variabile\n\n"
+        + "Esempio: \n"
+        + "   Pattern: '$1 e' arrivato.'\n"
+        + "   Azioni:  'say Ciao $1 io sono @TSPersonaggio'";
 
     protected defaultScript: string =
-    "/* Scrivi la tua script qui.\n"
-    + "Questo e' il codice javascript che verra eseguito quando l'alias viene lanciato.\n"
-    + "Non puoi creare variabili globali.\n"
-    + "Usa 'var' per creare variabili locali.\n"
-    + "Aggiungi valori a 'this' per interagire tra piu script.\n"
-    + "Esempio: this.mio_valore = 123;\n"
-    + "Ogni script lanciata usa lo stesso 'this'.\n"
+    "Scrivi la tua script qui in codice javascript.\n"
+    + "Essa verra eseguita quando il trigger scatta.\n"
+    + "Usa $1..$N per riferire a parametri del trigger.\n"
+    + "Usa @ per riferire a variabili (e.g. @TSRoom).\n"
+    + "Usa 'var' o 'let' per creare variabili locali.\nIl codice e' simile a java o C.\n"
     + "\n"
-    + "Usa la funzione send() per lanciare comandi al mud. Esempio: send('kill orc');\n"
-    + "Usa la funzione print() per per echo in locale. Esempio: print('Arrivato un avversario!!');\n"
-    + "Per alias regex, 'match' sara il l'array risultato di match della regex, con \n"
-    + "gli indici che sono i gruppi della regex.\n"
-    + "*/\n";
+    + "Usa la funzione send('comandi') per lanciare comandi.\n  Es.: send('kill orc');\n"
+    + "Usa la funzione print('testo') per per echo locale.\n  Es.: print('Arrivato un avversario!!');\n"
+    + "Per altre funzioni dell'Api del client vedi help.";
 
     protected defaultPattern: string = null;
 

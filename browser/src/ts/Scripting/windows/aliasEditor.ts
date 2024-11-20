@@ -40,30 +40,25 @@ export class AliasEditor extends TrigAlEditBase {
     protected defaultPattern: string = null;
 
     protected defaultValue: string = 
-              "Scrivi qui il valore dell'alias.\n"
-            + "Puo' essere 1 o piu' comandi, includendo i parametri (e.g. $1).\n\n"
-            + "Per gli alias non-regex, usa $1 nel valore per rappresentare l'argomento intero dato al commando.\n"
-            + "Esempio: Alias pattern 's', alias valore 'say $1', "
-            + "Usa il @ per espandere variabili, es.: get spada @borsa\n"
-            + "poi fai 's asadf dfdfa' e 'say asadf dfdfa' verra mandato.\n\n"
-            + "Per alias regex, usa $numero per rappresentare i match del tuo regex.\n"
-            + "Esempio: Alias pattern 's (\\w+)', alias valore 'say $1', "
-            + "poi fai 's asadf' e 'say asadf' verra' mandato.";
+              "Scrivi qui il valore dell'alias. Un comando mandato al mud per linea. \n"
+            + "\n$1 e' il parametro dato all'alias (e.g. in alias 'vai' lanciato con 'vai 150' $1 e' 150).\n"
+            + "Per alias regex si possono creare piu parametri e poi vanno da $1 a $N.\n\n"
+            + "Esempio per parlare con s: \n"
+            + "  Pattern: 's'\n"
+            + "  Valore : 'say $1'\n\n"
+            + "Usa il @ per espandere variabili\n  Es.: get spada @borsa\n"
+            + "Per alias non script c'e' una rudimentale forma di espressioni (vedi help)";
 
     protected defaultScript: string = 
-              "/* Scrivi la tua script qui.\n"
-            + "Questo e' il codice javascript che verra eseguito quando l'alias viene lanciato.\n"
-            + "Non puoi creare variabili globali.\n"
-            + "Usa 'var' per creare variabili locali.\n"
-            + "Aggiungi valori a 'this' per interagire tra piu script.\n"
-            + "Esempio: this.mio_valore = 123;\n"
-            + "Ogni script lanciata usa lo stesso 'this'.\n"
+              "Scrivi la tua script qui. Questo e' il codice\njavascript che verra eseguito.\n"
+            + "Usa $1..$N per riferire a parametri dell'alias\nSolo regex puo' averne piu di uno.\n"
+            + "Usa @ per riferire a variabili globali (e.g. @TSRoom).\n"
+            + "Usa 'var' o 'let' per creare variabili locali.\nIl codice e' simile a java o C.\n"
             + "\n"
-            + "Usa la funzione send() per lanciare comandi al mud. Esempio: send('kill orc');\n"
-            + "Usa la funzione print() per per echo in locale. Esempio: print('Arrivato un avversario!!');\n"
-            + "Per alias regex, 'match' sara il l'array risultato di match della regex, con \n"
-            + "gli indici che sono i gruppi della regex.\n"
-            + "*/\n";
+            + "Usa la funzione send('comandi') per lanciare\ncomandi al mud. Es.: send('kill orc');\n"
+            + "Usa la funzione print('testo') per echo in locale.\nEs.: print('Arrivato un avversario!!');\n"
+            + "Per altre funzioni dell'Api del client vedi help\noppure scoprile scrivendo nell'editor.\n";
+
 
     protected getList() {
         let aliases = this.aliasManager.aliases;

@@ -141,6 +141,7 @@ function mergeCodemirror(next) {
     input: [
         './static/public/codemirror/lib/codemirror.js',
         './static/public/codemirror/addon/display/autorefresh.js',
+        './static/public/codemirror/addon/display/placeholder.js',
         './static/public/codemirror/mode/javascript/javascript.js',
         './static/public/codemirror/addon/lint/lint.js',
         './static/public/codemirror/addon/lint/javascript-lint.js',
