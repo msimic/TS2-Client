@@ -82,6 +82,7 @@ export class MapperWindow implements IBaseWindow {
     private $bottomMessage:JQuery;
     private $zoneList:JQuery;
     private $menu:JQuery;
+    private musicOn = true
     canvas: JQuery;
     drawing: MapperDrawing;
     private zones:Zone[] = []
@@ -298,7 +299,9 @@ export class MapperWindow implements IBaseWindow {
                         <!--<button title="Sincronizza mappa" class="maptoolbarbutton" data-option-type="mapper" data-option-name="sync">&#128269;</button>-->
                         <button title="Abbassa zoom (mouse scroll down)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomout">-</button>
                         <span id="zoom">Zoom 100%</span>
-                        <button title="Ingrandisci (mouse scroll up)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomin">+</button></div>
+                        <button title="Ingrandisci (mouse scroll up)" class="maptoolbarbutton" data-option-type="mapper" data-option-name="zoomin">+</button>
+                        <button title="Musica" class="maptoolbarbutton toggled music gray-emoji" data-option-type="mapper" data-option-name="music">🎶</button>
+                    </div>
                 </div>
                 <div id="zonemessage">
                     <select id="zonelist"></select>
@@ -825,6 +828,11 @@ export class MapperWindow implements IBaseWindow {
             if ($((<any>event).target).closest(".jqx-menu-popup").length!=0) this.closeMenues($("#mapperMenubar",this.$win));
             try {
                 switch (name) {
+                    case "music":
+                        this.musicOn = !this.musicOn
+                        this.fader?.setVolume(this.musicOn?(this.mapper.getOptions().zoneVolume??30):0)
+                        this.musicOn ? $(element).addClass("toggled") : $(element).removeClass("toggled"); 
+                        break;
                     case "mapmode":
                         this.toggleMapMode();
                         break;

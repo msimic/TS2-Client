@@ -112,20 +112,20 @@ export function ansiToCssColor(ansiCode: number): string {
 
     const cssColors: { [key: string]: string } = {
         black: "#000000",
-        red: "#FF0000",
-        green: "#00FF00",
-        yellow: "#FFFF00",
-        blue: "#0000FF",
-        magenta: "#FF00FF",
-        cyan: "#00FFFF",
-        white: "#FFFFFF",
+        red: "#800000",
+        green: "#008000",
+        yellow: "#808000",
+        blue: "#000080",
+        magenta: "#800080",
+        cyan: "#008080",
+        white: "#C0C0C0",
         brightBlack: "#808080",
-        brightRed: "#FF8080",
-        brightGreen: "#80FF80",
-        brightYellow: "#FFFF80",
-        brightBlue: "#8080FF",
-        brightMagenta: "#FF80FF",
-        brightCyan: "#80FFFF",
+        brightRed: "#FF0000",
+        brightGreen: "#00FF00",
+        brightYellow: "#FFFF00",
+        brightBlue: "#0000FF",
+        brightMagenta: "#FF00FF",
+        brightCyan: "#00FFFF",
         brightWhite: "#FFFFFF"
     };
 

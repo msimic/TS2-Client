@@ -69,7 +69,7 @@ function clone(o:any):any {
 }
 
 
-export function colorize(sText: string, sColor:string, sBackground?:string, bold?:boolean, underline?:boolean, blink?:boolean) {
+export function colorize(sText: string, sColor:string, sBackground?:string, bold?:boolean, underline?:boolean, blink?:boolean, inline?:boolean) {
     if (typeof bold == "string") bold=(bold=="true");
     if (typeof underline == "string") underline=(underline=="true");
     if (typeof blink == "string") blink=(blink=="true");
@@ -81,7 +81,7 @@ export function colorize(sText: string, sColor:string, sBackground?:string, bold
     if (underline) {
         classes += "underline "
     }
-    let styles = "display: inline-block;";
+    let styles = inline ? "" : "display: inline-block;";
     if (sColor) {
         styles += "color:" + sColor + ";"
     }
@@ -1058,6 +1058,42 @@ function makeScript(owner:string, userScript: string, argSignature: string,
         return null;
     };
 
+    const waitEvent = async function (id:string, type:ScripEventTypes, maxDuration = 3000) {
+        if (type == ScripEventTypes.TriggerFired && (!id || !triggerManager?.getById(id))) {
+            EvtScriptEmitError.fire({
+                owner: owner,
+                err: "Il trigger " + id + " non esiste"
+            })
+            return false
+        } else if (type == ScripEventTypes.VariableChanged && (!id || !scriptManager?.getVariable(id))) {
+            EvtScriptEmitError.fire({
+                owner: owner,
+                err: "La variabile " + id + " non esiste"
+            })
+            return false
+        }
+        let max = new Date().getTime() + maxDuration
+        let resolve:Function = null
+        let reject:Function = null
+        let initPromise = (res:Function, rej:Function) => {
+            resolve = res
+            reject = rej
+        }
+        let promise = new Promise(initPromise)
+        let handler = (d:any) => {
+            if (d.event == type && d.condition == id) {
+                EvtScriptEvent.release(handler)
+                resolve(true)
+            }
+            if (new Date().getTime() > max) {
+                EvtScriptEvent.release(handler)
+                reject(ScripEventTypes[type] + " per id '" + id + "' non e' scattato dopo aver aspettato " + maxDuration + "ms.")      
+            }
+        }
+        EvtScriptEvent.handle(handler);
+        return promise
+    }
+
     /* end Scripting API section */
     const _errEmit = EvtScriptEmitError;
     
@@ -1066,6 +1102,8 @@ function makeScript(owner:string, userScript: string, argSignature: string,
     }
 
     const publicApi = {
+        triggerFired: (id:string, dur:number) => waitEvent(id, ScripEventTypes.TriggerFired, dur),
+        variableChanged: (id:string, dur:number) => waitEvent(id, ScripEventTypes.VariableChanged, dur),
         getSetting: getSetting,
         setSetting: setSetting,
         append: append,

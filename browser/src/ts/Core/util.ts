@@ -1248,6 +1248,14 @@ export function refreshApiInTern(cm: any, script: JsScript) {
             "!type": "fn(testo: string, finestra?: string)",
             "!doc": "Visualizza nella finestra dell'output un testo. La finestra e' opzionale e se non data verra' usata la finestra principale.\n\rIl testo verra mandato puro senza parsing e html."
             },
+            "variableChanged": {
+                "!type": "fn(id: string, maxDurataMs?: number) -> +Promise[bool]",
+                "!doc": "Risolve positivo quando la variabile cambia valore (await).\nSe il tempo scade o la variabile non esiste rejecta e serve usare .catch() per il messaggio d'errore."
+            },
+            "triggerFired": {
+                "!type": "fn(id: string, maxDurataMs?: number) -> +Promise[bool]",
+                "!doc": "Funzione asincrona da awaitare. Risolve e ritorna true quando il trigger scatta.\nSe il tempo scade o il trigger non esiste rejecta e serve usare .catch() per il messaggio d'errore."
+            },
             "highlight": {
             "!type": "fn(foreground: string, background: string, blink?: bool, bold?: bool, underline?: bool)",
             "!doc": "Evidenzia l'ultima linea di trigger con i colori assegnati e opzionalmente il blink, bold e underline."

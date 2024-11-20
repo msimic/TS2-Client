@@ -1,10 +1,12 @@
 import { Control, LayoutDefinition, LayoutManager, PanelPosition } from "../layoutManager";
-import { Button, Messagebox } from "../messagebox";
+import { Button, Messagebox, Notification } from "../messagebox";
 import { ProfileManager } from "../profileManager";
 import * as Util from "../../Core/util";
 import { WindowDefinition, WindowManager } from "../windowManager";
 import { EditPanelWindow } from "./editPanelWindow";
 import { JsScript } from "../../Scripting/jsScript";
+import { getVersionNumbers } from "../../Core/util";
+import { AppInfo } from "../../appInfo";
 
 export class LayoutWindow {
     protected $win: JQuery;
@@ -307,6 +309,10 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
         Util.importFromFile(d => {
             let l = JSON.parse(d)
+            if ((Util.denyClientVersion(l))) {
+                Messagebox.Show("Errore", `E' impossibile caricare questa versione.\nE' richiesta una versione piu' alta del client.\n\nAggiorna il client che usi per poter usare questa configurazione.\n\n<a href="https://github.com/temporasanguinis/TS2-Client/releases" target="_blank">Scarica l'ultima versione da qui</a>`)
+                return;
+            }
             this.layout = l
             this.load()
         })
@@ -557,6 +563,11 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
 
         let ws:WindowDefinition[] = [];
 
+        if (!this.layoutManager.layout){
+            Notification.Show("Il layout non esiste piu'. Hai forse disconnesso il profilo?")
+            return
+        }
+
         for (const w of this.windowManager.windows) {
             if (w[1].data.visible) {
                 ws.push(w[1])
@@ -565,11 +576,11 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         }
 
         this.layout.customized = customized;
-        Object.assign(this.layoutManager.layout, this.layout)
         let prof = this.profileManager.getProfile(this.profileManager.getCurrent())
         if (!prof.layout) {
             prof.layout = LayoutManager.emptyLayout()
         }
+        Object.assign(this.layoutManager.layout, this.layout)
         Object.assign(prof.layout, this.layout)
         this.layoutManager.save();
         this.layoutManager.redockWindowsWithAnchor()
@@ -639,8 +650,12 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
             if (r.button == Button.Ok) {
                 prof.useLayout = true;
                 if (!prof.layout) {
+                    let vn = getVersionNumbers(AppInfo.Version)
                     prof.layout = {
                         version: 0,
+                        requiresClientMajor: vn[0],
+                        requiresClientMinor: vn[1],
+                        requiresClientRevision: vn[2],
                         customized: true,
                         color: "white",
                         background: "black",

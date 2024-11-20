@@ -22,6 +22,7 @@ scripting:
 - aggiunto intellisense per browser e per jquery
 - oggetto api: accedere all'API nelle script e' conveniente usare "api."
 - oggetto custom: si puo settare in esso cose che non persistono il rilancio ma acessibili da ogni profilo
+- aggiunto all'api: triggerFired e variableChanged
 
 performance:
 - salvataggio profilo in IndexedDB
