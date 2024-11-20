@@ -68,6 +68,8 @@ export abstract class TrigAlEditBase {
     protected $copyButton: JQuery;
     profileManager: ProfileManager;
 
+    private readonly NOCLASS_LABEL = "[senza classe]";
+
     /* these need to be overridden */
     protected abstract getCount(): number;
     protected abstract getList(): Array<string>;
@@ -517,7 +519,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
     private addToClassTree(map:Map<string, ClassTreeItem>, classes:string[], item:object, trg:TrigAlItem) {
         
         if (classes.length == 1) {
-            const cls = (classes[0] || "[senza classe]");
+            const cls = (classes[0] || this.NOCLASS_LABEL);
             let parentClass = map.get(cls);
             if (!parentClass) {
                 const newCls: ClassTreeItem = {
@@ -675,7 +677,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.selectNone();
         this.$enabledCheckbox.prop("checked", true);
         let item = this.$listBox.data("selectedListItem");
-        if (item && !item.value && item.label) {
+        if (item && !item.value && item.label && item.label != this.NOCLASS_LABEL) {
             this.$className.val(item.label)
         }
         this.$pattern.attr('placeholder', this.defaultPattern || "Scrivi qui il modello (pattern)");

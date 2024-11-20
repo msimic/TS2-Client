@@ -572,6 +572,19 @@ export class EventsEditor {
     private handleNewButtonClick() {
         this.clearEditor();
         this.setEditorDisabled(false);
+        let item = this.jqList.getSelectedItem();
+        if (item && item.label && typeof item.value != "object") {
+            for (const enumMember in ScripEventTypes) {
+                var isValueProperty = parseInt(enumMember, 10) >= 0
+                if (isValueProperty) {
+                    let enumStr = ScripEventTypes[enumMember];
+                    if (ScriptEventsIta.nameof(enumMember) == item.label) {
+                        this.$type.val(enumStr)
+                        break;
+                    }
+                }
+            }
+        }
         this.selectNone();
     }
 
