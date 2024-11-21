@@ -864,7 +864,6 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
 
         let ret = this.splitNotBetween(v, 
             ["&&","&","!=","!","==","<=",">=","<",">","/","*","+","-",","], 
-            ["'","`",'"'], 
             ["'","`",'"']
         ).map(v => v.trim())
 
@@ -893,7 +892,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
             } else {
                 if (passed) {
                     ui.css({
-                        "display": "block"
+                        "display": "inline-block"
                     });
                 } else {
                     ui.css({
@@ -1490,17 +1489,30 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         return result;
     }
 
-    splitNotBetween(str: string, delimiter: string[], excludeStart:string[], excludeEnd:string[]): string[] {
+    splitNotBetween(str: string, delimiter: string[], excluded:string[]): string[] {
         let result: string[] = [];
         let current: string = '';
         let insideExclude = 0;
         let i = 0;
     
+        let excludeState:any = {
+        }
+
+        for (const exc of excluded) {
+            excludeState[exc] = false
+        }
+
+        let shouldExclude = () => {
+            let ret = false
+            Object.values(excludeState).map(v => (ret ||= v as boolean))
+            return ret
+        }
+
         while (i < str.length) {
-            if (excludeStart.indexOf(str[i]) != -1) {
-                insideExclude++;
-            } else if (excludeEnd.indexOf(str[i]) != -1) {
-                insideExclude--;
+            if (!excludeState[str[i]] && excluded.indexOf(str[i]) != -1) {
+                excludeState[str[i]] = true;
+            } else if (excludeState[str[i]] && excluded.indexOf(str[i]) != -1) {
+                excludeState[str[i]] = false;
             }
     
             let isDelimiter = (pos:number) => {
@@ -1512,7 +1524,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
                 return 0
             }
             let skip = 0
-            if (insideExclude === 0 && 
+            if (!shouldExclude() && 
                 (skip = isDelimiter(i))) {
                 result.push(current);
                 current = '';
