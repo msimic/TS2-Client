@@ -669,7 +669,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
 
     static getBackcolor(layout: LayoutDefinition) {
         const isDarkTheme = $("body").hasClass("dark")
-        return layout.background || isDarkTheme ? "#203C20" : "#156AA7"
+        return layout.background || (isDarkTheme ? "#203C20" : "#156AA7")
     }
 
     createHierarchicalControl(indexer:{index:number}, c:Control, parent:Control, parentControl:JQuery):JQuery {
