@@ -29,7 +29,7 @@ export class VoiceWin implements IBaseWindow {
     }
     public set status(value: string) {
         this._status = value;
-        this.$status.text(this.status || "")
+        this.$status?.text(this.status || "")
     }
     private _autoconnect: boolean = null;
     public get autoconnect(): boolean {
@@ -67,7 +67,7 @@ export class VoiceWin implements IBaseWindow {
         return this.$win
     }
     constructor(private rtc: WebRTC, private cmdInput:CommandInput, private audible=false) {
-        setInterval(this.checkAfk.bind(this), 30000)
+        if (this.rtc) setInterval(this.checkAfk.bind(this), 30000)
         this.lastActive = new Date()
         cmdInput.EvtEmitCmd.handle(c => {
             if (!c.fromScript) {
@@ -135,7 +135,7 @@ export class VoiceWin implements IBaseWindow {
         this.refreshUI = throttle(this.refreshUI, 250) as any;
 
         
-        this.rooms = rtc.GetAllowedChannels()
+        this.rooms = rtc?.GetAllowedChannels()
         this.$win = $(win);
 
         const w = Math.min($(window).width()-20, 300);
@@ -144,12 +144,18 @@ export class VoiceWin implements IBaseWindow {
         
         (<any>this.$win).jqxWindow({showAnimationDuration: 0, width: w, height: h, showCollapseButton: true, isModal: false});
         (<any>this.$win).jqxWindow("close");
+        this.$toolbar = $(".voicetoolbar", this.$win)
+        this.$toolbar.hide()
+        
+        this.enableUIOrShowMessage();
+
+        if (!this.rtc) return;
+
         (<any>this.$win).on("open", () => {
-            this.rtc.CheckAuthentication()
+            this.rtc?.CheckAuthentication()
         })
         
         if (this.autoconnect) this.room = this.autoconnectRoom
-        this.$toolbar = $(".voicetoolbar", this.$win)
         this.$status = $(".status", this.$win)
         this.$afk = $(".afk", this.$win).on("change", ()=>{
             if (this.$afk.prop("checked")) {
@@ -173,7 +179,6 @@ export class VoiceWin implements IBaseWindow {
                 this.autoconnectRoom = null
             }
         })
-        this.$toolbar.hide()
         this.$disconnect = $(".disconnect", this.$win).on("click", (e) => {
             this.Disconnect(false)
             this.updateStatus()
@@ -434,6 +439,7 @@ export class VoiceWin implements IBaseWindow {
         });
     }
     release() {
+        if (!this.rtc) return
         this.rtc.EvtRequestingChannel.release(this.onRequestingChannel)
         this.rtc.EvtNewChannelData.release(this.newChannelData)
         this.rtc.EvtChannelChange.release(this.onChannelChange)
@@ -451,6 +457,7 @@ export class VoiceWin implements IBaseWindow {
     }
 
     initRTC() {
+        if (!this.rtc) return;
         this.rtc.EvtRequestingChannel.handle(this.onRequestingChannel)
         this.rtc.EvtNewChannelData.handle(this.newChannelData)
         this.rtc.EvtChannelChange.handle(this.onChannelChange)
@@ -571,6 +578,17 @@ export class VoiceWin implements IBaseWindow {
     
 
     async enableUIOrShowMessage() {
+
+        if (!this.rtc) {
+            $(".uiok", this.$win).hide()
+            const ui = $(".uinotok", this.$win)
+            ui.empty()
+            let msg = $("<span class='voiceChatNeedAuth'>Il voice chat e' al momento disabilitato</span>")
+            ui.append(msg)
+            $(".uinotok", this.$win).show()
+            return false
+        }
+
         const okAuth = this.rtc.userName
         const okMic = okAuth && await this.rtc.IsMicAllowed(true)
         const ok = okAuth && okMic

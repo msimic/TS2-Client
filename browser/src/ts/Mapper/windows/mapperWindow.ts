@@ -257,7 +257,7 @@ export class MapperWindow implements IBaseWindow {
                             <li  class='custom' data-option-type="mapper" data-option-name="mapmode">Modalita' mappaggio</li>
                             <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="reload">Usa mappa pubblica</li>
-                            <li  class='custom' data-option-type="mapper" data-option-name="reloadLocal">Use mappa privata</li>
+                            <li  class='custom' data-option-type="mapper" data-option-name="reloadLocal">Usa mappa privata</li>
                             <li  class='custom electron' data-option-type="mapper" data-option-name="reloadweb">Usa mappa online</li>
                             <li type='separator'></li>
                             <li  class='custom' data-option-type="mapper" data-option-name="exportall">Scarica la mappa</li>

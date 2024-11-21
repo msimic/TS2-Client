@@ -261,46 +261,60 @@ Apre l'interfaccia per la configurazione del layout.
 I tooltip presenti in ogni sezione spiegano brevemente a cosa serve ogni elemento.
 Si possono creare 4 elementi:
 
-## Pannelli <a name="LayoutPannelli"></a>
+## Pannello <a name="LayoutPannelli"></a>
 
 Elemento grafico.
-Il testo è definito all'interno del campo Modello. Può contenere variabili
-Per impostare il colore includere il testo tra i tag %color e %closecolor
-Per includere una variabile usare il tag %var che ha due sintassi
+Il testo è definito all'interno del campo Modello. 
+Può contenere variabili che vengono decodificate usando il tag %
 
-**Sintassi 1:**
-%var(nomevariabile,numcaratteri)
+**Sintassi:**
+* %(nomevariabile)
+* %(nomevariabile,numcaratteri)
 
-**Sinassi 2:**
-Da usare con variabili booleane
-%var(nomevariabile,print_se_vero,print_se_falso)
+Da usare con variabili booleane o con operatori di comparazione
+* %var(variabilebooleana,print_se_vero,print_se_falso)
+* %var(nomevariabile *operatore* valore,print_se_vero,print_se_falso)
 
-**Esempi d'uso**:
+**Colori:**
+Per impostare il colore si possono usare le stesse stringe colore del mud ma:
+* utlizzare % al posto del $
+* c'è differenza tra %c e %C. Con c minuscola il colore nero per il client è trasparente ed eredita le condizioni di lampeggio, sottolineatura e grassetto del colore precedente. Con C maiuscola invece nero non è trasparente ed è definito dai codici impostati
+* per tornare al colore di default usare %cc
+
+Le espressioni possono anche essere opportunamente concatenate qualora necessario.
+
+**Esempi d'uso:**
 ```
-%color(yellow)%var(TSSigDivini,5)%closecolor
-%var(autoassist,%color(white) ON,%color(black) OFF)
+%(TSSigDivini,5)
+%(autoassist,ON,OFF)
+%(TSGold/1000000>100,Ricco,Povero)
+%(TSGold/1000000>10,%(TSGold/1000000>100,Molto Ricco,Ricco),Povero)
+%C0010Hello %C5010%(TSPersonaggio)%cc Testo con colore di default
 ```
 
 E' possibile anche definire un comando da eseguire quando il pannello viene premuto all'interno del campo *Comandi*
 Nel tab *stile* si può impostare lo stile grafico del pannello.
 Esempi possono essere trovati anche nel layout predefinito.
 
-## Finestre
+## Ancora Finestra
 
 Posizione della finestra disponibile nella lista delle finestre quando è ancorata al layout
 La grafica della finestra è definita a livello della finestra e non a livello del layout.
 
-## Pulsanti
+## Pulsante
 
 Elemento grafico che può prevedere uno stato attivo o disattivo.
 Il testo è definito all'intero del campo Modello. [Vedi Pannelli](#LayoutPannelli)
+
 Il comando da eseguire alla pressione deve essere impostato nel campo *Comandi*
-Nel campo *Avanzate-Stato* si può impostare la variabile che definisce se il pulsante risulta premuto o non premuto
+
+Nel campo *Avanzate-Stato* si può impostare la variabile che definisce se il pulsante risulta premuto o non premuto.
+Anche in questi campi possono essere impostate delle espressioni come quelle usate nel campo Modello. [Vedi Pannelli](#LayoutPannelli)
 
 Per Indicatori a barra scorrevole come il tickcounter deve essere creato un pulsante e compilato il campo *Avanzate-Indicatore*
 indicando due variabili divise da una virgola. La prima variabile rappresenta il valore da rappresentare, la seconda rappresenta il valore massimo su cui viene calcolata la dimensione della barra
 
-## Pulsanti a discesa
+## Pulsante a discesa
 Elemento grafico che rappresenta un pulsante a discesa.
 Il testo è definito all'intero del campo Modello. [Vedi Pannelli](#LayoutPannelli)
 L'elenco degli elementi da inserire nel pulsante a discesa deve essere messo nel campo *Comandi*:

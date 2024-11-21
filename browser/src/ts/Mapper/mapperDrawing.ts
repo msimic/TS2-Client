@@ -136,6 +136,10 @@ export class MapperDrawing {
         return this._zoneId;
     }
     public set zoneId(value: number) {
+        if (value != this._zoneId) {
+            this.selected = null
+            this.selectedRooms.clear()
+        }
         this._zoneId = value;
     }
     contextMenuOpen: boolean;

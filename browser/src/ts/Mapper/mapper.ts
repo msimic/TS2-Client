@@ -607,6 +607,7 @@ export class Mapper {
 
     public addManualStep(s:Step) {
         this.manualSteps.push(s)
+        this.scripting.delVariable({name: "TSSettore", class: "", value: null})
         let msg = ("Stepping from " + s.room.id + " towards " + s.dir + (s.exit ? "(existing exit)":"(no exit)") + " ("+ this.manualSteps.length +" steps left)")
         this.mapDebug(msg);
     }
@@ -1124,7 +1125,7 @@ export class Mapper {
             }
             if (d.event == ScripEventTypes.VariableChanged && d.condition == this.exitsVariable) {
                 if (d.value) 
-                    this.activeExits = ((<any>d.value).newValue as string||'').split('|').map(v => v);
+                    this.activeExits = ((<any>d.value).newValue as string||'').split('|').filter(Boolean).map(v => v);
                 else
                     this.activeExits = []
             } else if (d.event == ScripEventTypes.VariableChanged && d.condition == this.roomNameVariable) {
@@ -1159,18 +1160,24 @@ export class Mapper {
             const dir = this.nextStep;
             const fromRoom = dir.room;
             if (dir?.dir && fromRoom && fromRoom.id > 0) {
-                if (!fromRoom.exits[dir?.dir] || !fromRoom.exits[dir?.dir].to_room)
+                let createdNewExit = false
+                if (!fromRoom.exits[dir?.dir] || !fromRoom.exits[dir?.dir].to_room) {
                     fromRoom.exits[dir?.dir] = {
                         type: ExitType.Normal,
                         to_room: mudSeenRoom.id,
                         to_dir: ReverseExitDir.get(dir?.dir)
                     }
-                if (!mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] &&
-                    !((oldExits||{})[ReverseExitDir.get(dir?.dir)]?.to_room))
-                mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] = {
-                    type: ExitType.Normal,
-                    to_room: fromRoom.id,
-                    to_dir: (dir?.dir)
+                    createdNewExit = true
+                }
+                if (createdNewExit) {
+                    if (!mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] &&
+                        !((oldExits||{})[ReverseExitDir.get(dir?.dir)]?.to_room) &&
+                        !this.hasExitsTo(oldExits, fromRoom.id))
+                    mudSeenRoom.exits[ReverseExitDir.get(dir?.dir)] = {
+                        type: ExitType.Normal,
+                        to_room: fromRoom.id,
+                        to_dir: (dir?.dir)
+                    }
                 }
                 this.prepareRoom(fromRoom)
             } else if (fromRoom && fromRoom.id < 0) {
@@ -1193,6 +1200,7 @@ export class Mapper {
         }
 
         if (this.activeExits) this.activeExits.forEach((e)=>{
+            if (!e) return
             if (!mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] && oldExits[<ExitDir>Long2ShortExit.get(e)]) {
                 if (full || !mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)]?.to_room) { 
                     mudSeenRoom.exits[<ExitDir>Long2ShortExit.get(e)] = oldExits[<ExitDir>Long2ShortExit.get(e)]
@@ -1230,6 +1238,14 @@ export class Mapper {
             this.mapDebug("    by going from " + this.nextStep?.room?.id + " to -> " + this.nextStep?.dir)
         }
         return changed
+    }
+    hasExitsTo(exits: RoomExits, id: number) {
+        for (const dir of Object.keys(exits)) {
+            let ex = exits[dir as ExitDir]
+            if (ex && ex.to_room == id)
+                return true
+        }
+        return false
     }
 
     private compareDescriptions(newDesc: any, oldDesc: string): boolean {
@@ -2175,7 +2191,7 @@ export class Mapper {
             for (const st of path.steps) {
                 const walkQueue:WalkCommand[] = []
                 if (st.dir == "other") {
-                    walkQueue.push({ type: WalkCommandType.Other, command: (st.exit.param || st.exit.name).replace(/\;/g,",").split(",").join("\n")})
+                    walkQueue.push({ type: WalkCommandType.Other, command: (st.exit.param || st.exit.name || "").replace(/\;/g,",").split(",").join("\n")})
                 } else {
                     let alreadyOpen:boolean;
                     if (st.room.id == skipDoorsId) {

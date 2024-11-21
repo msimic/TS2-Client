@@ -132,6 +132,7 @@ export let populateItemsInPanes = (layout:LayoutDefinition) => {
 }
 
 export class LayoutManager {
+    
     askingUser: Profile;
     
     findDockingPositions(window: string):Control[] {
@@ -558,6 +559,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         this.layout = null;
         this.scripts.clear();
         this.parents.clear();
+        this.changedVariables.clear()
         this.variableChangedMap.clear();
         this.variableStyleChangedMap.clear();
         this.controls.clear();
@@ -858,6 +860,18 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         return ret;
     }
 
+    splitLeftHandSide(v: string):string[] {
+
+        let ret = this.splitNotBetween(v, 
+            ["&&","&","!=","!","==","<=",">=","<",">","/","*","+","-",","], 
+            ["'","`",'"'], 
+            ["'","`",'"']
+        ).map(v => v.trim())
+
+        ret = ret.filter(v => v.length);
+        return ret;
+    }
+
     checkGauge(c: Control) {
         let ui = this.controls.get(c);
         let color = c.color || "red";
@@ -908,8 +922,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
             if (part.startsWith('[') && part.endsWith(']')) {
                 part = part.slice(1, -1);
     
-                if (part.startsWith('"') && part.endsWith('"') ||
-                    part.startsWith("'") && part.endsWith("'")) {
+                if (this.isString(part)) {
                     part = part.slice(1, -1);
                 } else {
                     part = this.getValue(obj, part);
@@ -932,10 +945,26 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         }, obj);
     }
     
+    private isString(part: string) {
+        return part.startsWith('"') && part.endsWith('"') ||
+            part.startsWith("'") && part.endsWith("'") ||
+            part.startsWith("`") && part.endsWith("`");
+    }
+
     getSubExpression(sthis:any, varExpression:string):any {
         const parts = varExpression.split(/\.|\[/g);
         let val = sthis[parts[0]];
-        if (val == undefined) return val;
+        if (val == undefined) {
+            if (this.isString(varExpression)) {
+                return varExpression
+            } else if (isNumeric(varExpression)) {
+                return varExpression.indexOf(".")>-1 ?
+                         parseFloat(varExpression) :
+                         parseInt(varExpression)
+            } else {
+                return undefined
+            }
+        };
 
         if (parts.length>1) {
             val = this.getValue(sthis, varExpression)
@@ -971,14 +1000,12 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
     }
 
     private evalExpression(v: string, sthis: any) {
-        let vr = this.parseVariables(v);
+        let vr = this.splitLeftHandSide(v);
         let expr = v;
         vr.forEach(vrb => {
             let value = this.getSubExpression(sthis, vrb);
             value = (value ?? "")
-            if (typeof value == "string" &&
-                (!value.startsWith('"') || !!value.startsWith('"')) &&
-                (!value.endsWith("'") || !!value.endsWith("'"))) {
+            if (typeof value == "string" && !this.isString(value)) {
                 value = '`' + (value) + '`'
             }
             expr = expr.replace(vrb, value);
@@ -989,7 +1016,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         } catch {
             EvtScriptEmitPrint.fire({
                 owner:"LayoutManager",
-                message: "Errore nella definizione del modello.\nImpossibile evaluare:\n"+expr
+                message: "Errore nella definizione del modello.\nImpossibile evaluare:\n"+v
             })
             return ""
         }
@@ -1462,11 +1489,103 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
         result.push(current);
         return result;
     }
+
+    splitNotBetween(str: string, delimiter: string[], excludeStart:string[], excludeEnd:string[]): string[] {
+        let result: string[] = [];
+        let current: string = '';
+        let insideExclude = 0;
+        let i = 0;
     
+        while (i < str.length) {
+            if (excludeStart.indexOf(str[i]) != -1) {
+                insideExclude++;
+            } else if (excludeEnd.indexOf(str[i]) != -1) {
+                insideExclude--;
+            }
+    
+            let isDelimiter = (pos:number) => {
+                for (const del of delimiter) {
+                    if (str.substring(pos, pos + del.length) === del) {
+                        return del.length
+                    }    
+                }
+                return 0
+            }
+            let skip = 0
+            if (insideExclude === 0 && 
+                (skip = isDelimiter(i))) {
+                result.push(current);
+                current = '';
+                i += skip - 1; // Skip the delimiter
+            } else {
+                current += str[i];
+            }
+            i++;
+        }
+    
+        result.push(current);
+        return result;
+    }
+    
+    pad(ret: string, padLength: number): string {
+        if (ret.match(/\%c/i)) {
+            let rx = new RegExp(/\%color\([^\)]+?\)|\%c\d\d\d\d|\%closecolor|\%cc/gi)
+            let match: RegExpExecArray | null;
+            const matchRanges: Array<[number, number]> = [];
+            let extraCharCount = 0
+            while ((match = rx.exec(ret)) !== null)
+            {
+                matchRanges.push([match.index, match.index + match[0].length]);
+                extraCharCount += match[0].length; 
+            }
+            let result = ret.split('');
+            let count = 0
+            for (let i = 0; i < result.length; i++) {
+                let inMatch = false; 
+                for (const range of matchRanges) {
+                    if (i >= range[0] && i < range[1]) {
+                        inMatch = true; break; 
+                    } 
+                }
+                if (!inMatch) {
+                    count++;
+                    // Remove characters past the maxCount
+                    if (count > Math.abs(padLength)) {
+                        result.splice(i, 1);
+                        i--; // Adjust index due to removal
+        
+                        // Adjust match ranges
+                        for (let j = 0; j < matchRanges.length; j++) {
+                            if (i < matchRanges[j][0]) {
+                                matchRanges[j][0]--;
+                                matchRanges[j][1]--;
+                            }
+                        }
+                    }
+                }
+            }
+            ret = result.join("")
+            if (padLength>0) {
+                padLength += extraCharCount
+                return ret.padStart(padLength, ' ');
+            } else {
+                padLength = Math.abs(padLength - extraCharCount)
+                return ret.padEnd(padLength, ' ');
+            }
+        } else {
+            if (padLength>0) {
+                return ret.substring(0,padLength).padStart(padLength, ' ');
+            } else {
+                padLength = Math.abs(padLength)
+                return ret.substring(0,padLength).padEnd(padLength, ' ');
+            }
+        }
+    }
+
     replaceExpression = (ctrl:Control, parseVariable:boolean, s:string, sthis:any)=>{
         let params = this.splitOutsideBrackets(s, ",");
-        if (params.length > 3) {
-            EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid expression in template of Control: " + ctrl.content})
+        if (params.length > 4) {
+            EvtScriptEmitPrint.fire({owner:"Layout", message:"Espressione non valida nel template di: " + ctrl.content})
             return "?"
         }
         let expression=params[0];
@@ -1516,66 +1635,22 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
             }
         }
         if (params.length>2) {
+            let ret
             if (compare) {
-                return ((compareOP(val,compare)) ? params[1] : params[2]);
+                ret = ((compareOP(val,compare)) ? params[1] : params[2]);
             } else {
-                return (val) ? params[1] : params[2];
+                ret = (val) ? params[1] : params[2];
             }
+            ret = (ret==undefined?"-":ret).toString()
+            if (params.length == 4) {
+                ret = this.pad(ret, parseInt(params[3]))
+            }
+            return ret
         } else if (params.length==2) {
-            let ret:string = (val==undefined?"-":val).toString()
-            let padLength = parseInt(params[1])
-            if (ret.match(/\%c/i)) {
-                let rx = new RegExp(/\%color\([^\)]+?\)|\%c\d\d\d\d|\%closecolor|\%cc/gi)
-                let match: RegExpExecArray | null;
-                const matchRanges: Array<[number, number]> = [];
-                let extraCharCount = 0
-                while ((match = rx.exec(ret)) !== null)
-                {
-                    matchRanges.push([match.index, match.index + match[0].length]);
-                    extraCharCount += match[0].length; 
-                }
-                let result = ret.split('');
-                let count = 0
-                for (let i = 0; i < result.length; i++) {
-                    let inMatch = false; 
-                    for (const range of matchRanges) {
-                        if (i >= range[0] && i < range[1]) {
-                            inMatch = true; break; 
-                        } 
-                    }
-                    if (!inMatch) {
-                        count++;
-                        // Remove characters past the maxCount
-                        if (count > Math.abs(padLength)) {
-                            result.splice(i, 1);
-                            i--; // Adjust index due to removal
-            
-                            // Adjust match ranges
-                            for (let j = 0; j < matchRanges.length; j++) {
-                                if (i < matchRanges[j][0]) {
-                                    matchRanges[j][0]--;
-                                    matchRanges[j][1]--;
-                                }
-                            }
-                        }
-                    }
-                }
-                ret = result.join("")
-                if (padLength>0) {
-                    padLength += extraCharCount
-                    return ret.padStart(padLength, ' ');
-                } else {
-                    padLength = Math.abs(padLength - extraCharCount)
-                    return ret.padEnd(padLength, ' ');
-                }
-            } else {
-                if (padLength>0) {
-                    return ret.substring(0,padLength).padStart(padLength, ' ');
-                } else {
-                    padLength = Math.abs(padLength)
-                    return ret.substring(0,padLength).padEnd(padLength, ' ');
-                }
-            }
+            let ret:string = val
+            ret = (ret==undefined?"-":ret).toString()
+            ret = this.pad(ret, parseInt(params[1]))
+            return ret
         } else {
             return (compare ? (compareOP(val,compare)) : val);
         }
@@ -1611,7 +1686,7 @@ Se ora rispondi No dovrai aggiornare manualmente dalla finestra Disposizione sch
                     sthis
                 )
             } else {
-                EvtScriptEmitPrint.fire({owner:"Layout", message:"Invalid variable in template of Control: " + ctrl.content})
+                EvtScriptEmitPrint.fire({owner:"Layout", message:"Espressione non valida nel template: " + ctrl.content})
                 break;
             }
             replacement = replacement ?? "?"

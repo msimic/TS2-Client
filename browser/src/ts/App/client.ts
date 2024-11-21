@@ -156,9 +156,9 @@ export class Client {
 
     constructor(private connectionTarget: ConnectionTarget, private baseConfig:UserConfig, private profileManager:ProfileManager, public config:{[k:string]:any}) {
         console.log(config)
-        let rtcHost = config.rtcHost || window.location.hostname
-        let rtcPort = config.rtcPort || 4050
-        this.rtc = new WebRTC(rtcHost,
+        let rtcHost = config.rtcHost
+        let rtcPort = config.rtcPort
+        this.rtc = (!rtcHost || !rtcPort) ? null : new WebRTC(rtcHost,
                               rtcPort,
                               $("#peerElements","#rtc")[0] as HTMLElement,
                               $("#localElements","#rtc")[0] as HTMLElement) 
@@ -327,7 +327,7 @@ export class Client {
 
         this.socket.EvtIdentified.handle(s => {
             console.log("Got player name " + s)
-            this.rtc.SetUsername(s)
+            if (this.rtc) this.rtc.SetUsername(s)
         })
 
         // Socket events

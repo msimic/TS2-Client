@@ -397,8 +397,9 @@ export class EditPanelWindow {
         let cmStub = {
             sendCmd: (cmd: string, nohistory:boolean, script:boolean) => {}
         }
+        let lm:LayoutManager
         try {
-            let lm = new LayoutManager(null, this.jsScript, cmStub as any) 
+            lm = new LayoutManager(null, this.jsScript, cmStub as any) 
             let pw = lm.createHierarchicalControl(inx, c, null, null)
             if (pw) {
                 pw.css("flex", 1)
@@ -437,6 +438,7 @@ export class EditPanelWindow {
             lm.release()
             this.Focus()
         } catch (ex) {
+            if (lm) lm.release()
              Messagebox.Show("Errore", "Impossibile creare anteprima. Creazione fallita con errore:\n\n" + ex)
          }
         pr.remove()
