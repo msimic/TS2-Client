@@ -1,3 +1,12 @@
+v2.0.13
+Versione minore con bugfixes
+
+bugfixes:
+- risolto un problema nel mandare comandi separati da puntoe  virgola negli alias non script
+- risolto problema con lo scroll diviso
+- risolto un bug nel spegnere e riabilitare triggers
+- risolto un bug nel spegnere e riabilitare alias
+____________________________________________________________
 v2.0.12
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 

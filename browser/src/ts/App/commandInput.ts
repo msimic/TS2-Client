@@ -107,13 +107,9 @@ export class CommandInput {
         
         this.$cmdInput.on("focus", () => {
             hotkeys.setScope('macro');
-            //let codes = hotkeys.getAllKeyCodes().filter(c => c.scope == hotkeys.getScope())
-            //console.log("Scope hotkey settato per macro. ", codes)
         })
         this.$cmdInput.on("blur", () => {
             hotkeys.setScope('app');
-            //let codes = hotkeys.getAllKeyCodes().filter(c => c.scope == hotkeys.getScope())
-            //console.log("Scope hotkey settato per app.", codes)
         })
 
         this.chkCmdStack = $("#chkCmdStack");
@@ -167,8 +163,32 @@ export class CommandInput {
             this.chkCmdAliases.prop('checked', isTrue(v))
         });
 
-        $(".checkerTriggers").on('mouseup', () => {
-            this.chkCmdTriggers.prop('checked', !this.chkCmdTriggers.prop('checked'))
+        $("#cmdCont").on('mousedown', () => {
+            let textarea = this.$cmdInput[0] as HTMLInputElement;
+            let start = textarea.selectionStart;
+            textarea.setSelectionRange(start, start);
+        })
+        
+        this.chkCmdStack.on('change', () => {
+            EvtScriptEmitPrint.fire({
+                owner: "commandLine",
+                message: "COMANDI MULTIPLI " + (this.chkCmdStack.is(":checked") ? "ABILITATI" : "DISABILITATI")
+            })
+        })
+        
+        this.chkCmdAliases.on('change', () => {
+            this.config.set("aliasesEnabled", this.chkCmdAliases.is(":checked"));
+            EvtScriptEmitPrint.fire({
+                owner: "commandLine",
+                message: "ALIASES " + (this.chkCmdAliases.is(":checked") ? "ABILITATI" : "DISABILITATI")
+            })
+        })
+
+        this.chkCmdSplit.on('change', () => {
+            this.SplitScroll(this.chkCmdSplit.is(":checked"));
+        })
+
+        this.chkCmdTriggers.on('change', () => {
             this.config.set("triggersEnabled", this.chkCmdTriggers.is(":checked"));
             EvtScriptEmitPrint.fire({
                 owner: "commandLine",
@@ -176,46 +196,9 @@ export class CommandInput {
             })
         })
 
-        $(".checkerAliases").on('mouseup', () => {
-            this.chkCmdAliases.prop('checked', !this.chkCmdAliases.prop('checked'))
-            this.config.set("aliasesEnabled", this.chkCmdAliases.is(":checked"));
-            EvtScriptEmitPrint.fire({
-                owner: "commandLine",
-                message: "ALIASES " + (this.chkCmdAliases.is(":checked") ? "ABILITATI" : "DISABILITATI")
-            })
-        })
-        
-        $(".checkerStack").on('mouseup', () => {
-            this.chkCmdStack.prop('checked', !this.chkCmdStack.prop('checked'))
-            EvtScriptEmitPrint.fire({
-                owner: "commandLine",
-                message: "COMANDI MULTIPLI " + (this.chkCmdStack.is(":checked") ? "ABILITATI" : "DISABILITATI")
-            })
-        })
-        
-        $(".checkerSplit").on('mouseup', () => {
-            this.chkCmdSplit.prop('checked', !this.chkCmdSplit.prop('checked'))
-            this.SplitScroll(this.chkCmdSplit.is(":checked"));
-        })
-        
-        this.chkCmdAliases.on('change', () => {
-            
-            
-        })
-
-        this.chkCmdSplit.on('change', () => {
-            
-        })
-
-        this.chkCmdTriggers.on('change', () => {
-            
-            
-        })
-
         this.$cmdInput.keydown((event: JQueryEventObject) => { return this.keydown(event); });
         const thrInputChange = throttle(this.inputChange, 200, this)
         this.$cmdInput.bind("keyup", v => <any>thrInputChange(v));
-        this.$cmdInput.on("focus", v => this.SplitScroll(false));
 
         var contextMenu = (<any>$("#menuHistory")).jqxMenu({ animationShowDuration: 0, width: '120px', height: 'auto', source: [], autoOpenPopup: false, autoCloseOnClick: true, mode: 'popup'});
         
@@ -260,23 +243,52 @@ export class CommandInput {
         });
     }
 
-    SplitScroll(enabled: boolean) {
-        let m_pos:number; // Store initial mouse position
-            
-        function resize(e:MouseEvent) {
-            var parent = $(".scrollBackContainer")[0] as HTMLElement; // Get the parent div
-            var dx = m_pos - e.y; // Calculate mouse movement
-            m_pos = e.y; // Update mouse position
-            parent.style.height = ($(parent).height() - dx) + "px"; // Resize parent width
-            e.preventDefault()
-            e.stopPropagation()
+    m_pos:number; // Store initial mouse position
+    gutterClicked = true
+
+    resize = (e:MouseEvent) => {
+        var parent = $(".scrollBackContainer")[0] as HTMLElement; // Get the parent div
+        var dx = this.m_pos - e.y; // Calculate mouse movement
+        this.m_pos = e.y; // Update mouse position
+        parent.style.height = ($(parent).height() - dx) + "px"; // Resize parent width
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    onMouseUp = (ev:MouseEvent) => {
+        if (this.gutterClicked) {
+            $(".scrollBack")[0].scrollTop = $(".scrollBack")[0].scrollHeight
+            localStorage.setItem('split-sizes', parseInt($(".scrollBackContainer").height().toString()).toString())    
         }
+        this.gutterClicked = false
+        document.removeEventListener('mousemove', this.resize);
+        document.removeEventListener('mousemove', this.resize);
+        document.removeEventListener('mouseup', this.onMouseUp);
+    }
+    onMouseDown = (e:MouseEvent) => {
+        this.m_pos = e.y; // Store initial mouse position
+        document.removeEventListener('mousemove', this.resize);
+        document.removeEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('mousemove', this.resize);
+        document.addEventListener('mouseup', this.onMouseUp);
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    SplitScroll(enabled: boolean) {
+
+        console.log("split " + enabled)
         if (!enabled) {
             this.searchLine = -1;
             const elms = [$(".scrollBack")[0] as HTMLElement,$(".fill-parent.winOutput")[0] as HTMLElement]
             $("#scrollBack")[0].innerHTML = ""
             $($(".scrollBackContainer")).hide()
             $(".scrollBack")[0].scrollTop = $(".scrollBack")[0].scrollHeight
+            let gutter = $(".scrollBackContainer>.gutter")[0];
+            gutter.removeEventListener('mousedown', this.onMouseDown);
+            document.removeEventListener('mousemove', this.resize);
+            document.removeEventListener('mouseup', this.onMouseUp);
+            
         } else {
             $("#scrollBack")[0].innerHTML = $("#winOutput")[0].innerHTML
             let sizes:any = localStorage.getItem('split-sizes')
@@ -288,22 +300,11 @@ export class CommandInput {
             
             elms.forEach(e => e.scrollTop = e.scrollHeight)
             
-            var gutter = $(".scrollBackContainer>.gutter")[0];
-            gutter.addEventListener('mousedown', function (e:MouseEvent) {
-                let gutterClicked = true
-                m_pos = e.y; // Store initial mouse position
-                document.addEventListener('mousemove', resize);
-                document.addEventListener('mouseup', function (ev) {
-                    if (gutterClicked) {
-                        $(".scrollBack")[0].scrollTop = $(".scrollBack")[0].scrollHeight
-                        localStorage.setItem('split-sizes', parseInt($(".scrollBackContainer").height().toString()).toString())    
-                    }
-                    gutterClicked = false
-                    document.removeEventListener('mousemove', resize);
-                });
-                e.preventDefault()
-                e.stopPropagation()
-            });
+            let gutter = $(".scrollBackContainer>.gutter")[0];
+            gutter.removeEventListener('mousedown', this.onMouseDown);
+            document.removeEventListener('mousemove', this.resize);
+            document.removeEventListener('mouseup', this.onMouseUp);
+            gutter.addEventListener('mousedown', this.onMouseDown);
             
         }
     }
@@ -341,13 +342,16 @@ export class CommandInput {
             EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
             
         } else if (!result) {
-            this.EvtEmitCmd.fire({command:cmd,fromScript:fromScript});
-            EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
-            
+            let cmds:string[] = []
+            let ocmds:string[] = []
+            this.prepareCommands(cmd, cmds, ocmds, fromScript)
+            for (const cmd of cmds) {
+                this.EvtEmitCmd.fire({command:cmd,fromScript:fromScript});
+                EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                        
+            }
         } else if (result === true) {
             this.EvtEmitAliasCmds.fire({orig:cmd,commands:[], fromScript: fromScript});
             EvtScriptEvent.fire({event: ScripEventTypes.CommandExecuted, condition: (!!fromScript).toString(), value: { command: cmd, script: !!fromScript }});                
-            
         }
 
     }
