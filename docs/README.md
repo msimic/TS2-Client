@@ -3,7 +3,7 @@
 
 E' usato per il client online sul sito: https://temporasanguinis.it, e ha versioni binarie per windows, e linux (deb, rpm).
 
-![image](https://user-images.githubusercontent.com/160009/152183580-cb96942a-4bc7-49ca-8560-638435ed3e75.png)
+![image](https://github.com/user-attachments/assets/4ef3dc25-e0b9-4776-92db-f57b3b6d9a2f)
 
 Versione live su Tempora Sanguinis: https://temporasanguinis.it/#play
 
