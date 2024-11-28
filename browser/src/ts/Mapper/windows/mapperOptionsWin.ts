@@ -200,6 +200,10 @@ export class MapperOptionsWin {
 
     }
 
+    destroy() {
+        (<any>this.$win).jqxWindow("destroy");
+        this.$win.remove()
+    }
 
     private handleApplyButtonClick() {
         this.apply()

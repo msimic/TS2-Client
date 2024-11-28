@@ -8,6 +8,7 @@ import { TsClient } from "../../App/client";
 import { debounce } from "lodash";
 import { ProfileManager } from "../../App/profileManager";
 import { JsScript } from "../jsScript";
+import { ClassManager } from "../classManager";
 
 declare let CodeMirror: any;
 
@@ -150,7 +151,7 @@ export abstract class TrigAlEditBase {
         }
     }
 
-    constructor(protected isBase:boolean, protected title: string, private script:JsScript) {
+    constructor(protected isBase:boolean, protected title: string, private script:JsScript, protected classManager: ClassManager) {
         this.Filter = debounce(this.FilterImpl, 500)
         let myDiv = document.createElement("div");
         myDiv.style.display = "none";
@@ -493,6 +494,11 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         this.$importButton.prop("disabled", state);
         this.$exportButton.prop("disabled", state);
         this.$cancelButton.prop("disabled", state);
+        if (state) {
+            $(".right-pane", this.$win).addClass("grayed-out")
+        } else {
+            $(".right-pane", this.$win).removeClass("grayed-out")
+        }
         this.showTextInput();
     }
 
@@ -638,7 +644,7 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
         trg.shortcut = this.$macroLabel.text()
         trg.script = null;
 
-        let newItem:any = null;
+        let newItem:TrigAlItem = null;
         try {
             this.saving = true
             let newIndex = this.saveItem(
@@ -647,6 +653,9 @@ Vuoi salvare prima di uscire?`, "Si", "No").then(mr => {
  
             if (newIndex>-1) {
                 newItem = this.getItem(newIndex)
+                if (newItem?.class && !this.classManager.HasClass(newItem.class)) {
+                    this.classManager.Create(newItem.class, true)
+                }
             }
         } finally {
             this.saving = false

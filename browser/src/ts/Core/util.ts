@@ -3,8 +3,9 @@ import { EventHook } from "./event";
 import { Button, Messagebox, messagebox, Notification } from "../App/messagebox";
 import { TrigAlItem } from "../Scripting/windows/trigAlEditBase";
 import { TsClient } from "../App/client";
-import { UserConfigData } from "../App/userConfig";
-import { IsNumeric, JsScript, Variable } from "../Scripting/jsScript";
+import { UserConfig, UserConfigData } from "../App/userConfig";
+import { IsNumeric, JsScript, ScriptEvent, Variable } from "../Scripting/jsScript";
+import { Class } from "../Scripting/classManager";
 
 
 enum BlockType {
@@ -732,6 +733,185 @@ export function importFromFile(callback:(data:string)=>void) {
     document.body.appendChild(inp);
     inp.click();
     document.body.removeChild(inp);
+}
+
+export let importScriptsFunc = async (config:UserConfig) => {
+    importFromFile(async (data) => {
+        let importObj = <any>null;
+        try {
+        importObj = JSON.parse(data)
+        } catch {
+            Messagebox.Show("Errore", "File script non valido")
+            return;
+        }
+
+        let denyReason = "";
+        if ((denyReason = denyClientVersion(importObj))) {
+            Messagebox.Show("Errore", `E' impossibile caricare questa versione di script.\nE' richiesta una versione piu' alta del client.\nVersione client richiesta: ${denyReason}\nVersione attuale: ${AppInfo.Version}\n\nAggiorna il client che usi per poter usare questa configurazione.\n\n<a href="https://github.com/temporasanguinis/TS2-Client/releases" target="_blank">Scarica l'ultima versione da qui</a>`)
+            return;
+        }
+
+        if (!importObj.aliases ||
+            !importObj.triggers ||
+            !importObj.classes ||
+            !importObj.variables ||
+            !importObj.events) {
+            Messagebox.Show("Errore", "File script non valido")
+            return;
+        }
+
+        if (importObj.aliases.length +
+            importObj.triggers.length +
+            importObj.classes.length +
+            importObj.variables.length +
+            importObj.events.length == 0) {
+            Messagebox.Show("Errore", "Il file non contiene scripts (e' vuoto)")
+            return;
+        }
+
+        const str = `${config.data.name?"["+config.data.name+"]\n":"[preimpostati]\n"}Verranno importati scripts${importObj.description ? " '" + importObj.description + "'": ""}:
+
+Alias: ${importObj.aliases.length}
+Triggers: ${importObj.triggers.length}
+Classi: ${importObj.classes.length}
+Variabili: ${importObj.variables.length}
+Eventi: ${importObj.events.length}
+
+${importObj.datetime ? "Esportati in data: " + importObj.datetime + "\n": ""}Vuoi procedere?`
+        if ((await Messagebox.Question(str)).button == Button.Ok) {
+            const trgs:TrigAlItem[] = config.get("triggers") || [];
+            const als:TrigAlItem[] = config.get("aliases") || [];
+            const evs = [...(config.get("script_events") || [])];
+            const vars = [...(config.get("variables") || [])];
+            const cls = [...(config.get("classes") || [])];
+            const trgsI:TrigAlItem[] = importObj.triggers
+            const alsI:TrigAlItem[] = importObj.aliases
+            const varsI:[] = importObj.variables
+            const clsI:[] = importObj.classes
+            const evsI:[] = importObj.events
+            
+            const trgMap = new Map<string, TrigAlItem>()
+            trgs.forEach((el) => {
+                trgMap.set(el.pattern+el.class+el.id, el)
+            });
+            trgsI.forEach((el) => {
+                trgMap.set(el.pattern+el.class+el.id, el)
+            });
+            const newTr = [...trgMap.values()]
+
+            const alsMap = new Map<string, TrigAlItem>()
+            als.forEach((el) => {
+                alsMap.set(el.pattern+el.class+el.id, el)
+            });
+            alsI.forEach((el) => {
+                alsMap.set(el.pattern+el.class+el.id, el)
+            });
+            const newAls = [...alsMap.values()]
+
+            const varMapNew = new Map<string, Variable>(vars)
+            varsI.forEach((el:Variable) => {
+                varMapNew.set(el.name, el)
+            });
+            const newVars = [...varMapNew]
+
+            const clsMapNew = new Map<string, Variable>(cls)
+            clsI.forEach((el:Variable) => {
+                clsMapNew.set(el.name, el)
+            });
+            const newCls = [...clsMapNew]
+
+            const evMapNew = new Map<string, ScriptEvent[]>(evs)
+            evsI.forEach((el:ScriptEvent) => {
+                let etype = evMapNew.get(el.type) as ScriptEvent[]
+                if (!etype) {
+                    etype = []
+                    evMapNew.set(el.type, etype)
+                }
+                const insertIndex = etype.findIndex((v) => v.type + v.condition + v.id + v.class == el.type + el.condition + el.id + el.class)
+                if (insertIndex > -1) {
+                    etype[insertIndex] = el
+                } else {
+                    etype.push(el)
+                }
+            });
+            const newEvs = [...evMapNew]
+            
+            config.set("triggers", newTr, true);
+            config.set("aliases", newAls, true);
+            config.set("script_events", newEvs, true);
+            config.set("variables", newVars, true);
+            config.set("classes", newCls, true);
+
+            config.saveConfig()
+            
+            AskReload()
+        }
+    })
+}
+export let exportClassFunc = async (config:UserConfig, className?:string) => {
+    const response = await Messagebox.ShowMultiInput("Esporta scripts", ["Nome o regex della classe (richiesto)","Descrizione (opzionale)","Nome file (opzionale)"], [className || "", "", ""])
+
+    function hasDuplicates(array:any[]) {
+        return (new Set(array)).size !== array.length;
+    }
+    if (response.button != Button.Ok || !response.results[0]) return;
+
+    const cfg = JSON.parse(config.saveConfigToString())
+
+
+    const cls = [...(new Map<string,Class>(cfg.classes))].filter((tr) => !!tr[0].match(new RegExp("^" + response.result + "$", "i"))).map(v => v[1]);
+    
+    if (!cls || !cls[0]) {
+        Messagebox.Show("Errore", "Classi insesistenti con questo filtro, anche se forse hai i trigger con quella classe.\nCreala manualmente oppure disabilita o abilita quella classe almeno una volta.");
+        return;
+    }
+
+    const flt = (tr:any):boolean => {
+        const ret = !!cls.find(v => v.name == tr.class);
+        return ret;
+    }
+
+    const trgs: TrigAlItem[] = cfg.triggers ? (cfg.triggers).filter(flt) : [];
+    const als: TrigAlItem[] = cfg.aliases ? (cfg.aliases).filter(flt) : [];
+    const evs: ScriptEvent[] = cfg.script_events ? [...[...(new Map<string,ScriptEvent[]>(cfg.script_events))].map(v => v[1])].flat().filter(flt) : [];
+    const vars: Variable[] = cfg.variables ? [...[...(new Map<string,Variable>(cfg.variables))].map(v => v[1])].filter(flt) : [];
+
+    if (!(trgs.length + als.length + evs.length + vars.length)) {
+        Messagebox.Show("Errore", "La classe non contiene trigger, alias, variabili o eventi (e' vuota).");
+        return;
+    }
+
+    {
+        if (hasDuplicates(trgs.map(t => t.pattern + t.id))) {
+            Messagebox.Show("Errore", "Trigger non univoci (pattern + id).");
+            return;
+        }
+        if (hasDuplicates(als.map(t => t.pattern + t.id))) {
+            Messagebox.Show("Errore", "Alias non univoci (pattern + id).");
+            return;
+        }
+        if (hasDuplicates(evs.map(t => t.type + t.condition + t.id))) {
+            Messagebox.Show("Errore", "Eventi non univoci (type + condition + id).");
+            return;
+        }
+    }
+
+    const ver = getVersionNumbers(AppInfo.Version)
+    const dt = new Date();
+    const exportObj = {
+        aliases: als,
+        triggers: trgs,
+        events: evs,
+        classes: cls,
+        variables: vars,
+        requiresClientMajor: (ver[0]),
+        requiresClientMinor: (ver[1]),
+        requiresClientRevision: (ver[2]),
+        description: response.results[1],
+        datetime: dt.toDateString() + " " + dt.getHours() + ":" + dt.getMinutes() 
+    }
+
+    downloadJsonToFile(exportObj, response.results[2] || "export_scripts.json")
 }
 
 // https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array

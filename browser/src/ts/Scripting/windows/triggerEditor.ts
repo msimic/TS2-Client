@@ -3,13 +3,14 @@ import { copyData, TrigAlEditBase, TrigAlItem } from "./trigAlEditBase";
 import { TriggerManager } from "../triggerManager";
 import { ProfileManager } from "../../App/profileManager";
 import { JsScript } from "../jsScript";
+import { ClassManager } from "../classManager";
 
 export const EvtCopyTriggerToBase = new EventHook<copyData>()
 
 export class TriggerEditor extends TrigAlEditBase {
 
-    constructor(profileManager:ProfileManager, private triggerManager: TriggerManager,  isBase:boolean, script:JsScript, title?:string) {
-        super(isBase, title || "Triggers", script);
+    constructor(profileManager:ProfileManager, private triggerManager: TriggerManager,  isBase:boolean, script:JsScript, classManager: ClassManager, title?:string) {
+        super(isBase, title || "Triggers", script, classManager);
         this.setProfileManager(profileManager)
         triggerManager.changed.handle(()=>{
             if ((<any>this.$win).jqxWindow('isOpen')) super.refresh()

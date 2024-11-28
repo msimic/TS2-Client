@@ -896,10 +896,13 @@ function makeScript(owner:string, userScript: string, argSignature: string,
             clearTimeout(window.timeouts[id]);
             delete window.timeouts[id];
         }
-        if (func) window.timeouts[id] = setTimeout(() => {
-            func();
-            delete window.timeouts[id];
-        }, time);   
+        if (func) {
+            func = func.bind(this)
+            window.timeouts[id] = setTimeout(() => {
+                func();
+                delete window.timeouts[id];
+            }, time);
+        }   
     };
     const repeat = function(id: string, time:number, func:Function) {
         if (!window.repeats) {
@@ -913,6 +916,7 @@ function makeScript(owner:string, userScript: string, argSignature: string,
             delete window.repeats[id];
         }
         if (func) {
+            func = func.bind(this)
             window.repeats[id] = setInterval(() => {
                 func();
             }, time);

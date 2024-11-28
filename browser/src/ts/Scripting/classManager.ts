@@ -3,6 +3,8 @@ import { TrigAlItem } from "./windows/trigAlEditBase";
 import { EvtScriptEmitPrint, EvtScriptEmitToggleClass, EvtScriptEvent, ScripEventTypes } from "./jsScript";
 import { ConfigIf } from "../Core/util";
 import { ProfileManager } from "../App/profileManager";
+import { UserConfig } from "../App/userConfig";
+import { cli } from "webpack";
 
 export interface Class{
     name: string;
@@ -15,7 +17,7 @@ export class ClassManager {
     public classes: Map<string, Class> = new Map<string, Class>();
     public changed = new EventHook()
 
-    constructor(private config: ConfigIf, private profileManager:ProfileManager) {
+    constructor(private config: ConfigIf, private profileManager:ProfileManager, private baseConfig:UserConfig) {
         EvtScriptEmitToggleClass.handle(this.onToggle, this);
         this.loadClasses();
         profileManager.evtProfileChanged.handle(async d => {
@@ -35,8 +37,16 @@ export class ClassManager {
         }
     }
 
+    public hasBaseClass(name:string):boolean {
+        let cList:[[string,Class]] = this.baseConfig?.get("classes") || []
+        let classes = new Map<string, Class>(cList)
+        return classes.get(name) != null
+    }
     public Delete(id:string) {
         this.classes.delete(id);
+    }
+    public HasClass(id:string) {
+        return this.classes.get(id)!=null
     }
     public Create(id:string, val:boolean) {
         this.classes.set(id, {

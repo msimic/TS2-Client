@@ -422,6 +422,7 @@ export class MapperWindow implements IBaseWindow {
         this.refreshFavorites();
         var self = this;
         w.on('open', function (evt:any) {
+            
             if (self.drawing) {
                 self.drawing.zoomChanged.release(self.onZoomChange)
                 self.drawing.showContext.release(self.showContextMenu)
@@ -1703,6 +1704,11 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     public fillZonesDropDown(zones:Zone[]) {
         const useLabels = this.mapper.getOptions().preferZoneAbbreviations;
         
+        if (!this.$win || !this.$win.length ||
+            !this.$zoneList || !this.$zoneList.length ||
+            !$("#zonelist", this.$win).length
+        ) return;
+
         const prevVal = (<any>this.$zoneList).jqxDropDownList('getSelectedItem');
         let prevIndex = (<any>this.$zoneList).jqxDropDownList('selectedIndex');
         (<any>$("#zonelist", this.$win)).jqxDropDownList('clearFilter');
@@ -1750,6 +1756,10 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
     public loadZonesIfNeeded(force: boolean) {
         let items: any;
         
+        if (!this.$win || !this.$win.length ||
+            !this.$zoneList || !this.$zoneList.length
+        ) return;
+
         // reread zones when mapper sends empty zone message or we don't have items in dropdown
         if (force || !(items = (<any>this.$zoneList).jqxDropDownList('getItems')) || !items.length) {
             if (!this.selecting) this.fillZonesDropDown(this.zones)
@@ -1778,9 +1788,11 @@ Rispondendo negativamente uscirai dalla modalita' mapping senza salvare.`
             delete this.drawing;  
             this.drawing = null;
         }
+        <JQuery>((<any>this.$zoneList)).jqxDropDownList("destroy");
         delete this.ctx;
         delete this.canvas;
         this.resizeSensor.disconnect();
+        this.optionsWindow.destroy(); 
         (<any>this.$win).jqxWindow("destroy");
     }
 

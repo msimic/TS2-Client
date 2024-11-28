@@ -1,7 +1,11 @@
 Versione minore con bugfixes
 
 bugfixes:
-- risolto un problema nel mandare comandi separati da puntoe  virgola negli alias non script
+- risolto un problema nel mandare comandi separati da punto e virgola negli alias non script
 - risolto problema con lo scroll diviso
 - risolto un bug nel spegnere e riabilitare triggers
 - risolto un bug nel spegnere e riabilitare alias
+
+performance:
+- chiudere e riaprire il mapper non dovrebbe piu causare problemi
+  di degradazione di velocita' d'esecuzione

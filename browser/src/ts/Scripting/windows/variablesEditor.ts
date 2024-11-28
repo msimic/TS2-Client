@@ -258,6 +258,11 @@ export class VariablesEditor {
         this.$cancelButton.prop("disabled", state);
         this.$isTemp.prop("disabled", state);
         if (state) {
+            $(".right-pane", this.$win).addClass("grayed-out")
+        } else {
+            $(".right-pane", this.$win).removeClass("grayed-out")
+        }
+        if (state) {
             this.$filter.focus();
         }
     }

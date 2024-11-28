@@ -1792,7 +1792,9 @@ export class MapperDrawing {
                                 (this.selectedReverseExit && this.selectedReverseExit == ex)) {
                                 clr = this.selectedColor
                             }
+                            context.setLineDash([1, 3]);
                             if (!recursive) this.drawLink(context, roomData.rect, steps, exitData, roomData.room.z != destDrawData.room.z ? "gray" : clr, offsX, offsY);
+                            context.setLineDash([])
                         }
                     }
                     

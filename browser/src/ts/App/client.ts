@@ -222,7 +222,7 @@ export class Client {
         this.contactWin = new ContactWin();
         this.profileWin = new ProfileWindow(this.profileManager);
         this.variableEditor = new VariablesEditor(this.jsScript, this.profileManager);
-        this.classManager = new ClassManager(this.profileManager.activeConfig, profileManager);
+        this.classManager = new ClassManager(this.profileManager.activeConfig, profileManager, baseConfig);
         this.jsScriptWin = new JsScriptWin(this.jsScript);
         this.triggerManager = new TriggerManager(
             this.jsScript, this.profileManager.activeConfig, baseConfig, this.classManager, profileManager);
@@ -243,16 +243,16 @@ export class Client {
 
 
         this.classEditor = new ClassEditor(this.classManager, this.profileManager, this.triggerManager, this.aliasManager, this.jsScript);
-        this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false, this.jsScript);
+        this.aliasEditor = new AliasEditor(this.profileManager, this.aliasManager, false, this.jsScript, this.classManager);
         this.eventsEditor = new EventsEditor(this.jsScript, false, this.profileManager);
-        this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false, this.jsScript);
+        this.triggerEditor = new TriggerEditor(this.profileManager, this.triggerManager, false, this.jsScript, this.classManager);
 
         this.baseAliasManager = new AliasManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseAliasEditor = new AliasEditor(this.profileManager, this.baseAliasManager, true, this.jsScript, "Alias preimpostati (!)");
+        this.baseAliasEditor = new AliasEditor(this.profileManager, this.baseAliasManager, true, this.jsScript, this.classManager, "Alias preimpostati (!)");
         this.baseTriggerManager = new TriggerManager(
             null, baseConfig, null, this.classManager, profileManager);
-        this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, this.jsScript, "Trigger preimpostati (!)");
+        this.baseTriggerEditor = new TriggerEditor(this.profileManager, this.baseTriggerManager, true, this.jsScript, this.classManager, "Trigger preimpostati (!)");
         
         this.outputManager = new OutputManager(this.outputWin, this.profileManager.activeConfig, this.windowManager, this.jsScript);
         this.mxp = new Mxp(this.outputManager, this.commandInput, this.jsScript, this.profileManager.activeConfig);

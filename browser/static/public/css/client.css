@@ -265,6 +265,12 @@ font-family: 'Bitstream-Vera-Sans-Mono' !important;
 .dark .note {
     color: #acff4c8f
 }
+#menuBar .jqx-fill-state-focus, #menuBar .jqx-fill-state-focus-metro {
+    border-color: transparent !important;
+}
+.right-pane.grayed-out label {
+    opacity: 0.33;
+}
 .content-wrapper {
     position: absolute;
     top: 0;

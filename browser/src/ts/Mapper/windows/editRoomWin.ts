@@ -358,8 +358,8 @@ export class EditRoomWin {
 
     applyExitFields(selectedExit: RoomExit) {
         let exType = parseInt(this.$exitType.val()||0)
-        let exDirType = this.$exitdestDirType.val()
-        let exName = this.$roomeditexitname.val() 
+        let exDirType = this.$exitdestDirType.val()||'n'
+        let exName = this.$roomeditexitname.val()
         let exParam = this.$roomeditexitparam.val()
         let exLabel = this.$roomeditexitlabel.val()
         let exToRoom = parseInt(this.$roomeditexittoroom.val())

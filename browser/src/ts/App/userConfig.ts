@@ -205,6 +205,18 @@ export class UserConfig {
                 jso.favorites = favorites;
             }
         }
+
+        let aliases: [{script: any, shortcut: string}] = jso.aliases || []
+        let triggers: [{script: any, shortcut: string}] = jso.triggers || []
+        for (const el of aliases) {
+            delete el.script
+            if (!el.shortcut) delete el.shortcut
+        }
+        for (const el of triggers) {
+            delete el.script
+            if (!el.shortcut) delete el.shortcut
+        }
+
         const ver = getVersionNumbers(AppInfo.Version)
             
         jso.requiresClientMajor = (ver[0]);

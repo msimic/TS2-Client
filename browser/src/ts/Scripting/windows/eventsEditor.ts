@@ -454,6 +454,11 @@ export class EventsEditor {
         this.$importButton.prop("disabled", state);
         this.$exportButton.prop("disabled", state);
         if (state) {
+            $(".right-pane", this.$win).addClass("grayed-out")
+        } else {
+            $(".right-pane", this.$win).removeClass("grayed-out")
+        }
+        if (state) {
             this.$dummy.show();
             this.$codeMirrorWrapper.hide();
         } else {
