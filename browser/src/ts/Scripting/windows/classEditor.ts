@@ -325,9 +325,10 @@ export class ClassEditor {
 
     private updateListBox() {
         let lst = this.getList()
-        if (!this.$showBase.prop("checked")) {
-            lst = lst.filter(c => !this.classManager.hasBaseClass(c))
-        }
+        lst = lst.filter(c => 
+            this.$showBase.prop("checked") == this.classManager.hasBaseClass(c)
+        )
+        
         this.list = lst;
         this.values = [...this.classManager.classes.values()].
             filter(c => lst.includes(c.name));

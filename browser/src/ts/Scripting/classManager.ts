@@ -87,7 +87,9 @@ export class ClassManager {
 
     private loadClasses() {
         let cls = <any>this.config.get("classes") || [];
-        if (typeof (<any>cls).push != "function") {
+        if (cls instanceof Map) {
+            cls = [...cls]
+        } else if (typeof (<any>cls).push != "function") {
             (<any>cls) = [];
         }
         this.classes = this.config.get("classes") ? new Map<string, Class>(cls) : new Map<string, Class>();

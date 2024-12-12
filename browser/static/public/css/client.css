@@ -995,7 +995,7 @@ div:focus-visible {
 }
 
 .courier {
-    font-family: "Courier", monospace !important;
+    font-family: "Courier", "Courier New", monospace !important;
 }
 
 .consolas {

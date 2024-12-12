@@ -171,20 +171,7 @@ export class UserConfig {
     public saveConfig() {
         let val:string;
         if (!this.saveConfigFunc && this.saveFunc) {
-            let to_convert:string[] = [];
-            for (const key in this.data.cfgVals) {
-                if (Object.prototype.hasOwnProperty.call(this.data.cfgVals, key)) {
-                    const element = this.data.cfgVals[key];
-                    if (element instanceof Map) {
-                        to_convert.push(key);
-                        this.data.cfgVals[key] = [...this.data.cfgVals[key]];
-                    }
-                }
-            }
-            val = JSON.stringify(this.data.cfgVals);
-            for (const iterator of to_convert) {
-                this.data.cfgVals[iterator] = new Map<string,any>(this.data.cfgVals[iterator]);
-            }
+            val = this.getConfigJsonString();
             this.saveFunc(val);
         }
         else if (this.saveConfigFunc) {
@@ -194,9 +181,27 @@ export class UserConfig {
         }
     }
 
+    private getConfigJsonString() {
+        let val: string
+        let to_convert: string[] = [];
+        for (const key in this.data.cfgVals) {
+            if (Object.prototype.hasOwnProperty.call(this.data.cfgVals, key)) {
+                const element = this.data.cfgVals[key];
+                if (element instanceof Map) {
+                    to_convert.push(key);
+                    this.data.cfgVals[key] = [...element];
+                }
+            }
+        }
+        val = JSON.stringify(this.data.cfgVals);
+        for (const iterator of to_convert) {
+            this.data.cfgVals[iterator] = new Map<string, any>(this.data.cfgVals[iterator]);
+        }
+        return val;
+    }
+
     public async exportToFile(mapper?:Mapper) {
-        let vals = JSON.stringify(this.data.cfgVals);
-        let jso = JSON.parse(vals);
+        let jso = JSON.parse(this.getConfigJsonString());
         
         if (mapper) {
             const res = await Messagebox.ShowWithButtons("Export config","Esporta favoriti mapper nel file?","Si", "No");
