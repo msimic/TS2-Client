@@ -321,7 +321,9 @@ export class OutWinBase {
         
         // firo i trigger qua prima che venga a schermo
         // cosi posso manipulare il buffer
-        this.EvtBuffer.fire(data);
+        if (txt != "\n") {
+            this.EvtBuffer.fire(data);
+        }
         
         if (!this.outputHasChanged) {
             this.appendToCurrentTarget(spanText);

@@ -56,7 +56,7 @@ function generateVersions() {
     } else {
         let lines = versions.split(/\r\n|\r|\n/g)
         const index = lines.findIndex((v)=>{
-            const m = v.match(/^\d+\.\d+\.\d+$/gi)
+            const m = v.match(/^v?\d+\.\d+\.\d+$/gi)
             const ok = v != ver && m
             return ok
         })

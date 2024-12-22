@@ -1,6 +1,6 @@
 {
-  "version": 43,
-  "versionMessage": "Trigger cyrodiil e morrow",
+  "version": 46,
+  "versionMessage": "Min fix, Niav",
   "requiresClientMajor": 2,
   "requiresClientMinor": 0,
   "requiresClientRevision": 13,
@@ -983,8 +983,8 @@
     },
     {
       "pattern": "^Premi \\<Invio\\>\\:",
-      "id": "",
-      "value": "send(\" \", true)",
+      "id": "premiinvio",
+      "value": "send(\" \", true)\ntoggleTrigger(\"premiinvio\", false);\ndelay(\"enable_premiinvio\",10,()=>{\n  toggleTrigger(\"premiinvio\",true)\n})",
       "regex": true,
       "is_script": true,
       "class": "login",
@@ -1800,6 +1800,26 @@
       "pattern": "^Una navigatrice Altmer sta comandando la ciurma",
       "regex": true,
       "value": "prepend(link(color(\"[Dai benedizioni] \", \"magenta\"), () => {\n  for(let i = 0; i < 9; i++) {\n    send(\"give benedizione Ciryelda\")\n  }\n  delay(\"benedizioni\",2500,() => print(\"Ora chiedi: \" + link(color(\"Sunhold\", \"magenta\"), () => {\n    send(\"ask Ciryelda sunhold\")\n  }, \"Prmei per chiedere\")))\n},\"Premi per darle\"))"
+    },
+    {
+      "class": "immortal",
+      "enabled": true,
+      "id": "",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "^Tu pensi '(.*)'$|::(.+):: '(.*)'$",
+      "regex": true,
+      "value": "if (line.startsWith(\"%\")) return\nlet time=new Date().getHours()+\":\"+new Date().getMinutes();\nlet nome = match[2] || \"Tu\"\nnome = color(nome, \"lightgray\")\n\nconst tipo=color(\"Think\", \"lightgray\")\nlet msg = match[1] || match[3]\nmsg = msg.replace(/</gi,\"&lt;\").replace(/>/gi,\"&gt;\");\nmsg = color(msg, \"#6060FF\");\nif (this.afk) {\n  time=color(\"@\" +time,\"gray\");\n} else {\n  time=\"\";\n}\nprint(`[${tipo}]${time}:${nome}> ${msg}`,\"Social\")\n"
+    },
+    {
+      "class": "",
+      "enabled": true,
+      "id": "niav",
+      "is_prompt": false,
+      "is_script": true,
+      "pattern": "Un vecchio vestito di nero e dal volto rugoso ti osserva con malvagita'.",
+      "regex": false,
+      "value": "const l = link(color(\"[Consegna quest]\",\"red\"),()=>{\n  send(\"give sangue-drago-goccia niav\");\n  send(\"7x give frammento-sfera-draghi niav\");\n  send(\"ask niav ricompensa\");\n})\nappend(\" \" + l)"
     }
   ],
   "aliases": [
@@ -3343,7 +3363,7 @@
     {
       "pattern": "portal ?(.+)",
       "id": "",
-      "value": "if (!match[1]) {\n  print(\"Si ma su di chi??\");\n} else {\n\tsend(\"~portal ${match[1]}`);\n}",
+      "value": "if (!match[1]) {\n  print(\"Si ma su di chi??\");\n} else {\n\tsend(`~portal ${match[1]}`);\n}",
       "regex": true,
       "is_script": true,
       "class": "psionic",
@@ -4247,6 +4267,34 @@
       "monk",
       {
         "name": "monk",
+        "enabled": false
+      }
+    ],
+    [
+      "autostop",
+      {
+        "name": "autostop",
+        "enabled": false
+      }
+    ],
+    [
+      "autosplit",
+      {
+        "name": "autosplit",
+        "enabled": false
+      }
+    ],
+    [
+      "autocast",
+      {
+        "name": "autocast",
+        "enabled": false
+      }
+    ],
+    [
+      "autofury",
+      {
+        "name": "autofury",
         "enabled": false
       }
     ]

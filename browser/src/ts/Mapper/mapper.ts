@@ -1750,7 +1750,7 @@ export class Mapper {
                     }
                 }
             }
-            if (!this.mapmode) {
+            if (!this.mapmode && !this.current) {
                 this.current = found || this.syncToRoom()
                 if (this.current) {
                     this.mapDebug("full resync for vnum " + vnum + " to id " + this.current.id)

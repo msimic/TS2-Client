@@ -1,8 +1,15 @@
-v2.0.14
+v2.0.15
 Versione minore con bugfixes
 
 bugfixes:
-- risolto un problema nel mandare comandi separati da puntoe  virgola negli alias non script
+- il mapper riuscira' a rimanere sincronizzato anche quando il nome della room non corrisponde esattamente
+- i trigger Prompt non scatterranno due volte se arriva un caporiga alla fine
+____________________________________________________________
+v2.0.13
+Versione minore con bugfixes
+
+bugfixes:
+- risolto un problema nel mandare comandi separati da puntoe virgola negli alias non script
 - risolto problema con lo scroll diviso
 - risolto un bug nel spegnere e riabilitare triggers
 - risolto un bug nel spegnere e riabilitare alias
@@ -11,11 +18,10 @@ v2.0.12
 Rewrite del client per renderlo piu performante e nuove funzionalita'
 
 features:
-
 - mapper molto ampliato e con modalita mapping
 - miglioramenti al layout editor, ora si possono definire i contenuti dei pannelli
 - implementato le macro negli alias
-- consolidato l'uso di parametri e variabili in scripting (@­variabile, $parametro)
+- consolidato l'uso di parametri e variabili in scripting (@variabile, $parametro)
 - si possono cancellare finestre dal bottone per opzioni (ingranaggio)
 - aggiunto debug per variabili in menu impostazioni avanzate
 - e' possibile importare e esportare il layout dalla finestra disposizione schermo
@@ -24,7 +30,6 @@ features:
 - nell'editor delle classi a rimozione classe ora e' possibile includere il contenuto
 
 scripting:
-
 - aggiunta funzione printRaw() e sendRaw()
 - send e sendRaw accettano secondo parametro che definisce se mostrare a schermo i comandi
 - aggiunte funzioni append e prepend per i trigger
@@ -34,13 +39,12 @@ scripting:
 - oggetto api: accedere all'API nelle script e' conveniente usare "api."
 - oggetto custom: si puo settare in esso cose che non persistono il rilancio ma acessibili da ogni profilo
 - aggiunto all'api: triggerFired e variableChanged
-performance:
 
+performance:
 - salvataggio profilo in IndexedDB
 - alcuni metodi per consumare meno risorse cpu
 
 bugfixes:
-
 - risolto un problema nella funzione hideWindow()
 - risolto problema di parsing parametri per script eseguite in linea comando
 - risolto un bug con l'output quando il mud mandava una riga in piu pezzi
